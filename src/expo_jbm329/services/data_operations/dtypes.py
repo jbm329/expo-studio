@@ -185,6 +185,36 @@ def is_numeric_series(series: pd.Series, *, include_bool: bool = False) -> bool:
     return bool(include_bool and semantic == SemanticDType.BOOL)
 
 
+def get_numeric_column_positions(df: pd.DataFrame) -> tuple[int, ...]:
+    """Return integer and floating-point column positions using dtype metadata.
+
+    No values are inspected or converted. Boolean, complex, categorical, and
+    temporal columns are excluded, including categories with numeric labels.
+
+    Args:
+        df: Source DataFrame, which is never mutated.
+
+    Returns:
+        Eligible positions in source order, preserving duplicate column labels.
+    """
+    return tuple(
+        position for position, dtype in enumerate(df.dtypes) if pdt.is_integer_dtype(dtype) or pdt.is_float_dtype(dtype)
+    )
+
+
+def get_datetime_column_positions(df: pd.DataFrame) -> tuple[int, ...]:
+    """Return datetime column positions using dtype metadata only.
+
+    Args:
+        df: Source DataFrame, which is never mutated.
+
+    Returns:
+        Datetime positions in source order, including timezone-aware timestamps.
+        Object/string dates and timedelta columns are excluded.
+    """
+    return tuple(position for position, dtype in enumerate(df.dtypes) if pdt.is_datetime64_any_dtype(dtype))
+
+
 def get_numeric_columns(
     df: pd.DataFrame,
     *,

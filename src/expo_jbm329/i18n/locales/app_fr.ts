@@ -2243,6 +2243,361 @@ Consultez les journaux pour plus d'informations.</translation>
         <translation>Deuxième jeu de données</translation>
     </message>
 </context><context>
+    <name>ConditionDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="153" />
+        <source>Build condition</source>
+        <translation>Créer une condition</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="162" />
+        <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
+        <translation>Ce texte a été modifié manuellement. Appliquer le remplacera. Annuler conserve le texte initial.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="168" />
+        <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
+        <translation>Les noms de colonnes ambigus ne sont pas disponibles. Renommez-les avant de créer des conditions.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
+        <translation>Glissez une poignée sur une règle pour créer un groupe AND. Déposez-la sur un groupe pour l'y ajouter ; utilisez les bords des lignes pour réordonner.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="188" />
+        <source>Apply</source>
+        <translation>Appliquer</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="284" />
+        <source>Complete every rule before applying.</source>
+        <translation>Complétez toutes les règles avant d'appliquer.</translation>
+    </message>
+    <message>
+        <source>Add rule</source>
+        <translation type="vanished">Ajouter une règle</translation>
+    </message>
+    <message>
+        <source>All rules (AND)</source>
+        <translation type="vanished">Toutes les règles (AND)</translation>
+    </message>
+    <message>
+        <source>Any rule (OR)</source>
+        <translation type="vanished">Au moins une règle (OR)</translation>
+    </message>
+</context><context>
+    <name>ConditionDragHandle</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="51" />
+        <source>Move rule or group</source>
+        <translation>Déplacer une règle ou un groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="52" />
+        <source>Drag to move or group. Click for more actions.</source>
+        <translation>Glissez pour déplacer ou regrouper. Cliquez pour plus d'actions.</translation>
+    </message>
+</context><context>
+    <name>ConditionEditor</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="57" />
+        <source>Condition</source>
+        <translation>Condition</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="58" />
+        <source>Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated.</source>
+        <translation>Modifiez la syntaxe de la condition ou utilisez le générateur. La syntaxe et les noms de colonnes sont vérifiés ; les valeurs ne sont pas évaluées.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="65" />
+        <source>Build condition</source>
+        <translation>Créer une condition</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="66" />
+        <source>Condition builder</source>
+        <translation>Générateur de conditions</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="177" />
+        <source>Expected a column name enclosed in [brackets].</source>
+        <translation>Un nom de colonne entre [crochets] est attendu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="178" />
+        <source>Column '{name}' does not exist.</source>
+        <translation>La colonne '{name}' n'existe pas.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="179" />
+        <source>Column '{name}' is ambiguous. Rename duplicate columns first.</source>
+        <translation>La colonne '{name}' est ambiguë. Renommez d'abord les colonnes en double.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
+        <source>Missing closing ] in column name. Escape a literal ] as ]].</source>
+        <translation>Le ] fermant manque dans le nom de colonne. Écrivez ]] pour un ] littéral.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
+        <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
+        <translation>Valeur entre apostrophes non termin?e. V?rifiez si une apostrophe manque ou est mal plac?e plus t?t dans la condition. ?crivez '' pour une apostrophe litt?rale.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
+        <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
+        <translation>Opérateur attendu : =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL ou IS NOT NULL.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
+        <source>Expected a single-quoted value, for example 'value'.</source>
+        <translation>Une valeur entre apostrophes est attendue, par exemple 'valeur'.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
+        <source>Expected an unquoted number, for example 18. Remove single quotes from numeric values.</source>
+        <translation>Un nombre sans apostrophes est attendu, par exemple 18. Retirez les apostrophes des valeurs numériques.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
+        <source>Expected unquoted True or False. Remove single quotes from booleans.</source>
+        <translation>True ou False sans apostrophes est attendu. Retirez les apostrophes des booléens.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
+        <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
+        <translation>IN et NOT IN exigent une liste non vide entre parenth?ses, s?par?e par des virgules.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
+        <source>Expected a closing parenthesis ).</source>
+        <translation>Une parenthèse fermante ) est attendue.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
+        <source>Expected AND, OR or a closing parenthesis ).</source>
+        <translation>AND, OR ou une parenth?se fermante ) est attendu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="198" />
+        <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
+        <translation>Parenthèse fermante ) sans correspondance. Ajoutez une parenthèse ouvrante ( correspondante ou supprimez cette ).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
+        <source>Expected a condition or a parenthesized group.</source>
+        <translation>Une condition ou un groupe entre parenthèses est attendu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
+        <source>Expected AND or OR between conditions, or the end of the expression.</source>
+        <translation>AND ou OR entre les conditions, ou la fin de l'expression, est attendu.</translation>
+    </message>
+    <message>
+        <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
+        <translation type="vanished">Un nombre ou une valeur entre apostrophes est attendu, par exemple 18 ou '18'.</translation>
+    </message>
+    <message>
+        <source>Expected True, False or a single-quoted value.</source>
+        <translation type="vanished">True, False ou une valeur entre apostrophes est attendu.</translation>
+    </message>
+    <message>
+        <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
+        <translation type="vanished">IN et NOT IN exigent une liste non vide telle que ('valeur1', 'valeur2').</translation>
+    </message>
+    <message>
+        <source>Missing closing single quote. Escape an apostrophe as ''.</source>
+        <translation type="vanished">L'apostrophe fermante manque. Écrivez '' pour une apostrophe littérale.</translation>
+    </message>
+    <message>
+        <source>Edit condition syntax or use the builder. Manual syntax is not validated or executed.</source>
+        <translation type="vanished">Modifiez la syntaxe de la condition ou utilisez le générateur. La syntaxe manuelle n'est ni validée ni exécutée.</translation>
+    </message>
+</context><context>
+    <name>ConditionRuleWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="49" />
+        <source>Select column</source>
+        <translation>Sélectionner une colonne</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="61" />
+        <source>Ambiguous column name. Rename this column first.</source>
+        <translation>Nom de colonne ambigu. Renommez d'abord cette colonne.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="63" />
+        <source>Column</source>
+        <translation>Colonne</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="66" />
+        <source>Equal to</source>
+        <translation>Égal à</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
+        <source>Not equal to</source>
+        <translation>Différent de</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
+        <source>In</source>
+        <translation>Dans</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
+        <source>Not in</source>
+        <translation>Pas dans</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
+        <source>Greater than</source>
+        <translation>Supérieur à</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
+        <source>Greater than or equal to</source>
+        <translation>Supérieur ou égal à</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
+        <source>Less than</source>
+        <translation>Inférieur à</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
+        <source>Less than or equal to</source>
+        <translation>Inférieur ou égal à</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
+        <source>Is missing</source>
+        <translation>Est manquant</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
+        <source>Is not missing</source>
+        <translation>N'est pas manquant</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="79" />
+        <source>Operator</source>
+        <translation>Opérateur</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="81" />
+        <source>Remove rule</source>
+        <translation>Supprimer la règle</translation>
+    </message>
+</context><context>
+    <name>ConditionTreeWidget</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="307" />
+        <source>All rules (AND)</source>
+        <translation>Toutes les règles (AND)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="308" />
+        <source>Any rule (OR)</source>
+        <translation>Au moins une règle (OR)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="310" />
+        <source>Group operator</source>
+        <translation>Opérateur du groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="311" />
+        <source>Choose how the rules in this group are combined.</source>
+        <translation>Choisissez comment combiner les règles de ce groupe.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="321" />
+        <source>Add rule</source>
+        <translation>Ajouter une règle</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="387" />
+        <source>Move up</source>
+        <translation>Monter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="388" />
+        <source>Move down</source>
+        <translation>Descendre</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="389" />
+        <source>Group with previous (AND)</source>
+        <translation>Regrouper avec l'élément précédent (AND)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="390" />
+        <source>Move out of group</source>
+        <translation>Sortir du groupe</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_tree_widget.py" line="391" />
+        <source>Ungroup (use parent operator)</source>
+        <translation>Dissocier (utiliser l'opérateur parent)</translation>
+    </message>
+</context><context>
+    <name>ConditionValuePicker</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="56" />
+        <source>Search values</source>
+        <translation>Rechercher des valeurs</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="68" />
+        <source>Previous</source>
+        <translation>Précédent</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
+        <source>Next</source>
+        <translation>Suivant</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="75" />
+        <source>Selected values</source>
+        <translation>Valeurs sélectionnées</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="80" />
+        <source>Remove selected values</source>
+        <translation>Supprimer les valeurs sélectionnées</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="153" />
+        <source>No matching values.</source>
+        <translation>Aucune valeur correspondante.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="166" />
+        <source>(empty string)</source>
+        <translation>(chaîne vide)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="180" />
+        <source>Loading values...</source>
+        <translation>Chargement des valeurs...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="202" />
+        <source>Page {page}</source>
+        <translation>Page {page}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="234" />
+        <source>Select values ({count} selected)</source>
+        <translation>Sélectionner des valeurs ({count} sélectionnées)</translation>
+    </message>
+</context><context>
     <name>ConnectionEditor</name>
     <message>
         <location filename="../../app/settings/connection_editor.py" line="155" />
@@ -3593,56 +3948,56 @@ Continuer ?</translation>
 </context><context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="../../app/expo_studio.py" line="513" />
+        <location filename="../../app/expo_studio.py" line="515" />
         <location filename="../../app/expo_studio.py" line="115" />
         <source>Expo studio</source>
         <translation>Expo studio</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="516" />
+        <location filename="../../app/expo_studio.py" line="518" />
         <location filename="../../app/expo_studio.py" line="172" />
         <source>Database connections</source>
         <translation>Connexions aux bases de données</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="517" />
+        <location filename="../../app/expo_studio.py" line="519" />
         <location filename="../../app/expo_studio.py" line="195" />
         <source>Files</source>
         <translation>Fichiers</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="518" />
+        <location filename="../../app/expo_studio.py" line="520" />
         <location filename="../../app/expo_studio.py" line="215" />
         <source>REST connections</source>
         <translation>Connexions REST</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="444" />
+        <location filename="../../app/expo_studio.py" line="446" />
         <source>Logg settings reloaded.</source>
         <translation>Paramètres de journalisation rechargés.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="457" />
+        <location filename="../../app/expo_studio.py" line="459" />
         <source>Settings reloaded.</source>
         <translation>Paramètres rechargés.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="558" />
+        <location filename="../../app/expo_studio.py" line="560" />
         <source>No active jobs to cancel.</source>
         <translation>Aucune tâche active à annuler.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="574" />
+        <location filename="../../app/expo_studio.py" line="576" />
         <source>Cancelling active jobs…</source>
         <translation>Annulation des tâches actives…</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="607" />
+        <location filename="../../app/expo_studio.py" line="609" />
         <source>Confirm exit</source>
         <translation>Confirmer la fermeture</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="608" />
+        <location filename="../../app/expo_studio.py" line="610" />
         <source>Do you want to quit the application?</source>
         <translation>Voulez-vous quitter l'application ?</translation>
     </message>
@@ -7316,6 +7671,234 @@ Conseil : {error_hint}</translation>
         <translation>L'aperçu du rapport n'a pas pu être chargé.</translation>
     </message>
 </context><context>
+    <name>ReshapeConditionController</name>
+    <message>
+        <location filename="../../workbench/controllers/reshape_condition_controller.py" line="41" />
+        <source>Loading condition values</source>
+        <translation>Chargement des valeurs de condition</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_condition_controller.py" line="42" />
+        <source>Could not load values. Change the column or search to retry.</source>
+        <translation>Impossible de charger les valeurs. Changez de colonne ou de recherche pour réessayer.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_condition_controller.py" line="43" />
+        <source>This column contains unsupported values. Select a column with scalar text, numbers or dates.</source>
+        <translation>Cette colonne contient des valeurs non prises en charge. Sélectionnez une colonne de textes, nombres ou dates scalaires.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_condition_controller.py" line="46" />
+        <source>Different values have identical condition text. Convert the column to an unambiguous type first.</source>
+        <translation>Des valeurs différentes produisent le même texte de condition. Convertissez d'abord la colonne en un type non ambigu.</translation>
+    </message>
+</context><context>
+    <name>ReshapeController</name>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="41" />
+        <source>Reshape unavailable</source>
+        <translation>Remodelage indisponible</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="42" />
+        <source>Select a ready result dataset before opening Reshape.</source>
+        <translation>Sélectionnez un jeu de données de résultats prêt avant d’ouvrir le remodelage.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="43" />
+        <source>Calculating Reshape preview...</source>
+        <translation>Calcul de l'aperçu de restructuration...</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="44" />
+        <source>Reshape preview</source>
+        <translation>Aperçu de restructuration</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="45" />
+        <source>Preview cancelled. Press Preview to try again.</source>
+        <translation>Aperçu annulé. Cliquez sur Aperçu pour réessayer.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="46" />
+        <source>Preview failed. Check the selected data and conditions, then try again.</source>
+        <translation>Échec de l'aperçu. Vérifiez les données et les conditions sélectionnées, puis réessayez.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="47" />
+        <source>Reshaped data</source>
+        <translation>Données restructurées</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/reshape_controller.py" line="48" />
+        <source>Reshaping dataset...</source>
+        <translation>Restructuration du jeu de données...</translation>
+    </message>
+</context><context>
+    <name>ReshapeDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
+        <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
+        <translation>Remodeler — {dataset} ({rows} lignes × {columns} colonnes)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="105" />
+        <source>Preview uses the full dataset. Apply creates a new result dataset.</source>
+        <translation>L'aperçu utilise l'ensemble du jeu de données. Appliquer crée un nouveau jeu de données résultat.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="111" />
+        <source>Dimensions</source>
+        <translation>Dimensions</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="114" />
+        <source>Search dimensions</source>
+        <translation>Rechercher des dimensions</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="134" />
+        <source>Metrics</source>
+        <translation>Mesures</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="137" />
+        <source>SUM and AVG accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
+        <translation>SUM et AVG acceptent uniquement les colonnes d’entiers et de nombres à virgule flottante. MIN et MAX acceptent aussi les colonnes de date et d’heure. COUNT et COUNT DISTINCT acceptent toutes les colonnes. Changer de fonction efface une sélection de colonne source incompatible.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="149" />
+        <source>Metric name</source>
+        <translation>Nom de la mesure</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="239" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="150" />
+        <source>Function</source>
+        <translation>Fonction</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="244" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="151" />
+        <source>Source column</source>
+        <translation>Colonne source</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="152" />
+        <source>Condition (optional)</source>
+        <translation>Condition (facultative)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="165" />
+        <source>Add metric</source>
+        <translation>Ajouter une mesure</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="166" />
+        <source>Remove selected metrics</source>
+        <translation>Supprimer les mesures sélectionnées</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="175" />
+        <source>Preview (5 rows)</source>
+        <translation>Aperçu (5 lignes)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="179" />
+        <source>Configure metrics and press Preview to calculate up to five output rows.</source>
+        <translation>Configurez les mesures et cliquez sur Aperçu pour calculer jusqu'à cinq lignes de sortie.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="194" />
+        <source>Preview</source>
+        <translation>Aperçu</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="280" />
+        <source>Preview is out of date. Press Preview to recalculate.</source>
+        <translation>L'aperçu est obsolète. Cliquez sur Aperçu pour recalculer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="346" />
+        <source>Calculating preview...</source>
+        <translation>Calcul de l'aperçu...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="359" />
+        <source>Showing {shown} of {total} output rows.</source>
+        <translation>Affichage de {shown} lignes de sortie sur {total}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="374" />
+        <source>Complete every metric and correct condition errors before previewing.</source>
+        <translation>Complétez chaque mesure et corrigez les erreurs de condition avant l'aperçu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="429" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="377" />
+        <source>Output column names must be unique across dimensions and metrics.</source>
+        <translation>Les noms des colonnes de sortie doivent être uniques parmi les dimensions et les mesures.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="378" />
+        <source>A condition value cannot be interpreted for column '{name}'.</source>
+        <translation>Une valeur de condition ne peut pas être interprétée pour la colonne '{name}'.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="379" />
+        <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
+        <translation>Impossible de comparer ou d'agréger les données sélectionnées pour '{name}'. Vérifiez leurs valeurs et leurs types.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="424" />
+        <source>Correct condition errors before applying.</source>
+        <translation>Corrigez les erreurs de condition avant d'appliquer.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="426" />
+        <source>Apply creates a new result dataset.</source>
+        <translation>Appliquer crée un nouveau jeu de données résultat.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="431" />
+        <source>Calculate up to five output rows from the full dataset.</source>
+        <translation>Calculer jusqu'à cinq lignes de sortie à partir du jeu de données complet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="455" />
+        <source>Select column</source>
+        <translation>Sélectionner une colonne</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="vanished">Appliquer</translation>
+    </message>
+    <message>
+        <source>Preview uses the full dataset. Creating a result dataset is not available yet.</source>
+        <translation type="vanished">L'aperçu utilise le jeu de données complet. La création d'un jeu de données de résultat n'est pas encore disponible.</translation>
+    </message>
+    <message>
+        <source>Creating a result dataset is not available yet.</source>
+        <translation type="vanished">La création d'un jeu de données de résultat n'est pas encore disponible.</translation>
+    </message>
+    <message>
+        <source>UI only. Aggregation and preview are not available yet.</source>
+        <translation type="vanished">Interface uniquement. L’agrégation et l’aperçu ne sont pas encore disponibles.</translation>
+    </message>
+    <message>
+        <source>A five-row output preview will be available here in a later step.</source>
+        <translation type="vanished">Un aperçu de cinq lignes de résultat sera disponible ici lors d’une étape ultérieure.</translation>
+    </message>
+    <message>
+        <source>SQL-style condition text only. Not validated or executed.</source>
+        <translation type="vanished">Condition textuelle de style SQL uniquement. Ni validée ni exécutée.</translation>
+    </message>
+    <message>
+        <source>SUM, AVG, MAX and MIN accept integer and floating-point columns only. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
+        <translation type="vanished">SUM, AVG, MAX et MIN acceptent uniquement les colonnes d’entiers et de nombres à virgule flottante. COUNT et COUNT DISTINCT acceptent toutes les colonnes. Changer de fonction efface une sélection de colonne source incompatible.</translation>
+    </message>
+</context><context>
     <name>RestAuthWidget</name>
     <message>
         <location filename="../../gui/widgets/rest/auth_widget.py" line="16" />
@@ -9162,155 +9745,160 @@ Durée : {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ResultTabManager</name>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="173" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="174" />
         <source>Failure</source>
         <translation>Échec</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="174" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
         <source>Could not read column:
 {error}</source>
         <translation>Impossible de lire la colonne :
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
         <source>Could not load data: 
 {error}</source>
         <translation>Impossible de charger les données : 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
         <source>Could not update data: 
 {error}</source>
         <translation>Impossible de mettre à jour les données : 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="178" />
         <source>Could not perform the operation:
 {error}</source>
         <translation>Impossible d'effectuer l'opération :
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="179" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="180" />
         <source>Not available</source>
         <translation>Indisponible</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="180" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
         <source>No data available for this view</source>
         <translation>Aucune donnée disponible pour cette vue</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
         <source>Invalid column index: {column}</source>
         <translation>Indice de colonne invalide : {column}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="183" />
         <source>Column not available anymore.</source>
         <translation>La colonne n'est plus disponible.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="185" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="186" />
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="186" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
         <source>Nothing to undo.</source>
         <translation>Rien à annuler.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
         <source>Last action undone</source>
         <translation>Dernière action annulée</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="189" />
         <source>Restoring previous state…</source>
         <translation>Restauration de l'état précédent…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="191" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="192" />
         <source>Rename tab</source>
         <translation>Renommer l'onglet</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="192" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
         <source>New name:</source>
         <translation>Nouveau nom :</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
         <source>Rename…</source>
         <translation>Renommer…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
         <source>Close</source>
         <translation>Fermer</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
         <source>Close others</source>
         <translation>Fermer les autres</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
         <source>Close all to the right</source>
         <translation>Fermer tous les onglets à droite</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
         <source>Close all</source>
         <translation>Tout fermer</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
         <source>Derived column…</source>
         <translation>Colonne dérivée…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
         <source>Join…</source>
         <translation>Jointure…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
         <source>Concatenate…</source>
         <translation>Concaténer…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="203" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="202" />
+        <source>Reshape…</source>
+        <translation>Remodeler…</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
         <source>Processing data…</source>
         <translation>Traitement des données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="204" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
         <source>Updating table…</source>
         <translation>Mise à jour de la table…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
         <source>Loading data…</source>
         <translation>Chargement des données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
         <source>Preparing dataset…</source>
         <translation>Préparation du jeu de données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
         <source>pending…</source>
         <translation>en attente…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="210" />
         <source>Formatting cell values…</source>
         <translation>Formatage des valeurs des cellules…</translation>
     </message>
@@ -10513,40 +11101,45 @@ Raccourci : Ctrl+Shift+Enter</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/toolbar_controller.py" line="49" />
+        <source>Reshape</source>
+        <translation>Remodeler</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="50" />
         <source>Format view</source>
         <translation>Formater la vue</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="50" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="51" />
         <source>Clear editor</source>
         <translation>Effacer l'éditeur</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="51" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="52" />
         <source>Update schema</source>
         <translation>Mettre à jour le schéma</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="52" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="53" />
         <source>Update schema
 Shortcut: F5</source>
         <translation>Mettre à jour le schéma
 Raccourci : F5</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="53" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="54" />
         <source>Undo</source>
         <translation>Annuler</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="54" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="55" />
         <source>Undo last action
 Shortcut: Ctrl+Z</source>
         <translation>Annuler la dernière action
 Raccourci : Ctrl+Z</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/toolbar_controller.py" line="55" />
+        <location filename="../../workbench/controllers/toolbar_controller.py" line="56" />
         <source>Analyze data</source>
         <translation>Analyser les données</translation>
     </message>

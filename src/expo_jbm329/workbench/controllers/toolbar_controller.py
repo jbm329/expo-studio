@@ -46,6 +46,7 @@ class ToolbarController:
     TR_EXPORT_DATA = QT_TR_NOOP("Export to data file")
     TR_JOIN_DATASETS = QT_TR_NOOP("Join datasets")
     TR_CONCATENATE_DATASETS = QT_TR_NOOP("Concatenate datasets")
+    TR_RESHAPE = QT_TR_NOOP("Reshape")
     TR_FROMAT_VIEW = QT_TR_NOOP("Format view")
     TR_CLEAR_EDITOR = QT_TR_NOOP("Clear editor")
     TR_UPDATE_SCHEMA = QT_TR_NOOP("Update schema")
@@ -73,6 +74,7 @@ class ToolbarController:
     # Data ops
     _action_join_data: QAction
     _action_concatenate_data: QAction
+    _action_reshape: QAction
     _action_analyze: QAction
 
     # Misc
@@ -101,6 +103,7 @@ class ToolbarController:
         export_data: Callable[[], None],
         join_data: Callable[[], None],
         concatenate_data: Callable[[], None],
+        reshape_data: Callable[[], None],
         format_view: Callable[[bool], None],
         clear_editor: Callable[[], None],
         refresh_schema: Callable[[], None],
@@ -124,6 +127,7 @@ class ToolbarController:
             export_data: Callback for export to data file action.
             join_data: Callback for join data action.
             concatenate_data: Callback for concatenate data action.
+            reshape_data: Callback for reshape data action.
             format_view: Callback for format view action.
             clear_editor: Callback for clear editor action.
             refresh_schema: Callback for refresh schema action.
@@ -147,6 +151,7 @@ class ToolbarController:
         self._action_export_data_cb = export_data
         self._action_join_data_cb = join_data
         self._action_concatenate_data_cb = concatenate_data
+        self._action_reshape_cb = reshape_data
         self._action_format_view_cb = format_view
         self._action_clear_cb = clear_editor
         self._action_refresh_schema_cb = refresh_schema
@@ -225,6 +230,10 @@ class ToolbarController:
         self._action_concatenate_data.setEnabled(False)
         tb.addAction(self._action_concatenate_data)
 
+        self._action_reshape = QAction(self._tr(self.TR_RESHAPE), tb)
+        self._action_reshape.setEnabled(False)
+        tb.addAction(self._action_reshape)
+
         self._action_analyze = QAction(self._tr(self.TR_ANALYZE), tb)
         self._action_analyze.setEnabled(False)
         tb.addAction(self._action_analyze)
@@ -278,6 +287,7 @@ class ToolbarController:
 
         self._action_join_data.triggered.connect(self._action_join_data_cb)
         self._action_concatenate_data.triggered.connect(self._action_concatenate_data_cb)
+        self._action_reshape.triggered.connect(self._action_reshape_cb)
         self._action_analyze.triggered.connect(self._action_analyze_cb)
 
         self._action_clear.triggered.connect(self._action_clear_cb)
@@ -305,6 +315,7 @@ class ToolbarController:
 
         self._action_join_data.setIcon(self._icons.get("join"))
         self._action_concatenate_data.setIcon(self._icons.get("concatenate"))
+        self._action_reshape.setIcon(self._icons.get("table"))
         self._action_analyze.setIcon(self._icons.get("chart"))
 
         self._action_clear.setIcon(self._icons.get("file_clear"))
@@ -353,6 +364,10 @@ class ToolbarController:
         """
         self._action_analyze.setEnabled(active_dataset_ready)
 
+    def apply_reshape_state(self, active_dataset_ready: bool) -> None:
+        """Enable Reshape only when the active result dataset is ready."""
+        self._action_reshape.setEnabled(active_dataset_ready)
+
     def apply_has_multiple_datasets_state(self, has_multiple_datasets: bool) -> None:
         """Apply the multiple datasets state to enable/disable join/concatenate actions.
 
@@ -384,6 +399,7 @@ class ToolbarController:
 
         self._action_join_data.setText(self._tr(self.TR_JOIN_DATASETS))
         self._action_concatenate_data.setText(self._tr(self.TR_CONCATENATE_DATASETS))
+        self._action_reshape.setText(self._tr(self.TR_RESHAPE))
         self._action_analyze.setText(self._tr(self.TR_ANALYZE))
 
         self._action_clear.setText(self._tr(self.TR_CLEAR_EDITOR))

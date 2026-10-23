@@ -89,6 +89,7 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.concat_controller import ConcatController
     from expo_jbm329.workbench.controllers.derived_column_controller import DerivedColumnController
     from expo_jbm329.workbench.controllers.join_controller import JoinController
+    from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
 
 
 # ======================================================================
@@ -101,7 +102,7 @@ class ResultTabState(StrEnum):
     READY = "ready"
 
 
-ResultOrigin = Literal["file", "sql", "derived", "join", "concat", "unknown"]
+ResultOrigin = Literal["file", "sql", "derived", "join", "concat", "reshape", "unknown"]
 MIN_MULTI_COLUMN_SELECTION = 2
 
 
@@ -198,6 +199,7 @@ class ResultTabManager:
     TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column…")
     TR_JOIN = QT_TR_NOOP("Join…")
     TR_CONCATENATE = QT_TR_NOOP("Concatenate…")
+    TR_RESHAPE = QT_TR_NOOP("Reshape…")
 
     # Messages
     TR_PROCESSING_DATA = QT_TR_NOOP("Processing data…")
@@ -245,6 +247,7 @@ class ResultTabManager:
         "_notify_has_data_cbs",
         "_notify_toolbar_multi_dataset_cb",
         "_parent",
+        "_reshape_controller",
         "_result_counter",
         "_set_shape",
         "_set_status",
@@ -280,6 +283,7 @@ class ResultTabManager:
         self._col_profile_cache = col_profile_cache
         self._join_controller: JoinController | None = None
         self._concat_controller: ConcatController | None = None
+        self._reshape_controller: ReshapeController | None = None
         self._derived_column_controller: DerivedColumnController | None = None
         self._set_status = set_status
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
@@ -1032,6 +1036,10 @@ class ResultTabManager:
         """Set the concatenate controller for the result tab manager."""
         self._concat_controller = controller
 
+    def set_reshape_controller(self, controller: ReshapeController) -> None:
+        """Set the controller for Reshape configuration."""
+        self._reshape_controller = controller
+
     def set_derived_column_controller(self, controller: DerivedColumnController) -> None:
         """Set the derived column controller for the result tab manager."""
         self._derived_column_controller = controller
@@ -1162,6 +1170,11 @@ class ResultTabManager:
         menu.addAction(act_concatenate)
         act_concatenate.setEnabled(self._tabs.count() > 1)
 
+        act_reshape = QAction(self._tr(self.TR_RESHAPE), menu)
+        menu.addAction(act_reshape)
+        record = self._tabs_by_id.get(tab_id) if isinstance(tab_id, str) else None
+        act_reshape.setEnabled(record is not None and record.is_ready and record.df is not None)
+
         chosen = menu.exec(global_pos)
         if not chosen:
             return
@@ -1174,6 +1187,14 @@ class ResultTabManager:
             self._logger.debug("ResultTabManager: context menu target was removed.")
             return
         index = current_index
+
+        if chosen == act_reshape:
+            if self._reshape_controller is None:
+                self._logger.warning("ResultTabManager: Reshape controller is not available.")
+                return
+            self._tabs.setCurrentIndex(index)
+            self._reshape_controller.open_reshape_dialog()
+            return
 
         if chosen == act_rename:
             self.rename_tab(index)
@@ -1188,6 +1209,7 @@ class ResultTabManager:
 
         elif chosen == act_derived:
             if self._derived_column_controller is None:
+                self._logger.warning("ResultTabManager: Derived column controller is not available.")
                 return
             try:
                 self._derived_column_controller.create_derived_column()

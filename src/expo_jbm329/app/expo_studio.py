@@ -374,6 +374,7 @@ class ExpoStudio(QMainWindow):
             export_data=workbench.export.export_data,
             join_data=workbench.join.open_join_dialog,
             concatenate_data=workbench.concat.open_concat_dialog,
+            reshape_data=workbench.reshape.open_reshape_dialog,
             format_view=workbench.results.handle_format_view_toggle,
             clear_editor=workbench.editor_panel.clear_active_tab,
             refresh_schema=workbench.schema.refresh_current_schema,
@@ -389,6 +390,7 @@ class ExpoStudio(QMainWindow):
         toolbar_controller.apply_connection_state(False)
         workbench.results.apply_toolbar_data_state(toolbar_controller.apply_has_data_state)
         workbench.results.apply_toolbar_analysis_state(toolbar_controller.apply_analysis_state)
+        workbench.results.apply_toolbar_analysis_state(toolbar_controller.apply_reshape_state)
         workbench.results.apply_toolbar_multiple_dataset_state(toolbar_controller.apply_has_multiple_datasets_state)
         workbench.icon_service.icons_updated.connect(toolbar_controller.apply_icons)
 
