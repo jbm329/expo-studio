@@ -39,6 +39,9 @@ The project is still in its infancy and may change significantly.
 - **Reshape (UI skeleton)**: Configure dimensions and named aggregation metrics for the active ready dataset.
   Open Reshape after Concatenate in the toolbar or from a result tab's context menu.
   Each condition is editable text with a right-hand `...` button opening a visual builder.
+  Focusing or clicking the condition field opens a floating multiline editor over
+  the rows below without changing row height. Edits are kept immediately; clicking
+  elsewhere or pressing Escape closes it without discarding text.
   The builder button requires a nonblank metric name and a selected source column.
   Selecting a source column fills a blank metric name with the function and column
   name (for example, `Sum Sales` or `Count distinct Customer`); existing names are preserved.
