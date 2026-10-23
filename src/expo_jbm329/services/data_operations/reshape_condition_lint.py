@@ -27,6 +27,7 @@ class ConditionLintCode(StrEnum):
     UNMATCHED_CLOSE = "unmatched_close"
     EXPRESSION = "expression"
     CONNECTOR = "connector"
+    GROUP_CONNECTOR = "group_connector"
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,7 +136,7 @@ class _Parser:
                 if self.take("OR"):
                     pending.extend(("or_tail", "and_tail", "atom"))
             elif not self.take(")"):
-                self.fail(ConditionLintCode.CLOSE)
+                self.fail(ConditionLintCode.CLOSE if self.current.kind == "eof" else ConditionLintCode.GROUP_CONNECTOR)
 
     def predicate(self) -> None:
         token = self.current

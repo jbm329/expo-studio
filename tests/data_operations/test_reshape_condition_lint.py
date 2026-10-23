@@ -137,3 +137,23 @@ def test_parentheses_in_names_and_values_do_not_affect_group_matching():
     columns = condition_columns(["a)"])
     assert not lint_condition("([a)] IN (')', '('))", columns)
     assert lint_condition("[a)] = '(')", columns)[0].code == ConditionLintCode.UNMATCHED_CLOSE
+
+
+def test_misspelled_connector_after_nested_group_has_specific_hint_span():
+    text = "(([Ref_Vårdform_Nyckel] = 'AKUT' OR [Akutflagga] = 'True') AN [Ålder] > '17')"
+    columns = condition_columns(["Ref_Vårdform_Nyckel", "Akutflagga", "Ålder"])
+    diagnostics = lint_condition(text, columns)
+    assert len(diagnostics) == 1
+    assert diagnostics[0].code == ConditionLintCode.GROUP_CONNECTOR
+    assert text[diagnostics[0].start : diagnostics[0].end] == "AN"
+    assert not lint_condition(text.replace(" AN ", " AND "), columns)
+
+
+@pytest.mark.parametrize("unexpected", ["AN", "O", "XOR", "[b]", "'AND'"])
+def test_unexpected_group_token_is_not_reported_as_missing_closing_parenthesis(unexpected):
+    text = f"([a] = 'x' {unexpected})"
+    assert lint_condition(text, COLUMNS)[0].code == ConditionLintCode.GROUP_CONNECTOR
+
+
+def test_unclosed_group_at_end_retains_missing_parenthesis_hint():
+    assert lint_condition("(([a] = 'x')", COLUMNS)[0].code == ConditionLintCode.CLOSE

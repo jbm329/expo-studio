@@ -2367,16 +2367,21 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <source>Expected AND, OR or a closing parenthesis ).</source>
+        <translation>AND, OR oder eine schlie?ende Klammer ) wird erwartet.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Schließende Klammer ) ohne passende öffnende Klammer. Fügen Sie eine passende öffnende ( hinzu oder entfernen Sie diese ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Eine Bedingung oder eine geklammerte Gruppe wird erwartet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>AND oder OR zwischen Bedingungen oder das Ende des Ausdrucks wird erwartet.</translation>
     </message>

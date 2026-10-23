@@ -128,6 +128,7 @@ class ConditionEditor(QWidget):
             ConditionLintCode.VALUE: self.tr("Expected a single-quoted value, for example 'value'."),
             ConditionLintCode.LIST: self.tr("IN and NOT IN require a nonempty list such as ('value1', 'value2')."),
             ConditionLintCode.CLOSE: self.tr("Expected a closing parenthesis )."),
+            ConditionLintCode.GROUP_CONNECTOR: self.tr("Expected AND, OR or a closing parenthesis )."),
             ConditionLintCode.UNMATCHED_CLOSE: self.tr(
                 "Unmatched closing parenthesis ). Add a matching opening ( or remove this )."
             ),

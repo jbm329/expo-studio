@@ -2367,16 +2367,21 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <source>Expected AND, OR or a closing parenthesis ).</source>
+        <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Avslutande parentes ) saknar motsvarande öppnande parentes. Lägg till en öppnande ( eller ta bort denna ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Förväntade ett villkor eller en grupp inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Förväntade AND eller OR mellan villkor, eller slutet på uttrycket.</translation>
     </message>

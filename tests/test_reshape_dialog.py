@@ -175,6 +175,7 @@ def test_compiled_reshape_translations(qt_app, language):
                     "ConditionEditor",
                     "Unmatched closing parenthesis ). Add a matching opening ( or remove this ).",
                 ),
+                ("ConditionEditor", "Expected AND, OR or a closing parenthesis )."),
             ):
                 assert translate(context, source) != source
             assert "Metrics" not in [box.title() for box in dialog.findChildren(QGroupBox)]
@@ -231,7 +232,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 for placeholder in ("{dataset}", "{rows}", "{columns}", "{page}", "{count}", "{name}"):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 84
+    assert checked == 85
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

@@ -152,6 +152,18 @@ def test_unmatched_closing_parenthesis_hint_and_underline():
     parent.close()
 
 
+def test_misspelled_group_connector_hint_and_underline():
+    parent, editor, _other = make_editor()
+    editor.text.setText("(([a] = 'x' OR [a] = 'y') AN [a] > '17')")
+    assert not editor.validate_now()
+    assert "Expected AND, OR or a closing parenthesis )." in editor.text.toolTip()
+    assert editor.expanded_text.toolTip() == editor.text.toolTip()
+    selections = editor.expanded_text.extraSelections()
+    assert len(selections) == 1
+    assert selections[0].cursor.selectedText() == "AN"
+    parent.close()
+
+
 def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
     dialog = ReshapeDialog(
         parent=None,

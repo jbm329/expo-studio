@@ -2367,16 +2367,21 @@ Consulte los registros para obtener más información.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="131" />
+        <source>Expected AND, OR or a closing parenthesis ).</source>
+        <translation>Se esperaba AND, OR o un par?ntesis de cierre ).</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="132" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Paréntesis de cierre ) sin correspondencia. Añade un paréntesis de apertura ( correspondiente o elimina este ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="134" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Se esperaba una condición o un grupo entre paréntesis.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="136" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Se esperaba AND u OR entre condiciones, o el final de la expresión.</translation>
     </message>
