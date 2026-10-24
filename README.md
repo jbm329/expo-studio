@@ -585,7 +585,7 @@ See the [LICENSE.txt](LICENSE.txt) file for details.
 
 ## 👤 Author
 
-**Jonas Brännström** - [jonas.brannstrom@gmail.com](mailto:jonas.brannstrom@gmail.com)
+**Jonas Brännström** - [expostudio.contact@gmail.com](mailto:expostudio.contact@gmail.com)
 
 
 ## 🎨 Icon Credits
