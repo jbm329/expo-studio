@@ -52,18 +52,16 @@ body:
     attributes:
       label: Version
       description: What version are you using?
-      placeholder: e.g. v1.4.2
+      placeholder: e.g. v1.1.0
 
   - type: dropdown
     id: environment
     attributes:
-      label: Environment
+      label: Operating System
       description: Where did you encounter the issue?
       options:
-        - Production
-        - Staging
-        - Local
-        - Other
+        - Windows
+        - Linux
     validations:
       required: true
 
