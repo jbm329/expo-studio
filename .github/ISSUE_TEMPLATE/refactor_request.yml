@@ -1,0 +1,75 @@
+name: Refactor
+description: Propose internal code improvements without changing external behavior
+title: "[Refactor]: "
+labels: ["refactor"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for internal code improvements (structure, readability, maintainability, performance) that should not change user-facing behavior.
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: Why is this refactor needed?
+      placeholder: Describe current pain points (complexity, duplication, tech debt, fragile code, etc.).
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_state
+    attributes:
+      label: Current state
+      description: What does the code look like today?
+      placeholder: Reference files/modules and describe the current design briefly.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_changes
+    attributes:
+      label: Proposed changes
+      description: What should be refactored?
+      placeholder: List the intended structural/code changes.
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: What is explicitly not part of this refactor?
+      placeholder: List boundaries to keep the work focused.
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact_risk
+    attributes:
+      label: Impact and risk
+      description: What areas could be affected? Any migration or compatibility risk?
+      placeholder: Note runtime, API, performance, or deployment risks.
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing_plan
+    attributes:
+      label: Testing plan
+      description: How will we verify no behavior changes?
+      placeholder: Unit/integration/regression tests, manual checks, benchmarks, etc.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: This change is internal and should not intentionally change external behavior.
+          required: true
+        - label: I searched existing issues to avoid duplicates.
+          required: true
+        - label: I have identified affected areas and added/updated tests where needed.
+          required: false
