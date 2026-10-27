@@ -1,0 +1,50 @@
+name: Documentation
+description: Report missing, unclear, or outdated documentation
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help improve the documentation! Use this form to report unclear instructions, missing information, or outdated examples.
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Where is the documentation?
+      description: Link to the page or mention the file or section. If documentation is missing, describe where you expected to find it.
+      placeholder: e.g. README.md — Installation section
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What needs improving?
+      description: Describe what is missing, incorrect, or difficult to understand.
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested_improvement
+    attributes:
+      label: Suggested improvement
+      description: How could we make this clearer? It is fine if you do not have a solution yet.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Add relevant screenshots, examples, or links.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues to avoid creating duplicates.
+          required: true
