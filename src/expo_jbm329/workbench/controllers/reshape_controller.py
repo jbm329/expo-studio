@@ -78,7 +78,7 @@ class ReshapeController:
         tab_id = self._results.active_tab_id()
         record = self._results.tabs_by_id.get(tab_id) if tab_id is not None else None
         if record is None or not record.is_ready or record.df is None:
-            self._logger.warning("Reshape was requested without a ready active dataset.")
+            self._logger.warning("ReshapeController: reshape unavailable (reason=ready_dataset_required)")
             QMessageBox.warning(
                 self._parent,
                 self._tr(self.TR_UNAVAILABLE),
@@ -116,6 +116,15 @@ class ReshapeController:
     def _run_reshape(self, source: pd.DataFrame, request: ReshapeRequest) -> None:
         """Create a pending result tab and run the captured configuration."""
         corr_id = uuid.uuid4().hex
+        self._logger.info(
+            "ReshapeController: reshape requested (corr=%s, operation=apply, source_rows=%d, source_cols=%d, "
+            "dimensions=%d, metrics=%d)",
+            corr_id,
+            len(source),
+            len(source.columns),
+            len(request.dimensions),
+            len(request.metrics),
+        )
         pending = self._results.create_pending_tab(
             title=self._tr(self.TR_RESULT),
             origin_type="reshape",
@@ -135,17 +144,32 @@ class ReshapeController:
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
         ) -> pd.DataFrame | None:
-            return compute_reshape(source, request, progress_cb=progress_cb, cancel_cb=cancel_cb)
+            return compute_reshape(
+                source,
+                request,
+                progress_cb=progress_cb,
+                cancel_cb=cancel_cb,
+                corr_id=corr_id,
+            )
 
         def result(frame: pd.DataFrame | None) -> None:
             if stale():
                 return
             if frame is None:
                 self._results.remove_pending_tab(tab_id)
-                self._logger.info("Reshape cancelled (corr=%s, tab_id=%s).", corr_id, tab_id)
+                self._logger.info(
+                    "ReshapeController: result tab removed (corr=%s, tab_id=%s, outcome=cancelled)",
+                    corr_id,
+                    tab_id,
+                )
                 return
             self._results.fulfill_pending_tab(tab_id, frame)
-            self._logger.info("Reshape completed (corr=%s, tab_id=%s, rows=%d).", corr_id, tab_id, len(frame))
+            self._logger.info(
+                "ReshapeController: result tab fulfilled (corr=%s, tab_id=%s, rows=%d)",
+                corr_id,
+                tab_id,
+                len(frame),
+            )
 
         def finished() -> None:
             if not stale():
@@ -168,12 +192,17 @@ class ReshapeController:
             show_status_progress=False,
             show_started_in_status=False,
             suppress_error_dialog=False,
+            log_error_tracebacks=False,
         )
         job_id = self._async_ops.job_mgr.get_job_id(job if isinstance(job, QObject) else None)
         if job_id is not None:
             self._results.bind_job_to_tab(tab_id, job_id)
         else:
-            self._logger.warning("Reshape job could not be bound (corr=%s, tab_id=%s).", corr_id, tab_id)
+            self._logger.warning(
+                "ReshapeController: result tab job binding unavailable (corr=%s, tab_id=%s)",
+                corr_id,
+                tab_id,
+            )
 
     def _connect_preview(self, dialog: ReshapeDialog, source: pd.DataFrame) -> None:
         closed = False
@@ -228,10 +257,15 @@ class ReshapeController:
                     return cancel_event.is_set() or (cancel_cb is not None and cancel_cb())
 
                 try:
-                    return compute_reshape_preview(source, request, progress_cb=progress_cb, cancel_cb=cancelled)
-                except ReshapeError as error:
-                    self._logger.warning("Reshape preview rejected (corr=%s): %s", corr_id, error)
-                    return error
+                    return compute_reshape_preview(
+                        source,
+                        request,
+                        progress_cb=progress_cb,
+                        cancel_cb=cancelled,
+                        corr_id=corr_id,
+                    )
+                except ReshapeError as reshape_error:
+                    return reshape_error
 
             def result(value: ReshapePreview | ReshapeError | None) -> None:
                 nonlocal handled
@@ -245,9 +279,9 @@ class ReshapeController:
                 else:
                     dialog.show_preview(value)
 
-            def error(traceback: str) -> None:
+            def error(_traceback: str) -> None:
                 nonlocal handled
-                self._logger.error("Reshape preview failed (corr=%s): %s", corr_id, traceback)
+                self._logger.error("ReshapeController: preview worker failed (corr=%s, stage=worker)", corr_id)
                 if not stale():
                     handled = True
                     dialog.show_preview_message(failed_message)
@@ -264,7 +298,15 @@ class ReshapeController:
                 dialog.set_preview_busy(False)
 
             dialog.set_preview_busy(True)
-            self._logger.debug("Reshape preview requested (corr=%s, rows=%d).", corr_id, len(source))
+            self._logger.info(
+                "ReshapeController: reshape requested (corr=%s, operation=preview, source_rows=%d, source_cols=%d, "
+                "dimensions=%d, metrics=%d)",
+                corr_id,
+                len(source),
+                len(source.columns),
+                len(request.dimensions),
+                len(request.metrics),
+            )
             job = self._async_ops.run_target_overlay_operation(
                 target=dialog.preview_panel,
                 runner="pool",
@@ -280,6 +322,7 @@ class ReshapeController:
                 cancelable=True,
                 indeterminate=False,
                 timeout_ms=600_000,
+                log_error_tracebacks=False,
             )
             job_id = self._async_ops.job_mgr.get_job_id(job if isinstance(job, QObject) else None)
             if job_id is None:

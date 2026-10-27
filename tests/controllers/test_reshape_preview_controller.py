@@ -1,5 +1,6 @@
 """Controlled preview jobs, real dialog states and overlay facade integration."""
 
+import logging
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -44,8 +45,9 @@ def dispatch(dialog, async_ops):
     return async_ops.run_target_overlay_operation.call_args.kwargs
 
 
-def test_real_results_overlay_target_and_repeat_requests():
+def test_real_results_overlay_target_and_repeat_requests(caplog):
     dialog, source, async_ops, controller, job = setup_preview()
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
     call = dispatch(dialog, async_ops)
     assert call["target"] is dialog.preview_panel
     assert call["runner"] == "pool"
@@ -55,6 +57,7 @@ def test_real_results_overlay_target_and_repeat_requests():
     progress = []
     result = call["work"](progress_cb=progress.append)
     assert progress[-1] == 100
+    assert any(f"corr={call['corr_id']}, operation=preview" in record.getMessage() for record in caplog.records)
     assert result.frame["Sum value"].tolist() == [4, 2]
     call["on_result"](result)
     assert "Showing 2 of 2 output rows" in dialog.preview_placeholder.text()
@@ -103,6 +106,7 @@ def test_cancelled_job_and_unexpected_error_restore_controls():
     assert "Preview failed" in dialog.preview_placeholder.text()
     assert dialog.preview_button.isEnabled()
     controller._logger.error.assert_called()
+    assert "unexpected worker traceback" not in repr(controller._logger.error.call_args)
     dialog.close()
 
 
