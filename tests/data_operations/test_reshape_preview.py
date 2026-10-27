@@ -1,5 +1,7 @@
 """Real full-data aggregation, conditional masks and bounded preview semantics."""
 
+import logging
+
 import pandas as pd
 import pytest
 
@@ -59,6 +61,42 @@ def test_full_result_cancellation_and_invalid_values_are_not_success_results() -
     with pytest.raises(ReshapeError) as caught:
         compute_reshape(source, invalid)
     assert caught.value.problem == ReshapeProblem.VALUE
+
+
+def test_reshape_diagnostics_include_correlation_and_safe_failure_metadata(caplog) -> None:
+    source = pd.DataFrame({"private dimension": ["secret-value-a", "secret-value-b"], "private value": [1, 2]})
+    request = ReshapeRequest((0,), (metric(source, "SUM", name="private metric"),))
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    preview = compute_reshape_preview(source, request, corr_id="preview-correlation")
+    result = compute_reshape(source, request, corr_id="apply-correlation")
+
+    assert preview is not None
+    assert result is not None
+    assert any(
+        "ReshapeService: computation started (corr=preview-correlation, operation=preview" in record.getMessage()
+        for record in caplog.records
+    )
+    assert any(
+        "ReshapeService: computation finished (corr=apply-correlation, operation=apply, outcome=success"
+        in record.getMessage()
+        for record in caplog.records
+    )
+    assert any("stage=validation" in record.getMessage() for record in caplog.records)
+    assert any("stage=grouping" in record.getMessage() for record in caplog.records)
+
+    with pytest.raises(ReshapeError):
+        compute_reshape_preview(source, ReshapeRequest((0,), ()), corr_id="failure-correlation")
+
+    failure_logs = [
+        record.getMessage() for record in caplog.records if "corr=failure-correlation" in record.getMessage()
+    ]
+    assert any("problem=configuration" in message and "exception=ReshapeError" in message for message in failure_logs)
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "private dimension" not in messages
+    assert "private value" not in messages
+    assert "private metric" not in messages
+    assert "secret-value" not in messages
 
 
 def program(frame, text):

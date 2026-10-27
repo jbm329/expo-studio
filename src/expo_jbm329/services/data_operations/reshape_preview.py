@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 import math
 from dataclasses import dataclass
 from enum import StrEnum
+from time import perf_counter
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -23,6 +25,24 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
+
+logger = logging.getLogger("applogger.service")
+
+
+def _log_reshape_event(
+    level: int,
+    event: str,
+    corr_id: str | None,
+    metadata_format: str,
+    *values: object,
+) -> None:
+    """Write a Reshape diagnostic without adding absent correlation metadata."""
+    metadata = metadata_format % values
+    if corr_id is None:
+        logger.log(level, "ReshapeService: %s (%s)", event, metadata)
+    else:
+        logger.log(level, "ReshapeService: %s (corr=%s, %s)", event, corr_id, metadata)
 
 
 class ReshapeFunction(StrEnum):
@@ -242,6 +262,7 @@ def compute_reshape_preview(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
 ) -> ReshapePreview | None:
     """Aggregate the entire source, returning five output rows or cancellation.
 
@@ -250,6 +271,7 @@ def compute_reshape_preview(
         request: Frozen dimensions, metrics and parsed conditions.
         progress_cb: Optional phase/metric progress callback.
         cancel_cb: Cooperative cancellation callback.
+        corr_id: Optional correlation ID for diagnostic logs.
 
     Returns:
         Bounded preview with full group count, or None if cancelled.
@@ -257,7 +279,15 @@ def compute_reshape_preview(
     Raises:
         ReshapeError: If configuration, literals or source data cannot be processed.
     """
-    return _compute_reshape(source, request, row_limit=5, progress_cb=progress_cb, cancel_cb=cancel_cb)
+    return _compute_reshape(
+        source,
+        request,
+        row_limit=5,
+        progress_cb=progress_cb,
+        cancel_cb=cancel_cb,
+        operation="preview",
+        corr_id=corr_id,
+    )
 
 
 def compute_reshape(
@@ -266,6 +296,7 @@ def compute_reshape(
     *,
     progress_cb: Callable[[int], None] | None = None,
     cancel_cb: Callable[[], bool] | None = None,
+    corr_id: str | None = None,
 ) -> pd.DataFrame | None:
     """Calculate every output group, returning None on cooperative cancellation.
 
@@ -274,6 +305,7 @@ def compute_reshape(
         request: Frozen dimensions, metrics and parsed conditions.
         progress_cb: Optional phase/metric progress callback.
         cancel_cb: Cooperative cancellation callback.
+        corr_id: Optional correlation ID for diagnostic logs.
 
     Returns:
         Complete result dataset, or None if cancelled.
@@ -281,7 +313,15 @@ def compute_reshape(
     Raises:
         ReshapeError: If configuration, literals or source data cannot be processed.
     """
-    result = _compute_reshape(source, request, row_limit=None, progress_cb=progress_cb, cancel_cb=cancel_cb)
+    result = _compute_reshape(
+        source,
+        request,
+        row_limit=None,
+        progress_cb=progress_cb,
+        cancel_cb=cancel_cb,
+        operation="apply",
+        corr_id=corr_id,
+    )
     return result.frame if result is not None else None
 
 
@@ -292,13 +332,106 @@ def _compute_reshape(
     row_limit: int | None,
     progress_cb: Callable[[int], None] | None,
     cancel_cb: Callable[[], bool] | None,
+    operation: str,
+    corr_id: str | None,
 ) -> ReshapePreview | None:
+    started = perf_counter()
+    _log_reshape_event(
+        logging.DEBUG,
+        "computation started",
+        corr_id,
+        "operation=%s, source_rows=%d, source_cols=%d, dimensions=%d, metrics=%d",
+        operation,
+        len(source),
+        len(source.columns),
+        len(request.dimensions),
+        len(request.metrics),
+    )
+    try:
+        result = _compute_reshape_result(
+            source,
+            request,
+            row_limit=row_limit,
+            progress_cb=progress_cb,
+            cancel_cb=cancel_cb,
+            operation=operation,
+            corr_id=corr_id,
+        )
+    except ReshapeError as error:
+        _log_reshape_event(
+            logging.WARNING,
+            "computation rejected",
+            corr_id,
+            "operation=%s, problem=%s, exception=%s, ms=%.1f",
+            operation,
+            error.problem.value,
+            type(error).__name__,
+            (perf_counter() - started) * 1000,
+        )
+        raise
+    except Exception as error:
+        _log_reshape_event(
+            logging.ERROR,
+            "computation failed",
+            corr_id,
+            "operation=%s, exception=%s, ms=%.1f",
+            operation,
+            type(error).__name__,
+            (perf_counter() - started) * 1000,
+        )
+        raise
+    if result is None:
+        _log_reshape_event(
+            logging.DEBUG,
+            "computation finished",
+            corr_id,
+            "operation=%s, outcome=cancelled, ms=%.1f",
+            operation,
+            (perf_counter() - started) * 1000,
+        )
+        return None
+    _log_reshape_event(
+        logging.INFO,
+        "computation finished",
+        corr_id,
+        "operation=%s, outcome=success, output_rows=%d, returned_rows=%d, metrics=%d, ms=%.1f",
+        operation,
+        result.total_rows,
+        len(result.frame),
+        len(request.metrics),
+        (perf_counter() - started) * 1000,
+    )
+    return result
+
+
+def _compute_reshape_result(
+    source: pd.DataFrame,
+    request: ReshapeRequest,
+    *,
+    row_limit: int | None,
+    progress_cb: Callable[[int], None] | None,
+    cancel_cb: Callable[[], bool] | None,
+    operation: str,
+    corr_id: str | None,
+) -> ReshapePreview | None:
+    """Run the aggregation and emit bounded summaries for its processing stages."""
+    stage_started = perf_counter()
     columns = condition_columns(list(source.columns), list(source.dtypes))
     validate_reshape(request, columns, [str(dtype) for dtype in source.dtypes])
+    _log_reshape_event(
+        logging.DEBUG,
+        "stage finished",
+        corr_id,
+        "operation=%s, stage=validation, ms=%.1f",
+        operation,
+        (perf_counter() - stage_started) * 1000,
+    )
     if cancel_cb is not None and cancel_cb():
         return None
     if progress_cb is not None:
         progress_cb(0)
+
+    stage_started = perf_counter()
     if request.dimensions:
         dimensions = source.iloc[:, list(request.dimensions)]
         try:
@@ -319,8 +452,19 @@ def _compute_reshape(
         frame = pd.DataFrame(index=pd.RangeIndex(1))
     group_ids = pd.Series(codes, index=pd.RangeIndex(len(source)))
     output_ids = pd.RangeIndex(total_rows if row_limit is None else min(row_limit, total_rows))
+    _log_reshape_event(
+        logging.DEBUG,
+        "stage finished",
+        corr_id,
+        "operation=%s, stage=grouping, output_rows=%d, ms=%.1f",
+        operation,
+        total_rows,
+        (perf_counter() - stage_started) * 1000,
+    )
     if progress_cb is not None:
         progress_cb(10)
+
+    stage_started = perf_counter()
     for index, metric in enumerate(request.metrics):
         mask = evaluate_condition(source, metric.condition, cancel_cb)
         if mask is None or (cancel_cb is not None and cancel_cb()):
@@ -355,4 +499,13 @@ def _compute_reshape(
             progress_cb(10 + (index + 1) * 90 // len(request.metrics))
     if cancel_cb is not None and cancel_cb():
         return None
+    _log_reshape_event(
+        logging.DEBUG,
+        "stage finished",
+        corr_id,
+        "operation=%s, stage=aggregation, metrics=%d, ms=%.1f",
+        operation,
+        len(request.metrics),
+        (perf_counter() - stage_started) * 1000,
+    )
     return ReshapePreview(request, frame, total_rows)

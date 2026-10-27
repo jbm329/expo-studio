@@ -153,6 +153,34 @@ def test_run_operation_uses_pool_backend(controller):
     assert controller._job_mgr.run_pool_calls
 
 
+def test_safe_error_logging_redacts_traceback_but_preserves_custom_error_handler():
+    job_manager = DummyJobManager()
+    logger = MagicMock()
+    on_error = MagicMock()
+    controller = AsyncOperationController(
+        parent=DummyView(),
+        job_mgr=job_manager,
+        busy=DummyBusy(),
+        dialogs=DummyDialogService(),
+        logger=logger,
+    )
+    controller.run_operation(
+        work=lambda: None,
+        on_result=lambda _: None,
+        on_error=on_error,
+        busy_message="Working",
+        scope="reshape:preview",
+        log_error_tracebacks=False,
+    )
+
+    assert job_manager.run_pool_calls[0][1]["log_error_tracebacks"] is False
+    error_callback = job_manager.job.error.connect.call_args[0][0]
+    error_callback("sensitive traceback detail")
+
+    on_error.assert_called_once_with("sensitive traceback detail")
+    assert "sensitive traceback detail" not in repr(logger.error.call_args)
+
+
 def test_run_target_overlay_operation_shows_overlay(controller):
     target = DummyView()
     controller.run_target_overlay_operation(

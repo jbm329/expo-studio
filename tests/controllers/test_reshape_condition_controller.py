@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -46,7 +47,8 @@ def test_builder_captures_dtype_and_applies_unquoted_numeric_literal(monkeypatch
     assert editor.restorable_group() is not None
 
 
-def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch) -> None:
+def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch, caplog) -> None:
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
     parent = QWidget()
     editor = ConditionEditor(parent)
     editor.text.setText("manual")
@@ -64,6 +66,10 @@ def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch) -> None:
         dialog.page_requested.emit(picker, ValuePageRequest(0))
         first = async_ops.run_operation.call_args.kwargs
         assert first["work"]() == ValuePage((ConditionValue("string", "x"), ConditionValue("string", "y")), False)
+        assert first["log_error_tracebacks"] is False
+        assert any(
+            f"corr={first['corr_id']}, page=0, source_rows=2" in record.getMessage() for record in caplog.records
+        )
         assert first["show_overlay"] is False
         assert first["foreground"] is False
         picker.search.setText("y")
@@ -120,12 +126,13 @@ def test_apply_only_updates_target_editor_and_restores_state(monkeypatch) -> Non
     async_ops.run_operation.assert_not_called()
 
 
-def test_failure_removed_rule_and_deleted_editor_are_safe(monkeypatch) -> None:
+def test_failure_removed_rule_and_deleted_editor_are_safe(monkeypatch, caplog) -> None:
     parent = QWidget()
     editor = ConditionEditor(parent)
     async_ops = MagicMock()
     async_ops.job_mgr.get_job_id.return_value = "job"
     logger = MagicMock()
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
 
     def execute(dialog):
         rule = dialog.rules[0]
@@ -150,7 +157,8 @@ def test_failure_removed_rule_and_deleted_editor_are_safe(monkeypatch) -> None:
 
     monkeypatch.setattr(module.ConditionDialog, "exec", execute)
     module.ReshapeConditionController(async_ops, logger).open_dialog(parent, editor, pd.DataFrame({"a": [[1]]}))
-    logger.warning.assert_called_once()
+    logger.warning.assert_not_called()
+    assert any("problem=unsupported_value" in record.getMessage() for record in caplog.records)
     async_ops.job_mgr.cancel_job.assert_called_with("job")
 
 

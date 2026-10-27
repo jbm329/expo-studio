@@ -1,5 +1,6 @@
 """Apply uses a captured request and the standard pending result-tab lifecycle."""
 
+import logging
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -48,8 +49,9 @@ def apply_setup():
     return controller, source, request, results, async_ops, view, job
 
 
-def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypatch, apply_setup) -> None:
+def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypatch, apply_setup, caplog) -> None:
     controller, source, request, results, async_ops, view, job = apply_setup
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
     dialogs = []
 
     def execute(dialog):
@@ -87,6 +89,7 @@ def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypat
     progress = []
     frame = call["work"](progress_cb=progress.append)
     assert progress[-1] == 100
+    assert any(f"corr={call['corr_id']}, operation=apply" in record.getMessage() for record in caplog.records)
     assert len(frame) == 7
     assert frame["group"].tolist() == list("gfedcba")
     assert frame["Total"].tolist() == [7, 9, 11, 13, 15, 17, 19]

@@ -101,6 +101,45 @@ def test_worker_emits_error():
     w.run()
 
 
+def test_worker_redacts_traceback_logs_when_requested(caplog):
+    def fn_fail():
+        raise RuntimeError("secret")
+
+    logger = logging.getLogger("test.safe_worker")
+    w = Worker(
+        fn_fail,
+        job_id="X",
+        job_scope="reshape:preview",
+        corr_id="CORR",
+        logger=logger,
+        log_error_tracebacks=False,
+    )
+    caplog.set_level(logging.ERROR, logger="test.safe_worker")
+
+    w.run()
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "exception=RuntimeError" in messages
+    assert "secret" not in messages
+
+
+def test_job_error_signal_redacts_traceback_logs_when_requested(caplog):
+    manager = JobManager()
+    manager._register_job(
+        job_id="JID",
+        runner="pool",
+        scope="reshape:preview",
+        corr_id="CORR",
+        log_error_tracebacks=False,
+    )
+    caplog.set_level(logging.ERROR, logger="applogger.jobs")
+
+    manager._on_job_error("JID", "sensitive traceback detail")
+
+    assert "traceback=redacted" in caplog.text
+    assert "sensitive traceback detail" not in caplog.text
+
+
 @patch("expo_jbm329.services.job_manager.QThread", DummyThread)
 def test_run_in_thread_returns_thread_and_worker(monkeypatch):
     monkeypatch.setattr(Worker, "moveToThread", lambda self, t: None)

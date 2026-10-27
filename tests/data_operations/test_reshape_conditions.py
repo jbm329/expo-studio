@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from decimal import Decimal
 
 import numpy as np
@@ -211,3 +212,48 @@ def test_cancellation_between_chunks_and_after_empty_scan() -> None:
     assert calls == 2
     with pytest.raises(ValueRequestCancelledError):
         distinct_value_page(pd.DataFrame({"a": []}), ValuePageRequest(0), cancel_cb=lambda: True)
+
+
+def test_value_page_diagnostics_are_correlated_and_do_not_log_query_or_values(caplog) -> None:
+    source = pd.DataFrame({"sensitive column": ["secret-search-match", "other-value"]})
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+
+    page = distinct_value_page(
+        source,
+        ValuePageRequest(0, search="secret-search"),
+        corr_id="page-correlation",
+    )
+
+    assert [entry.text for entry in page.entries] == ["secret-search-match"]
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "ReshapeConditionValues: value page requested (corr=page-correlation, page=0, source_rows=2)" in messages
+    assert "outcome=success, page=0, entries=1, has_next=False" in messages
+    assert "secret-search" not in messages
+    assert "secret-search-match" not in messages
+    assert "sensitive column" not in messages
+
+
+def test_value_page_failure_and_cancellation_diagnostics_are_safe(caplog) -> None:
+    caplog.set_level(logging.DEBUG, logger="applogger.service")
+    source = pd.DataFrame({"sensitive column": pd.Series([23, "23"], dtype=object)})
+
+    with pytest.raises(ConditionError):
+        distinct_value_page(
+            source,
+            ValuePageRequest(0, search="23"),
+            corr_id="failure-correlation",
+        )
+    with pytest.raises(ValueRequestCancelledError):
+        distinct_value_page(
+            source,
+            ValuePageRequest(0, search="private-query"),
+            cancel_cb=lambda: True,
+            corr_id="cancel-correlation",
+        )
+
+    messages = "\n".join(record.getMessage() for record in caplog.records)
+    assert "corr=failure-correlation, page=0, problem=ambiguous_value, exception=ConditionError" in messages
+    assert "corr=cancel-correlation, outcome=cancelled" in messages
+    assert "private-query" not in messages
+    assert "sensitive column" not in messages
+    assert "23" not in messages

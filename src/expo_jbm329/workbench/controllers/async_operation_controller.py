@@ -153,6 +153,7 @@ class AsyncOperationController:
         show_status_progress: bool = False,
         show_started_in_status: bool = False,
         corr_id: str | None = None,
+        log_error_tracebacks: bool = True,
     ) -> QObject:
         """Run an async operation through the centralized workbench facade.
 
@@ -185,6 +186,7 @@ class AsyncOperationController:
             show_status_progress: Delegate status-progress UI to JobManager for now.
             show_started_in_status: Delegate started status to JobManager for now.
             corr_id: Correlation ID.
+            log_error_tracebacks: Whether worker tracebacks may be written to logs.
 
         Returns:
             Job handle returned by JobManager.
@@ -199,6 +201,7 @@ class AsyncOperationController:
             show_status_progress=show_status_progress,
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
         )
         job = cast("_AsyncJobHandle", job_obj)
 
@@ -309,12 +312,19 @@ class AsyncOperationController:
 
         def _handle_error(tb: str) -> None:
             try:
-                self._logger.error(
-                    "AsyncOperationController: async job failed (scope=%s corr=%s).\n%s",
-                    scope,
-                    corr_id,
-                    tb,
-                )
+                if log_error_tracebacks:
+                    self._logger.error(
+                        "AsyncOperationController: async job failed (scope=%s corr=%s).\n%s",
+                        scope,
+                        corr_id,
+                        tb,
+                    )
+                else:
+                    self._logger.error(
+                        "AsyncOperationController: async job failed (scope=%s corr=%s, traceback=redacted).",
+                        scope,
+                        corr_id,
+                    )
 
                 if on_error is not None:
                     try:
@@ -644,6 +654,7 @@ class AsyncOperationController:
         show_status_progress: bool = False,
         show_started_in_status: bool = False,
         corr_id: str | None = None,
+        log_error_tracebacks: bool = True,
         runner: RunnerKind = "thread",
     ) -> object:
         """Run an async operation with overlay on any QWidget target.
@@ -673,6 +684,7 @@ class AsyncOperationController:
             show_status_progress=show_status_progress,
             show_started_in_status=show_started_in_status,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
         )
 
     # ==================================================================
@@ -691,6 +703,7 @@ class AsyncOperationController:
         show_status_progress: bool,
         show_started_in_status: bool,
         corr_id: str | None,
+        log_error_tracebacks: bool,
     ) -> QObject:
         """Start a job using the selected backend.
 
@@ -704,12 +717,26 @@ class AsyncOperationController:
         _ = show_started_in_status
 
         if runner == "thread":
+            if not log_error_tracebacks:
+                return self._job_mgr.run(
+                    work,
+                    scope=scope,
+                    corr_id=corr_id,
+                    log_error_tracebacks=False,
+                )
             return self._job_mgr.run(
                 work,
                 scope=scope,
                 corr_id=corr_id,
             )
 
+        if not log_error_tracebacks:
+            return self._job_mgr.run_pool(
+                work,
+                scope=scope,
+                corr_id=corr_id,
+                log_error_tracebacks=False,
+            )
         return self._job_mgr.run_pool(
             work,
             scope=scope,

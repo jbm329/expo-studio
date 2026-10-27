@@ -85,6 +85,7 @@ class JobMetadata:
     runner: RunnerKind
     scope: str | None
     corr_id: str | None
+    log_error_tracebacks: bool
     created_monotonic: float
 
 
@@ -213,6 +214,7 @@ class Worker(QObject):
         job_id: str,
         job_scope: str | None,
         corr_id: str | None,
+        log_error_tracebacks: bool = True,
         logger: logging.Logger | None = None,
         **kwargs: object,
     ) -> None:
@@ -224,6 +226,7 @@ class Worker(QObject):
             job_id: Unique job identifier.
             job_scope: Optional job scope.
             corr_id: Optional correlation identifier.
+            log_error_tracebacks: Whether worker tracebacks may be written to logs.
             logger: Optional logger instance.
             **kwargs: Keyword arguments passed to the callable.
         """
@@ -235,6 +238,7 @@ class Worker(QObject):
         self._job_id = job_id
         self._job_scope = job_scope
         self._corr_id = corr_id
+        self._log_error_tracebacks = log_error_tracebacks
 
         self._logger = logger if logger is not None else logging.getLogger("applogger.jobs")
         self._cancel_func: Callable[[], bool] | None = None
@@ -321,15 +325,25 @@ class Worker(QObject):
         # Thread boundary: PyQt6 aborts the whole process when an exception escapes
         # QThread.run, without any log in windowed builds. Every failure must
         # therefore be reported through the error signal instead.
-        except Exception:
+        except Exception as error:
             tb = traceback.format_exc()
-            self._logger.exception(
-                "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
-                self._job_id,
-                self._job_scope,
-                self._corr_id,
-                tb,
-            )
+            if self._log_error_tracebacks:
+                self._logger.exception(
+                    "Worker: callable raised (job_id=%s, scope=%s, corr=%s): %s",
+                    self._job_id,
+                    self._job_scope,
+                    self._corr_id,
+                    tb,
+                )
+            else:
+                self._logger.log(
+                    logging.ERROR,
+                    "Worker: callable raised (job_id=%s, scope=%s, corr=%s, exception=%s)",
+                    self._job_id,
+                    self._job_scope,
+                    self._corr_id,
+                    type(error).__name__,
+                )
             self._dispatch_error.emit(tb)
 
         finally:
@@ -347,6 +361,7 @@ def run_in_thread(
     job_id: str,
     job_scope: str | None,
     corr_id: str | None,
+    log_error_tracebacks: bool = True,
     logger: logging.Logger | None = None,
     **kwargs: object,
 ) -> tuple[QThread, Worker]:
@@ -358,6 +373,7 @@ def run_in_thread(
         job_id: Unique job identifier.
         job_scope: Optional job scope.
         corr_id: Optional correlation identifier.
+        log_error_tracebacks: Whether worker tracebacks may be written to logs.
         logger: Optional logger instance.
         **kwargs: Keyword arguments passed to the callable.
 
@@ -371,6 +387,7 @@ def run_in_thread(
         job_id=job_id,
         job_scope=job_scope,
         corr_id=corr_id,
+        log_error_tracebacks=log_error_tracebacks,
         logger=logger,
         **kwargs,
     )
@@ -588,6 +605,7 @@ class JobManager:
         *args: object,
         scope: str | None = None,
         corr_id: str | None = None,
+        log_error_tracebacks: bool = True,
         **kwargs: object,
     ) -> Worker:
         """Launch a callable in a dedicated QThread.
@@ -597,6 +615,7 @@ class JobManager:
             *args: Positional arguments passed to the callable.
             scope: Optional job scope string.
             corr_id: Optional correlation identifier.
+            log_error_tracebacks: Whether worker tracebacks may be written to logs.
             **kwargs: Keyword arguments passed to the callable.
 
         Returns:
@@ -615,6 +634,7 @@ class JobManager:
             runner="thread",
             scope=scope,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
         )
         self._cancel_flags[job_id] = False
 
@@ -624,6 +644,7 @@ class JobManager:
             job_id=job_id,
             job_scope=scope,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
             logger=self._logger,
             **kwargs,
         )
@@ -674,6 +695,7 @@ class JobManager:
         *args: object,
         scope: str | None = None,
         corr_id: str | None = None,
+        log_error_tracebacks: bool = True,
         **kwargs: object,
     ) -> _FutureBridge:
         """Launch a callable on a shared ThreadPoolExecutor.
@@ -683,6 +705,7 @@ class JobManager:
             *args: Positional arguments passed to the callable.
             scope: Optional job scope string.
             corr_id: Optional correlation identifier.
+            log_error_tracebacks: Whether worker tracebacks may be written to logs.
             **kwargs: Keyword arguments passed to the callable.
 
         Returns:
@@ -701,6 +724,7 @@ class JobManager:
             runner="pool",
             scope=scope,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
         )
         self._cancel_flags[job_id] = False
 
@@ -758,14 +782,24 @@ class JobManager:
                 result = fn(*args, **call_kwargs)
             # Pool boundary: any failure must reach the bridge's error signal;
             # otherwise the job would finish without reporting why.
-            except Exception:
+            except Exception as error:
                 tb = traceback.format_exc()
-                self._logger.exception(
-                    "JobManager: pool callable raised (job_id=%s, scope=%s, corr=%s)",
-                    job_id,
-                    scope,
-                    corr_id,
-                )
+                if log_error_tracebacks:
+                    self._logger.exception(
+                        "JobManager: pool callable raised (job_id=%s, scope=%s, corr=%s)",
+                        job_id,
+                        scope,
+                        corr_id,
+                    )
+                else:
+                    self._logger.log(
+                        logging.ERROR,
+                        "JobManager: pool callable raised (job_id=%s, scope=%s, corr=%s, exception=%s)",
+                        job_id,
+                        scope,
+                        corr_id,
+                        type(error).__name__,
+                    )
                 return "err", tb
             else:
                 return "ok", result
@@ -786,8 +820,16 @@ class JobManager:
                 else:
                     bridge.post_error(str(payload))
             # Covers cancellation (CancelledError) and other future failures.
-            except Exception:
-                self._logger.exception("JobManager: pool future failed (job_id=%s)", job_id)
+            except Exception as error:
+                if log_error_tracebacks:
+                    self._logger.exception("JobManager: pool future failed (job_id=%s)", job_id)
+                else:
+                    self._logger.log(
+                        logging.ERROR,
+                        "JobManager: pool future failed (job_id=%s, exception=%s)",
+                        job_id,
+                        type(error).__name__,
+                    )
                 bridge.post_error(traceback.format_exc())
             finally:
                 bridge.post_finished()
@@ -1023,6 +1065,7 @@ class JobManager:
         runner: RunnerKind,
         scope: str | None,
         corr_id: str | None,
+        log_error_tracebacks: bool,
     ) -> None:
         """Register job metadata before execution begins.
 
@@ -1031,12 +1074,14 @@ class JobManager:
             runner: Selected execution backend.
             scope: Optional job scope.
             corr_id: Optional correlation identifier.
+            log_error_tracebacks: Whether worker tracebacks may be written to logs.
         """
         self._meta[job_id] = JobMetadata(
             job_id=job_id,
             runner=runner,
             scope=scope,
             corr_id=corr_id,
+            log_error_tracebacks=log_error_tracebacks,
             created_monotonic=time.perf_counter(),
         )
 
@@ -1152,13 +1197,21 @@ class JobManager:
         if meta is None:
             return
 
-        self._logger.error(
-            "JobManager: job error signaled (job_id=%s, scope=%s, corr=%s)\n%s",
-            meta.job_id,
-            meta.scope,
-            meta.corr_id,
-            tb,
-        )
+        if meta.log_error_tracebacks:
+            self._logger.error(
+                "JobManager: job error signaled (job_id=%s, scope=%s, corr=%s)\n%s",
+                meta.job_id,
+                meta.scope,
+                meta.corr_id,
+                tb,
+            )
+        else:
+            self._logger.error(
+                "JobManager: job error signaled (job_id=%s, scope=%s, corr=%s, traceback=redacted)",
+                meta.job_id,
+                meta.scope,
+                meta.corr_id,
+            )
 
     def _on_job_finished(self, job_id: str) -> None:
         """Log when a job signals finished.

@@ -156,6 +156,10 @@ Advanced analysis (Overview): computation finished (corr=50813..., scope=analysi
 - Log duration (ms) on success.
 - Log errors with `exc_info=True`.
 - Validate early (e.g., Excel sheet name) and provide clear messages.
+- Reshape computation and condition-value diagnostics use stable problem codes
+  and exception class names without exception text or tracebacks, which may
+  contain user-provided column names or values. Async Reshape workers also
+  redact tracebacks in logs while preserving the existing UI error handling.
 
 ### Jobs (`applogger.jobs`)
 - Log start/finish/cancel; include total runtime (ms).
