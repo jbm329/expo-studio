@@ -92,6 +92,7 @@ class ReshapeConditionController:
             picker, request = candidate, payload
             invalidate(picker)
             generation = picker.generation
+            corr_id = uuid.uuid4().hex
 
             def stale() -> bool:
                 return closed or sip.isdeleted(picker) or picker.generation != generation
@@ -102,17 +103,11 @@ class ReshapeConditionController:
                 **_: object,
             ) -> ValuePage | ConditionProblem | None:
                 try:
-                    return distinct_value_page(source, request, cancel_cb=cancel_cb)
+                    return distinct_value_page(source, request, cancel_cb=cancel_cb, corr_id=corr_id)
                 except ValueRequestCancelledError:
                     return None
-                except ConditionError as exc:
-                    self._logger.warning(
-                        "Reshape condition value request rejected (column=%s, problem=%s, session=%s).",
-                        request.column_position,
-                        exc.problem.value,
-                        session_id,
-                    )
-                    return exc.problem
+                except ConditionError as error:
+                    return error.problem
 
             def result(value: ValuePage | ConditionProblem | None) -> None:
                 if stale():
@@ -147,13 +142,17 @@ class ReshapeConditionController:
                 show_overlay=False,
                 show_status_progress=False,
                 show_started_in_status=False,
-                corr_id=uuid.uuid4().hex,
+                corr_id=corr_id,
+                log_error_tracebacks=False,
             )
             job_id = self._async_ops.job_mgr.get_job_id(job)
             if job_id is not None:
                 jobs[picker] = job_id
             else:
-                self._logger.warning("Reshape condition page job has no cancellation identifier.")
+                self._logger.warning(
+                    "ReshapeConditionController: value page job binding unavailable (corr=%s)",
+                    corr_id,
+                )
 
         def close() -> None:
             nonlocal closed
