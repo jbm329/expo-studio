@@ -1,6 +1,6 @@
 # Expo Studio
 
-Expo Studio is a PyQt6-based SQL editor and data exploration tool built primarily for my own workflows and learning.  
+Expo Studio is a PyQt6-based data exploration and analysis tool built primarily for my own workflows and learning.  
 It is shared publicly in case others find it useful.
 
 Connect to databases, load files, and retrieve data from REST APIs. Inspect and
@@ -36,8 +36,7 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
-- **Reshape**: Group data by dimensions and calculate named aggregation metrics with optional per-metric conditions, a visual condition builder, and a five-row preview.
-- **Data Transformation**: Apply transformations to datasets using a visual interface.
+- **Data Transformations**: Transform and reshape datasets using a visual interface, including grouping by dimensions and calculating named aggregation metrics with optional per-metric conditions, a visual condition builder, and a five-row preview.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
 - **Advanced Analysis**: Explore the active ready result dataset in an interactive analysis workspace.

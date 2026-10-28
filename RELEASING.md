@@ -17,3 +17,107 @@ A release tag points to a **commit**, not to a branch. Tag a commit **after it h
 6. The tag push starts the release workflow. It checks the version and lockfile, builds both platforms, and, if both succeed, publishes the GitHub Release with its files. Check the Actions run and the resulting release page.
 
 Your branch can be deleted after the merge; the release tag remains attached to the merged commit. **Do not tag the feature branch before merging**: that could release a commit different from the one on `main`. If GitHub rejects the tag push, that is a separate tag-permission or repository-rules setting, not a need for direct-push access to `main`.
+
+
+# Release tracking issue template
+
+# Release vX.Y.Z
+
+## Summary
+Prepare and publish release **vX.Y.Z** for `expo-studio`.
+
+- Target date: YYYY-MM-DD
+- Release type: patch / minor / major
+- Owner: @jbm329
+
+---
+
+## Scope (since last release)
+This release includes all merged work since the previous tag/release, grouped below.
+
+### Features
+- [ ] #123 — Add diagnostic logging to Reshape area
+- [ ] #124 — <feature title>
+
+### Fixes
+- [ ] #130 — <bug fix title>
+
+### Refactors
+- [ ] #135 — <refactor title>
+
+### Documentation
+- [ ] #140 — <docs title>
+
+### Chores / Maintenance
+- [ ] #145 — Add issue templates (bug/feature/refactor/documentation)
+- [ ] #146 — Project workflow/filter updates
+- [ ] #147 — CI/dependency/tooling maintenance
+
+---
+
+## Included PRs
+<!-- Include everything merged since last release -->
+- [ ] #201 — feat: add reshape diagnostic logging (`Closes #123`)
+- [ ] #202 — docs: add documentation issue template
+- [ ] #203 — chore: add/refine issue templates
+- [ ] #204 — chore: update project automation filters
+
+---
+
+## Release checklist
+
+### 1) Scope freeze
+- [ ] Confirm all PRs intended for vX.Y.Z are merged
+- [ ] Move any unfinished items to next release issue/milestone
+
+### 2) Versioning
+- [ ] Determine semantic version bump (patch/minor/major)
+- [ ] Update app/package version(s)
+- [ ] Commit message follows convention (e.g., `chore(release): vX.Y.Z`)
+
+### 3) Release notes
+- [ ] Draft release notes from included PRs/issues
+- [ ] Ensure user-facing changes are clear
+- [ ] Keep chores brief in public notes
+
+### 4) QA / verification
+- [ ] Smoke test core flows
+- [ ] Verify Reshape logging behavior (success + error path)
+- [ ] Confirm no sensitive data appears in logs
+
+### 5) Publish
+- [ ] Create release PR (if used)
+- [ ] Merge release PR
+- [ ] Create/push tag `vX.Y.Z`
+- [ ] Publish GitHub Release with notes
+
+### 6) Post-release
+- [ ] Verify production/runtime health
+- [ ] Announce release (if applicable)
+- [ ] Create next release tracking issue
+
+---
+
+## Draft release notes (public)
+
+### ✨ Features
+- Added diagnostic logging in the Reshape area to improve troubleshooting and observability.
+
+### 🐛 Fixes
+- <Add fix summaries>
+
+### ♻️ Refactors
+- <Add refactor summaries>
+
+### 📝 Documentation
+- Added/improved issue templates and contribution workflow guidance.
+
+### 🧰 Chores
+- Repository maintenance updates (labels/templates/project automation).
+
+---
+
+## References
+- Previous release: <link>
+- Compare changes: <link>
+- Milestone/Project view: <link>
