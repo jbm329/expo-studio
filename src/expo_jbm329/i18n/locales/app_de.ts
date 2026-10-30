@@ -9069,154 +9069,169 @@ Dauer: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ResultTabHeaderColumnActions</name>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="44" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="45" />
         <source>split column</source>
         <translation>Spalte teilen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="45" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="46" />
         <source>Split column</source>
         <translation>Spalte teilen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="46" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="47" />
         <source>Splitting column: {column_name}</source>
         <translation>Spalte wird geteilt: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="47" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="48" />
         <source>Split '{column_name}' by:</source>
         <translation>„{column_name}“ trennen bei:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="48" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="49" />
         <source>Split column '{column_name}' into {count} columns</source>
         <translation>Spalte „{column_name}“ in {count} Spalten aufteilen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="49" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="50" />
         <source>Invalid split</source>
         <translation>Ungültige Trennung</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="50" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="51" />
         <source>The split did not produce any new columns.</source>
         <translation>Beim Teilen sind keine neuen Spalten entstanden.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="51" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="52" />
         <source>Split column: {column_name} ({original})</source>
         <translation>Spalte teilen: {column_name} ({original})</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="54" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="55" />
         <source>merge columns</source>
         <translation>Spalten zusammenführen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="55" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="56" />
         <source>Merge columns</source>
         <translation>Spalten zusammenführen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="56" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="57" />
         <source>Merging columns: {columns_merged}</source>
         <translation>Spalten werden zusammengeführt: {columns_merged}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="57" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="58" />
         <source>Select columns to merge:</source>
         <translation>Wählen Sie die zusammenzuführenden Spalten aus:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="58" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="59" />
         <source>Merged columns into '{column_name}'</source>
         <translation>Spalten zu „{column_name}“ zusammengeführt</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="59" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="60" />
         <source>You must select at least two columns to merge.</source>
         <translation>Wählen Sie mindestens zwei Spalten zum Zusammenführen aus.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="60" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="61" />
         <source>kept original</source>
         <translation>Original beibehalten</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="61" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="62" />
         <source>removed original</source>
         <translation>Original entfernt</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="62" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="63" />
         <source>Select at least two columns.</source>
         <translation>Wählen Sie mindestens zwei Spalten aus.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="63" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="64" />
         <source>Merged columns '{columns_merged}' → '{new_name}' ({original})</source>
         <translation>Spalten „{columns_merged}“ zu „{new_name}“ zusammengeführt ({original})</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="66" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="67" />
         <source>rename column</source>
         <translation>Spalte umbenennen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="67" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="68" />
         <source>Rename column</source>
         <translation>Spalte umbenennen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="68" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="69" />
         <source>Renaming column: {column_name} → {new_name}</source>
         <translation>Spalte wird umbenannt: {column_name} → {new_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="69" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="70" />
         <source>New name for '{column_name}':</source>
         <translation>Neuer Name für „{column_name}“:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="70" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="71" />
         <source>Name taken</source>
         <translation>Name bereits vergeben</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="71" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="72" />
         <source>A column with the name '{column_name}' already exists.</source>
         <translation>Eine Spalte mit dem Namen „{column_name}“ ist bereits vorhanden.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="72" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="73" />
         <source>Renamed column '{old_name}' → '{new_name}'</source>
         <translation>Spalte „{old_name}“ in „{new_name}“ umbenannt</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="75" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="76" />
         <source>remove column</source>
         <translation>Spalte entfernen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="76" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="77" />
         <source>Remove column</source>
         <translation>Spalte entfernen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="77" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="78" />
         <source>Removing column: {column_name}</source>
         <translation>Spalte wird entfernt: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="78" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="79" />
         <source>Remove column: {column_name}</source>
         <translation>Spalte entfernen: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="79" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="80" />
         <source>Removed column: {column_name}</source>
         <translation>Spalte entfernt: {column_name}</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="83" />
+        <source>move column</source>
+        <translation>Spalte verschieben</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="84" />
+        <source>Moving column: {column_name}</source>
+        <translation>Spalte wird verschoben: {column_name}</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="85" />
+        <source>Moved column '{column_name}' to position {position}</source>
+        <translation>Spalte '{column_name}' an Position {position} verschoben</translation>
     </message>
 </context><context>
     <name>ResultTabHeaderDtypeActions</name>

@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 from xml.etree import ElementTree
 
 import pytest
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QTranslator
 
 from expo_jbm329.build import build_i18n, build_locales
 from expo_jbm329.i18n import translation_service
@@ -88,6 +88,42 @@ def test_english_catalog_uses_unfinished_source_fallback(
         assert translation.get("type") == "unfinished", key
         assert not translation.text, key
         assert len(translation) == 0, key
+
+
+@pytest.mark.parametrize("language", [language.value for language in Language])
+@pytest.mark.parametrize(
+    "source",
+    [
+        "move column",
+        "Moving column: {column_name}",
+        "Moved column '{column_name}' to position {position}",
+    ],
+)
+def test_column_movement_messages_survive_extraction_and_compilation(extracted_messages, language: str, source: str):
+    context = "ResultTabHeaderColumnActions"
+    key = (context, source, "")
+    assert key in extracted_messages
+    catalog = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / f"app_{language}.ts").getroot())
+    translation = catalog[key].find("translation")
+    assert translation is not None
+    translator = QTranslator()
+    assert translator.load(str(build_i18n.locales_dir() / f"app_{language}.qm"))
+    if language == "en":
+        assert translation.get("type") == "unfinished"
+        assert not translation.text
+        assert not translator.translate(context, source)
+        expected = source
+    else:
+        assert translation.get("type") is None
+        assert translation.text
+        expected = translation.text
+        assert translator.translate(context, source) == expected
+
+    formatter = Formatter()
+    source_fields = sorted(field for _, field, _, _ in formatter.parse(source) if field is not None)
+    translated_fields = sorted(field for _, field, _, _ in formatter.parse(expected) if field is not None)
+    assert translated_fields == source_fields
+    assert expected.format(column_name="example", position=3)
 
 
 @pytest.mark.parametrize(
