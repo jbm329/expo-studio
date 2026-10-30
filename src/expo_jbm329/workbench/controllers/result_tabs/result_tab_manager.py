@@ -1377,6 +1377,22 @@ class ResultTabManager:
             self._column_properties.open(view, column)
             return
 
+        if action_id == "column.move_right":
+            self._header_column_actions.move_right(view, column)
+            return
+
+        if action_id == "column.move_left":
+            self._header_column_actions.move_left(view, column)
+            return
+
+        if action_id == "column.move_first":
+            self._header_column_actions.move_to_first(view, column)
+            return
+
+        if action_id == "column.move_last":
+            self._header_column_actions.move_to_last(view, column)
+            return
+
         # ============================================================
         # Cleanse data
         # ============================================================
@@ -2041,9 +2057,33 @@ class ResultTabManager:
                 )
 
         try:
+            old_columns = model.data_frame().columns
+            header = view.horizontalHeader()
+            reordered_positions: list[int] = []
+            section_sizes: list[int] = []
+            sorted_column = -1
+            if (
+                header is not None
+                and old_columns.is_unique
+                and new_df.columns.is_unique
+                and len(old_columns) == len(new_df.columns)
+                and not old_columns.equals(new_df.columns)
+                and old_columns.isin(new_df.columns).all()
+            ):
+                # Model resets retain positional header state, not column identity.
+                reordered_positions = [int(i) for i in old_columns.get_indexer(new_df.columns)]
+                section_sizes = [header.sectionSize(i) for i in range(len(old_columns))]
+                sorted_column = header.sortIndicatorSection()
+
             model.set_data_frame(new_df)
             with contextlib.suppress(Exception):
                 view.setModel(model)
+
+            if header is not None and reordered_positions:
+                for new_index, old_index in enumerate(reordered_positions):
+                    header.resizeSection(new_index, section_sizes[old_index])
+                if sorted_column in reordered_positions:
+                    header.setSortIndicator(reordered_positions.index(sorted_column), header.sortIndicatorOrder())
 
             if self._should_apply_formatting(new_df):
                 self._apply_presentation_delegate(view, new_df)

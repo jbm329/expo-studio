@@ -8529,192 +8529,217 @@ Tiempo: {sec:.2f}s{sample}</translation>
         <translation>Propiedades</translation>
     </message>
     <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="88" />
+        <source>Order</source>
+        <translation>Orden</translation>
+    </message>
+    <message>
         <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="89" />
+        <source>Move right</source>
+        <translation>Mover a la derecha</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <source>Move left</source>
+        <translation>Mover a la izquierda</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <source>Move to first</source>
+        <translation>Mover al principio</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <source>Move to last</source>
+        <translation>Mover al final</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
         <source>Cleanse data…</source>
         <translation>Limpiar datos…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
         <source>Trim (remove whitespace)</source>
         <translation>Recortar (quitar espacios en blanco)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
         <source>Normalize whitespace</source>
         <translation>Normalizar espacios en blanco</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
         <source>Convert to lowercase</source>
         <translation>Convertir a minúsculas</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="93" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
         <source>Convert to uppercase</source>
         <translation>Convertir a mayúsculas</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="94" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
         <source>Convert to title case</source>
         <translation>Convertir a tipo título</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
         <source>Capitalize first letter</source>
         <translation>Poner en mayúscula la primera letra</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="102" />
         <source>Replace text…</source>
         <translation>Reemplazar texto…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="103" />
         <source>Insert text…</source>
         <translation>Insertar texto…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
         <source>Remove text (simple)…</source>
         <translation>Quitar texto (simple)…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
         <source>Remove text (regex)…</source>
         <translation>Quitar texto (expresión regular)…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
         <source>Keep digits only</source>
         <translation>Conservar solo dígitos</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
         <source>Keep letters only</source>
         <translation>Conservar solo letras</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="110" />
         <source>Fill missing values…</source>
         <translation>Rellenar valores ausentes…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
         <source>Mean</source>
         <translation>Media</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
         <source>Median</source>
         <translation>Mediana</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
         <source>Mode</source>
         <translation>Moda</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="108" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
         <source>Custom value…</source>
         <translation>Valor personalizado…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
         <source>Datatype…</source>
         <translation>Tipo de dato…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
         <source>Convert to category…</source>
         <translation>Convertir a categoría…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
         <source>Convert to text (string)</source>
         <translation>Convertir a texto (cadena)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
         <source>Convert to integer (Int64)</source>
         <translation>Convertir a entero (Int64)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="115" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
         <source>Convert to float (Float64)</source>
         <translation>Convertir a coma flotante (Float64)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="116" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="122" />
         <source>Convert to datetime…</source>
         <translation>Convertir a fecha y hora…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="123" />
         <source>Convert to date…</source>
         <translation>Convertir a fecha…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
         <source>Convert to boolean…</source>
         <translation>Convertir a booleano…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
         <source>Rename category…</source>
         <translation>Cambiar nombre de categoría…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
         <source>Set category order…</source>
         <translation>Establecer el orden de las categorías…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
         <source>Remove unused categories</source>
         <translation>Quitar categorías no utilizadas</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
         <source>Filter rows…</source>
         <translation>Filtrar filas…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="131" />
         <source>Equals…</source>
         <translation>Es igual a…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="132" />
         <source>Contains…</source>
         <translation>Contiene…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
         <source>Is empty</source>
         <translation>Está vacío</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="128" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
         <source>Is not empty</source>
         <translation>No está vacío</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="129" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="135" />
         <source>Compare…</source>
         <translation>Comparar…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="136" />
         <source>Between…</source>
         <translation>Entre…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="139" />
         <source>Split column…</source>
         <translation>Dividir columna…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="140" />
         <source>Merge columns…</source>
         <translation>Combinar columnas…</translation>
     </message>
@@ -9069,154 +9094,169 @@ Tiempo: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ResultTabHeaderColumnActions</name>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="44" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="45" />
         <source>split column</source>
         <translation>dividir columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="45" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="46" />
         <source>Split column</source>
         <translation>Dividir columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="46" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="47" />
         <source>Splitting column: {column_name}</source>
         <translation>Dividiendo la columna: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="47" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="48" />
         <source>Split '{column_name}' by:</source>
         <translation>Dividir '{column_name}' por:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="48" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="49" />
         <source>Split column '{column_name}' into {count} columns</source>
         <translation>Se dividió la columna '{column_name}' en {count} columnas</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="49" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="50" />
         <source>Invalid split</source>
         <translation>División no válida</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="50" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="51" />
         <source>The split did not produce any new columns.</source>
         <translation>La división no generó ninguna columna nueva.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="51" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="52" />
         <source>Split column: {column_name} ({original})</source>
         <translation>Columna dividida: {column_name} ({original})</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="54" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="55" />
         <source>merge columns</source>
         <translation>combinar columnas</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="55" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="56" />
         <source>Merge columns</source>
         <translation>Combinar columnas</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="56" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="57" />
         <source>Merging columns: {columns_merged}</source>
         <translation>Combinando columnas: {columns_merged}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="57" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="58" />
         <source>Select columns to merge:</source>
         <translation>Seleccione las columnas que desea combinar:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="58" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="59" />
         <source>Merged columns into '{column_name}'</source>
         <translation>Se combinaron las columnas en '{column_name}'</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="59" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="60" />
         <source>You must select at least two columns to merge.</source>
         <translation>Debe seleccionar al menos dos columnas para combinar.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="60" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="61" />
         <source>kept original</source>
         <translation>se conservó la original</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="61" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="62" />
         <source>removed original</source>
         <translation>se quitó la original</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="62" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="63" />
         <source>Select at least two columns.</source>
         <translation>Seleccione al menos dos columnas.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="63" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="64" />
         <source>Merged columns '{columns_merged}' → '{new_name}' ({original})</source>
         <translation>Se combinaron las columnas '{columns_merged}' → '{new_name}' ({original})</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="66" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="67" />
         <source>rename column</source>
         <translation>cambiar nombre de columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="67" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="68" />
         <source>Rename column</source>
         <translation>Cambiar nombre de columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="68" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="69" />
         <source>Renaming column: {column_name} → {new_name}</source>
         <translation>Cambiando el nombre de la columna: {column_name} → {new_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="69" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="70" />
         <source>New name for '{column_name}':</source>
         <translation>Nombre nuevo para '{column_name}':</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="70" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="71" />
         <source>Name taken</source>
         <translation>Nombre ya utilizado</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="71" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="72" />
         <source>A column with the name '{column_name}' already exists.</source>
         <translation>Ya existe una columna con el nombre '{column_name}'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="72" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="73" />
         <source>Renamed column '{old_name}' → '{new_name}'</source>
         <translation>Se cambió el nombre de la columna '{old_name}' → '{new_name}'</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="75" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="76" />
         <source>remove column</source>
         <translation>quitar columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="76" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="77" />
         <source>Remove column</source>
         <translation>Quitar columna</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="77" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="78" />
         <source>Removing column: {column_name}</source>
         <translation>Quitando la columna: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="78" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="79" />
         <source>Remove column: {column_name}</source>
         <translation>Quitar columna: {column_name}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="79" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="80" />
         <source>Removed column: {column_name}</source>
         <translation>Columna quitada: {column_name}</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="83" />
+        <source>move column</source>
+        <translation>mover columna</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="84" />
+        <source>Moving column: {column_name}</source>
+        <translation>Moviendo columna: {column_name}</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_header_column_actions.py" line="85" />
+        <source>Moved column '{column_name}' to position {position}</source>
+        <translation>Columna '{column_name}' movida a la posición {position}</translation>
     </message>
 </context><context>
     <name>ResultTabHeaderDtypeActions</name>

@@ -5,6 +5,7 @@ This module contains column-header actions related to column structure:
 - merge multiple columns into a single column
 - rename a column
 - remove a column
+- move a column to a different position
 
 All dependencies are injected explicitly.
 No dependency on ResultTabManager exists.
@@ -14,7 +15,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import QT_TR_NOOP
 
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
 
 
 class ResultTabHeaderColumnActions:
-    """Header (column) split & merge actions with explicit dependency injection."""
+    """Column structure actions with explicit dependency injection."""
 
     # ------------------------------------------------------------------
     # i18n markers (pylupdate6-visible)
@@ -77,6 +78,11 @@ class ResultTabHeaderColumnActions:
     TR_REMOVING_COLUMN = QT_TR_NOOP("Removing column: {column_name}")
     TR_COLUMN_AND_NAME = QT_TR_NOOP("Remove column: {column_name}")
     TR_REMOVED_COLUMN = QT_TR_NOOP("Removed column: {column_name}")
+
+    # Move
+    TR_MOVE_OPERATION = QT_TR_NOOP("move column")
+    TR_MOVING_COLUMN = QT_TR_NOOP("Moving column: {column_name}")
+    TR_MOVED_COLUMN = QT_TR_NOOP("Moved column '{column_name}' to position {position}")
 
     # ------------------------------------------------------------------
     # i18n helpers
@@ -134,6 +140,88 @@ class ResultTabHeaderColumnActions:
         self._async_ops = async_ops
         self._resolve_df_col_series = resolve_df_col_series
         self._apply_new_dataframe = apply_new_dataframe
+
+    def move_right(self, view: QTableView, column: int) -> None:
+        """Move the column one position to the right."""
+        self._move_column(view, column, "right")
+
+    def move_left(self, view: QTableView, column: int) -> None:
+        """Move the column one position to the left."""
+        self._move_column(view, column, "left")
+
+    def move_to_first(self, view: QTableView, column: int) -> None:
+        """Move the column to the first position."""
+        self._move_column(view, column, "first")
+
+    def move_to_last(self, view: QTableView, column: int) -> None:
+        """Move the column to the last position."""
+        self._move_column(view, column, "last")
+
+    def _move_column(
+        self,
+        view: QTableView,
+        column: int,
+        direction: Literal["right", "left", "first", "last"],
+    ) -> None:
+        """Schedule a positional move through the standard DataFrame pipeline."""
+        ok, df, col_name, _ = self._resolve_df_col_series(view, column)
+        if not ok or df is None or col_name is None:
+            return
+
+        last_index = len(df.columns) - 1
+        destinations = {
+            "right": min(column + 1, last_index),
+            "left": max(column - 1, 0),
+            "first": 0,
+            "last": last_index,
+        }
+        destination = destinations[direction]
+        if destination == column:
+            self._logger.debug("Column move skipped: column '%s' is already at position %s.", col_name, column)
+            return
+
+        from expo_jbm329.services.data_operations.columns import move_column
+
+        corr_id = uuid.uuid4().hex
+        # User-facing column positions are 1-based.
+        status = self._tr_fmt(self.TR_MOVED_COLUMN, column_name=col_name, position=destination + 1)
+
+        self._logger.debug(
+            "ResultTabHeaderColumnActions: move requested for column '%s' to position '%s'.",
+            col_name,
+            destination,
+        )
+
+        safe_df = df
+
+        def _work(
+            *,
+            progress_cb: Callable[[int], None] | None = None,  # noqa: ARG001
+            cancel_cb: Callable[[], bool] | None = None,
+            **_: object,
+        ) -> pd.DataFrame | None:
+            if cancel_cb and cancel_cb():
+                return None
+            return move_column(safe_df, column, destination)
+
+        def _apply_result(new_df: pd.DataFrame | None) -> None:
+            if new_df is None:
+                return
+            self._apply_new_dataframe(view, new_df, status)
+            self._logger.info(
+                "Column '%s' moved from position %s to %s (corr=%s).", col_name, column, destination, corr_id
+            )
+
+        self._async_ops.run_dataframe_operation(
+            view=view,
+            runner="pool",
+            work=_work,
+            apply_result=_apply_result,
+            busy_message=self._tr_fmt(self.TR_MOVING_COLUMN, column_name=col_name),
+            scope=f"move:{col_name}",
+            operation_name=self._tr(self.TR_MOVE_OPERATION),
+            corr_id=corr_id,
+        )
 
     # ==================================================================
     # Split column

@@ -36,6 +36,7 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
+- **Column Order**: Right-click a result-tab column header and choose **Order** → **Move right**, **Move left**, **Move to first**, or **Move to last**. This changes the dataset's column order for subsequent operations and exports, and supports **Undo**. Moves apply to one column at a time; unavailable moves are disabled.
 - **Data Transformations**: Transform and reshape datasets using a visual interface, including grouping by dimensions and calculating named aggregation metrics (including median) with optional per-metric conditions, a visual condition builder, and a five-row preview.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
