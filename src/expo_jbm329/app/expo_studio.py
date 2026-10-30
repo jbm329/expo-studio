@@ -464,6 +464,7 @@ class ExpoStudio(QMainWindow):
         dlg = ConnectionEditor(
             parent=self,
             dialogs=self._require_dialogs(),
+            file_dialogs=self._require_file_dialogs(),
             icon_service=self._require_workbench_services().icon_service,
             invalidate_connection=workbench.invalidate_connection_configuration,
         )
@@ -489,7 +490,7 @@ class ExpoStudio(QMainWindow):
 
     def _show_about_dialog(self) -> None:
         """Show the professional About dialog."""
-        dlg = AboutDialog(parent=self)
+        dlg = AboutDialog(parent=self, dialogs=self._require_dialogs())
         dlg.exec()
 
     # ==================================================================

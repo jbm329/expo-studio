@@ -8,7 +8,6 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING, Protocol, cast
 
 from PyQt6.QtCore import QT_TR_NOOP, QT_TRANSLATE_NOOP, QTimer
-from PyQt6.QtWidgets import QMessageBox
 
 from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog, build_placeholder_label
 from expo_jbm329.gui.dialogs.analysis.chi_square_view import ChiSquareView
@@ -33,6 +32,7 @@ from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
 from expo_jbm329.gui.dialogs.analysis.survival_view import SurvivalRegressionView
 from expo_jbm329.gui.dialogs.analysis.timeseries_config import TimeSeriesConfigWidget
 from expo_jbm329.gui.dialogs.analysis.timeseries_view import TimeSeriesView
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.chi_square import analyze_chi_square, initialize_chi_square
 from expo_jbm329.services.analysis.clustering import MIN_SELECTED_COLUMNS as CLUSTERING_MIN_SELECTED_COLUMNS
@@ -178,6 +178,7 @@ if TYPE_CHECKING:
     import pandas as pd
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.services.analysis.chi_square import ChiSquareResult
     from expo_jbm329.services.analysis.clustering import ClusteringResult
     from expo_jbm329.services.analysis.correlation import CorrelationMatrixResult, CorrelationPairDetail
@@ -700,6 +701,7 @@ class AnalysisController:
         async_ops: AsyncOperationController,
         export_controller: ExportController | None = None,
         logger: logging.Logger | None = None,
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the analysis controller.
 
@@ -708,11 +710,13 @@ class AnalysisController:
             async_ops: Controller running analyses as background jobs.
             export_controller: Shared exporter receiving per-call analysis dialog context.
             logger: Optional logger instance.
+            dialogs: Optional dialog service.
         """
         self._results = results
         self._async_ops = async_ops
         self._export_controller = export_controller
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
         self._category_handlers: dict[AnalysisCategory, _CategoryHandler] = {
             AnalysisCategory.OVERVIEW: _CategoryHandler(
@@ -774,7 +778,7 @@ class AnalysisController:
         )
         if source_dataset is None:
             self._logger.warning("Advanced Analysis was requested without a ready active dataset.")
-            QMessageBox.warning(
+            self._dialogs.warn(
                 parent,
                 self._tr(self.TR_ANALYSIS_UNAVAILABLE),
                 self._tr(self.TR_READY_DATASET_REQUIRED),

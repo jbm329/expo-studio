@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+import pytest
 from PyQt6.QtCore import QCoreApplication, QTranslator
 from PyQt6.QtWidgets import QApplication
 
 from expo_jbm329.gui.dialogs import about_dialog
 from expo_jbm329.gui.dialogs.about_dialog import AboutDialog
-
-if TYPE_CHECKING:
-    import pytest
+from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 def test_about_dialog_shows_legal_copy_and_footer_links(monkeypatch) -> None:
@@ -76,11 +75,13 @@ def test_repository_link_opens_application_repository(monkeypatch) -> None:
         "openUrl",
         lambda url: opened_urls.append(url.toString()) or True,
     )
-    dialog = AboutDialog()
+    dialogs = MagicMock(spec=DialogService)
+    dialog = AboutDialog(dialogs=dialogs)
 
     dialog._open_link("repository")
 
     assert opened_urls == ["https://github.com/jbm329/expo-studio"]
+    dialogs.warn.assert_not_called()
 
 
 def test_license_link_opens_local_document(monkeypatch, tmp_path: Path) -> None:
@@ -93,11 +94,13 @@ def test_license_link_opens_local_document(monkeypatch, tmp_path: Path) -> None:
         "openUrl",
         lambda url: opened_urls.append(url.toLocalFile()) or True,
     )
-    dialog = AboutDialog()
+    dialogs = MagicMock(spec=DialogService)
+    dialog = AboutDialog(dialogs=dialogs)
 
     dialog._open_link("license")
 
     assert [Path(url) for url in opened_urls] == [document]
+    dialogs.warn.assert_not_called()
 
 
 def test_about_dialog_uses_swedish_legal_translations() -> None:
@@ -167,14 +170,49 @@ def test_missing_document_formats_warning(monkeypatch: pytest.MonkeyPatch, widge
     document = "LICENSE {document} %1.txt"
     monkeypatch.setitem(about_dialog.LOCAL_DOCUMENTS, "license", document)
     monkeypatch.setattr(AboutDialog, "_find_document", staticmethod(lambda _name: None))
-    warning = MagicMock()
-    monkeypatch.setattr(about_dialog.QMessageBox, "warning", warning)
-    dialog = AboutDialog()
+    dialogs = MagicMock(spec=DialogService)
+    open_url = MagicMock()
+    monkeypatch.setattr(about_dialog.QDesktopServices, "openUrl", open_url)
+    dialog = AboutDialog(dialogs=dialogs)
 
     dialog._open_link("license")
 
     expected = f"Kunde inte hitta {document}." if widget_language == "sv" else f"Could not find {document}."
-    warning.assert_called_once_with(dialog, dialog.tr("Document unavailable"), expected)
+    dialogs.warn.assert_called_once_with(dialog, dialog.tr("Document unavailable"), expected)
+    open_url.assert_not_called()
+
+
+@pytest.mark.parametrize("link_id", ["repository", "license"])
+def test_failed_link_warns_through_injected_service(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, widget_language: str, link_id: str
+) -> None:
+    document = tmp_path / "LICENSE.txt"
+    monkeypatch.setattr(AboutDialog, "_find_document", staticmethod(lambda _name: document))
+    open_url = MagicMock(return_value=False)
+    monkeypatch.setattr(about_dialog.QDesktopServices, "openUrl", open_url)
+    dialogs = MagicMock(spec=DialogService)
+    dialog = AboutDialog(dialogs=dialogs)
+
+    dialog._open_link(link_id)
+
+    open_url.assert_called_once()
+    dialogs.warn.assert_called_once_with(
+        dialog, dialog.tr("Unable to open link"), dialog.tr("The requested link could not be opened.")
+    )
+
+
+def test_application_about_dialog_receives_shared_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    from expo_jbm329.app import expo_studio
+
+    dialogs = MagicMock(spec=DialogService)
+    host = SimpleNamespace(_require_dialogs=lambda: dialogs)
+    factory = MagicMock()
+    monkeypatch.setattr(expo_studio, "AboutDialog", factory)
+
+    expo_studio.ExpoStudio._show_about_dialog(host)
+
+    factory.assert_called_once_with(parent=host, dialogs=dialogs)
+    factory.return_value.exec.assert_called_once_with()
 
 
 def test_about_dialog_formats_reordered_translated_fields(monkeypatch: pytest.MonkeyPatch) -> None:

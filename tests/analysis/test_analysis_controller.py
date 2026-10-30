@@ -1185,33 +1185,38 @@ def _assert_apply_prompt(ctrl: AnalysisController, dlg: DummyAnalysisDialog) -> 
     assert content.text() == ctrl._tr(ctrl.TR_APPLY_PROMPT)  # noqa: SLF001
 
 
-def test_open_dialog_explains_when_no_ready_active_dataset_is_available(dialog_factory, monkeypatch):
-    warning = Mock()
-    monkeypatch.setattr(analysis_controller_module.QMessageBox, "warning", warning)
-    ctrl = AnalysisController(results=DummyResults(datasets=[]), async_ops=DummyAsyncOps())
-    _open_and_flush(ctrl, QWidget())
+def test_open_dialog_explains_when_no_ready_active_dataset_is_available(dialog_factory, widget_language):
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+
+    dialogs = Mock(spec=DialogService)
+    ctrl = AnalysisController(results=DummyResults(datasets=[]), async_ops=DummyAsyncOps(), dialogs=dialogs)
+    parent = QWidget()
+    _open_and_flush(ctrl, parent)
 
     assert dialog_factory == []
-    assert warning.call_args.args[1:] == (
+    dialogs.warn.assert_called_once_with(
+        parent,
         ctrl._tr(ctrl.TR_ANALYSIS_UNAVAILABLE),
         ctrl._tr(ctrl.TR_READY_DATASET_REQUIRED),
     )
 
 
 @pytest.mark.parametrize("active_tab_id", [None, "not-ready"])
-def test_open_dialog_never_falls_back_to_another_ready_dataset(dialog_factory, monkeypatch, active_tab_id):
-    warning = Mock()
-    monkeypatch.setattr(analysis_controller_module.QMessageBox, "warning", warning)
+def test_open_dialog_never_falls_back_to_another_ready_dataset(dialog_factory, active_tab_id):
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+
+    dialogs = Mock(spec=DialogService)
     ready_source = DatasetRef("ready", "Ready", 2, 1)
     ctrl = AnalysisController(
         results=DummyResults(datasets=[ready_source], active_tab_id=active_tab_id),
         async_ops=DummyAsyncOps(),
+        dialogs=dialogs,
     )
 
     _open_and_flush(ctrl, QWidget())
 
     assert dialog_factory == []
-    warning.assert_called_once()
+    dialogs.warn.assert_called_once()
 
 
 def test_open_dialog_binds_active_ready_source_even_when_not_first(dialog_factory):

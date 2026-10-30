@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING
 
 from PyQt6 import sip
 from PyQt6.QtCore import QT_TR_NOOP, QObject
-from PyQt6.QtWidgets import QDialog, QMessageBox
+from PyQt6.QtWidgets import QDialog
 
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
 from expo_jbm329.services.data_operations.dtypes import get_datetime_column_positions, get_numeric_column_positions
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     import pandas as pd
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
     from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 
@@ -54,6 +56,7 @@ class ReshapeController:
         results: ResultTabManager,
         async_ops: AsyncOperationController,
         logger: logging.Logger | None = None,
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the controller with explicit workbench dependencies.
 
@@ -62,10 +65,12 @@ class ReshapeController:
             results: Manager owning dataset readiness and identity.
             async_ops: Workbench job facade for condition values, previews and results.
             logger: Optional UI logger.
+            dialogs: Optional dialog service.
         """
         self._parent = parent_widget
         self._results = results
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._conditions = ReshapeConditionController(async_ops, self._logger)
         self._async_ops = async_ops
 
@@ -79,7 +84,7 @@ class ReshapeController:
         record = self._results.tabs_by_id.get(tab_id) if tab_id is not None else None
         if record is None or not record.is_ready or record.df is None:
             self._logger.warning("ReshapeController: reshape unavailable (reason=ready_dataset_required)")
-            QMessageBox.warning(
+            self._dialogs.warn(
                 self._parent,
                 self._tr(self.TR_UNAVAILABLE),
                 self._tr(self.TR_READY_DATASET_REQUIRED),

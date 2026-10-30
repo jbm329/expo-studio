@@ -14,6 +14,7 @@ from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.db import base
 from expo_jbm329.db.core.models import SqlError, SqlResult
 from expo_jbm329.gui.dialogs.service.null_dialog_service import NullDialogService
+from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import FileDialogService, OpenFileRequest
 from expo_jbm329.i18n.language import Language
 from expo_jbm329.services.schema_cache import SchemaCacheEntry, SchemaCacheManager
 from expo_jbm329.workbench.controllers.connection_controller import ConnectionController
@@ -254,13 +255,18 @@ def duckdb_path(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def duckdb_editor(duckdb_path: Path):
+def database_file_dialogs():
+    return MagicMock(spec=FileDialogService)
+
+
+@pytest.fixture
+def duckdb_editor(duckdb_path: Path, database_file_dialogs):
     write_connections({
         "Duck file": {"db_type": "duckdb", "protocol": "duckdb", "database": str(duckdb_path)},
         "SQLite file": {"db_type": "sqlite", "protocol": "sqlite", "database": ":memory:"},
     })
     dialogs = MagicMock(spec=NullDialogService)
-    editor = ConnectionEditor(dialogs=dialogs)
+    editor = ConnectionEditor(dialogs=dialogs, file_dialogs=database_file_dialogs)
     editor.show()
     editor.list_widget.setCurrentRow(0)
     try:
@@ -324,20 +330,24 @@ def test_switching_to_duckdb_clears_stale_options_and_leaving_restores_controls(
 @pytest.mark.parametrize("engine", ["duckdb", "sqlite"])
 @pytest.mark.parametrize("cancelled", [False, True])
 def test_database_browse_uses_engine_filter_and_preserves_path_on_cancel(
-    duckdb_editor, monkeypatch: pytest.MonkeyPatch, engine: str, cancelled: bool
+    duckdb_editor, database_file_dialogs, widget_language: str, engine: str, cancelled: bool
 ) -> None:
     editor, _ = duckdb_editor
     editor.db_type_combo.setCurrentIndex(editor.db_type_combo.findData(engine))
     previous = editor.db_edit.text()
-    chosen = "/selected/database.db"
-    picker = MagicMock(return_value=("" if cancelled else chosen, ""))
-    monkeypatch.setattr(connection_editor.QFileDialog, "getOpenFileName", picker)
+    chosen = r"C:\selected\database.db"
+    database_file_dialogs.get_open_filename.return_value = ("" if cancelled else chosen, "")
     editor.sqlite_browse_btn.click()
     assert editor.db_edit.text() == (previous if cancelled else chosen)
-    args = picker.call_args.args
-    assert args[0] is editor
-    assert args[1] == editor.tr(f"Select {'DuckDB' if engine == 'duckdb' else 'SQLite'} database file")
-    assert ("*.duckdb *.ddb *.db" if engine == "duckdb" else "*.db *.sqlite *.sqlite3") in args[3]
+    title = editor.tr("Select DuckDB database file") if engine == "duckdb" else editor.tr("Select SQLite database file")
+    file_filter = (
+        editor.tr("DuckDB files (*.duckdb *.ddb *.db);;All files (*.*)")
+        if engine == "duckdb"
+        else editor.tr("SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)")
+    )
+    database_file_dialogs.get_open_filename.assert_called_once_with(
+        editor, OpenFileRequest(title=title, initial_path="", filter_str=file_filter)
+    )
 
 
 def test_save_duckdb_roundtrip_drops_irrelevant_fields(duckdb_editor, duckdb_path: Path) -> None:
@@ -588,15 +598,20 @@ def test_application_dialog_injects_workbench_invalidation_owner(monkeypatch: py
     workbench.schema = MagicMock()
     controller = MagicMock(spec=ConnectionController)
     controller.get_connection_names.return_value = ["Duck file"]
+    dialogs = NullDialogService()
+    file_dialogs = MagicMock(spec=FileDialogService)
     host = SimpleNamespace(
         _require_workbench_services=lambda: workbench,
-        _require_dialogs=lambda: NullDialogService(),
+        _require_dialogs=lambda: dialogs,
+        _require_file_dialogs=lambda: file_dialogs,
         connection_controller=controller,
     )
     dialog = MagicMock()
     factory = MagicMock(return_value=dialog)
     monkeypatch.setattr(expo_studio, "ConnectionEditor", factory)
     expo_studio.ExpoStudio._open_connection_dialog(host)
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+    assert factory.call_args.kwargs["file_dialogs"] is file_dialogs
     assert factory.call_args.kwargs["invalidate_connection"] == workbench.invalidate_connection_configuration
     dialog.exec.assert_called_once_with()
     refresh = dialog.connections_changed.connect.call_args.args[0]
