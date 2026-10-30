@@ -126,6 +126,57 @@ def test_column_movement_messages_survive_extraction_and_compilation(extracted_m
     assert expected.format(column_name="example", position=3)
 
 
+@pytest.mark.parametrize("language", [language.value for language in Language])
+def test_order_menu_uses_extracted_compiled_translations(extracted_messages, language: str, qt_app) -> None:
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView
+
+    from expo_jbm329.gui.menus.result_tab_column_header_context_menu import ResultTabColumnHeaderContextMenu
+    from expo_jbm329.gui.menus.result_tab_header_context import build_header_context
+
+    context = "ResultTabColumnHeaderContextMenu"
+    sources = ["Order", "Move right", "Move left", "Move to first", "Move to last"]
+    catalog = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / f"app_{language}.ts").getroot())
+    expected = []
+    for source in sources:
+        key = (context, source, "")
+        assert key in extracted_messages
+        translation = catalog[key].find("translation")
+        assert translation is not None
+        if language == "en":
+            assert translation.get("type") == "unfinished"
+            assert not translation.text
+            expected.append(source)
+        else:
+            assert translation.get("type") is None
+            assert translation.text
+            expected.append(translation.text)
+    translator = QTranslator()
+    assert translator.load(str(build_i18n.locales_dir() / f"app_{language}.qm"))
+    qt_app.installTranslator(translator)
+    try:
+        view = QTableView()
+        ctx = build_header_context(
+            view=view,
+            df=pd.DataFrame({"a": [1], "b": [2], "c": [3]}),
+            column=1,
+            column_name="b",
+            only_one_selected=True,
+        )
+        menu, action_map = ResultTabColumnHeaderContextMenu(view).build(ctx)
+        order = next(action.menu() for action in menu.actions() if action.text() == expected[0])
+        assert order.isEnabled()
+        assert [action.text() for action in order.actions()] == expected[1:]
+        assert [action_map[action] for action in order.actions()] == [
+            "column.move_right",
+            "column.move_left",
+            "column.move_first",
+            "column.move_last",
+        ]
+    finally:
+        qt_app.removeTranslator(translator)
+
+
 @pytest.mark.parametrize(
     ("context", "old_source", "source"),
     [

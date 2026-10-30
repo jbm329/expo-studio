@@ -8529,192 +8529,217 @@ Dauer: {sec:.2f}s{sample}</translation>
         <translation>Eigenschaften</translation>
     </message>
     <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="88" />
+        <source>Order</source>
+        <translation>Reihenfolge</translation>
+    </message>
+    <message>
         <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="89" />
+        <source>Move right</source>
+        <translation>Nach rechts verschieben</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <source>Move left</source>
+        <translation>Nach links verschieben</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <source>Move to first</source>
+        <translation>An die erste Position verschieben</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <source>Move to last</source>
+        <translation>An die letzte Position verschieben</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
         <source>Cleanse data…</source>
         <translation>Daten bereinigen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
         <source>Trim (remove whitespace)</source>
         <translation>Leerraum entfernen</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
         <source>Normalize whitespace</source>
         <translation>Leerraum vereinheitlichen</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
         <source>Convert to lowercase</source>
         <translation>In Kleinbuchstaben umwandeln</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="93" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
         <source>Convert to uppercase</source>
         <translation>In Großbuchstaben umwandeln</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="94" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
         <source>Convert to title case</source>
         <translation>In Anfangsbuchstaben großschreiben</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
         <source>Capitalize first letter</source>
         <translation>Ersten Buchstaben großschreiben</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="102" />
         <source>Replace text…</source>
         <translation>Text ersetzen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="103" />
         <source>Insert text…</source>
         <translation>Text einfügen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
         <source>Remove text (simple)…</source>
         <translation>Text entfernen (einfach) …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
         <source>Remove text (regex)…</source>
         <translation>Text entfernen (Regex) …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
         <source>Keep digits only</source>
         <translation>Nur Ziffern beibehalten</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
         <source>Keep letters only</source>
         <translation>Nur Buchstaben beibehalten</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="110" />
         <source>Fill missing values…</source>
         <translation>Fehlende Werte ersetzen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
         <source>Mean</source>
         <translation>Mittelwert</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
         <source>Mode</source>
         <translation>Modus</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="108" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
         <source>Custom value…</source>
         <translation>Benutzerdefinierter Wert …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
         <source>Datatype…</source>
         <translation>Datentyp …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
         <source>Convert to category…</source>
         <translation>In Kategorie konvertieren …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
         <source>Convert to text (string)</source>
         <translation>In Text (Zeichenfolge) konvertieren</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
         <source>Convert to integer (Int64)</source>
         <translation>In Ganzzahl (Int64) konvertieren</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="115" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
         <source>Convert to float (Float64)</source>
         <translation>In Gleitkommazahl (Float64) konvertieren</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="116" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="122" />
         <source>Convert to datetime…</source>
         <translation>In Datum und Uhrzeit konvertieren …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="123" />
         <source>Convert to date…</source>
         <translation>In Datum konvertieren …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
         <source>Convert to boolean…</source>
         <translation>In Boolean konvertieren …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
         <source>Rename category…</source>
         <translation>Kategorie umbenennen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
         <source>Set category order…</source>
         <translation>Kategorienreihenfolge festlegen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
         <source>Remove unused categories</source>
         <translation>Nicht verwendete Kategorien entfernen</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
         <source>Filter rows…</source>
         <translation>Zeilen filtern …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="131" />
         <source>Equals…</source>
         <translation>Gleich …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="132" />
         <source>Contains…</source>
         <translation>Enthält …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
         <source>Is empty</source>
         <translation>Ist leer</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="128" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
         <source>Is not empty</source>
         <translation>Ist nicht leer</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="129" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="135" />
         <source>Compare…</source>
         <translation>Vergleichen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="136" />
         <source>Between…</source>
         <translation>Zwischen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="139" />
         <source>Split column…</source>
         <translation>Spalte teilen …</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="140" />
         <source>Merge columns…</source>
         <translation>Spalten zusammenführen …</translation>
     </message>

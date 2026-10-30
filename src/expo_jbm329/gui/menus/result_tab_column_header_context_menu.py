@@ -85,6 +85,12 @@ class ResultTabColumnHeaderContextMenu:
     TR_REMOVE = QT_TR_NOOP("Remove…")
     TR_PROPERTIES = QT_TR_NOOP("Properties")
 
+    TR_ORDER = QT_TR_NOOP("Order")
+    TR_MOVE_RIGHT = QT_TR_NOOP("Move right")
+    TR_MOVE_LEFT = QT_TR_NOOP("Move left")
+    TR_MOVE_TO_FIRST = QT_TR_NOOP("Move to first")
+    TR_MOVE_TO_LAST = QT_TR_NOOP("Move to last")
+
     # Cleanse
     TR_CLEANSE = QT_TR_NOOP("Cleanse data…")
     TR_TRIM = QT_TR_NOOP("Trim (remove whitespace)")
@@ -224,6 +230,16 @@ class ResultTabColumnHeaderContextMenu:
         )
 
         menu.addSeparator()
+
+        order_menu = self._add_submenu(menu, self._tr(self.TR_ORDER))
+        order_menu.setEnabled(one and (ctx.can_move_left or ctx.can_move_right))
+        for label, action_id, available in (
+            (self.TR_MOVE_RIGHT, "column.move_right", ctx.can_move_right),
+            (self.TR_MOVE_LEFT, "column.move_left", ctx.can_move_left),
+            (self.TR_MOVE_TO_FIRST, "column.move_first", ctx.can_move_left),
+            (self.TR_MOVE_TO_LAST, "column.move_last", ctx.can_move_right),
+        ):
+            self._add_menu_action(order_menu, action_map, self._tr(label), action_id, enabled=one and available)
 
         # ---- Clean submenu ----------------------------------------
         clean_menu = self._add_submenu(menu, self._tr(self.TR_CLEANSE))

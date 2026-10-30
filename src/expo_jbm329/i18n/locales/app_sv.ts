@@ -8529,192 +8529,217 @@ Tid: {sec:.2f}s{sample}</translation>
         <translation>Egenskaper</translation>
     </message>
     <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="88" />
+        <source>Order</source>
+        <translation>Ordning</translation>
+    </message>
+    <message>
         <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="89" />
+        <source>Move right</source>
+        <translation>Flytta åt höger</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <source>Move left</source>
+        <translation>Flytta åt vänster</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <source>Move to first</source>
+        <translation>Flytta till första</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <source>Move to last</source>
+        <translation>Flytta till sista</translation>
+    </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
         <source>Cleanse data…</source>
         <translation>Rensa data…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="90" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
         <source>Trim (remove whitespace)</source>
         <translation>Trimma (ta bort blanksteg)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="91" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
         <source>Normalize whitespace</source>
         <translation>Normalisera mellanrum</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="92" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
         <source>Convert to lowercase</source>
         <translation>Ändra till gemener</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="93" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
         <source>Convert to uppercase</source>
         <translation>Ändra till versaler</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="94" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
         <source>Convert to title case</source>
         <translation>Ändra till titelstil</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="95" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
         <source>Capitalize first letter</source>
         <translation>Ändra första bokstav till versal</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="96" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="102" />
         <source>Replace text…</source>
         <translation>Ersätt text…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="97" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="103" />
         <source>Insert text…</source>
         <translation>Infoga text…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="98" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
         <source>Remove text (simple)…</source>
         <translation>Ta bort text (enkelt)…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="99" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
         <source>Remove text (regex)…</source>
         <translation>Ta bort text (regex)…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="100" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
         <source>Keep digits only</source>
         <translation>Behåll endast siffror</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="101" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
         <source>Keep letters only</source>
         <translation>Behåll endast bokstäver</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="104" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="110" />
         <source>Fill missing values…</source>
         <translation>Fyll saknade värden…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="105" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
         <source>Mean</source>
         <translation>Medelvärde</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="106" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
         <source>Median</source>
         <translation>Median</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="107" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
         <source>Mode</source>
         <translation>Läge (mode)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="108" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
         <source>Custom value…</source>
         <translation>Eget värde…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="111" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
         <source>Datatype…</source>
         <translation>Datatyp…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="112" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
         <source>Convert to category…</source>
         <translation>Omvandla till kategorier…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="113" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
         <source>Convert to text (string)</source>
         <translation>Omvandla till text (string)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="114" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
         <source>Convert to integer (Int64)</source>
         <translation>Omvandla till heltal (Int64)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="115" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
         <source>Convert to float (Float64)</source>
         <translation>Omvandla till decimaltal (Float64)</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="116" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="122" />
         <source>Convert to datetime…</source>
         <translation>Omvandla till datum/tid…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="117" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="123" />
         <source>Convert to date…</source>
         <translation>Omvandla till datum…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="118" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
         <source>Convert to boolean…</source>
         <translation>Omvandla till bool (sant/falskt)…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="119" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
         <source>Rename category…</source>
         <translation>Byt namn på kategori…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="120" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
         <source>Set category order…</source>
         <translation>Ordna kategorier…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="121" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
         <source>Remove unused categories</source>
         <translation>Ta bort oanvända kategorier…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="124" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
         <source>Filter rows…</source>
         <translation>Filtrera rader…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="125" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="131" />
         <source>Equals…</source>
         <translation>Är lika med…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="126" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="132" />
         <source>Contains…</source>
         <translation>Innehåller…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="127" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
         <source>Is empty</source>
         <translation>Är tom</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="128" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
         <source>Is not empty</source>
         <translation>Är inte tom</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="129" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="135" />
         <source>Compare…</source>
         <translation>Jämförelse…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="130" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="136" />
         <source>Between…</source>
         <translation>Mellan…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="133" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="139" />
         <source>Split column…</source>
         <translation>Dela kolumn…</translation>
     </message>
     <message>
-        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="134" />
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="140" />
         <source>Merge columns…</source>
         <translation>Slå ihop kolumner…</translation>
     </message>

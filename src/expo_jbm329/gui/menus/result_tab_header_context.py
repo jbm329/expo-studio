@@ -48,6 +48,8 @@ class ResultTabHeaderContext:
     # Data interpretation
     semantics: SeriesSemantics
     capabilities: SeriesCapabilities
+    can_move_left: bool = False
+    can_move_right: bool = False
 
 
 # =====================================================================
@@ -75,7 +77,7 @@ def build_header_context(
     # --------------------------------------------------------------
     # Fallback: no DataFrame
     # --------------------------------------------------------------
-    if df is None or column_name not in df.columns:
+    if df is None or column_name not in df.columns or not 0 <= column < len(df.columns):
         empty_semantics = SeriesSemantics(semantic_dtype="other")
         empty_capabilities = SeriesCapabilities()
 
@@ -105,4 +107,6 @@ def build_header_context(
         only_one_selected=only_one_selected,
         semantics=semantics,
         capabilities=capabilities,
+        can_move_left=column > 0,
+        can_move_right=column < len(df.columns) - 1,
     )
