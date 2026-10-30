@@ -36,7 +36,7 @@ The project is still in its infancy and may change significantly.
 
 ### 📊 Data Operations
 - **Data Preparation**: Built-in tools for joining and concatenating datasets within the workbench.
-- **Data Transformations**: Transform and reshape datasets using a visual interface, including grouping by dimensions and calculating named aggregation metrics with optional per-metric conditions, a visual condition builder, and a five-row preview.
+- **Data Transformations**: Transform and reshape datasets using a visual interface, including grouping by dimensions and calculating named aggregation metrics (including median) with optional per-metric conditions, a visual condition builder, and a five-row preview.
 - **Export Capabilities**: Export query results to multiple formats including **CSV**, **feather**, **parquet**, and more.
 - **Dataset Analysis**: Integrated data profiling (via `fg-data-profiling`) for in-depth dataset statistics.
 - **Advanced Analysis**: Explore the active ready result dataset in an interactive analysis workspace.

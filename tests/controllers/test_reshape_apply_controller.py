@@ -101,6 +101,18 @@ def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypat
     assert source["value"].tolist() == list(range(14))
 
 
+def test_median_apply_worker_uses_shared_aggregation_path(apply_setup):
+    controller, source, request, results, async_ops, view, job = apply_setup
+    median_request = ReshapeRequest((0,), (ReshapeMetric("Median", ReshapeFunction.MEDIAN, 1),))
+
+    controller._run_reshape(source, median_request)
+    call = async_ops.run_target_overlay_operation.call_args.kwargs
+    result = call["work"]()
+
+    assert result["group"].tolist() == list("gfedcba")
+    assert result["Median"].tolist() == [3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5]
+
+
 @pytest.mark.parametrize("cancelled_result", [False, True])
 def test_cancellation_and_finished_without_result_remove_pending_tab(apply_setup, cancelled_result) -> None:
     controller, source, request, results, async_ops, view, job = apply_setup

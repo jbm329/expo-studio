@@ -148,10 +148,86 @@ def test_no_dimensions_empty_source_and_all_missing_values():
     assert result.frame["COUNT"].tolist() == [0]
     assert result.frame["COUNT DISTINCT"].tolist() == [0]
     assert pd.isna(result.frame["SUM"].iloc[0])
+    assert pd.isna(result.frame["MEDIAN"].iloc[0])
     empty_groups = compute_reshape_preview(source, ReshapeRequest((0,), metrics))
     assert empty_groups.total_rows == 0
     assert list(empty_groups.frame.columns) == ["value", *ReshapeFunction]
     assert empty_groups.frame.empty
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "Float64"])
+def test_median_uses_numeric_median_semantics_and_preserves_source(dtype):
+    source = pd.DataFrame({
+        "group": ["skew", "skew", "skew", "even", "even", "missing", "missing", "filtered", "filtered"],
+        "value": pd.Series([1, 3, 100, 2, 8, None, None, 7, 9], dtype=dtype),
+    })
+    original = source.copy(deep=True)
+    result = compute_reshape_preview(
+        source,
+        ReshapeRequest(
+            (0,),
+            (
+                metric(source, "MEDIAN", position=1),
+                metric(source, "MEDIAN", "[value] > 100", position=1, name="Filtered median"),
+            ),
+        ),
+    )
+
+    assert result.frame["group"].tolist() == ["skew", "even", "missing", "filtered"]
+    assert result.frame["MEDIAN"].iloc[:2].tolist() == [3.0, 5.0]
+    assert result.frame["MEDIAN"].iloc[0] != source.loc[source["group"] == "skew", "value"].mean()
+    assert result.frame["Filtered median"].isna().all()
+    assert result.frame["MEDIAN"].isna().iloc[2]
+    pd.testing.assert_frame_equal(source, original)
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        pd.Series(["1", "3"], dtype="string"),
+        pd.Series([True, False], dtype="boolean"),
+        pd.Series(pd.to_datetime(["2026-01-01", "2026-01-02"])),
+    ],
+    ids=["text", "boolean", "datetime"],
+)
+def test_median_rejects_nonnumeric_source_dtypes(values):
+    source = pd.DataFrame({"value": values})
+
+    with pytest.raises(ReshapeError) as caught:
+        compute_reshape_preview(source, ReshapeRequest((), (metric(source, "MEDIAN", position=0),)))
+
+    assert caught.value.problem == ReshapeProblem.CONFIGURATION
+
+
+def test_full_median_result_matches_five_row_preview_and_preserves_fractional_values():
+    source = pd.DataFrame({
+        "group": [group for group in "gfedcba" for _ in range(2)],
+        "value": pd.Series([value for index in range(7) for value in (index * 10 + 1, index * 10 + 2)], dtype="Int64"),
+    })
+    original = source.copy(deep=True)
+    request = ReshapeRequest(
+        (0,),
+        (
+            metric(source, "MEDIAN"),
+            metric(source, "MEDIAN", "[value] >= 2", name="Conditional median"),
+        ),
+    )
+
+    preview = compute_reshape_preview(source, request)
+    full_result = compute_reshape(source, request)
+
+    assert preview is not None and full_result is not None
+    assert preview.total_rows == 7
+    assert preview.frame["group"].tolist() == list("gfedc")
+    assert preview.frame["MEDIAN"].tolist() == [index * 10 + 1.5 for index in range(5)]
+    assert preview.frame["Conditional median"].tolist() == [2.0, *[index * 10 + 1.5 for index in range(1, 5)]]
+    pd.testing.assert_frame_equal(full_result.head(5), preview.frame)
+    assert full_result["MEDIAN"].tolist() == [index * 10 + 1.5 for index in range(7)]
+    assert full_result["Conditional median"].tolist() == [
+        2.0,
+        *[index * 10 + 1.5 for index in range(1, 7)],
+    ]
+    pd.testing.assert_frame_equal(source, original)
 
 
 def test_multiple_dimensions_categories_missing_values_and_duplicate_index():

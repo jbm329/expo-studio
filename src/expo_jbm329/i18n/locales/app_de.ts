@@ -7764,8 +7764,8 @@ Hinweis: {error_hint}</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="137" />
-        <source>SUM and AVG accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
-        <translation>SUM und AVG akzeptieren nur Ganzzahl- und Gleitkommaspalten. MIN und MAX akzeptieren auch Datum-und-Uhrzeit-Spalten. COUNT und COUNT DISTINCT akzeptieren jede Spalte. Beim Ändern der Funktion wird eine inkompatible Quellspaltenauswahl zurückgesetzt.</translation>
+        <source>SUM, AVG and MEDIAN accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
+        <translation>SUM, AVG und MEDIAN akzeptieren nur Ganzzahl- und Gleitkommaspalten. MIN und MAX akzeptieren auch Datum-und-Uhrzeit-Spalten. COUNT und COUNT DISTINCT akzeptieren jede Spalte. Beim Ändern der Funktion wird eine inkompatible Quellspaltenauswahl zurückgesetzt.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="149" />

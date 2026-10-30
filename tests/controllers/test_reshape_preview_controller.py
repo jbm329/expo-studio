@@ -75,6 +75,18 @@ def test_real_results_overlay_target_and_repeat_requests(caplog):
     dialog.close()
 
 
+def test_median_preview_worker_uses_shared_aggregation_path():
+    dialog, source, async_ops, controller, job = setup_preview()
+    dialog.metrics.cellWidget(0, 1).setCurrentText("MEDIAN")
+    dialog.metrics.item(0, 0).setText("Median value")
+
+    call = dispatch(dialog, async_ops)
+    result = call["work"]()
+
+    assert result.frame["Median value"].tolist() == [2.0, 2.0]
+    dialog.close()
+
+
 def test_edits_during_job_cancel_cooperatively_and_discard_all_callbacks():
     dialog, source, async_ops, controller, job = setup_preview()
     call = dispatch(dialog, async_ops)
