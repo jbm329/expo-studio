@@ -75,7 +75,7 @@ profiling = [
 # Build dependencies
 build = [
     "pyinstaller>=6.4",
-    "pillow>=11.0"
+    "pillow>=13.0.0.0"
 ]
 
 # -------------------------------
