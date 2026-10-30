@@ -199,6 +199,37 @@ def test_median_rejects_nonnumeric_source_dtypes(values):
     assert caught.value.problem == ReshapeProblem.CONFIGURATION
 
 
+def test_full_median_result_matches_five_row_preview_and_preserves_fractional_values():
+    source = pd.DataFrame({
+        "group": [group for group in "gfedcba" for _ in range(2)],
+        "value": pd.Series([value for index in range(7) for value in (index * 10 + 1, index * 10 + 2)], dtype="Int64"),
+    })
+    original = source.copy(deep=True)
+    request = ReshapeRequest(
+        (0,),
+        (
+            metric(source, "MEDIAN"),
+            metric(source, "MEDIAN", "[value] >= 2", name="Conditional median"),
+        ),
+    )
+
+    preview = compute_reshape_preview(source, request)
+    full_result = compute_reshape(source, request)
+
+    assert preview is not None and full_result is not None
+    assert preview.total_rows == 7
+    assert preview.frame["group"].tolist() == list("gfedc")
+    assert preview.frame["MEDIAN"].tolist() == [index * 10 + 1.5 for index in range(5)]
+    assert preview.frame["Conditional median"].tolist() == [2.0, *[index * 10 + 1.5 for index in range(1, 5)]]
+    pd.testing.assert_frame_equal(full_result.head(5), preview.frame)
+    assert full_result["MEDIAN"].tolist() == [index * 10 + 1.5 for index in range(7)]
+    assert full_result["Conditional median"].tolist() == [
+        2.0,
+        *[index * 10 + 1.5 for index in range(1, 7)],
+    ]
+    pd.testing.assert_frame_equal(source, original)
+
+
 def test_multiple_dimensions_categories_missing_values_and_duplicate_index():
     source = pd.DataFrame(
         {
