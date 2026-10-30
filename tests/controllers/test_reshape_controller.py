@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QWidget
 
+from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers import reshape_controller as module
@@ -62,7 +63,7 @@ def test_open_passes_numeric_positions_from_dtype_metadata(monkeypatch):
 
 
 @pytest.mark.parametrize("state", ["no-active", "removed", "pending", "no-data"])
-def test_unavailable_source_warns_without_opening_dialog(monkeypatch, state):
+def test_unavailable_source_warns_without_opening_dialog(monkeypatch, state, widget_language):
     results = MagicMock()
     results.active_tab_id.return_value = None if state == "no-active" else "source"
     record = SimpleNamespace(
@@ -70,18 +71,19 @@ def test_unavailable_source_warns_without_opening_dialog(monkeypatch, state):
         df=None if state == "no-data" else pd.DataFrame({"a": [1]}),
     )
     results.tabs_by_id = {} if state in {"no-active", "removed"} else {"source": record}
-    warning = MagicMock()
+    dialogs = MagicMock(spec=DialogService)
     dialog_class = MagicMock()
-    monkeypatch.setattr(module.QMessageBox, "warning", warning)
     monkeypatch.setattr(module, "ReshapeDialog", dialog_class)
     logger = MagicMock()
     parent = QWidget()
-    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock(), logger=logger)
+    controller = module.ReshapeController(
+        parent_widget=parent, results=results, async_ops=MagicMock(), logger=logger, dialogs=dialogs
+    )
 
     controller.open_reshape_dialog()
 
-    warning.assert_called_once_with(
-        parent, "Reshape unavailable", "Select a ready result dataset before opening Reshape."
+    dialogs.warn.assert_called_once_with(
+        parent, controller._tr(controller.TR_UNAVAILABLE), controller._tr(controller.TR_READY_DATASET_REQUIRED)
     )
     logger.warning.assert_called_once()
     dialog_class.assert_not_called()

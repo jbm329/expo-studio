@@ -10,6 +10,7 @@ import platform
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import PYQT_VERSION_STR, QT_VERSION_STR, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QPixmap
@@ -17,13 +18,16 @@ from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from expo_jbm329.app.metadata import get_app_metadata
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 LOCAL_DOCUMENTS = {
     "license": "LICENSE.txt",
@@ -34,9 +38,15 @@ LOCAL_DOCUMENTS = {
 class AboutDialog(QDialog):
     """About dialog for Expo Studio."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize the About dialog."""
+    def __init__(self, parent: QWidget | None = None, *, dialogs: DialogService | None = None) -> None:
+        """Initialize the About dialog.
+
+        Args:
+            parent: Parent widget for the dialog.
+            dialogs: Optional dialog service, defaulting to QtDialogService.
+        """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self.setWindowTitle(self.tr("About Expo Studio"))
         self.setFixedSize(610, 430)
         self._init_ui()
@@ -184,7 +194,7 @@ class AboutDialog(QDialog):
 
             document_path = self._find_document(document_name)
             if document_path is None:
-                QMessageBox.warning(
+                self._dialogs.warn(
                     self,
                     self.tr("Document unavailable"),
                     self.tr("Could not find {document}.").format(document=document_name),
@@ -193,7 +203,7 @@ class AboutDialog(QDialog):
             url = QUrl.fromLocalFile(str(document_path))
 
         if not QDesktopServices.openUrl(url):
-            QMessageBox.warning(
+            self._dialogs.warn(
                 self,
                 self.tr("Unable to open link"),
                 self.tr("The requested link could not be opened."),

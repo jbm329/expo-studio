@@ -492,6 +492,7 @@ class WorkbenchServices:
             async_ops=async_ops,
             export_controller=export,
             logger=app.log_ui,
+            dialogs=app.dialogs,
         )
 
         # ============================================================
@@ -530,6 +531,7 @@ class WorkbenchServices:
             results=results,
             async_ops=async_ops,
             logger=app.log_ui,
+            dialogs=app.dialogs,
         )
         results.set_reshape_controller(reshape)
 

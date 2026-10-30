@@ -20,7 +20,6 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
-    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -37,6 +36,7 @@ from expo_jbm329.app.settings.json_types import JsonObject, is_json_object, stri
 from expo_jbm329.db.base import close_connection, execute_sql_safe, validate_duckdb_connection
 from expo_jbm329.db.core.errors import TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import OpenFileRequest, QtFileDialogService
 from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
     from expo_jbm329.db.core.models import SqlError
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import FileDialogService
     from expo_jbm329.workbench.icon.icon_service import IconService
 
 # =============================================================================
@@ -135,6 +136,8 @@ class ConnectionEditor(QDialog):
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
         invalidate_connection: Callable[[str], None] | None = None,
+        *,
+        file_dialogs: FileDialogService | None = None,
     ) -> None:
         """Initializes the ConnectionEditor dialog.
 
@@ -144,10 +147,12 @@ class ConnectionEditor(QDialog):
             icon_service: Service for retrieving icons.
             invalidate_connection: Callback invalidating changed DuckDB connections.
                 Defaults to closing the backend when no workbench is attached.
+            file_dialogs: Optional file selection service, defaulting to QtFileDialogService.
         """
         super().__init__(parent)
 
         self._dialogs = dialogs or QtDialogService()
+        self._file_dialogs = file_dialogs if file_dialogs is not None else QtFileDialogService()
         self._icon_service = icon_service
         self._invalidate_connection = invalidate_connection if invalidate_connection is not None else close_connection
 
@@ -481,12 +486,8 @@ class ConnectionEditor(QDialog):
         else:
             title = self.tr("Select SQLite database file")
             file_filter = self.tr("SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)")
-        path, _ = QFileDialog.getOpenFileName(
-            self,
-            title,
-            "",
-            file_filter,
-        )
+        req = OpenFileRequest(title=title, initial_path="", filter_str=file_filter)
+        path, _ = self._file_dialogs.get_open_filename(self, req)
 
         if path:
             self.db_edit.setText(path)
