@@ -50,6 +50,7 @@ class ReshapeFunction(StrEnum):
 
     SUM = "SUM"
     AVG = "AVG"
+    MEDIAN = "MEDIAN"
     COUNT = "COUNT"
     COUNT_DISTINCT = "COUNT DISTINCT"
     MIN = "MIN"
@@ -119,7 +120,7 @@ def validate_reshape(request: ReshapeRequest, columns: Sequence[ConditionColumn]
         names.append(metric.name)
         numeric = columns[position].literal_type == ConditionLiteralType.NUMBER
         datetime = pd.api.types.is_datetime64_any_dtype(dtypes[position])
-        if metric.function in {ReshapeFunction.SUM, ReshapeFunction.AVG} and not numeric:
+        if metric.function in {ReshapeFunction.SUM, ReshapeFunction.AVG, ReshapeFunction.MEDIAN} and not numeric:
             raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
         if metric.function in {ReshapeFunction.MIN, ReshapeFunction.MAX} and not (numeric or datetime):
             raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
@@ -481,6 +482,8 @@ def _compute_reshape_result(
                     aggregate = grouped.sum(min_count=1)
                 case ReshapeFunction.AVG:
                     aggregate = grouped.mean()
+                case ReshapeFunction.MEDIAN:
+                    aggregate = grouped.median()
                 case ReshapeFunction.MIN:
                     aggregate = grouped.min()
                 case ReshapeFunction.MAX:
