@@ -5,7 +5,7 @@ DataFrame columns, including:
 
 - Mapping UI column indices to DataFrame column names
 - Sorting by column
-- Dropping, renaming, splitting, and joining columns
+- Moving, dropping, renaming, splitting, and joining columns
 - Preserving column order and predictable insertion behavior
 
 Design principles:
@@ -61,6 +61,43 @@ def sort_dataframe(
         raise KeyError(msg)
 
     return df.sort_values(by=column, ascending=ascending).copy()
+
+
+def move_column(
+    df: pd.DataFrame,
+    source_index: int,
+    destination_index: int,
+) -> pd.DataFrame:
+    """Return a copy with one column moved to a new position.
+
+    All other columns retain their relative order. Selection is positional,
+    so repeated and non-string column labels are preserved. Row order, index,
+    values, dtypes and DataFrame attributes remain unchanged.
+
+    Args:
+        df: Source DataFrame, which is not modified.
+        source_index: Zero-based position of the column to move.
+        destination_index: Zero-based final position of the moved column.
+
+    Returns:
+        A new DataFrame, even when both positions are the same.
+
+    Raises:
+        IndexError: If either position is outside the available columns.
+    """
+    column_count = len(df.columns)
+    if source_index < 0 or source_index >= column_count:
+        msg = f"Invalid source column index: {source_index}"
+        raise IndexError(msg)
+    if destination_index < 0 or destination_index >= column_count:
+        msg = f"Invalid destination column index: {destination_index}"
+        raise IndexError(msg)
+
+    logger.debug("Moving column from position %s to %s", source_index, destination_index)
+
+    positions = list(range(column_count))
+    positions.insert(destination_index, positions.pop(source_index))
+    return df.iloc[:, positions].copy()
 
 
 def safe_drop_column(
