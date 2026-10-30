@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QComboBox, QDialogButtonBox, QGroupBox
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
 from expo_jbm329.services.data_operations.reshape_conditions import ConditionColumn
+from expo_jbm329.services.data_operations.reshape_preview import ReshapeFunction
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import translate
@@ -62,6 +63,7 @@ def test_metrics_edit_add_remove_and_column_identity():
     assert [functions.itemData(index) for index in range(functions.count())] == [
         "SUM",
         "AVG",
+        "MEDIAN",
         "COUNT",
         "COUNT DISTINCT",
         "MAX",
@@ -334,7 +336,7 @@ def test_dimension_dtype_metadata_must_match_columns():
 
 def translate_guidance_source() -> str:
     return (
-        "SUM and AVG accept integer and floating-point columns only. "
+        "SUM, AVG and MEDIAN accept integer and floating-point columns only. "
         "MIN and MAX also accept datetime columns. "
         "COUNT and COUNT DISTINCT accept any column. "
         "Changing the function clears an incompatible source selection."
@@ -395,7 +397,7 @@ def test_metric_actions_require_nonblank_name_and_source_selection():
     dialog.close()
 
 
-@pytest.mark.parametrize("function", ["SUM", "AVG", "COUNT", "COUNT DISTINCT", "MAX", "MIN"])
+@pytest.mark.parametrize("function", ["SUM", "AVG", "MEDIAN", "COUNT", "COUNT DISTINCT", "MAX", "MIN"])
 def test_selecting_source_fills_only_blank_metric_names(function):
     dialog = make_dialog(("Sales amount", "Customer"), (0,))
     functions, columns = metric_controls(dialog)
@@ -448,10 +450,15 @@ def test_datetime_sources_are_available_for_min_max_and_count_only():
         functions.setCurrentText(function)
         assert offered_positions(columns) == [0, 1, 3]
     columns.setCurrentIndex(columns.findData(3))
+    functions.setCurrentText("MEDIAN")
+    assert offered_positions(columns) == [1]
+    assert columns.currentData() is None
+    functions.setCurrentText("MIN")
+    columns.setCurrentIndex(columns.findData(3))
     for function in ("MIN", "COUNT", "MAX", "COUNT DISTINCT", "MIN"):
         functions.setCurrentText(function)
         assert columns.currentData() == 3
-    for function in ("SUM", "AVG"):
+    for function in ("SUM", "AVG", "MEDIAN"):
         functions.setCurrentText("MAX")
         columns.setCurrentIndex(columns.findData(0))
         functions.setCurrentText(function)
@@ -461,7 +468,7 @@ def test_datetime_sources_are_available_for_min_max_and_count_only():
     dialog.close()
 
 
-@pytest.mark.parametrize("function", ["SUM", "AVG", "MAX", "MIN", "COUNT", "COUNT DISTINCT"])
+@pytest.mark.parametrize("function", ["SUM", "AVG", "MEDIAN", "MAX", "MIN", "COUNT", "COUNT DISTINCT"])
 def test_function_filters_source_columns_without_changing_dimensions(function):
     dialog = make_dialog()
     functions, columns = metric_controls(dialog)
@@ -480,7 +487,7 @@ def test_switch_preserves_eligible_selection_and_clears_incompatible_selection()
     functions, columns = metric_controls(dialog)
     assert offered_positions(columns) == [0, 3]
     columns.setCurrentIndex(columns.findData(0))
-    for function in ("AVG", "COUNT", "MAX", "MIN", "COUNT DISTINCT", "SUM"):
+    for function in ("AVG", "MEDIAN", "COUNT", "MAX", "MIN", "COUNT DISTINCT", "SUM"):
         functions.setCurrentText(function)
         assert columns.currentData() == 0
         assert columns.toolTip() == "1"
@@ -505,7 +512,7 @@ def test_no_numeric_columns_still_allows_count_functions(source_columns):
     dialog = make_dialog(source_columns, ())
     functions, columns = metric_controls(dialog)
     assert functions.isEnabled()
-    for function in ("SUM", "AVG", "MIN", "MAX"):
+    for function in ("SUM", "AVG", "MEDIAN", "MIN", "MAX"):
         functions.setCurrentText(function)
         assert offered_positions(columns) == []
         assert columns.currentIndex() == 0
@@ -513,6 +520,29 @@ def test_no_numeric_columns_still_allows_count_functions(source_columns):
         functions.setCurrentText(function)
         assert offered_positions(columns) == list(range(len(source_columns)))
     assert not dialog.apply_button.isEnabled()
+    dialog.close()
+
+
+def test_median_selection_captures_valid_preview_and_apply_request():
+    dialog = make_dialog()
+    functions, columns = metric_controls(dialog)
+    functions.setCurrentText("MEDIAN")
+    columns.setCurrentIndex(columns.findData(2))
+    dialog.metrics.item(0, 0).setText("Median value")
+
+    assert columns.currentData() == 2
+    assert dialog.preview_button.isEnabled()
+    assert dialog.apply_button.isEnabled()
+    request = dialog.capture_request()
+    assert request.metrics[0].function == ReshapeFunction.MEDIAN
+    assert request.metrics[0].source_position == 2
+
+    preview_requests = []
+    dialog.preview_requested.connect(preview_requests.append)
+    dialog._request_preview()
+    assert preview_requests == [request]
+    dialog._apply()
+    assert dialog.applied_request == request
     dialog.close()
 
 

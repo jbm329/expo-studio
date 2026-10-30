@@ -135,7 +135,7 @@ class ReshapeDialog(QDialog):
         metrics_layout = QVBoxLayout(metrics_box)
         self.source_column_guidance = QLabel(
             self.tr(
-                "SUM and AVG accept integer and floating-point columns only. "
+                "SUM, AVG and MEDIAN accept integer and floating-point columns only. "
                 "MIN and MAX also accept datetime columns. "
                 "COUNT and COUNT DISTINCT accept any column. "
                 "Changing the function clears an incompatible source selection."
@@ -234,7 +234,7 @@ class ReshapeDialog(QDialog):
         self.metrics.setItem(row, 0, name)
 
         functions = QComboBox(self.metrics)
-        for function in ("SUM", "AVG", "COUNT", "COUNT DISTINCT", "MAX", "MIN"):
+        for function in ("SUM", "AVG", "MEDIAN", "COUNT", "COUNT DISTINCT", "MAX", "MIN"):
             functions.addItem(function, function)
         functions.setAccessibleName(self.tr("Function"))
         self.metrics.setCellWidget(row, 1, functions)
