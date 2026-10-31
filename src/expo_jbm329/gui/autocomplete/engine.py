@@ -8,11 +8,11 @@ UI framework.
 from __future__ import annotations
 
 import logging
-from typing import Self
 
 from expo_jbm329.db.sql_analysis import TableRef, extract_table_refs
 
-MIN_QUOTED_IDENTIFIER_LENGTH = 2
+from .identifiers import identifier_completion, identifier_lookup_name, split_identifier_prefix
+
 SCHEMA_TABLE_PARTS = 2
 SCHEMA_TABLE_COLUMN_PARTS = 3
 
@@ -89,7 +89,7 @@ class SqlAutoCompleter:
 
         Args:
             sql: Full SQL editor text.
-            cursor_pos: Current cursor position in the editor text.
+            cursor_pos: Current cursor position as a Python string index.
             prefix: Prefix/token immediately before the cursor.
             dialect: Optional internal engine name or sqlglot dialect name.
 
@@ -98,7 +98,7 @@ class SqlAutoCompleter:
         """
         safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
-        safe_prefix = (prefix or "").strip()
+        safe_prefix = (prefix or "").lstrip()
 
         self._log.debug(
             "SqlAutoCompleter: contextual request prefix=%r cursor_pos=%s dialect=%r schema_count=%s",
@@ -139,7 +139,8 @@ class SqlAutoCompleter:
         """Get autocomplete suggestions based on the provided text.
 
         Parses the text to determine if it's a schema, table, or column prefix
-        and returns matching objects from the schema.
+        and returns matching raw metadata names. Quoted components are decoded
+        for lookup; dots and whitespace inside delimiters are literal characters.
 
         Args:
             text: The text prefix to get suggestions for.
@@ -147,17 +148,17 @@ class SqlAutoCompleter:
         Returns:
             A list of matching object names.
         """
-        text = (text or "").strip()
+        text = (text or "").lstrip()
         if not text:
             return []
 
-        if "." in text:
-            parts = text.split(".")
-
+        source_parts = split_identifier_prefix(text)
+        parts = tuple(identifier_lookup_name(part) for part in source_parts)
+        if len(parts) > 1:
             # schema. OR table.
             if len(parts) == SCHEMA_TABLE_PARTS:
                 first, second = parts
-                if text.endswith("."):
+                if not source_parts[-1]:
                     schema_key = self._resolve_schema_ci(first)
                     if schema_key:
                         return self._list_tables(schema_key)
@@ -180,19 +181,19 @@ class SqlAutoCompleter:
             # schema.table. OR schema.table.colprefix
             if len(parts) == SCHEMA_TABLE_COLUMN_PARTS:
                 schema, table, colprefix = parts
-                if text.endswith("."):
+                if not source_parts[-1]:
                     return self._list_columns(schema, table)
                 return self._filter_starts_with(self._list_columns(schema, table), colprefix)
 
         # table. (no schema)
-        if text.endswith("."):
-            table = text[:-1]
+        if len(parts) > 1 and not source_parts[-1]:
+            table = ".".join(parts[:-1])
             table_schema = self._find_schema_for_table(table)
             return self._list_columns(table_schema, table) if table_schema else []
 
         # table.prefix (no schema)
-        if "." in text:
-            table, colprefix = text.split(".", 1)
+        if len(parts) > 1:
+            table, colprefix = parts[0], ".".join(parts[1:])
             table_schema = self._find_schema_for_table(table)
             if table_schema:
                 return self._filter_starts_with(self._list_columns(table_schema, table), colprefix)
@@ -205,7 +206,8 @@ class SqlAutoCompleter:
         """Get suggestions from all schemas, tables, and columns matching the prefix.
 
         Args:
-            prefix: The prefix to search for across all object types.
+            prefix: Editor prefix to search for across all object types. A single
+                quoted or unfinished quoted component is decoded for matching.
 
         Returns:
             A list of matching schema, table, and column names.
@@ -213,7 +215,8 @@ class SqlAutoCompleter:
         if not prefix:
             return []
 
-        pref = prefix.lower()
+        source_parts = split_identifier_prefix(prefix)
+        pref = (identifier_lookup_name(prefix) if len(source_parts) == 1 else prefix).lower()
         col_set = set()
         tables: list[str] = []
         schemas: list[str] = []
@@ -277,12 +280,14 @@ class SqlAutoCompleter:
             Matching column suggestions, or an empty list when no alias context
             can be resolved.
         """
-        if "." not in prefix:
-            self._log.debug("SqlAutoCompleter: prefix has no dot; not alias-qualified: %r", prefix)
+        parts = split_identifier_prefix(prefix)
+        if len(parts) != SCHEMA_TABLE_PARTS:
+            self._log.debug("SqlAutoCompleter: prefix is not a single alias-qualified column: %r", prefix)
             return []
 
-        qualifier, col_prefix = prefix.rsplit(".", 1)
+        qualifier, col_prefix_source = parts
         qualifier = qualifier.strip()
+        col_prefix = identifier_lookup_name(col_prefix_source)
         if not qualifier:
             self._log.debug("SqlAutoCompleter: empty qualifier for prefix=%r", prefix)
             return []
@@ -317,7 +322,7 @@ class SqlAutoCompleter:
                 refs,
             )
 
-        ref = self._resolve_ref_for_qualifier(refs, qualifier)
+        ref = self._resolve_ref_for_qualifier(refs, identifier_lookup_name(qualifier))
         self._log.debug("SqlAutoCompleter: resolved qualifier=%r to ref=%s", qualifier, ref)
 
         if ref is None:
@@ -365,69 +370,18 @@ class SqlAutoCompleter:
 
         return None
 
-    # ------------------------------------------------------------------ #
-    @classmethod
-    def _normalize_identifier(cls: type[Self], value: str | None) -> str:
-        """Normalize an SQL identifier for lookup.
-
-        Removes common SQL quoting styles used by supported dialects:
-        - [identifier] for SQL Server
-        - "identifier" for PostgreSQL/SQLite/Oracle
-        - `identifier` for MySQL/MariaDB
-
-        Args:
-            value: Identifier text.
-
-        Returns:
-            Unquoted identifier text.
-        """
-        text = (value or "").strip()
-
-        if len(text) >= MIN_QUOTED_IDENTIFIER_LENGTH:
-            if text.startswith("[") and text.endswith("]"):
-                return text[1:-1].replace("]]", "]")
-
-            if text.startswith('"') and text.endswith('"'):
-                return text[1:-1].replace('""', '"')
-
-            if text.startswith("`") and text.endswith("`"):
-                return text[1:-1].replace("``", "`")
-
-        return text
-
-    @classmethod
-    def _normalize_qualified_identifier(cls: type[Self], value: str | None) -> str:
-        """Normalize a possibly qualified SQL identifier.
-
-        Examples:
-            [dbo].[Table] -> dbo.Table
-            "public"."users" -> public.users
-            `db`.`users` -> db.users
-
-        Args:
-            value: Identifier text.
-
-        Returns:
-            Normalized identifier text.
-        """
-        text = (value or "").strip()
-        if "." not in text:
-            return cls._normalize_identifier(text)
-
-        return ".".join(cls._normalize_identifier(part) for part in text.split("."))
-
     def _resolve_schema_ci(self, schema: str | None) -> str | None:
-        s = self._normalize_identifier(schema).lower()
+        s = schema.lower() if schema is not None else ""
         for k in self._schema:
-            if self._normalize_identifier(k).lower() == s:
+            if k.lower() == s:
                 return k
         return None
 
     def _find_schema_for_table(self, table: str | None) -> str | None:
-        table_l = self._normalize_identifier(table).lower()
+        table_l = table.lower() if table is not None else ""
         for schema, tbls in self._schema.items():
             for t in tbls:
-                if self._normalize_identifier(t).lower() == table_l:
+                if t.lower() == table_l:
                     return schema
         return None
 
@@ -435,9 +389,8 @@ class SqlAutoCompleter:
         key = self._resolve_schema_ci(schema)
         if key is None:
             self._log.debug(
-                "SqlAutoCompleter: no schema match while listing tables schema=%r normalized=%r available=%s",
+                "SqlAutoCompleter: no schema match while listing tables schema=%r available=%s",
                 schema,
-                self._normalize_identifier(schema),
                 list(self._schema.keys()),
             )
             return []
@@ -447,18 +400,17 @@ class SqlAutoCompleter:
         skey = self._resolve_schema_ci(schema)
         if skey is None:
             self._log.debug(
-                "SqlAutoCompleter: no schema match for schema=%r normalized=%r available=%s",
+                "SqlAutoCompleter: no schema match for schema=%r available=%s",
                 schema,
-                self._normalize_identifier(schema),
                 list(self._schema.keys()),
             )
             return []
 
-        t = self._normalize_identifier(table).lower()
+        t = table.lower() if table is not None else ""
         available_tables = list(self._schema.get(skey, {}).keys())
 
         for tbl_name, cols in self._schema.get(skey, {}).items():
-            if self._normalize_identifier(tbl_name).lower() == t:
+            if tbl_name.lower() == t:
                 self._log.debug(
                     "SqlAutoCompleter: table match schema=%r table=%r columns_count=%s",
                     skey,
@@ -468,10 +420,9 @@ class SqlAutoCompleter:
                 return cols
 
         self._log.debug(
-            "SqlAutoCompleter: no table match for schema=%r table=%r normalized_table=%r available_tables=%s",
+            "SqlAutoCompleter: no table match for schema=%r table=%r available_tables=%s",
             skey,
             table,
-            self._normalize_identifier(table),
             available_tables[:25],
         )
         return []
@@ -536,12 +487,11 @@ class SqlAutoCompleter:
         safe_sql = sql
         safe_cursor_pos = max(0, min(int(cursor_pos), len(safe_sql)))
         start = max(0, safe_cursor_pos - len(prefix))
-
-        if start > safe_cursor_pos:
-            return safe_sql
+        context = identifier_completion(safe_sql, safe_cursor_pos)
+        end = context.end if context is not None else safe_cursor_pos
 
         placeholder = f"{qualifier}.__expo_dummy_col"
-        return f"{safe_sql[:start]}{placeholder}{safe_sql[safe_cursor_pos:]}"
+        return f"{safe_sql[:start]}{placeholder}{safe_sql[end:]}"
 
         # ------------------------------------------------------------------ #
 

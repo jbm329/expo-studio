@@ -1,6 +1,7 @@
 import pytest
 
 from expo_jbm329.gui.autocomplete.engine import SqlAutoCompleter
+from expo_jbm329.gui.autocomplete.identifiers import quote_identifier
 
 
 @pytest.fixture
@@ -116,3 +117,69 @@ def test_filter_starts_with():
     assert SqlAutoCompleter._filter_starts_with(items, "a") == ["Apple"]
     assert SqlAutoCompleter._filter_starts_with(items, "B") == ["banana"]
     assert SqlAutoCompleter._filter_starts_with(items, "xyz") == []
+
+
+@pytest.mark.parametrize("dialect", ["tsql", "postgres", "mysql", "sqlite", "duckdb", None])
+def test_quoted_schema_table_column_chain_keeps_suggestions_plain(dialect):
+    c = SqlAutoCompleter()
+    schema = 'my.schema]"`'
+    table = 'order details]"`'
+    columns = ["select", "Column.With.Dot", ' a]"` ', '"literal"']
+    c.set_schema({schema: {table: columns}})
+    schema_source = quote_identifier(schema, dialect)
+    table_source = quote_identifier(table, dialect)
+
+    assert c.get_suggestions(schema_source + ".") == [table]
+    assert c.get_suggestions(schema_source + "." + table_source + ".") == columns
+    assert c.get_suggestions(table_source + ".") == columns
+    assert c.get_suggestions(schema_source + "." + table_source + "." + quote_identifier("Column.", dialect)) == [
+        "Column.With.Dot"
+    ]
+    assert c.get_suggestions(quote_identifier("my.", dialect)) == [schema]
+
+
+@pytest.mark.parametrize("opening", ['"', "[", "`"])
+def test_partial_quoted_prefixes(completer, opening):
+    assert completer.get_suggestions(opening + "user") == ["user_id", "username", "users"]
+    assert completer.get_global_suggestions(opening + "user") == ["user_id", "username", "users"]
+    assert completer.get_suggestions("public." + opening + "us") == ["users"]
+    assert completer.get_suggestions("public.users." + opening + "us") == ["username"]
+
+
+def test_raw_metadata_delimiters_and_significant_spaces_are_not_normalized():
+    c = SqlAutoCompleter()
+    c.set_schema({'"schema"': {"[table]": [" has space", " has other"], "table": ["different"]}})
+    assert c.get_suggestions('"""schema""".') == ["[table]", "table"]
+    assert c.get_suggestions('"""schema"""."[table]".') == [" has space", " has other"]
+    assert c.get_suggestions('"[table]"." has ') == [" has space", " has other"]
+    assert c.get_global_suggestions('" has ') == [" has other", " has space"]
+
+
+@pytest.mark.parametrize("dialect", ["mssql", "tsql", "postgresql", "postgres", "mysql", "mariadb", "sqlite", "duckdb"])
+@pytest.mark.parametrize("partial_column", [False, True])
+def test_quoted_alias_context_and_existing_column_suffix(dialect, partial_column):
+    c = SqlAutoCompleter()
+    schema, table, alias = 'my.schema]"`', "[my table]", 'a.lias]"`'
+    c.set_schema({schema: {table: ["username", "user_id", "id"]}})
+    q_schema = quote_identifier(schema, dialect)
+    q_table = quote_identifier(table, dialect)
+    q_alias = quote_identifier(alias, dialect)
+    column = quote_identifier("us", dialect)
+    before = f"SELECT {q_alias}." + (column[:-1] if partial_column else "")
+    after = (column[-1] if partial_column else "") + f" FROM {q_schema}.{q_table} AS {q_alias}"
+    prefix = f"{q_alias}." + (column[:-1] if partial_column else "")
+
+    assert c.get_contextual_suggestions(before + after, len(before), prefix, dialect=dialect) == (
+        ["username", "user_id"] if partial_column else ["username", "user_id", "id"]
+    )
+
+
+def test_unquoted_alias_behavior_is_preserved(completer):
+    before = "SELECT u.us"
+    sql = before + " FROM public.users u"
+    assert completer.get_contextual_suggestions(sql, len(before), "u.us", dialect="postgres") == ["username"]
+
+
+def test_qualified_global_prefix_does_not_match_only_its_first_component(completer):
+    assert completer.get_global_suggestions('"public"."users".') == []
+    assert completer.get_suggestions('"public"."users".unknown.extra') == []
