@@ -7664,6 +7664,18 @@ Hint: {error_hint}</source>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation type="unfinished" />
@@ -11052,4 +11064,23 @@ Shortcut: Ctrl+Z</source>
         <source>Analyze data</source>
         <translation type="unfinished" />
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation type="unfinished" />
+    </message>
+</context>
+</TS>

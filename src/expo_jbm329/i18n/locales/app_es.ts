@@ -7742,6 +7742,18 @@ Sugerencia: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Selecciona una columna de ordenación para cada métrica FIRST/LAST.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST aceptan cualquier columna de valores. Ordena por una columna numérica o de fecha/hora: FIRST selecciona el valor más bajo/antiguo, LAST el más alto/reciente. Las condiciones filtran las filas antes de ordenar. Se excluyen los valores de ordenación ausentes; se conservan los valores ausentes seleccionados. En caso de empate, se usa el orden de las filas de origen.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST requieren una columna de ordenación numérica o de fecha/hora. Este conjunto de datos no tiene ninguna. Convierte el tipo de datos de una columna de ordenación antes de remodelar, o elige otra función.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Remodelar — {dataset} ({rows} filas × {columns} columnas)</translation>
@@ -11188,4 +11200,23 @@ Atajo: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analizar datos</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Columna de origen</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Valor</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Ordenar por</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Seleccionar columna de ordenación</translation>
+    </message>
+</context>
+</TS>

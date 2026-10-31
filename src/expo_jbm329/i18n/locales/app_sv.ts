@@ -7742,6 +7742,18 @@ Tips: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Välj en sorteringskolumn för varje FIRST/LAST-mått.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST tillåter valfri värdekolumn. Sortera efter en numerisk kolumn eller en datum/tid-kolumn: FIRST väljer det lägsta/tidigaste, LAST det högsta/senaste. Villkor filtrerar rader före sortering. Saknade sorteringsvärden utesluts; valda saknade värden behålls. Vid lika sorteringsvärden används källans radordning.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST kräver en numerisk sorteringskolumn eller en datum/tid-kolumn. Detta dataset saknar en sådan. Konvertera sorteringskolumnens datatyp före omformning, eller välj en annan funktion.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Omforma — {dataset} ({rows} rader × {columns} kolumner)</translation>
@@ -11187,4 +11199,23 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Källkolumn</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Sortera efter</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Välj sorteringskolumn</translation>
+    </message>
+</context>
+</TS>

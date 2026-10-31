@@ -7742,6 +7742,18 @@ Hinweis: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Wählen Sie für jede FIRST/LAST-Kennzahl eine Sortierspalte.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST erlauben jede Wertespalte. Sortieren Sie nach einer numerischen oder Datum/Uhrzeit-Spalte: FIRST wählt den niedrigsten/frühesten, LAST den höchsten/spätesten Wert. Bedingungen filtern Zeilen vor der Sortierung. Fehlende Sortierwerte werden ausgeschlossen; ausgewählte fehlende Werte bleiben erhalten. Bei gleichen Sortierwerten gilt die Zeilenreihenfolge der Quelle.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST benötigen eine numerische oder Datum/Uhrzeit-Sortierspalte. Dieser Datensatz enthält keine solche Spalte. Konvertieren Sie vor dem Umformen den Datentyp einer Sortierspalte oder wählen Sie eine andere Funktion.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Umformen — {dataset} ({rows} Zeilen × {columns} Spalten)</translation>
@@ -11188,4 +11200,23 @@ Tastenkombination: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Daten analysieren</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Quellspalte</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Wert</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Sortieren nach</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Sortierspalte auswählen</translation>
+    </message>
+</context>
+</TS>

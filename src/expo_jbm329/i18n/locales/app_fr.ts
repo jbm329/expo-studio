@@ -7742,6 +7742,18 @@ Conseil : {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Sélectionnez une colonne de tri pour chaque mesure FIRST/LAST.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST acceptent toute colonne de valeurs. Triez selon une colonne numérique ou de date/heure : FIRST sélectionne la valeur la plus basse/ancienne, LAST la plus haute/récente. Les conditions filtrent les lignes avant le tri. Les valeurs de tri manquantes sont exclues ; les valeurs manquantes sélectionnées sont conservées. En cas d'égalité, l'ordre des lignes source est utilisé.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST nécessitent une colonne de tri numérique ou de date/heure. Ce jeu de données n'en contient aucune. Convertissez le type d'une colonne de tri avant de remodeler les données, ou choisissez une autre fonction.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Remodeler — {dataset} ({rows} lignes × {columns} colonnes)</translation>
@@ -11188,4 +11200,23 @@ Raccourci : Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analyser les données</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Colonne source</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Valeur</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Trier selon</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Sélectionner la colonne de tri</translation>
+    </message>
+</context>
+</TS>

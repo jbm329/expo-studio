@@ -27,7 +27,7 @@ def setup_preview():
         numeric_column_positions=(1,),
         datetime_column_positions=(),
     )
-    dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
     dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
     async_ops = MagicMock()
     job = QObject()

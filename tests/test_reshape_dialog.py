@@ -3,14 +3,17 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QComboBox, QDialogButtonBox, QGroupBox
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
+from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
 from expo_jbm329.services.data_operations.reshape_conditions import ConditionColumn
-from expo_jbm329.services.data_operations.reshape_preview import ReshapeFunction
+from expo_jbm329.services.data_operations.reshape_preview import ReshapeError, ReshapeFunction, ReshapePreview
 from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import translate
@@ -25,7 +28,14 @@ def make_dialog(
         parent=None,
         source_dataset=DatasetRef("source", "Source <dataset>", 1234, len(columns)),
         source_columns=columns,
-        source_dtypes=tuple("int64" if position in numeric_positions else "string" for position in range(len(columns))),
+        source_dtypes=tuple(
+            "int64"
+            if position in numeric_positions
+            else "datetime64[ns]"
+            if position in datetime_positions
+            else "string"
+            for position in range(len(columns))
+        ),
         numeric_column_positions=numeric_positions,
         datetime_column_positions=datetime_positions,
     )
@@ -33,6 +43,12 @@ def make_dialog(
 
 def test_fixed_title_dimensions_and_initial_preview():
     dialog = make_dialog()
+    source_cell = dialog.metrics.cellWidget(0, 2)
+    assert isinstance(source_cell, MetricSourceCell)
+    assert source_cell.value.accessibleName() == translate("MetricSourceCell", "Source column")
+    assert source_cell.order.accessibleName() == translate("MetricSourceCell", "Order by")
+    assert source_cell.value_label.text() == translate("MetricSourceCell", "Value")
+    assert source_cell.order.itemText(0) == translate("MetricSourceCell", "Select ordering column")
     assert dialog.metrics.horizontalHeaderItem(0).text() == "Metric name"
     assert dialog.windowTitle() == f"Reshape — Source <dataset> ({fmt_int(1234)} rows × {fmt_int(3)} columns)"
     assert dialog.windowFlags() & Qt.WindowType.WindowMaximizeButtonHint
@@ -68,10 +84,12 @@ def test_metrics_edit_add_remove_and_column_identity():
         "COUNT DISTINCT",
         "MAX",
         "MIN",
+        "FIRST",
+        "LAST",
     ]
     assert functions.currentData() == "SUM"
     functions.setCurrentText("COUNT")
-    columns = metrics.cellWidget(0, 2)
+    columns = metrics.cellWidget(0, 2).value
     assert isinstance(columns, QComboBox)
     assert columns.currentData() is None
     assert [columns.itemData(index) for index in range(1, columns.count())] == [0, 1, 2]
@@ -146,7 +164,7 @@ def test_button_labels_and_alignment_match_join(qt_app) -> None:
 def test_empty_source_and_cancel_button():
     dialog = make_dialog((), ())
     assert dialog.dimensions.count() == 0
-    columns = dialog.metrics.cellWidget(0, 2)
+    columns = dialog.metrics.cellWidget(0, 2).value
     assert isinstance(columns, QComboBox)
     assert columns.count() == 1
     assert not dialog.apply_button.isEnabled()
@@ -168,6 +186,36 @@ def test_compiled_reshape_translations(qt_app, language):
     qt_app.installTranslator(translator)
     try:
         dialog = make_dialog()
+        source_cell = dialog.metrics.cellWidget(0, 2)
+        assert isinstance(source_cell, MetricSourceCell)
+        assert source_cell.value.accessibleName() == translate("MetricSourceCell", "Source column")
+        assert source_cell.order.accessibleName() == translate("MetricSourceCell", "Order by")
+        assert source_cell.value_label.text() == translate("MetricSourceCell", "Value")
+        assert source_cell.order_label.text() == translate("MetricSourceCell", "Order by")
+        assert source_cell.order.itemText(0) == translate("MetricSourceCell", "Select ordering column")
+        dialog.metrics.cellWidget(0, 1).setCurrentText("FIRST")
+        guidance = (
+            "FIRST/LAST accept any value column. Order by a numeric or datetime column: "
+            "FIRST selects the lowest/earliest, LAST the highest/latest. "
+            "Conditions filter rows before ordering. Missing ordering values are excluded; "
+            "selected missing values are kept. Ties use source row order."
+        )
+        assert dialog.ordering_guidance.text() == translate("ReshapeDialog", guidance)
+        assert dialog.preview_button.toolTip() == translate(
+            "ReshapeDialog", "Select an ordering column for every FIRST/LAST metric."
+        )
+        no_order = make_dialog(("text",), ())
+        no_order.metrics.cellWidget(0, 1).setCurrentText("LAST")
+        unavailable = (
+            "FIRST/LAST require a numeric or datetime ordering column. "
+            "This dataset has none. Convert an ordering column's datatype before reshaping, "
+            "or choose another function."
+        )
+        assert no_order.ordering_guidance.text() == translate("ReshapeDialog", unavailable)
+        if language != "en":
+            assert dialog.ordering_guidance.text() != guidance
+            assert no_order.ordering_guidance.text() != unavailable
+        no_order.close()
         assert dialog.metrics.cellWidget(0, 3).button.toolTip() == translate("ConditionEditor", "Condition builder")
         editor = dialog.metrics.cellWidget(0, 3)
         editor.text.setText("[missing] = 'anything'")
@@ -191,6 +239,11 @@ def test_compiled_reshape_translations(qt_app, language):
                 "Configure metrics and press Preview to calculate up to five output rows."
             )
             for context, source in (
+                ("MetricSourceCell", "Source column"),
+                ("MetricSourceCell", "Value"),
+                ("MetricSourceCell", "Order by"),
+                ("MetricSourceCell", "Select ordering column"),
+                ("ReshapeDialog", "Select an ordering column for every FIRST/LAST metric."),
                 ("ToolbarController", "Reshape"),
                 ("ResultTabManager", "Reshape…"),
                 ("ReshapeController", "Reshape unavailable"),
@@ -252,6 +305,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
             source = message.findtext("source", "")
             if name not in {
                 "ReshapeDialog",
+                "MetricSourceCell",
                 "ReshapeController",
                 "ConditionDialog",
                 "ConditionEditor",
@@ -287,7 +341,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 103
+    assert checked == 110
 
 
 def test_dimension_search_preserves_checks_order_and_identity():
@@ -349,7 +403,9 @@ def translate_guidance_source() -> str:
 
 def metric_controls(dialog, row=0):
     functions = dialog.metrics.cellWidget(row, 1)
-    columns = dialog.metrics.cellWidget(row, 2)
+    source = dialog.metrics.cellWidget(row, 2)
+    assert isinstance(source, MetricSourceCell)
+    columns = source.value
     assert isinstance(functions, QComboBox)
     assert isinstance(columns, QComboBox)
     return functions, columns
@@ -357,13 +413,13 @@ def metric_controls(dialog, row=0):
 
 def complete_metric(dialog: ReshapeDialog, row: int) -> None:
     dialog.metrics.item(row, 0).setText(f"Metric {row}")
-    dialog.metrics.cellWidget(row, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(row, 2).value.setCurrentIndex(1)
 
 
 def test_metric_actions_require_nonblank_name_and_source_selection():
     dialog = make_dialog()
     editor = dialog.metrics.cellWidget(0, 3)
-    columns = dialog.metrics.cellWidget(0, 2)
+    columns = dialog.metrics.cellWidget(0, 2).value
     assert editor.button.toolTip() == "Condition builder"
     assert not editor.button.isEnabled()
     assert not dialog.add_metric_button.isEnabled()
@@ -428,7 +484,7 @@ def test_selecting_source_fills_only_blank_metric_names(function):
 
 def test_default_name_callback_follows_metric_after_earlier_row_removed():
     dialog = make_dialog((1, "Text"), (0,))
-    columns = dialog.metrics.cellWidget(0, 2)
+    columns = dialog.metrics.cellWidget(0, 2).value
     columns.setCurrentIndex(1)
     assert dialog.metrics.item(0, 0).text() == "Sum 1"
     dialog.add_metric_button.click()
@@ -593,4 +649,255 @@ def test_metric_callbacks_remain_independent_after_removing_earlier_row():
     assert offered_positions(new_columns) == [0, 2]
     assert new_columns.currentData() is None
     assert not dialog.apply_button.isEnabled()
+    dialog.close()
+
+
+@pytest.mark.parametrize("function", ["FIRST", "LAST"])
+def test_inline_ordering_layout_accessibility_and_gating(qt_app, function: str) -> None:
+    dialog = make_dialog(("Status", "Amount", "Visit date"), (1,), (2,))
+    dialog.show()
+    qt_app.processEvents()
+    functions, columns = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    condition = dialog.metrics.cellWidget(0, 3)
+    normal_height = dialog.metrics.rowHeight(0)
+    assert dialog.metrics.columnCount() == 4
+    assert not source.value_label.isVisible()
+    assert not source.order.isVisible()
+    assert not dialog.ordering_guidance.isVisible()
+    functions.setCurrentText(function)
+    qt_app.processEvents()
+    assert source.value_label.isVisible() and source.order_label.isVisible() and source.order.isVisible()
+    assert source.value_label.text() == "Value"
+    assert source.order_label.text() == "Order by"
+    assert source.value_label.buddy() is columns
+    assert source.order_label.buddy() is source.order
+    assert source.value.accessibleName() == "Source column"
+    assert source.order.accessibleName() == "Order by"
+    assert source.focusProxy() is source.value
+    assert dialog.metrics.rowHeight(0) > normal_height
+    assert source.order.geometry().top() >= source.value.geometry().bottom()
+    assert dialog.metrics.cellWidget(0, 3) is condition
+    assert dialog.ordering_guidance.isVisible()
+    assert "Conditions filter rows before ordering" in dialog.ordering_guidance.text()
+    assert offered_positions(columns) == [0, 1, 2]
+    assert offered_positions(source.order) == [1, 2]
+    assert source.order.currentData() is None
+    columns.setCurrentIndex(columns.findData(0))
+    assert dialog.metrics.item(0, 0).text() == f"{function.capitalize()} Status"
+    assert condition.button.isEnabled()
+    requested = []
+    dialog.condition_requested.connect(requested.append)
+    condition.button.click()
+    assert requested == [condition]
+    assert not dialog.add_metric_button.isEnabled()
+    assert not dialog.preview_button.isEnabled() and not dialog.apply_button.isEnabled()
+    assert "ordering column" in dialog.preview_button.toolTip()
+    with pytest.raises(ReshapeError):
+        dialog.capture_request()
+    source.order.setCurrentIndex(source.order.findData(2))
+    assert dialog.add_metric_button.isEnabled()
+    assert dialog.preview_button.isEnabled() and dialog.apply_button.isEnabled()
+    request = dialog.capture_request()
+    assert request.metrics[0].order_position == 2
+    assert request.metrics[0].source_position == 0
+    columns.setCurrentIndex(columns.findData(1))
+    functions.setCurrentText("SUM")
+    qt_app.processEvents()
+    assert not source.order.isVisible() and not source.value_label.isVisible()
+    assert not dialog.ordering_guidance.isVisible()
+    assert dialog.metrics.rowHeight(0) == normal_height
+    assert dialog.capture_request().metrics[0].order_position is None
+    dialog.close()
+
+
+def test_order_selection_retained_but_ignored_for_ordinary_functions() -> None:
+    dialog = make_dialog(("Status", "Amount", "Date"), (1,), (2,))
+    functions, columns = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    functions.setCurrentText("FIRST")
+    columns.setCurrentIndex(columns.findData(0))
+    source.order.setCurrentIndex(source.order.findData(2))
+    dialog.metrics.item(0, 0).setText("Custom metric")
+    condition = dialog.metrics.cellWidget(0, 3)
+    condition.text.setText("[Amount] > 0")
+    assert dialog.validate_conditions()
+    first = dialog.capture_request()
+    for function in ("LAST", "COUNT", "FIRST"):
+        functions.setCurrentText(function)
+        assert columns.currentData() == 0
+        assert source.order.currentData() == 2
+        assert source.order_position == (None if function == "COUNT" else 2)
+        assert dialog.capture_request().metrics[0].order_position == source.order_position
+        assert dialog.metrics.item(0, 0).text() == "Custom metric"
+        assert condition.text.text() == "[Amount] > 0"
+    functions.setCurrentText("SUM")
+    assert columns.currentData() is None
+    assert not condition.button.isEnabled()
+    columns.setCurrentIndex(columns.findData(1))
+    assert dialog.apply_button.isEnabled()
+    assert dialog.capture_request().metrics[0].order_position is None
+    functions.setCurrentText("LAST")
+    assert columns.currentData() == 1 and source.order.currentData() == 2
+    source.order.setCurrentIndex(source.order.findData(1))
+    assert first.metrics[0].order_position == 2
+    assert dialog.capture_request().metrics[0].order_position == 1
+    dialog.close()
+
+
+@pytest.mark.parametrize("columns", [(), ("Text", "Flag")])
+def test_no_ordering_columns_has_actionable_guidance_and_keeps_count_usable(columns: tuple[str, ...]) -> None:
+    dialog = make_dialog(columns, ())
+    functions, values = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    for function in ("FIRST", "LAST"):
+        functions.setCurrentText(function)
+        assert source.order.count() == 1 and source.order.currentData() is None
+        assert offered_positions(values) == list(range(len(columns)))
+        assert "This dataset has none" in dialog.ordering_guidance.text()
+        assert not dialog.apply_button.isEnabled()
+    if columns:
+        values.setCurrentIndex(1)
+        assert dialog.metrics.cellWidget(0, 3).button.isEnabled()
+        assert not dialog.add_metric_button.isEnabled()
+        functions.setCurrentText("COUNT")
+        assert dialog.apply_button.isEnabled()
+        assert dialog.capture_request().metrics[0].order_position is None
+    dialog.close()
+
+
+def test_ordering_filter_uses_dtype_metadata_and_positional_identity() -> None:
+    columns = ("duplicate", "duplicate", "duplicate", "bool", "complex", "category", "duration", "date text")
+    dialog = ReshapeDialog(
+        parent=None,
+        source_dataset=DatasetRef("source", "Source", 3, len(columns)),
+        source_columns=columns,
+        source_dtypes=(
+            "Int64",
+            "datetime64[ns, UTC]",
+            "string",
+            "boolean",
+            "complex128",
+            "category",
+            "timedelta64[ns]",
+            "object",
+        ),
+        numeric_column_positions=(0,),
+        datetime_column_positions=(1,),
+    )
+    functions, values = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    functions.setCurrentText("LAST")
+    assert offered_positions(source.order) == [0, 1]
+    assert offered_positions(values) == list(range(len(columns)))
+    values.setCurrentIndex(values.findData(2))
+    source.order.setCurrentIndex(source.order.findData(1))
+    assert source.order.toolTip() == "duplicate"
+    assert source.order.itemData(2, Qt.ItemDataRole.ToolTipRole) == "duplicate"
+    request = dialog.capture_request()
+    assert request.metrics[0].source_position == 2 and request.metrics[0].order_position == 1
+    dialog.close()
+
+
+def test_ordering_rows_stay_independent_when_an_earlier_row_is_removed(qt_app) -> None:
+    dialog = make_dialog(("Status", "Amount", "Date"), (1,), (2,))
+    complete_metric(dialog, 0)
+    dialog.add_metric_button.click()
+    functions, values = metric_controls(dialog, 1)
+    first = dialog.metrics.cellWidget(1, 2)
+    functions.setCurrentText("FIRST")
+    values.setCurrentIndex(values.findData(0))
+    first.order.setCurrentIndex(first.order.findData(2))
+    dialog.add_metric_button.click()
+    second_function, second_value = metric_controls(dialog, 2)
+    second = dialog.metrics.cellWidget(2, 2)
+    second_function.setCurrentText("LAST")
+    second_value.setCurrentIndex(second_value.findData(0))
+    dialog.metrics.item(2, 0).setText("Last status")
+    second.order.setCurrentIndex(second.order.findData(1))
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    functions.setCurrentText("COUNT")
+    qt_app.processEvents()
+    assert not first.requires_order and second.requires_order
+    assert dialog.metrics.rowHeight(1) > dialog.metrics.rowHeight(0)
+    request = dialog.capture_request()
+    assert [metric.order_position for metric in request.metrics] == [None, 1]
+    functions.setCurrentText("LAST")
+    assert first.order.currentData() == 2
+    first.order.setCurrentIndex(0)
+    assert second.order.currentData() == 1
+    assert not dialog.add_metric_button.isEnabled() and not dialog.apply_button.isEnabled()
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    assert dialog.apply_button.isEnabled()
+    dialog.metrics.selectRow(0)
+    dialog.remove_metric_button.click()
+    assert dialog.ordering_guidance.isHidden()
+    dialog.close()
+
+
+def test_ordering_edits_invalidate_preview_and_keep_condition_errors_gating() -> None:
+    dialog = make_dialog()
+    functions, values = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    functions.setCurrentText("FIRST")
+    values.setCurrentIndex(values.findData(1))
+    source.order.setCurrentIndex(source.order.findData(0))
+    captured = dialog.capture_request()
+    dialog.show_preview(ReshapePreview(captured, pd.DataFrame({"First VisitId": ["value"]}), 1))
+    revision = dialog.revision
+    changes = []
+    dialog.configuration_changed.connect(lambda: changes.append(dialog.revision))
+    source.order.setCurrentIndex(source.order.findData(2))
+    assert dialog.revision == revision + 1 and changes == [revision + 1]
+    assert "out of date" in dialog.preview_placeholder.text()
+    assert dialog.preview_table.isHidden()
+    assert captured.metrics[0].order_position == 0
+    assert dialog.capture_request().metrics[0].order_position == 2
+    condition = dialog.metrics.cellWidget(0, 3)
+    condition.text.setText("[Value] > '1'")
+    assert not dialog.validate_conditions()
+    assert not dialog.apply_button.isEnabled()
+    condition.text.setText("[Value] > 1")
+    assert dialog.validate_conditions()
+    assert dialog.apply_button.isEnabled()
+    source.order.setCurrentIndex(0)
+    assert not dialog.apply_button.isEnabled()
+    assert condition.button.isEnabled()
+    dialog.close()
+
+
+@pytest.mark.parametrize("function", ["SUM", "FIRST", "LAST"])
+def test_keyboard_navigation_visits_order_only_when_required(qt_app, function: str) -> None:
+    dialog = make_dialog()
+    functions, _ = metric_controls(dialog)
+    source = dialog.metrics.cellWidget(0, 2)
+    functions.setCurrentText(function)
+    complete_metric(dialog, 0)
+    if source.requires_order:
+        source.order.setCurrentIndex(1)
+    condition = dialog.metrics.cellWidget(0, 3)
+    dialog.show()
+    dialog.activateWindow()
+    qt_app.processEvents()
+    functions.setFocus()
+    QTest.keyClick(functions, Qt.Key.Key_Tab)
+    assert qt_app.focusWidget() is source.value
+    QTest.keyClick(source.value, Qt.Key.Key_Tab)
+    if source.requires_order:
+        assert qt_app.focusWidget() is source.order
+        QTest.keyClick(source.order, Qt.Key.Key_Tab)
+    assert qt_app.focusWidget() is condition.text
+    QTest.keyClick(condition.text, Qt.Key.Key_Tab)
+    assert qt_app.focusWidget() is condition.button
+    QTest.keyClick(condition.button, Qt.Key.Key_Backtab)
+    assert qt_app.focusWidget() is condition.text
+    QTest.keyClick(condition.text, Qt.Key.Key_Backtab)
+    if source.requires_order:
+        assert qt_app.focusWidget() is source.order
+        QTest.keyClick(source.order, Qt.Key.Key_Backtab)
+    assert qt_app.focusWidget() is source.value
+    QTest.keyClick(source.value, Qt.Key.Key_Backtab)
+    assert qt_app.focusWidget() is functions
     dialog.close()

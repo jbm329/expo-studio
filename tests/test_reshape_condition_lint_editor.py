@@ -186,12 +186,12 @@ def test_dialog_aggregates_pending_errors_removal_and_builder_readiness():
         datetime_column_positions=(),
     )
     first = dialog.metrics.cellWidget(0, 3)
-    dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
     assert first.button.isEnabled()
     assert dialog.conditions_valid
     dialog.add_metric_button.click()
     second = dialog.metrics.cellWidget(1, 3)
-    dialog.metrics.cellWidget(1, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(1, 2).value.setCurrentIndex(1)
     first.text.setText("[b] = 'not a known value'")
     assert not dialog.conditions_valid
     assert dialog.validate_conditions()

@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
+from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
 from expo_jbm329.services.data_operations.reshape_condition_lint import parse_condition
 from expo_jbm329.services.data_operations.reshape_conditions import condition_columns
 from expo_jbm329.services.data_operations.reshape_preview import (
@@ -144,6 +145,10 @@ class ReshapeDialog(QDialog):
         )
         self.source_column_guidance.setWordWrap(True)
         metrics_layout.addWidget(self.source_column_guidance)
+        self.ordering_guidance = QLabel(metrics_box)
+        self.ordering_guidance.setWordWrap(True)
+        self.ordering_guidance.hide()
+        metrics_layout.addWidget(self.ordering_guidance)
         self.metrics = QTableWidget(0, 4, metrics_box)
         self.metrics.setHorizontalHeaderLabels([
             self.tr("Metric name"),
@@ -152,6 +157,8 @@ class ReshapeDialog(QDialog):
             self.tr("Condition (optional)"),
         ])
         self.metrics.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        # Tab should visit embedded editors rather than navigate table cells.
+        self.metrics.setTabKeyNavigation(False)
         header = self.metrics.horizontalHeader()
         if header is not None:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -234,19 +241,24 @@ class ReshapeDialog(QDialog):
         self.metrics.setItem(row, 0, name)
 
         functions = QComboBox(self.metrics)
-        for function in ("SUM", "AVG", "MEDIAN", "COUNT", "COUNT DISTINCT", "MAX", "MIN"):
+        for function in ("SUM", "AVG", "MEDIAN", "COUNT", "COUNT DISTINCT", "MAX", "MIN", "FIRST", "LAST"):
             functions.addItem(function, function)
         functions.setAccessibleName(self.tr("Function"))
         self.metrics.setCellWidget(row, 1, functions)
 
-        columns = QComboBox(self.metrics)
-        columns.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
-        columns.setAccessibleName(self.tr("Source column"))
-        columns.currentTextChanged.connect(columns.setToolTip)
-        self.metrics.setCellWidget(row, 2, columns)
+        source = MetricSourceCell(
+            self.metrics,
+            self._source_columns,
+            sorted(self._numeric_column_positions | self._datetime_column_positions),
+        )
+        columns = source.value
+        self.metrics.setCellWidget(row, 2, source)
 
         def update_source_columns() -> None:
+            source.set_order_required(functions.currentText() in {"FIRST", "LAST"})
             self._populate_source_columns(columns, functions.currentText())
+            self._update_metric_rows()
+            self._update_metric_readiness()
 
         functions.currentIndexChanged.connect(update_source_columns)
         functions.currentIndexChanged.connect(self._configuration_changed)
@@ -265,6 +277,12 @@ class ReshapeDialog(QDialog):
         columns.currentIndexChanged.connect(fill_default_name)
         columns.currentIndexChanged.connect(self._update_metric_readiness)
         columns.currentIndexChanged.connect(self._configuration_changed)
+        source.order.currentIndexChanged.connect(self._update_metric_readiness)
+        source.order.currentIndexChanged.connect(self._configuration_changed)
+        QWidget.setTabOrder(functions, columns)
+        QWidget.setTabOrder(columns, source.order)
+        QWidget.setTabOrder(source.order, condition.text)
+        QWidget.setTabOrder(condition.text, condition.button)
         self._update_metric_readiness()
         self._configuration_changed()
 
@@ -299,9 +317,10 @@ class ReshapeDialog(QDialog):
             if (
                 name is None
                 or not isinstance(function, QComboBox)
-                or not isinstance(source, QComboBox)
+                or not isinstance(source, MetricSourceCell)
                 or not isinstance(condition, ConditionEditor)
-                or not isinstance(source.currentData(), int)
+                or source.source_position is None
+                or not source.ordering_complete
             ):
                 raise ReshapeError(ReshapeProblem.CONFIGURATION)
             parsed = parse_condition(condition.text.text(), self._condition_columns)
@@ -311,8 +330,9 @@ class ReshapeDialog(QDialog):
                 ReshapeMetric(
                     name.text().strip(),
                     ReshapeFunction(function.currentText()),
-                    source.currentData(),
+                    source.source_position,
                     parsed.instructions,
+                    order_position=source.order_position,
                 )
             )
         request = ReshapeRequest(dimensions, tuple(metrics))
@@ -405,6 +425,7 @@ class ReshapeDialog(QDialog):
             if (item := self.dimensions.item(position)) is not None and item.checkState() == Qt.CheckState.Checked
         ]
         ready = self.metrics.rowCount() > 0 and self.conditions_valid
+        ordering_complete = True
         for row in range(self.metrics.rowCount()):
             name = self.metrics.item(row, 0)
             source = self.metrics.cellWidget(row, 2)
@@ -412,9 +433,12 @@ class ReshapeDialog(QDialog):
                 ready
                 and name is not None
                 and bool(name.text().strip())
-                and isinstance(source, QComboBox)
-                and source.currentData() is not None
+                and isinstance(source, MetricSourceCell)
+                and source.source_position is not None
+                and source.ordering_complete
             )
+            if isinstance(source, MetricSourceCell):
+                ordering_complete = ordering_complete and source.ordering_complete
             if name is not None:
                 names.append(name.text().strip())
         unique = len(set(names)) == len(names)
@@ -423,11 +447,15 @@ class ReshapeDialog(QDialog):
         self.apply_button.setToolTip(
             self.tr("Correct condition errors before applying.")
             if not self.conditions_valid
+            else self.tr("Select an ordering column for every FIRST/LAST metric.")
+            if not ordering_complete
             else self.tr("Apply creates a new result dataset.")
         )
         self.preview_button.setToolTip(
             self.tr("Output column names must be unique across dimensions and metrics.")
             if not unique
+            else self.tr("Select an ordering column for every FIRST/LAST metric.")
+            if not ordering_complete
             else self.tr("Calculate up to five output rows from the full dataset.")
         )
 
@@ -440,12 +468,12 @@ class ReshapeDialog(QDialog):
             ready = (
                 name is not None
                 and bool(name.text().strip())
-                and isinstance(columns, QComboBox)
-                and columns.currentData() is not None
+                and isinstance(columns, MetricSourceCell)
+                and columns.source_position is not None
             )
             if isinstance(condition, ConditionEditor):
                 condition.button.setEnabled(ready)
-            all_ready = all_ready and ready
+            all_ready = all_ready and ready and isinstance(columns, MetricSourceCell) and columns.ordering_complete
         self.add_metric_button.setEnabled(all_ready)
         self._update_apply_button()
 
@@ -453,7 +481,7 @@ class ReshapeDialog(QDialog):
         selected_position = columns.currentData()
         columns.clear()
         columns.addItem(self.tr("Select column"), None)
-        all_columns = function in {"COUNT", "COUNT DISTINCT"}
+        all_columns = function in {"COUNT", "COUNT DISTINCT", "FIRST", "LAST"}
         allow_datetime = function in {"MIN", "MAX"}
         for position, column in enumerate(self._source_columns):
             if (
@@ -473,8 +501,38 @@ class ReshapeDialog(QDialog):
         for row in sorted(rows, reverse=True):
             self.metrics.removeRow(row)
         self._update_remove_button()
+        self._update_metric_rows()
         self._update_metric_readiness()
         self._configuration_changed()
+
+    def _update_metric_rows(self) -> None:
+        """Fit inline ordering while keeping ordinary rows at their usual height."""
+        ordered = False
+        header = self.metrics.verticalHeader()
+        if header is None:
+            message = "Reshape metrics require a vertical header."
+            raise RuntimeError(message)
+        for row in range(self.metrics.rowCount()):
+            source = self.metrics.cellWidget(row, 2)
+            if isinstance(source, MetricSourceCell):
+                ordered = ordered or source.requires_order
+                height = max(header.defaultSectionSize(), source.sizeHint().height() + 2)
+                self.metrics.setRowHeight(row, height)
+        self.ordering_guidance.setVisible(ordered)
+        self.ordering_guidance.setText(
+            self.tr(
+                "FIRST/LAST accept any value column. Order by a numeric or datetime column: "
+                "FIRST selects the lowest/earliest, LAST the highest/latest. "
+                "Conditions filter rows before ordering. Missing ordering values are excluded; "
+                "selected missing values are kept. Ties use source row order."
+            )
+            if self._numeric_column_positions or self._datetime_column_positions
+            else self.tr(
+                "FIRST/LAST require a numeric or datetime ordering column. "
+                "This dataset has none. Convert an ordering column's datatype before reshaping, "
+                "or choose another function."
+            )
+        )
 
     def _update_remove_button(self) -> None:
         self.remove_metric_button.setEnabled(bool(self.metrics.selectedIndexes()))

@@ -57,7 +57,7 @@ def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypat
     def execute(dialog):
         dialogs.append(dialog)
         dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
-        dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+        dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
         dialog.metrics.item(0, 0).setText("Total")
         results.active_tab_id.return_value = "other"
         results.tabs_by_id["source"].df = pd.DataFrame({"replacement": [999]})
@@ -169,7 +169,7 @@ def test_apply_validates_configuration_without_accepting_invalid_or_pending_prev
         numeric_column_positions=(0,),
         datetime_column_positions=(),
     )
-    dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
     editor = dialog.metrics.cellWidget(0, 3)
     editor.text.setText("[value] > '1'")
     dialog._apply()

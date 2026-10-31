@@ -7742,6 +7742,18 @@ Wskazówka: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Wybierz kolumnę sortowania dla każdej miary FIRST/LAST.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST obsługują dowolną kolumnę wartości. Sortuj według kolumny liczbowej lub daty/czasu: FIRST wybiera wartość najniższą/najwcześniejszą, LAST najwyższą/najpóźniejszą. Warunki filtrują wiersze przed sortowaniem. Brakujące wartości sortowania są pomijane; wybrane brakujące wartości są zachowywane. Przy jednakowych wartościach sortowania używana jest kolejność wierszy źródłowych.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST wymagają liczbowej kolumny sortowania lub kolumny daty/czasu. Ten zbiór danych nie ma takiej kolumny. Przed zmianą kształtu danych przekonwertuj typ danych kolumny sortowania lub wybierz inną funkcję.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Przekształć — {dataset} ({rows} wierszy × {columns} kolumn)</translation>
@@ -11188,4 +11200,23 @@ Skrót: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analizuj dane</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Kolumna źródłowa</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>Wartość</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Sortuj według</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Wybierz kolumnę sortowania</translation>
+    </message>
+</context>
+</TS>
