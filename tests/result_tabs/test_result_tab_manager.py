@@ -208,11 +208,19 @@ def test_reshape_context_opens_real_dialog_for_clicked_source(result_tabs_env, m
         assert [dialog.dimensions.item(i).text() for i in range(dialog.dimensions.count())] == [
             f"{column} [{dtype}]" for column, dtype in zip(dataframe.columns, dataframe.dtypes, strict=True)
         ]
-        columns = dialog.metrics.cellWidget(0, 2)
+        source_cell = dialog.metrics.cellWidget(0, 2)
+        columns = source_cell.value
         assert [columns.itemData(i) for i in range(1, columns.count())] == [0]
         dialog.metrics.cellWidget(0, 1).setCurrentText("COUNT DISTINCT")
         assert [columns.itemData(i) for i in range(1, columns.count())] == [0, 1]
+        dialog.metrics.cellWidget(0, 1).setCurrentText("LAST")
+        columns.setCurrentIndex(columns.findData(1))
+        assert [source_cell.order.itemData(i) for i in range(1, source_cell.order.count())] == [0]
         assert not dialog.apply_button.isEnabled()
+        source_cell.order.setCurrentIndex(source_cell.order.findData(0))
+        assert dialog.apply_button.isEnabled()
+        request = dialog.capture_request()
+        assert request.metrics[0].source_position == 1 and request.metrics[0].order_position == 0
         opened.append(dialog.windowTitle())
         return 0
 

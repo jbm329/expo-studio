@@ -9,6 +9,7 @@ from PyQt6 import sip
 from PyQt6.QtCore import QEvent, QObject, Qt
 
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.data_operations.dtypes import get_datetime_column_positions, get_numeric_column_positions
 from expo_jbm329.services.data_operations.reshape_preview import (
     ReshapeError,
     ReshapeProblem,
@@ -17,15 +18,16 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
 
 
-def setup_preview():
-    source = pd.DataFrame({"clinic": ["B", "A", "B"], "value": [1, 2, 3]})
+def setup_preview(source: pd.DataFrame | None = None):
+    if source is None:
+        source = pd.DataFrame({"clinic": ["B", "A", "B"], "value": [1, 2, 3]})
     dialog = ReshapeDialog(
         parent=None,
-        source_dataset=DatasetRef("fixed", "Source", 3, 2),
+        source_dataset=DatasetRef("fixed", "Source", len(source), len(source.columns)),
         source_columns=list(source.columns),
         source_dtypes=[str(dtype) for dtype in source.dtypes],
-        numeric_column_positions=(1,),
-        datetime_column_positions=(),
+        numeric_column_positions=get_numeric_column_positions(source),
+        datetime_column_positions=get_datetime_column_positions(source),
     )
     dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
     dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
@@ -191,4 +193,92 @@ def test_no_duplicate_dispatch_and_plain_readonly_table():
     call["on_finished"]()
     model = dialog.preview_model
     assert not (model.flags(model.index(0, 0)) & Qt.ItemFlag.ItemIsEditable)
+    dialog.close()
+
+
+def test_ordered_preview_captures_conditions_and_displays_five_full_data_groups(ordered_reshape_case) -> None:
+    source, expected, configure = ordered_reshape_case
+    original = source.copy(deep=True)
+    dialog, source, async_ops, controller, job = setup_preview(source)
+    configure(dialog)
+    request = dialog.capture_request()
+    assert [metric.order_position for metric in request.metrics] == [None, 2, 3]
+    assert request.metrics[1].condition and request.metrics[2].condition
+    call = dispatch(dialog, async_ops)
+    progress: list[int] = []
+    preview = call["work"](progress_cb=progress.append)
+    assert preview.request == request and preview.total_rows == 7
+    pd.testing.assert_frame_equal(preview.frame, expected.head(5))
+    assert progress[0] == 0 and progress[-1] == 100
+    call["on_result"](preview)
+    call["on_finished"]()
+    assert dialog.preview_model.rowCount() == 5 and dialog.preview_model.columnCount() == 4
+    assert dialog.preview_model.data(dialog.preview_model.index(0, 2), Qt.ItemDataRole.EditRole) == "early G"
+    assert dialog.preview_model.data(dialog.preview_model.index(0, 3), Qt.ItemDataRole.EditRole) == "end G"
+    assert "Showing 5 of 7 output rows" in dialog.preview_placeholder.text()
+    assert dialog.apply_button.isEnabled()
+    pd.testing.assert_frame_equal(source, original)
+    dialog.close()
+
+
+def test_order_edits_cancel_stale_preview_and_old_results_cannot_replace_new_preview(ordered_reshape_case) -> None:
+    source, expected, configure = ordered_reshape_case
+    dialog, source, async_ops, controller, job = setup_preview(source)
+    configure(dialog)
+    initial = dispatch(dialog, async_ops)
+    initial["on_result"](initial["work"]())
+    initial["on_finished"]()
+    assert dialog.preview_model is not None
+    stale_call = dispatch(dialog, async_ops)
+    stale_result = stale_call["work"]()
+    ordering = dialog.metrics.cellWidget(1, 2).order
+    ordering.setCurrentIndex(ordering.findData(3))
+    assert stale_call["stale_check"]()
+    assert stale_call["work"]() is None
+    assert dialog.preview_table.isHidden() and "out of date" in dialog.preview_placeholder.text()
+    stale_call["on_result"](stale_result)
+    stale_call["on_error"]("stale ordering failure")
+    assert "out of date" in dialog.preview_placeholder.text()
+    stale_call["on_finished"]()
+    updated_call = dispatch(dialog, async_ops)
+    updated = updated_call["work"]()
+    expected = expected.head(5).copy()
+    expected["Earliest status"] = pd.Series(["late G", None, None, "late D", "late C"], dtype="string")
+    pd.testing.assert_frame_equal(updated.frame, expected)
+    updated_call["on_result"](updated)
+    updated_call["on_finished"]()
+    new_model = dialog.preview_model
+    stale_call["on_result"](stale_result)
+    assert dialog.preview_model is new_model
+    assert new_model.data(new_model.index(0, 2), Qt.ItemDataRole.EditRole) == "late G"
+    dialog.close()
+
+
+@pytest.mark.parametrize("outcome", ["cancel", "error", "close"])
+def test_ordered_preview_preserves_cancel_error_and_close_lifecycle(ordered_reshape_case, outcome: str) -> None:
+    source, expected, configure = ordered_reshape_case
+    original = source.copy(deep=True)
+    dialog, source, async_ops, controller, job = setup_preview(source)
+    configure(dialog)
+    call = dispatch(dialog, async_ops)
+    if outcome == "cancel":
+        assert call["work"](cancel_cb=lambda: True) is None
+        call["on_result"](None)
+        call["on_finished"]()
+        assert "cancelled" in dialog.preview_placeholder.text()
+    elif outcome == "error":
+        call["on_error"]("ordered worker failure")
+        call["on_finished"]()
+        assert "Preview failed" in dialog.preview_placeholder.text()
+    else:
+        result = call["work"]()
+        dialog.reject()
+        async_ops.job_mgr.cancel_job.assert_called_with("preview-job")
+        assert call["stale_check"]() and call["work"]() is None
+        call["on_result"](result)
+        call["on_finished"]()
+    assert dialog.preview_model is None
+    if outcome != "close":
+        assert dialog.preview_button.isEnabled() and dialog.apply_button.isEnabled()
+    pd.testing.assert_frame_equal(source, original)
     dialog.close()
