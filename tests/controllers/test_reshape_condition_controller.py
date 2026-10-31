@@ -11,6 +11,7 @@ from PyQt6 import sip
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QWidget
 
+from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.services.data_operations.reshape_condition_import import condition_group_from_text
 from expo_jbm329.services.data_operations.reshape_condition_lint import parse_condition
@@ -265,17 +266,16 @@ def test_invalid_conditions_block_builder_show_error_and_preserve_text(monkeypat
     editor.text.setText(text)
     state = editor.builder_state()
     assert state.diagnostic is not None
-    warning = MagicMock()
+    dialogs = MagicMock(spec=DialogService)
     dialog = MagicMock()
     focus = MagicMock()
-    monkeypatch.setattr(module.QMessageBox, "warning", warning)
     monkeypatch.setattr(module, "ConditionDialog", dialog)
     monkeypatch.setattr(editor, "focus_builder_diagnostic", focus)
     async_ops = MagicMock()
-    module.ReshapeConditionController(async_ops, MagicMock()).open_dialog(parent, editor, source)
+    module.ReshapeConditionController(async_ops, MagicMock(), dialogs=dialogs).open_dialog(parent, editor, source)
     dialog.assert_not_called()
     async_ops.run_operation.assert_not_called()
-    warning.assert_called_once_with(
+    dialogs.warn.assert_called_once_with(
         parent, editor.button.accessibleName(), editor.builder_diagnostic_message(state.diagnostic)
     )
     focus.assert_called_once_with(state.diagnostic)
@@ -287,11 +287,14 @@ def test_import_uses_current_source_metadata_not_stale_editor_columns(monkeypatc
     parent = QWidget()
     editor = ConditionEditor(parent, condition_columns(["a"]))
     editor.text.setText("[a] IS NULL")
-    monkeypatch.setattr(module.QMessageBox, "warning", MagicMock())
+    dialogs = MagicMock(spec=DialogService)
     dialog = MagicMock()
     monkeypatch.setattr(module, "ConditionDialog", dialog)
-    module.ReshapeConditionController(MagicMock(), MagicMock()).open_dialog(parent, editor, pd.DataFrame({"b": [1]}))
+    module.ReshapeConditionController(MagicMock(), MagicMock(), dialogs=dialogs).open_dialog(
+        parent, editor, pd.DataFrame({"b": [1]})
+    )
     dialog.assert_not_called()
+    dialogs.warn.assert_called_once()
     assert editor.text.text() == "[a] IS NULL"
     parent.close()
 
