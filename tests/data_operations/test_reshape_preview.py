@@ -106,7 +106,13 @@ def program(frame, text):
 
 
 def metric(frame, function, condition="", position=1, name=None):
-    return ReshapeMetric(name or function, ReshapeFunction(function), position, program(frame, condition))
+    return ReshapeMetric(
+        name or function,
+        ReshapeFunction(function),
+        position,
+        program(frame, condition),
+        order_position=position if function in {ReshapeFunction.FIRST, ReshapeFunction.LAST} else None,
+    )
 
 
 def test_all_functions_conditional_metrics_and_no_match_groups():
@@ -125,7 +131,7 @@ def test_all_functions_conditional_metrics_and_no_match_groups():
     assert pd.isna(result.frame["clinic"].iloc[2])
     assert result.frame["COUNT"].tolist() == [0, 2, 0]
     assert result.frame["COUNT DISTINCT"].tolist() == [0, 2, 0]
-    for name, expected in [("SUM", 60), ("AVG", 30), ("MIN", 20), ("MAX", 40)]:
+    for name, expected in [("SUM", 60), ("AVG", 30), ("MIN", 20), ("MAX", 40), ("FIRST", 20), ("LAST", 40)]:
         assert result.frame[name].iloc[1] == expected
         assert pd.isna(result.frame[name].iloc[0])
         assert pd.isna(result.frame[name].iloc[2])

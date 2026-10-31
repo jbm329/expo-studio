@@ -1,6 +1,7 @@
 """Apply uses a captured request and the standard pending result-tab lifecycle."""
 
 import logging
+from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -10,6 +11,7 @@ from PyQt6.QtCore import QObject, Qt
 from PyQt6.QtWidgets import QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.data_operations.dtypes import get_datetime_column_positions, get_numeric_column_positions
 from expo_jbm329.services.data_operations.reshape_preview import (
     ReshapeError,
     ReshapeFunction,
@@ -57,7 +59,7 @@ def test_apply_closes_dialog_before_starting_and_keeps_original_source(monkeypat
     def execute(dialog):
         dialogs.append(dialog)
         dialog.dimensions.item(0).setCheckState(Qt.CheckState.Checked)
-        dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+        dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
         dialog.metrics.item(0, 0).setText("Total")
         results.active_tab_id.return_value = "other"
         results.tabs_by_id["source"].df = pd.DataFrame({"replacement": [999]})
@@ -169,7 +171,7 @@ def test_apply_validates_configuration_without_accepting_invalid_or_pending_prev
         numeric_column_positions=(0,),
         datetime_column_positions=(),
     )
-    dialog.metrics.cellWidget(0, 2).setCurrentIndex(1)
+    dialog.metrics.cellWidget(0, 2).value.setCurrentIndex(1)
     editor = dialog.metrics.cellWidget(0, 3)
     editor.text.setText("[value] > '1'")
     dialog._apply()
@@ -184,3 +186,100 @@ def test_apply_validates_configuration_without_accepting_invalid_or_pending_prev
     dialog._apply()
     assert dialog.result() == QDialog.DialogCode.Accepted
     assert dialog.applied_request is not None
+
+
+def test_ordered_apply_matches_preview_and_uses_captured_order_after_widget_edits(
+    monkeypatch, apply_setup, ordered_reshape_case
+) -> None:
+    controller, _, _, results, async_ops, view, job = apply_setup
+    source, expected, configure = ordered_reshape_case
+    original = source.copy(deep=True)
+    results.tabs_by_id["source"].df = source
+    captured = []
+    previews = []
+
+    def execute(dialog: ReshapeDialog) -> int:
+        configure(dialog)
+        request = dialog.capture_request()
+        dialog.preview_button.click()
+        preview_call = async_ops.run_target_overlay_operation.call_args.kwargs
+        preview = preview_call["work"]()
+        preview_call["on_result"](preview)
+        preview_call["on_finished"]()
+        previews.append(preview)
+        pd.testing.assert_frame_equal(preview.frame, expected.head(5))
+        dialog.apply_button.click()
+        assert dialog.result() == QDialog.DialogCode.Accepted
+        assert dialog.applied_request == request
+        captured.append(request)
+        results.create_pending_tab.assert_not_called()
+        for row, order in ((1, 3), (2, 2)):
+            cell = dialog.metrics.cellWidget(row, 2)
+            cell.order.setCurrentIndex(cell.order.findData(order))
+        dialog.metrics.item(1, 0).setText("Edited after Apply")
+        assert dialog.capture_request() != request
+        results.active_tab_id.return_value = "other"
+        results.tabs_by_id["source"].df = pd.DataFrame({"replacement": [999]})
+        return dialog.result()
+
+    monkeypatch.setattr(ReshapeDialog, "exec", execute)
+    controller.open_reshape_dialog()
+    call = async_ops.run_target_overlay_operation.call_args.kwargs
+    assert call["target"] is view and call["runner"] == "pool" and call["cancelable"]
+    results.bind_job_to_tab.assert_called_once_with("pending", "reshape-job")
+    progress: list[int] = []
+    frame = call["work"](progress_cb=progress.append)
+    pd.testing.assert_frame_equal(frame, expected)
+    pd.testing.assert_frame_equal(frame.head(5), previews[0].frame)
+    assert [metric.order_position for metric in captured[0].metrics] == [None, 2, 3]
+    assert progress[0] == 0 and progress[-1] == 100
+    call["on_result"](frame)
+    call["on_finished"]()
+    assert results.tabs_by_id["pending"].df is frame
+    results.remove_pending_tab.assert_not_called()
+    pd.testing.assert_frame_equal(source, original)
+
+
+@pytest.mark.parametrize("outcome", ["cancel", "error", "closed"])
+def test_ordered_apply_keeps_pending_tab_cleanup_and_error_propagation(
+    apply_setup, ordered_reshape_case, outcome: str
+) -> None:
+    controller, _, _, results, async_ops, view, job = apply_setup
+    source, expected, configure = ordered_reshape_case
+    original = source.copy(deep=True)
+    dialog = ReshapeDialog(
+        parent=None,
+        source_dataset=DatasetRef("source", "Source", len(source), len(source.columns)),
+        source_columns=list(source.columns),
+        source_dtypes=[str(dtype) for dtype in source.dtypes],
+        numeric_column_positions=get_numeric_column_positions(source),
+        datetime_column_positions=get_datetime_column_positions(source),
+    )
+    configure(dialog)
+    request = dialog.capture_request()
+    if outcome == "error":
+        request = replace(request, metrics=(replace(request.metrics[1], order_position=-1),))
+    controller._run_reshape(source, request)
+    call = async_ops.run_target_overlay_operation.call_args.kwargs
+    assert call["suppress_error_dialog"] is False and call["cancelable"]
+    if outcome == "cancel":
+        assert call["work"](cancel_cb=lambda: True) is None
+        call["on_result"](None)
+    elif outcome == "error":
+        with pytest.raises(ReshapeError):
+            call["work"]()
+    else:
+        frame = call["work"]()
+        pd.testing.assert_frame_equal(frame, expected)
+        results.tabs_by_id.pop("pending")
+        assert call["stale_check"]()
+        call["on_result"](frame)
+    call["on_finished"]()
+    if outcome == "closed":
+        results.remove_pending_tab.assert_not_called()
+    else:
+        results.remove_pending_tab.assert_called_once_with("pending")
+    assert "pending" not in results.tabs_by_id
+    results.fulfill_pending_tab.assert_not_called()
+    pd.testing.assert_frame_equal(source, original)
+    dialog.close()

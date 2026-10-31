@@ -25,6 +25,7 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+    from typing import Literal
 
 
 logger = logging.getLogger("applogger.service")
@@ -46,7 +47,7 @@ def _log_reshape_event(
 
 
 class ReshapeFunction(StrEnum):
-    """Supported aggregation functions."""
+    """Supported aggregations and ordered row-selection functions."""
 
     SUM = "SUM"
     AVG = "AVG"
@@ -55,6 +56,8 @@ class ReshapeFunction(StrEnum):
     COUNT_DISTINCT = "COUNT DISTINCT"
     MIN = "MIN"
     MAX = "MAX"
+    FIRST = "FIRST"
+    LAST = "LAST"
 
 
 class ReshapeProblem(StrEnum):
@@ -78,12 +81,21 @@ class ReshapeError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class ReshapeMetric:
-    """One immutable metric and its parsed, postfix row condition."""
+    """One immutable metric and its parsed, postfix row condition.
+
+    Attributes:
+        name: Output column name.
+        function: Aggregation or ordered row-selection function.
+        source_position: Positional source column supplying the output value.
+        condition: Parsed instructions filtering eligible rows before selection.
+        order_position: Numeric or datetime column required only for FIRST/LAST.
+    """
 
     name: str
     function: ReshapeFunction
     source_position: int
     condition: tuple[ConditionRule | ConditionMatch, ...] = ()
+    order_position: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +135,19 @@ def validate_reshape(request: ReshapeRequest, columns: Sequence[ConditionColumn]
         if metric.function in {ReshapeFunction.SUM, ReshapeFunction.AVG, ReshapeFunction.MEDIAN} and not numeric:
             raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
         if metric.function in {ReshapeFunction.MIN, ReshapeFunction.MAX} and not (numeric or datetime):
+            raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
+        if metric.function in {ReshapeFunction.FIRST, ReshapeFunction.LAST}:
+            order_position = metric.order_position
+            if order_position is None or not 0 <= order_position < len(columns):
+                raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
+            order_dtype = dtypes[order_position]
+            if not (
+                pd.api.types.is_integer_dtype(order_dtype)
+                or pd.api.types.is_float_dtype(order_dtype)
+                or pd.api.types.is_datetime64_any_dtype(order_dtype)
+            ):
+                raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
+        elif metric.order_position is not None:
             raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
         depth = 0
         for instruction in metric.condition:
@@ -405,6 +430,46 @@ def _compute_reshape(
     return result
 
 
+def _select_ordered_values(
+    source: pd.DataFrame,
+    metric: ReshapeMetric,
+    mask: pd.Series,
+    group_ids: pd.Series,
+    output_ids: pd.RangeIndex,
+    total_rows: int,
+    cancel_cb: Callable[[], bool] | None,
+) -> pd.Series | None:
+    """Select actual row values, including nulls, by stable ascending order.
+
+    Missing ordering values are excluded. FIRST picks the earliest source row
+    at the lowest key; LAST picks the latest source row at the highest key.
+    Source values are neither compared nor hashed. Groups without eligible rows
+    receive missing values, using nullable integer/boolean dtypes when needed.
+    """
+    if metric.order_position is None:
+        raise ReshapeError(ReshapeProblem.CONFIGURATION, metric.name)
+    order = source.iloc[:, metric.order_position].reset_index(drop=True)
+    eligible = order[mask & order.notna()]
+    if cancel_cb is not None and cancel_cb():
+        return None
+    ordered = eligible.sort_values(kind="stable")
+    if cancel_cb is not None and cancel_cb():
+        return None
+    ordered_groups = group_ids.loc[ordered.index]
+    keep: Literal["first", "last"] = "first" if metric.function == ReshapeFunction.FIRST else "last"
+    selected = ordered_groups[~ordered_groups.duplicated(keep=keep)]
+    values = source.iloc[selected.index, metric.source_position].copy()
+    values.index = pd.Index(selected.array)
+    if len(values) < total_rows and isinstance(values.dtype, np.dtype):
+        if pd.api.types.is_integer_dtype(values.dtype):
+            values = values.astype("UInt64" if pd.api.types.is_unsigned_integer_dtype(values.dtype) else "Int64")
+        elif pd.api.types.is_bool_dtype(values.dtype):
+            values = values.astype("boolean")
+    if cancel_cb is not None and cancel_cb():
+        return None
+    return values.reindex(output_ids)
+
+
 def _compute_reshape_result(
     source: pd.DataFrame,
     request: ReshapeRequest,
@@ -488,7 +553,16 @@ def _compute_reshape_result(
                     aggregate = grouped.min()
                 case ReshapeFunction.MAX:
                     aggregate = grouped.max()
-            if pd.api.types.is_integer_dtype(aggregate.dtype):
+                case ReshapeFunction.FIRST | ReshapeFunction.LAST:
+                    selected_values = _select_ordered_values(
+                        source, metric, mask, group_ids, output_ids, total_rows, cancel_cb
+                    )
+                    if selected_values is None:
+                        return None
+                    aggregate = selected_values
+            if metric.function not in {ReshapeFunction.FIRST, ReshapeFunction.LAST} and pd.api.types.is_integer_dtype(
+                aggregate.dtype
+            ):
                 aggregate = aggregate.astype(
                     "UInt64" if pd.api.types.is_unsigned_integer_dtype(aggregate.dtype) else "Int64"
                 )

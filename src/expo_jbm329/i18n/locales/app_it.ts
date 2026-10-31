@@ -7742,6 +7742,18 @@ Suggerimento: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
+        <source>Select an ordering column for every FIRST/LAST metric.</source>
+        <translation>Seleziona una colonna di ordinamento per ogni metrica FIRST/LAST.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
+        <translation>FIRST/LAST accettano qualsiasi colonna di valori. Ordina per una colonna numerica o di data/ora: FIRST seleziona il valore più basso/meno recente, LAST il più alto/più recente. Le condizioni filtrano le righe prima dell'ordinamento. I valori di ordinamento mancanti sono esclusi; i valori mancanti selezionati vengono mantenuti. A parità di valori si usa l'ordine delle righe di origine.</translation>
+    </message>
+    <message>
+        <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
+        <translation>FIRST/LAST richiedono una colonna di ordinamento numerica o di data/ora. Questo dataset non ne contiene alcuna. Converti il tipo di dati di una colonna di ordinamento prima di rimodellare i dati, oppure scegli un'altra funzione.</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="94" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Rimodella — {dataset} ({rows} righe × {columns} colonne)</translation>
@@ -11188,4 +11200,19 @@ Scorciatoia: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analizza dati</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>MetricSourceCell</name>
+    <message>
+        <source>Source column</source>
+        <translation>Colonna di origine</translation>
+    </message>
+    <message>
+        <source>Order by</source>
+        <translation>Ordina per</translation>
+    </message>
+    <message>
+        <source>Select ordering column</source>
+        <translation>Seleziona colonna di ordinamento</translation>
+    </message>
+</context>
+</TS>
