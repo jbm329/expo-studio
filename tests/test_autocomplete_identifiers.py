@@ -4,8 +4,10 @@ from expo_jbm329.gui.autocomplete.identifiers import (
     IdentifierCompletion,
     identifier_completion,
     identifier_lookup_name,
+    python_index_from_utf16,
     quote_identifier,
     split_identifier_prefix,
+    utf16_offset_from_python,
 )
 
 
@@ -131,3 +133,27 @@ def test_completion_resumes_after_literals_and_comments(before):
 def test_completion_rejects_out_of_range_cursor(position):
     with pytest.raises(ValueError, match="cursor index"):
         identifier_completion("SELECT", position)
+
+
+@pytest.mark.parametrize("sql", ["SELECT users", "åäö", "😀 column 😀", "a\n😀\nb", ""])
+def test_utf16_cursor_conversion_roundtrip(sql):
+    for index in range(len(sql) + 1):
+        offset = utf16_offset_from_python(sql, index)
+        assert python_index_from_utf16(sql, offset) == index
+
+
+@pytest.mark.parametrize("position", [-1, 4])
+def test_utf16_cursor_conversion_rejects_out_of_range_offset(position):
+    with pytest.raises(ValueError, match="offset"):
+        python_index_from_utf16("😀a", position)
+
+
+def test_utf16_cursor_conversion_rejects_split_surrogate_pair():
+    with pytest.raises(ValueError):
+        python_index_from_utf16("😀a", 1)
+
+
+@pytest.mark.parametrize("index", [-1, 3])
+def test_python_cursor_conversion_rejects_out_of_range_index(index):
+    with pytest.raises(ValueError, match="index"):
+        utf16_offset_from_python("😀a", index)

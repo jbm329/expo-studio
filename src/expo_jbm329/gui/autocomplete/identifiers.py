@@ -35,6 +35,45 @@ class IdentifierCompletion:
     end: int
 
 
+def python_index_from_utf16(sql: str, position: int) -> int:
+    """Convert a Qt UTF-16 cursor offset to a Python string index.
+
+    Args:
+        sql: Full editor text.
+        position: UTF-16 code-unit offset used by QTextCursor.
+
+    Returns:
+        Equivalent Python string index.
+
+    Raises:
+        ValueError: If the offset is out of range or splits a surrogate pair.
+    """
+    encoded = sql.encode("utf-16-le")
+    if not 0 <= position * 2 <= len(encoded):
+        msg = "Completion UTF-16 cursor offset is outside the SQL text."
+        raise ValueError(msg)
+    return len(encoded[: position * 2].decode("utf-16-le"))
+
+
+def utf16_offset_from_python(sql: str, index: int) -> int:
+    """Convert a Python string index to a Qt UTF-16 cursor offset.
+
+    Args:
+        sql: Full editor text.
+        index: Python string index.
+
+    Returns:
+        Equivalent UTF-16 code-unit offset used by QTextCursor.
+
+    Raises:
+        ValueError: If the index is outside the editor text.
+    """
+    if not 0 <= index <= len(sql):
+        msg = "Completion Python cursor index is outside the SQL text."
+        raise ValueError(msg)
+    return len(sql[:index].encode("utf-16-le")) // 2
+
+
 def quote_identifier(name: str, dialect: str | None = None) -> str:
     """Quote a raw metadata name without interpreting its literal characters.
 

@@ -11,7 +11,11 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QPoint, QRect, Qt
 from PyQt6.QtWidgets import QFrame, QListWidget, QListWidgetItem, QPlainTextEdit
 
+from .identifiers import identifier_completion, python_index_from_utf16, quote_identifier, utf16_offset_from_python
+
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from PyQt6.QtGui import QKeyEvent
 
 
@@ -26,16 +30,25 @@ class SqlEditorAutoCompletePopup(QFrame):
         list: The list widget displaying the suggestions.
     """
 
-    def __init__(self, editor: QPlainTextEdit, parent: object = None) -> None:
+    def __init__(
+        self,
+        editor: QPlainTextEdit,
+        parent: object = None,
+        *,
+        format_identifier: Callable[[str], str] = quote_identifier,
+    ) -> None:
         """Initialize the popup.
 
         Args:
             editor: The editor widget to position the popup relative to.
             parent: Optional parent widget.
+            format_identifier: Formatter for accepted raw metadata names.
+                Defaults to ANSI identifier quoting; displayed labels are unchanged.
         """
         _ = parent
         super().__init__(editor)
         self.editor = editor
+        self._format_identifier = format_identifier
 
         # Identical to original
         self.setWindowFlags(Qt.WindowType.ToolTip | Qt.WindowType.FramelessWindowHint)
@@ -120,24 +133,24 @@ class SqlEditorAutoCompletePopup(QFrame):
 
     def _insert_selected(self) -> None:
         item = self.list.currentItem()
-        if not item:
+        if item is None:
             self.hide()
             return
 
-        text = item.text()
         cursor = self.editor.textCursor()
         full = self.editor.toPlainText()
-        pos = cursor.position()
+        pos = python_index_from_utf16(full, cursor.position())
+        context = identifier_completion(full, pos)
+        if context is None:
+            self.hide()
+            return
 
-        start = pos - 1
-        while start >= 0 and full[start] not in ". \n\t(),;":
-            start -= 1
-        start += 1
-
-        cursor.setPosition(start, cursor.MoveMode.MoveAnchor)
-        cursor.setPosition(pos, cursor.MoveMode.KeepAnchor)
-        cursor.removeSelectedText()
+        text = self._format_identifier(item.text())
+        cursor.beginEditBlock()
+        cursor.setPosition(utf16_offset_from_python(full, context.start), cursor.MoveMode.MoveAnchor)
+        cursor.setPosition(utf16_offset_from_python(full, context.end), cursor.MoveMode.KeepAnchor)
         cursor.insertText(text)
+        cursor.endEditBlock()
         self.editor.setTextCursor(cursor)
         self.editor.setFocus()
         self.hide()

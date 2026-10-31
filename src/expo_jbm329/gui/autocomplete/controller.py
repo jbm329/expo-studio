@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, override
 from PyQt6.QtCore import QEvent, QObject, Qt, QTimer
 from PyQt6.QtGui import QKeyEvent
 
+from .identifiers import identifier_completion, python_index_from_utf16, quote_identifier, split_identifier_prefix
 from .popup import SqlEditorAutoCompletePopup
 
 if TYPE_CHECKING:
@@ -55,10 +56,13 @@ class SqlAutocompleteController(QObject):
         super().__init__(parent)
         self.editor = editor
         self.completer = completer
-        self.popup = SqlEditorAutoCompletePopup(editor)
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._debug = bool(debug)
         self._dialect: str | None = None
+        self.popup = SqlEditorAutoCompletePopup(editor, format_identifier=self._format_identifier)
+
+    def _format_identifier(self, name: str) -> str:
+        return quote_identifier(name, self._dialect)
 
     # ------------------------------------------------------------------ #
     def install(self) -> None:
@@ -77,7 +81,7 @@ class SqlAutocompleteController(QObject):
         self.completer.set_schema(schema_dict)
 
     def set_dialect(self, dialect: str | None) -> None:
-        """Set the active SQL dialect used for context-aware suggestions."""
+        """Set the active dialect for suggestions and accepted identifier quoting."""
         self._dialect = dialect
 
         if self._debug:
@@ -159,25 +163,31 @@ class SqlAutocompleteController(QObject):
             return False
 
         # Live filtering when popup open
-        if self.popup.isVisible() and (text.isalnum() or text == "_"):
+        if (
+            self.popup.isVisible()
+            and text.isprintable()
+            and not (
+                event.modifiers()
+                & (
+                    Qt.KeyboardModifier.ControlModifier
+                    | Qt.KeyboardModifier.AltModifier
+                    | Qt.KeyboardModifier.MetaModifier
+                )
+            )
+        ):
             QTimer.singleShot(0, self._update_suggestions)
             return False
 
         return False
 
     # ------------------------------------------------------------------ #
-    def _extract_prefix(self) -> str:
+    def _extract_prefix(self) -> str | None:
         try:
             cursor = self.editor.textCursor()
-            pos = cursor.position()
             full = self.editor.toPlainText()
-
-            start = pos - 1
-            while start >= 0 and full[start] not in " \n\t(),;":
-                start -= 1
-            start += 1
-
-            prefix = full[start:pos]
+            pos = python_index_from_utf16(full, cursor.position())
+            context = identifier_completion(full, pos)
+            prefix = context.prefix if context is not None else None
 
             if self._debug:
                 self._logger.debug(
@@ -198,12 +208,11 @@ class SqlAutocompleteController(QObject):
             TypeError,
             ValueError,
         ):
-            if self._debug:
-                self._logger.debug(
-                    "SqlAutocompleteController: prefix extraction failed.",
-                    exc_info=True,
-                )
-            return ""
+            self._logger.debug(
+                "SqlAutocompleteController: prefix extraction failed.",
+                exc_info=True,
+            )
+            return None
         else:
             return prefix
 
@@ -219,7 +228,7 @@ class SqlAutocompleteController(QObject):
 
             cursor = self.editor.textCursor()
             sql = self.editor.toPlainText()
-            cursor_pos = cursor.position()
+            cursor_pos = python_index_from_utf16(sql, cursor.position())
 
             if self._debug:
                 self._logger.debug(
@@ -259,13 +268,25 @@ class SqlAutocompleteController(QObject):
     def _force_suggestions_now(self) -> None:
         try:
             prefix = self._extract_prefix()
+            if prefix is None:
+                self.popup.hide()
+                return
             if not prefix:
                 suggestions = self.completer.get_all_objects()
                 self._debug_log("<empty>", suggestions)
                 self._show_or_hide(suggestions)
                 return
 
-            suggestions = self.completer.get_global_suggestions(prefix)
+            if len(split_identifier_prefix(prefix)) > 1:
+                sql = self.editor.toPlainText()
+                suggestions = self.completer.get_contextual_suggestions(
+                    sql,
+                    python_index_from_utf16(sql, self.editor.textCursor().position()),
+                    prefix,
+                    dialect=self._dialect,
+                )
+            else:
+                suggestions = self.completer.get_global_suggestions(prefix)
             self._debug_log(prefix, suggestions)
             self._show_or_hide(suggestions)
 

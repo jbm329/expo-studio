@@ -27,7 +27,7 @@ The feature list reflects current functionality, not guarantees.
 The project is still in its infancy and may change significantly.
 
 ### 🛠️ Core Workbench
-- **SQL Editor**: Syntax highlighting, SQL-aware auto-completion and linting
+- **SQL Editor**: Syntax highlighting, SQL-aware auto-completion and linting.
 - **Schema Browser**: Navigate through database structures, including tables, views, and schemas.
 - **File Explorer**: Integrated file system browser for quick access to local SQL scripts and data files.
 - **REST Data Loader**: Experimental support for loading and exploring datasets from REST APIs.
