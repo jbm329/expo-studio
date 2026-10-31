@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.services.data_operations.reshape_condition_completion import column_completion
 from expo_jbm329.services.data_operations.reshape_condition_import import (
+    ConditionBuilderDiagnostic,
     ConditionImportResult,
     condition_group_from_text,
 )
@@ -355,19 +356,41 @@ class ConditionEditor(QWidget):
         """Return applied builder state only if manual text is unchanged."""
         return self._applied if self.text.text() == self._expression else None
 
-    def builder_state(self) -> ConditionImportResult:
+    def builder_state(self, columns: Sequence[ConditionColumn] | None = None) -> ConditionImportResult:
         """Import current text without changing it or discarding import errors.
+
+        Args:
+            columns: Optional authoritative source metadata from the controller.
 
         Returns:
             Current builder state, an empty result for blank text, or the first
             import diagnostic. Unchanged generated text retains the original
             group and scalar identities after successful validation.
         """
-        result = condition_group_from_text(self.text.text(), self._columns)
+        metadata = self._columns if columns is None else tuple(columns)
+        result = condition_group_from_text(self.text.text(), metadata)
         if result.diagnostic is not None:
             return result
-        saved = self.restorable_group()
+        saved = self.restorable_group() if metadata == self._columns else None
         return ConditionImportResult(group=saved) if saved is not None else result
+
+    def builder_diagnostic_message(self, diagnostic: ConditionDiagnostic | ConditionBuilderDiagnostic) -> str:
+        """Translate an import failure using existing lint messages when possible."""
+        if isinstance(diagnostic, ConditionDiagnostic):
+            return self._diagnostic_message(diagnostic)
+        return self.tr("This condition cannot be represented in the builder. Check for duplicate or ambiguous values.")
+
+    def focus_builder_diagnostic(self, diagnostic: ConditionDiagnostic | ConditionBuilderDiagnostic) -> None:
+        """Select the failing span in the multiline editor without editing text."""
+        self.validate_now()
+        self.text.setFocus(Qt.FocusReason.OtherFocusReason)
+        self._show_popup()
+        cursor = self.expanded_text.textCursor()
+        value = self.text.text()
+        cursor.setPosition(self._qt_position(value, diagnostic.start))
+        cursor.setPosition(self._qt_position(value, diagnostic.end), QTextCursor.MoveMode.KeepAnchor)
+        self.expanded_text.setTextCursor(cursor)
+        self.expanded_text.ensureCursorVisible()
 
     def apply_group(self, group: ConditionGroup) -> None:
         """Replace this editor's text after a successful builder acceptance."""

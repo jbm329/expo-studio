@@ -6,11 +6,14 @@ import logging
 from unittest.mock import MagicMock
 
 import pandas as pd
+import pytest
 from PyQt6 import sip
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
+from expo_jbm329.services.data_operations.reshape_condition_import import condition_group_from_text
+from expo_jbm329.services.data_operations.reshape_condition_lint import parse_condition
 from expo_jbm329.services.data_operations.reshape_condition_tree import ConditionDrop
 from expo_jbm329.services.data_operations.reshape_condition_values import ValuePage, ValuePageRequest
 from expo_jbm329.services.data_operations.reshape_conditions import (
@@ -51,7 +54,6 @@ def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch, caplog) ->
     caplog.set_level(logging.DEBUG, logger="applogger.service")
     parent = QWidget()
     editor = ConditionEditor(parent)
-    editor.text.setText("manual")
     source = pd.DataFrame({"a": ["x", "y"]})
     original = source.copy(deep=True)
     async_ops = MagicMock()
@@ -99,7 +101,7 @@ def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch, caplog) ->
     assert callbacks[0]["stale_check"]()
     callbacks[0]["on_error"]("late failure")
     callbacks[0]["on_result"](ValuePage((), False))
-    assert editor.text.text() == "manual"
+    assert editor.text.text() == ""
     pd.testing.assert_frame_equal(source, original)
 
 
@@ -206,7 +208,6 @@ def test_independent_rule_jobs_and_destroyed_dialog(monkeypatch) -> None:
 def test_nested_loading_rules_move_without_restarting_jobs_and_close_cancels_all(monkeypatch):
     parent = QWidget()
     editor = ConditionEditor(parent)
-    editor.text.setText("manual")
     async_ops = MagicMock()
     async_ops.job_mgr.get_job_id.side_effect = ["first", "second", "third"]
     callbacks = []
@@ -249,4 +250,130 @@ def test_nested_loading_rules_move_without_restarting_jobs_and_close_cancels_all
     for callback in callbacks:
         assert callback["stale_check"]()
         callback["on_result"](ValuePage((), False))
-    assert editor.text.text() == "manual"
+    assert editor.text.text() == ""
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["[a] = 'unfinished", "[missing] = 'x'", "[dup] IS NULL", "[a] IN ('x', 'x')", "[a] LIKE 'x'"],
+)
+def test_invalid_conditions_block_builder_show_error_and_preserve_text(monkeypatch, text):
+    parent = QWidget()
+    source = pd.DataFrame([["x", 1, 2]], columns=["a", "dup", "dup"])
+    columns = condition_columns(list(source.columns), list(source.dtypes))
+    editor = ConditionEditor(parent, columns)
+    editor.text.setText(text)
+    state = editor.builder_state()
+    assert state.diagnostic is not None
+    warning = MagicMock()
+    dialog = MagicMock()
+    focus = MagicMock()
+    monkeypatch.setattr(module.QMessageBox, "warning", warning)
+    monkeypatch.setattr(module, "ConditionDialog", dialog)
+    monkeypatch.setattr(editor, "focus_builder_diagnostic", focus)
+    async_ops = MagicMock()
+    module.ReshapeConditionController(async_ops, MagicMock()).open_dialog(parent, editor, source)
+    dialog.assert_not_called()
+    async_ops.run_operation.assert_not_called()
+    warning.assert_called_once_with(
+        parent, editor.button.accessibleName(), editor.builder_diagnostic_message(state.diagnostic)
+    )
+    focus.assert_called_once_with(state.diagnostic)
+    assert editor.text.text() == editor.expanded_text.toPlainText() == text
+    parent.close()
+
+
+def test_import_uses_current_source_metadata_not_stale_editor_columns(monkeypatch):
+    parent = QWidget()
+    editor = ConditionEditor(parent, condition_columns(["a"]))
+    editor.text.setText("[a] IS NULL")
+    monkeypatch.setattr(module.QMessageBox, "warning", MagicMock())
+    dialog = MagicMock()
+    monkeypatch.setattr(module, "ConditionDialog", dialog)
+    module.ReshapeConditionController(MagicMock(), MagicMock()).open_dialog(parent, editor, pd.DataFrame({"b": [1]}))
+    dialog.assert_not_called()
+    assert editor.text.text() == "[a] IS NULL"
+    parent.close()
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_manual_nested_condition_imports_and_cancel_preserves_exact_text(monkeypatch, accepted):
+    parent = QWidget()
+    source = pd.DataFrame({"a": [None], "b": ["x"], "c": [None]})
+    columns = condition_columns(list(source.columns), list(source.dtypes))
+    editor = ConditionEditor(parent, columns)
+    text = " [a] is null or ([b] is not null and [c] is null) "
+    editor.text.setText(text)
+    expected = condition_group_from_text(text, columns).group
+    assert expected is not None
+
+    def execute(dialog):
+        assert dialog.build_group() == expected
+        assert len(dialog.rules) == 3
+        if accepted:
+            dialog.accept()
+        else:
+            dialog.reject()
+        return dialog.result()
+
+    monkeypatch.setattr(module.ConditionDialog, "exec", execute)
+    async_ops = MagicMock()
+    module.ReshapeConditionController(async_ops, MagicMock()).open_dialog(parent, editor, source)
+    if accepted:
+        assert editor.text.text() == "([a] IS NULL OR ([b] IS NOT NULL AND [c] IS NULL))"
+        assert editor.restorable_group() == expected
+    else:
+        assert editor.text.text() == text
+    async_ops.run_operation.assert_not_called()
+    parent.close()
+
+
+@pytest.mark.parametrize(
+    ("series", "text", "selected"),
+    [
+        (pd.Series([1.0], dtype="Float64"), "[a] = 1.00", ConditionValue("decimal", "1.00")),
+        (pd.Series([True], dtype="boolean"), "[a] = true", ConditionValue("boolean", "True")),
+        (
+            pd.Series(pd.to_datetime(["2026-10-31"])),
+            "[a] = '2026-10-31T00:00:00'",
+            ConditionValue("string", "2026-10-31T00:00:00"),
+        ),
+        (pd.Series([1], dtype="category"), "[a] = '1'", ConditionValue("string", "1")),
+        (pd.Series(["x"], dtype="object"), "[a] = 'x'", ConditionValue("string", "x")),
+    ],
+)
+def test_imported_values_are_selected_on_loaded_pages_and_accept_preserves_literals(
+    monkeypatch, series, text, selected
+):
+    parent = QWidget()
+    source = pd.DataFrame({"a": series})
+    columns = condition_columns(list(source.columns), list(source.dtypes))
+    editor = ConditionEditor(parent, columns)
+    editor.text.setText(text)
+    async_ops = MagicMock()
+    async_ops.job_mgr.get_job_id.return_value = "import-page"
+
+    def execute(dialog):
+        rule = dialog.rules[0]
+        picker = rule.picker
+        assert picker.selected_values() == (selected,)
+        assert picker.loading
+        assert not dialog.apply_button.isEnabled()
+        picker._timer.stop()
+        dialog.page_requested.emit(picker, ValuePageRequest(0))
+        callbacks = async_ops.run_operation.call_args.kwargs
+        callbacks["on_result"](callbacks["work"]())
+        assert picker.values_list.item(0).checkState() == Qt.CheckState.Checked
+        assert picker.selected_values() == (selected,)
+        assert dialog.apply_button.isEnabled()
+        dialog.accept()
+        return dialog.result()
+
+    monkeypatch.setattr(module.ConditionDialog, "exec", execute)
+    controller = module.ReshapeConditionController(async_ops, MagicMock())
+    controller.open_dialog(parent, editor, source)
+    assert parse_condition(editor.text.text(), columns) == parse_condition(text, columns)
+    # Reopening accepted text must keep restored selections, too.
+    controller.open_dialog(parent, editor, source)
+    assert editor.restorable_group() is not None
+    parent.close()

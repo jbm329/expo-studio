@@ -2245,32 +2245,32 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="153" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="160" />
         <source>Build condition</source>
         <translation>Skapa villkor</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="162" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="169" />
         <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
         <translation>Texten har redigerats manuellt. Verkställ ersätter den. Avbryt behåller originaltexten.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="168" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
         <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
         <translation>Tvetydiga kolumnnamn är inte tillgängliga. Byt namn på dem innan du skapar villkor.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="182" />
         <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
         <translation>Dra ett handtag till en regel för att skapa en AND-grupp. Släpp på en grupp för att lägga till i den; använd radkanterna för att ändra ordning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="188" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="195" />
         <source>Apply</source>
         <translation>Verkställ</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="284" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="291" />
         <source>Complete every rule before applying.</source>
         <translation>Fyll i alla regler innan du verkställer.</translation>
     </message>
@@ -2301,99 +2301,104 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionEditor</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="62" />
         <source>Condition</source>
         <translation>Villkor</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="58" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="63" />
         <source>Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated.</source>
         <translation>Redigera villkorssyntax eller använd byggaren. Syntax och kolumnnamn kontrolleras; värden utvärderas inte.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="65" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="70" />
         <source>Build condition</source>
         <translation>Skapa villkor</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="66" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="71" />
         <source>Condition builder</source>
         <translation>Villkorsbyggare</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="177" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
         <source>Expected a column name enclosed in [brackets].</source>
         <translation>Förväntade ett kolumnnamn inom [hakparenteser].</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="178" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
         <source>Column '{name}' does not exist.</source>
         <translation>Kolumnen '{name}' finns inte.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="179" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="184" />
         <source>Column '{name}' is ambiguous. Rename duplicate columns first.</source>
         <translation>Kolumnen '{name}' är tvetydig. Byt först namn på dubblettkolumner.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
         <source>Missing closing ] in column name. Escape a literal ] as ]].</source>
         <translation>Avslutande ] saknas i kolumnnamnet. Skriv ]] för ett bokstavligt ].</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
         <translation>Oavslutat citerat v?rde. Kontrollera om ett enkelt citattecken saknas eller ?r felplacerat tidigare i villkoret. Skriv '' f?r en apostrof.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Förväntade =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL eller IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Förväntade ett värde inom enkla citattecken, till exempel 'värde'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
         <source>Expected an unquoted number, for example 18. Remove single quotes from numeric values.</source>
         <translation>Förväntade ett tal utan citattecken, till exempel 18. Ta bort enkla citattecken från numeriska värden.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
         <source>Expected unquoted True or False. Remove single quotes from booleans.</source>
         <translation>Förväntade True eller False utan citattecken. Ta bort enkla citattecken från booleska värden.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
         <translation>IN och NOT IN kr?ver en icke-tom, kommaseparerad lista inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Förväntade en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="198" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="203" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Avslutande parentes ) saknar motsvarande öppnande parentes. Lägg till en öppnande ( eller ta bort denna ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="206" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Förväntade ett villkor eller en grupp inom parenteser.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="207" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>Förväntade AND eller OR mellan villkor, eller slutet på uttrycket.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="381" />
+        <source>This condition cannot be represented in the builder. Check for duplicate or ambiguous values.</source>
+        <translation>Det här villkoret kan inte visas i villkorsbyggaren. Kontrollera om det finns dubbla eller tvetydiga värden.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
@@ -2418,77 +2423,77 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="49" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="50" />
         <source>Select column</source>
         <translation>Välj kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="61" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="62" />
         <source>Ambiguous column name. Rename this column first.</source>
         <translation>Tvetydigt kolumnnamn. Byt namn på kolumnen först.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="63" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="64" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="66" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
         <source>Equal to</source>
         <translation>Lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
         <source>Not equal to</source>
         <translation>Inte lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
         <source>In</source>
         <translation>Ingår i</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
         <source>Not in</source>
         <translation>Ingår inte i</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
         <source>Greater than</source>
         <translation>Större än</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
         <source>Greater than or equal to</source>
         <translation>Större än eller lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
         <source>Less than</source>
         <translation>Mindre än</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
         <source>Less than or equal to</source>
         <translation>Mindre än eller lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
         <source>Is missing</source>
         <translation>Saknas</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
         <source>Is not missing</source>
         <translation>Saknas inte</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="79" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
         <source>Operator</source>
         <translation>Operator</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="81" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="82" />
         <source>Remove rule</source>
         <translation>Ta bort regel</translation>
     </message>
@@ -2547,53 +2552,53 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionValuePicker</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="57" />
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="56" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="59" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="58" />
         <source>Search values</source>
         <translation>Sök värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="70" />
         <source>Previous</source>
         <translation>Föregående</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="71" />
         <source>Next</source>
         <translation>Nästa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="77" />
         <source>Selected values</source>
         <translation>Valda värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="80" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="82" />
         <source>Remove selected values</source>
         <translation>Ta bort valda värden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="153" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="157" />
         <source>No matching values.</source>
         <translation>Inga matchande värden.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="166" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="170" />
         <source>(empty string)</source>
         <translation>(tom sträng)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="180" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="184" />
         <source>Loading values...</source>
         <translation>Läser in värden...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="202" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="206" />
         <source>Page {page}</source>
         <translation>Sida {page}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="234" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="253" />
         <source>Select values ({count} selected)</source>
         <translation>Välj värden ({count} valda)</translation>
     </message>

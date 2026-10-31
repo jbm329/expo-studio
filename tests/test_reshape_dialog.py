@@ -200,6 +200,10 @@ def test_compiled_reshape_translations(qt_app, language):
                     "Unmatched closing parenthesis ). Add a matching opening ( or remove this ).",
                 ),
                 ("ConditionEditor", "Expected AND, OR or a closing parenthesis )."),
+                (
+                    "ConditionEditor",
+                    "This condition cannot be represented in the builder. Check for duplicate or ambiguous values.",
+                ),
                 ("ReshapeDialog", "Preview"),
                 ("ReshapeController", "Calculating Reshape preview..."),
                 ("ReshapeController", "Reshaped data"),
@@ -283,7 +287,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 102
+    assert checked == 103
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

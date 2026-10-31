@@ -227,3 +227,34 @@ def test_builder_state_reads_edits_from_the_expanded_editor(qt_app):
     assert second == condition_group_from_text("[a] = 'second'", columns)
     assert editor.text.text() == "[a] = 'second'"
     parent.close()
+
+
+def test_import_diagnostic_focus_selects_utf16_span_without_changing_text(qt_app):
+    parent, editor, _other = show_editor(qt_app)
+    value = "[emoji] = '😀'\nAND [missing] IS NULL"
+    editor.text.setText(value)
+    result = editor.builder_state(condition_columns(["emoji"]))
+    assert result.diagnostic is not None
+    editor.focus_builder_diagnostic(result.diagnostic)
+    qt_app.processEvents()
+    assert editor.popup.isVisible()
+    assert editor.expanded_text.hasFocus()
+    cursor = editor.expanded_text.textCursor()
+    assert cursor.selectedText() == "[missing]"
+    assert cursor.selectionStart() == len(value[: value.index("[missing]")].encode("utf-16-le")) // 2
+    assert editor.text.text() == editor.expanded_text.toPlainText() == value
+    parent.close()
+
+
+def test_import_diagnostic_focus_positions_cursor_at_eof(qt_app):
+    parent, editor, _other = show_editor(qt_app)
+    value = "[a] = 'x' AND "
+    editor.text.setText(value)
+    result = editor.builder_state(condition_columns(["a"]))
+    assert result.diagnostic is not None
+    editor.focus_builder_diagnostic(result.diagnostic)
+    qt_app.processEvents()
+    assert editor.expanded_text.textCursor().position() == len(value)
+    assert not editor.expanded_text.textCursor().hasSelection()
+    assert editor.text.text() == value
+    parent.close()

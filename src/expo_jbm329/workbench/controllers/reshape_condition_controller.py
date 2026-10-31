@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6 import sip
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtWidgets import QDialog
+from PyQt6.QtWidgets import QDialog, QMessageBox
 
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_value_picker import ConditionValuePicker
@@ -58,12 +58,19 @@ class ReshapeConditionController:
 
     def open_dialog(self, parent: QWidget, editor: ConditionEditor, source: pd.DataFrame) -> None:
         """Open a builder bound to one metric and its captured source DataFrame."""
-        initial = editor.restorable_group()
+        columns = condition_columns(list(source.columns), list(source.dtypes))
+        state = editor.builder_state(columns)
+        if state.diagnostic is not None:
+            QMessageBox.warning(
+                parent, editor.button.accessibleName(), editor.builder_diagnostic_message(state.diagnostic)
+            )
+            if not sip.isdeleted(editor):
+                editor.focus_builder_diagnostic(state.diagnostic)
+            return
         dialog = ConditionDialog(
             parent=parent,
-            columns=condition_columns(list(source.columns), list(source.dtypes)),
-            initial=initial,
-            replaces_manual_text=bool(editor.text.text()) and initial is None,
+            columns=columns,
+            initial=state.group,
         )
         closed = False
         jobs: dict[ConditionValuePicker, str] = {}
