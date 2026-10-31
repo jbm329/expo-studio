@@ -22,6 +22,10 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.data_operations.reshape_condition_completion import column_completion
+from expo_jbm329.services.data_operations.reshape_condition_import import (
+    ConditionImportResult,
+    condition_group_from_text,
+)
 from expo_jbm329.services.data_operations.reshape_condition_lint import (
     ConditionDiagnostic,
     ConditionLintCode,
@@ -350,6 +354,20 @@ class ConditionEditor(QWidget):
     def restorable_group(self) -> ConditionGroup | None:
         """Return applied builder state only if manual text is unchanged."""
         return self._applied if self.text.text() == self._expression else None
+
+    def builder_state(self) -> ConditionImportResult:
+        """Import current text without changing it or discarding import errors.
+
+        Returns:
+            Current builder state, an empty result for blank text, or the first
+            import diagnostic. Unchanged generated text retains the original
+            group and scalar identities after successful validation.
+        """
+        result = condition_group_from_text(self.text.text(), self._columns)
+        if result.diagnostic is not None:
+            return result
+        saved = self.restorable_group()
+        return ConditionImportResult(group=saved) if saved is not None else result
 
     def apply_group(self, group: ConditionGroup) -> None:
         """Replace this editor's text after a successful builder acceptance."""
