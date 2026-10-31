@@ -11206,10 +11206,6 @@ Snabbkommando: Ctrl+Z</translation>
         <translation>Källkolumn</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Värde</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Sortera efter</translation>
     </message>

@@ -11207,10 +11207,6 @@ Atajo: Ctrl+Z</translation>
         <translation>Columna de origen</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Valor</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Ordenar por</translation>
     </message>

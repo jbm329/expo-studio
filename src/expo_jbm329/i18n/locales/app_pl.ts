@@ -11207,10 +11207,6 @@ Skrót: Ctrl+Z</translation>
         <translation>Kolumna źródłowa</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Wartość</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Sortuj według</translation>
     </message>

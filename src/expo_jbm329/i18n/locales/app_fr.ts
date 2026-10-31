@@ -11207,10 +11207,6 @@ Raccourci : Ctrl+Z</translation>
         <translation>Colonne source</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Valeur</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Trier selon</translation>
     </message>

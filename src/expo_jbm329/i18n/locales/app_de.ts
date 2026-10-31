@@ -11207,10 +11207,6 @@ Tastenkombination: Ctrl+Z</translation>
         <translation>Quellspalte</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Wert</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Sortieren nach</translation>
     </message>

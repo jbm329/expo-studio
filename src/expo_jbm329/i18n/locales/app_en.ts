@@ -11071,10 +11071,6 @@ Shortcut: Ctrl+Z</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <source>Value</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <source>Order by</source>
         <translation type="unfinished" />
     </message>

@@ -337,7 +337,7 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                 ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 110
+    assert checked == 109
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

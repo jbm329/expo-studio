@@ -11207,10 +11207,6 @@ Scorciatoia: Ctrl+Z</translation>
         <translation>Colonna di origine</translation>
     </message>
     <message>
-        <source>Value</source>
-        <translation>Valore</translation>
-    </message>
-    <message>
         <source>Order by</source>
         <translation>Ordina per</translation>
     </message>
