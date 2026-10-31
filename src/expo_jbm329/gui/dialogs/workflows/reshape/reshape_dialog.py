@@ -163,10 +163,10 @@ class ReshapeDialog(QDialog):
         if header is not None:
             header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
             header.setStretchLastSection(True)
-        self.metrics.setColumnWidth(0, 220)
+        self.metrics.setColumnWidth(0, 160)
         self.metrics.setColumnWidth(1, 150)
-        self.metrics.setColumnWidth(2, 200)
-        self.metrics.setColumnWidth(3, 260)
+        self.metrics.setColumnWidth(2, 320)
+        self.metrics.setColumnWidth(3, 200)
         metrics_layout.addWidget(self.metrics)
         metric_buttons = QHBoxLayout()
         self.add_metric_button = QPushButton(self.tr("Add metric"), metrics_box)
@@ -257,7 +257,7 @@ class ReshapeDialog(QDialog):
         def update_source_columns() -> None:
             source.set_order_required(functions.currentText() in {"FIRST", "LAST"})
             self._populate_source_columns(columns, functions.currentText())
-            self._update_metric_rows()
+            self._update_ordering_guidance()
             self._update_metric_readiness()
 
         functions.currentIndexChanged.connect(update_source_columns)
@@ -501,23 +501,16 @@ class ReshapeDialog(QDialog):
         for row in sorted(rows, reverse=True):
             self.metrics.removeRow(row)
         self._update_remove_button()
-        self._update_metric_rows()
+        self._update_ordering_guidance()
         self._update_metric_readiness()
         self._configuration_changed()
 
-    def _update_metric_rows(self) -> None:
-        """Fit inline ordering while keeping ordinary rows at their usual height."""
-        ordered = False
-        header = self.metrics.verticalHeader()
-        if header is None:
-            message = "Reshape metrics require a vertical header."
-            raise RuntimeError(message)
-        for row in range(self.metrics.rowCount()):
-            source = self.metrics.cellWidget(row, 2)
-            if isinstance(source, MetricSourceCell):
-                ordered = ordered or source.requires_order
-                height = max(header.defaultSectionSize(), source.sizeHint().height() + 2)
-                self.metrics.setRowHeight(row, height)
+    def _update_ordering_guidance(self) -> None:
+        """Show ordering guidance only when an ordered metric is present."""
+        ordered = any(
+            isinstance(source := self.metrics.cellWidget(row, 2), MetricSourceCell) and source.requires_order
+            for row in range(self.metrics.rowCount())
+        )
         self.ordering_guidance.setVisible(ordered)
         self.ordering_guidance.setText(
             self.tr(

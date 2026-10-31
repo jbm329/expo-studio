@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QGridLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QComboBox, QHBoxLayout, QSizePolicy, QWidget
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
 class MetricSourceCell(QWidget):
-    """Keep ordinary sources compact and expose ordering only when required."""
+    """Show paired selectors and enable ordering only when required."""
 
     def __init__(
         self,
@@ -29,18 +29,19 @@ class MetricSourceCell(QWidget):
         """
         super().__init__(parent)
         self.requires_order = False
-        layout = QGridLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setHorizontalSpacing(4)
-        layout.setVerticalSpacing(2)
+        layout.setSpacing(4)
         self.value = QComboBox(self)
         self.value.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.value.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.value.setMinimumWidth(0)
         self.value.setAccessibleName(self.tr("Source column"))
         self.value.currentTextChanged.connect(self.value.setToolTip)
-        self.value_label = QLabel(self.tr("Value"), self)
-        self.value_label.setBuddy(self.value)
         self.order = QComboBox(self)
         self.order.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon)
+        self.order.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        self.order.setMinimumWidth(0)
         self.order.setAccessibleName(self.tr("Order by"))
         self.order.addItem(self.tr("Select ordering column"), None)
         for position in ordering_positions:
@@ -49,13 +50,8 @@ class MetricSourceCell(QWidget):
             self.order.setItemData(self.order.count() - 1, name, Qt.ItemDataRole.ToolTipRole)
         self.order.setToolTip(self.order.currentText())
         self.order.currentTextChanged.connect(self.order.setToolTip)
-        self.order_label = QLabel(self.tr("Order by"), self)
-        self.order_label.setBuddy(self.order)
-        layout.addWidget(self.value_label, 0, 0)
-        layout.addWidget(self.value, 0, 1)
-        layout.addWidget(self.order_label, 1, 0)
-        layout.addWidget(self.order, 1, 1)
-        layout.setColumnStretch(1, 1)
+        layout.addWidget(self.value, 1)
+        layout.addWidget(self.order, 1)
         self.setFocusProxy(self.value)
         QWidget.setTabOrder(self.value, self.order)
         self.set_order_required(False)
@@ -78,9 +74,6 @@ class MetricSourceCell(QWidget):
         return not self.requires_order or self.order_position is not None
 
     def set_order_required(self, required: bool) -> None:
-        """Toggle inline ordering without discarding the per-metric selection."""
+        """Enable ordering without discarding the per-metric selection."""
         self.requires_order = required
-        self.value_label.setVisible(required)
-        self.order_label.setVisible(required)
-        self.order.setVisible(required)
-        self.updateGeometry()
+        self.order.setEnabled(required)

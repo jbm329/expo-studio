@@ -47,7 +47,6 @@ def test_fixed_title_dimensions_and_initial_preview():
     assert isinstance(source_cell, MetricSourceCell)
     assert source_cell.value.accessibleName() == translate("MetricSourceCell", "Source column")
     assert source_cell.order.accessibleName() == translate("MetricSourceCell", "Order by")
-    assert source_cell.value_label.text() == translate("MetricSourceCell", "Value")
     assert source_cell.order.itemText(0) == translate("MetricSourceCell", "Select ordering column")
     assert dialog.metrics.horizontalHeaderItem(0).text() == "Metric name"
     assert dialog.windowTitle() == f"Reshape — Source <dataset> ({fmt_int(1234)} rows × {fmt_int(3)} columns)"
@@ -190,8 +189,6 @@ def test_compiled_reshape_translations(qt_app, language):
         assert isinstance(source_cell, MetricSourceCell)
         assert source_cell.value.accessibleName() == translate("MetricSourceCell", "Source column")
         assert source_cell.order.accessibleName() == translate("MetricSourceCell", "Order by")
-        assert source_cell.value_label.text() == translate("MetricSourceCell", "Value")
-        assert source_cell.order_label.text() == translate("MetricSourceCell", "Order by")
         assert source_cell.order.itemText(0) == translate("MetricSourceCell", "Select ordering column")
         dialog.metrics.cellWidget(0, 1).setCurrentText("FIRST")
         guidance = (
@@ -240,7 +237,6 @@ def test_compiled_reshape_translations(qt_app, language):
             )
             for context, source in (
                 ("MetricSourceCell", "Source column"),
-                ("MetricSourceCell", "Value"),
                 ("MetricSourceCell", "Order by"),
                 ("MetricSourceCell", "Select ordering column"),
                 ("ReshapeDialog", "Select an ordering column for every FIRST/LAST metric."),
@@ -662,21 +658,23 @@ def test_inline_ordering_layout_accessibility_and_gating(qt_app, function: str) 
     condition = dialog.metrics.cellWidget(0, 3)
     normal_height = dialog.metrics.rowHeight(0)
     assert dialog.metrics.columnCount() == 4
-    assert not source.value_label.isVisible()
-    assert not source.order.isVisible()
+    assert dialog.metrics.columnWidth(0) == 160
+    assert dialog.metrics.columnWidth(2) == 320
+    assert abs(columns.width() - source.order.width()) <= 1
+    assert source.order.isVisible()
+    assert not source.order.isEnabled()
     assert not dialog.ordering_guidance.isVisible()
     functions.setCurrentText(function)
     qt_app.processEvents()
-    assert source.value_label.isVisible() and source.order_label.isVisible() and source.order.isVisible()
-    assert source.value_label.text() == "Value"
-    assert source.order_label.text() == "Order by"
-    assert source.value_label.buddy() is columns
-    assert source.order_label.buddy() is source.order
+    assert source.order.isVisible()
+    assert source.order.isEnabled()
     assert source.value.accessibleName() == "Source column"
     assert source.order.accessibleName() == "Order by"
     assert source.focusProxy() is source.value
-    assert dialog.metrics.rowHeight(0) > normal_height
-    assert source.order.geometry().top() >= source.value.geometry().bottom()
+    assert dialog.metrics.rowHeight(0) == normal_height
+    assert source.order.geometry().left() > source.value.geometry().right()
+    assert source.order.geometry().top() == source.value.geometry().top()
+    assert abs(source.order.width() - source.value.width()) <= 1
     assert dialog.metrics.cellWidget(0, 3) is condition
     assert dialog.ordering_guidance.isVisible()
     assert "Conditions filter rows before ordering" in dialog.ordering_guidance.text()
@@ -704,7 +702,9 @@ def test_inline_ordering_layout_accessibility_and_gating(qt_app, function: str) 
     columns.setCurrentIndex(columns.findData(1))
     functions.setCurrentText("SUM")
     qt_app.processEvents()
-    assert not source.order.isVisible() and not source.value_label.isVisible()
+    assert source.order.isVisible()
+    assert not source.order.isEnabled()
+    assert abs(columns.width() - source.order.width()) <= 1
     assert not dialog.ordering_guidance.isVisible()
     assert dialog.metrics.rowHeight(0) == normal_height
     assert dialog.capture_request().metrics[0].order_position is None
@@ -820,7 +820,7 @@ def test_ordering_rows_stay_independent_when_an_earlier_row_is_removed(qt_app) -
     functions.setCurrentText("COUNT")
     qt_app.processEvents()
     assert not first.requires_order and second.requires_order
-    assert dialog.metrics.rowHeight(1) > dialog.metrics.rowHeight(0)
+    assert dialog.metrics.rowHeight(1) == dialog.metrics.rowHeight(0)
     request = dialog.capture_request()
     assert [metric.order_position for metric in request.metrics] == [None, 1]
     functions.setCurrentText("LAST")
@@ -900,4 +900,99 @@ def test_keyboard_navigation_visits_order_only_when_required(qt_app, function: s
     assert qt_app.focusWidget() is source.value
     QTest.keyClick(source.value, Qt.Key.Key_Backtab)
     assert qt_app.focusWidget() is functions
+    dialog.close()
+
+
+@pytest.mark.parametrize("language", ["en", "sv", "de", "fr", "it", "es", "pl"])
+def test_horizontal_selectors_fit_translated_placeholders_and_long_names(qt_app, language: str) -> None:
+    translator = QTranslator()
+    catalog = Path(__file__).parents[1] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(catalog))
+    qt_app.installTranslator(translator)
+    dialog = make_dialog(("Status " * 30, "Priority " * 30), (1,))
+    try:
+        dialog.show()
+        qt_app.processEvents()
+        function, value = metric_controls(dialog)
+        source = dialog.metrics.cellWidget(0, 2)
+        height = dialog.metrics.rowHeight(0)
+        for selection in ("FIRST", "LAST"):
+            function.setCurrentText(selection)
+            qt_app.processEvents()
+            assert value.currentText() == translate("ReshapeDialog", "Select column")
+            assert source.order.currentText() == translate("MetricSourceCell", "Select ordering column")
+            assert source.order.geometry().left() > value.geometry().right()
+            assert source.order.isEnabled()
+            assert abs(value.width() - source.order.width()) <= 1
+            assert value.width() >= 130 and source.order.width() >= 130
+            assert source.order.geometry().right() < source.width()
+            assert dialog.metrics.rowHeight(0) == height
+            value.setCurrentIndex(value.findData(0))
+            source.order.setCurrentIndex(source.order.findData(1))
+            assert value.toolTip() == "Status " * 30
+            assert source.order.toolTip() == "Priority " * 30
+            assert dialog.apply_button.isEnabled()
+            dialog.metrics.setColumnWidth(2, 400)
+            qt_app.processEvents()
+            assert abs(value.width() - source.order.width()) <= 1
+            assert dialog.metrics.rowHeight(0) == height
+            function.setCurrentText("COUNT")
+            qt_app.processEvents()
+            assert source.order.isVisible()
+            assert not source.order.isEnabled()
+            assert abs(value.width() - source.order.width()) <= 1
+            assert dialog.metrics.rowHeight(0) == height
+            value.setCurrentIndex(0)
+            source.order.setCurrentIndex(0)
+            dialog.metrics.setColumnWidth(2, 320)
+    finally:
+        dialog.close()
+        qt_app.removeTranslator(translator)
+
+
+def test_source_width_transfer_reduces_stretched_condition_space(qt_app) -> None:
+    dialog = make_dialog()
+    dialog.show()
+    qt_app.processEvents()
+    condition_width = dialog.metrics.columnWidth(3)
+    dialog.metrics.setColumnWidth(2, 280)
+    qt_app.processEvents()
+    assert dialog.metrics.columnWidth(3) == condition_width + 40
+    dialog.close()
+
+
+def test_metric_name_width_transfer_reduces_stretched_condition_space(qt_app) -> None:
+    dialog = make_dialog()
+    dialog.show()
+    qt_app.processEvents()
+    assert dialog.metrics.columnWidth(0) == 160
+    condition_width = dialog.metrics.columnWidth(3)
+    dialog.metrics.setColumnWidth(0, 140)
+    qt_app.processEvents()
+    assert dialog.metrics.columnWidth(3) == condition_width + 20
+    assert dialog.metrics.columnWidth(2) == 320
+    dialog.close()
+
+
+def test_disabled_ordering_does_not_accept_user_input_or_gate_ordinary_metric(qt_app) -> None:
+    dialog = make_dialog()
+    complete_metric(dialog, 0)
+    dialog.show()
+    qt_app.processEvents()
+    source = dialog.metrics.cellWidget(0, 2)
+    assert source.order.isVisible() and not source.order.isEnabled()
+    QTest.keyClick(source.order, Qt.Key.Key_Down)
+    assert source.order.currentData() is None
+    assert dialog.capture_request().metrics[0].order_position is None
+    assert dialog.preview_button.isEnabled() and dialog.apply_button.isEnabled()
+    dialog.metrics.cellWidget(0, 1).setCurrentText("FIRST")
+    assert source.order.isEnabled()
+    assert not dialog.apply_button.isEnabled()
+    source.order.setCurrentIndex(1)
+    selected = source.order.currentData()
+    dialog.metrics.cellWidget(0, 1).setCurrentText("SUM")
+    assert source.order.currentData() == selected
+    assert not source.order.isEnabled()
+    assert dialog.capture_request().metrics[0].order_position is None
+    assert dialog.apply_button.isEnabled()
     dialog.close()
