@@ -13,6 +13,18 @@ from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers import reshape_controller as module
 
 
+def test_condition_controller_receives_shared_dialog_service(monkeypatch):
+    conditions = MagicMock()
+    monkeypatch.setattr(module, "ReshapeConditionController", conditions)
+    dialogs = MagicMock(spec=DialogService)
+    async_ops = MagicMock()
+    logger = MagicMock()
+    module.ReshapeController(
+        parent_widget=QWidget(), results=MagicMock(), async_ops=async_ops, logger=logger, dialogs=dialogs
+    )
+    conditions.assert_called_once_with(async_ops, logger, dialogs=dialogs)
+
+
 def test_open_captures_only_active_dataset_metadata_without_mutation(monkeypatch):
     dataframe = pd.DataFrame([[1, 2, 3]], columns=[1, "1", "value"])
     original = dataframe.copy(deep=True)

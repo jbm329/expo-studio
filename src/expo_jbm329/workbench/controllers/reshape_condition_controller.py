@@ -9,6 +9,7 @@ from PyQt6 import sip
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import QDialog
 
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_value_picker import ConditionValuePicker
 from expo_jbm329.services.data_operations.reshape_condition_values import (
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     import pandas as pd
     from PyQt6.QtWidgets import QWidget
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
     from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
 
@@ -47,10 +49,17 @@ class ReshapeConditionController:
         "Different values have identical condition text. Convert the column to an unambiguous type first."
     )
 
-    def __init__(self, async_ops: AsyncOperationController, logger: logging.Logger) -> None:
-        """Reuse the workbench's async facade and UI logger."""
+    def __init__(
+        self,
+        async_ops: AsyncOperationController,
+        logger: logging.Logger,
+        *,
+        dialogs: DialogService | None = None,
+    ) -> None:
+        """Reuse the workbench's async facade, UI logger and dialog service."""
         self._async_ops = async_ops
         self._logger = logger
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -58,12 +67,19 @@ class ReshapeConditionController:
 
     def open_dialog(self, parent: QWidget, editor: ConditionEditor, source: pd.DataFrame) -> None:
         """Open a builder bound to one metric and its captured source DataFrame."""
-        initial = editor.restorable_group()
+        columns = condition_columns(list(source.columns), list(source.dtypes))
+        state = editor.builder_state(columns)
+        if state.diagnostic is not None:
+            self._dialogs.warn(
+                parent, editor.button.accessibleName(), editor.builder_diagnostic_message(state.diagnostic)
+            )
+            if not sip.isdeleted(editor):
+                editor.focus_builder_diagnostic(state.diagnostic)
+            return
         dialog = ConditionDialog(
             parent=parent,
-            columns=condition_columns(list(source.columns), list(source.dtypes)),
-            initial=initial,
-            replaces_manual_text=bool(editor.text.text()) and initial is None,
+            columns=columns,
+            initial=state.group,
         )
         closed = False
         jobs: dict[ConditionValuePicker, str] = {}

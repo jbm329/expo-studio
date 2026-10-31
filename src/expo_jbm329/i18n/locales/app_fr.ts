@@ -2245,32 +2245,32 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConditionDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="153" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="160" />
         <source>Build condition</source>
         <translation>Créer une condition</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="162" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="169" />
         <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
         <translation>Ce texte a été modifié manuellement. Appliquer le remplacera. Annuler conserve le texte initial.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="168" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
         <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
         <translation>Les noms de colonnes ambigus ne sont pas disponibles. Renommez-les avant de créer des conditions.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="182" />
         <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
         <translation>Glissez une poignée sur une règle pour créer un groupe AND. Déposez-la sur un groupe pour l'y ajouter ; utilisez les bords des lignes pour réordonner.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="188" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="195" />
         <source>Apply</source>
         <translation>Appliquer</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="284" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="291" />
         <source>Complete every rule before applying.</source>
         <translation>Complétez toutes les règles avant d'appliquer.</translation>
     </message>
@@ -2301,99 +2301,104 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConditionEditor</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="57" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="62" />
         <source>Condition</source>
         <translation>Condition</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="58" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="63" />
         <source>Edit condition syntax or use the builder. Syntax and column names are checked; values are not evaluated.</source>
         <translation>Modifiez la syntaxe de la condition ou utilisez le générateur. La syntaxe et les noms de colonnes sont vérifiés ; les valeurs ne sont pas évaluées.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="65" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="70" />
         <source>Build condition</source>
         <translation>Créer une condition</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="66" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="71" />
         <source>Condition builder</source>
         <translation>Générateur de conditions</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="177" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
         <source>Expected a column name enclosed in [brackets].</source>
         <translation>Un nom de colonne entre [crochets] est attendu.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="178" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
         <source>Column '{name}' does not exist.</source>
         <translation>La colonne '{name}' n'existe pas.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="179" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="184" />
         <source>Column '{name}' is ambiguous. Rename duplicate columns first.</source>
         <translation>La colonne '{name}' est ambiguë. Renommez d'abord les colonnes en double.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
         <source>Missing closing ] in column name. Escape a literal ] as ]].</source>
         <translation>Le ] fermant manque dans le nom de colonne. Écrivez ]] pour un ] littéral.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="183" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
         <translation>Valeur entre apostrophes non termin?e. V?rifiez si une apostrophe manque ou est mal plac?e plus t?t dans la condition. ?crivez '' pour une apostrophe litt?rale.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="187" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
         <source>Expected =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL or IS NOT NULL.</source>
         <translation>Opérateur attendu : =, !=, &gt;, &gt;=, &lt;, &lt;=, IN, NOT IN, IS NULL ou IS NOT NULL.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="188" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="193" />
         <source>Expected a single-quoted value, for example 'value'.</source>
         <translation>Une valeur entre apostrophes est attendue, par exemple 'valeur'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="189" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="194" />
         <source>Expected an unquoted number, for example 18. Remove single quotes from numeric values.</source>
         <translation>Un nombre sans apostrophes est attendu, par exemple 18. Retirez les apostrophes des valeurs numériques.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="192" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
         <source>Expected unquoted True or False. Remove single quotes from booleans.</source>
         <translation>True ou False sans apostrophes est attendu. Retirez les apostrophes des booléens.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="200" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
         <translation>IN et NOT IN exigent une liste non vide entre parenth?ses, s?par?e par des virgules.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="196" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
         <source>Expected a closing parenthesis ).</source>
         <translation>Une parenthèse fermante ) est attendue.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="197" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
         <translation>AND, OR ou une parenth?se fermante ) est attendu.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="198" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="203" />
         <source>Unmatched closing parenthesis ). Add a matching opening ( or remove this ).</source>
         <translation>Parenthèse fermante ) sans correspondance. Ajoutez une parenthèse ouvrante ( correspondante ou supprimez cette ).</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="201" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="206" />
         <source>Expected a condition or a parenthesized group.</source>
         <translation>Une condition ou un groupe entre parenthèses est attendu.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="202" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="207" />
         <source>Expected AND or OR between conditions, or the end of the expression.</source>
         <translation>AND ou OR entre les conditions, ou la fin de l'expression, est attendu.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="381" />
+        <source>This condition cannot be represented in the builder. Check for duplicate or ambiguous values.</source>
+        <translation>Cette condition ne peut pas être représentée dans l'éditeur visuel. Vérifiez la présence de valeurs en double ou ambiguës.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
@@ -2418,77 +2423,77 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="49" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="50" />
         <source>Select column</source>
         <translation>Sélectionner une colonne</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="61" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="62" />
         <source>Ambiguous column name. Rename this column first.</source>
         <translation>Nom de colonne ambigu. Renommez d'abord cette colonne.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="63" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="64" />
         <source>Column</source>
         <translation>Colonne</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="66" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
         <source>Equal to</source>
         <translation>Égal à</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
         <source>Not equal to</source>
         <translation>Différent de</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
         <source>In</source>
         <translation>Dans</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
         <source>Not in</source>
         <translation>Pas dans</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
         <source>Greater than</source>
         <translation>Supérieur à</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
         <source>Greater than or equal to</source>
         <translation>Supérieur ou égal à</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
         <source>Less than</source>
         <translation>Inférieur à</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
         <source>Less than or equal to</source>
         <translation>Inférieur ou égal à</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
         <source>Is missing</source>
         <translation>Est manquant</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
         <source>Is not missing</source>
         <translation>N'est pas manquant</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="79" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
         <source>Operator</source>
         <translation>Opérateur</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="81" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="82" />
         <source>Remove rule</source>
         <translation>Supprimer la règle</translation>
     </message>
@@ -2547,53 +2552,53 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConditionValuePicker</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="57" />
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="56" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="59" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="58" />
         <source>Search values</source>
         <translation>Rechercher des valeurs</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="70" />
         <source>Previous</source>
         <translation>Précédent</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="71" />
         <source>Next</source>
         <translation>Suivant</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="77" />
         <source>Selected values</source>
         <translation>Valeurs sélectionnées</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="80" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="82" />
         <source>Remove selected values</source>
         <translation>Supprimer les valeurs sélectionnées</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="153" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="157" />
         <source>No matching values.</source>
         <translation>Aucune valeur correspondante.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="166" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="170" />
         <source>(empty string)</source>
         <translation>(chaîne vide)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="180" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="184" />
         <source>Loading values...</source>
         <translation>Chargement des valeurs...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="202" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="206" />
         <source>Page {page}</source>
         <translation>Page {page}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="234" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_value_picker.py" line="253" />
         <source>Select values ({count} selected)</source>
         <translation>Sélectionner des valeurs ({count} sélectionnées)</translation>
     </message>

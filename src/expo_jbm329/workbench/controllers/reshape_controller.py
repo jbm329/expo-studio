@@ -71,7 +71,7 @@ class ReshapeController:
         self._results = results
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
-        self._conditions = ReshapeConditionController(async_ops, self._logger)
+        self._conditions = ReshapeConditionController(async_ops, self._logger, dialogs=self._dialogs)
         self._async_ops = async_ops
 
     @staticmethod

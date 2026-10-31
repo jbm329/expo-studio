@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QLabel, QPushButton, QWidget
 
@@ -13,12 +14,50 @@ from expo_jbm329.services.data_operations.reshape_condition_values import ValueP
 from expo_jbm329.services.data_operations.reshape_conditions import (
     ConditionColumn,
     ConditionGroup,
+    ConditionLiteralType,
     ConditionMatch,
     ConditionOperator,
     ConditionRule,
     ConditionValue,
 )
 from expo_jbm329.utils.dataset_ref import DatasetRef
+
+
+@pytest.mark.parametrize(
+    ("literal_type", "selected", "entry"),
+    [
+        (ConditionLiteralType.NUMBER, ConditionValue("decimal", "1.00"), ConditionValue("float", "1.0")),
+        (ConditionLiteralType.QUOTED, ConditionValue("string", "1"), ConditionValue("integer", "1")),
+        (ConditionLiteralType.QUOTED, ConditionValue("string", "2026-10-31"), ConditionValue("date", "2026-10-31")),
+    ],
+)
+def test_imported_picker_selection_matches_page_identity_and_can_be_unchecked(literal_type, selected, entry):
+    parent = QWidget()
+    picker = ConditionValuePicker(parent)
+    picker.configure(0, multiple=True, enabled=True, values=(selected,), literal_type=literal_type)
+    picker._timer.stop()
+    picker.receive_page(ValuePage((), True))
+    assert picker.selected_values() == (selected,)
+    picker.receive_page(ValuePage((entry,), False))
+    assert picker.values_list.item(0).checkState() == Qt.CheckState.Checked
+    assert picker.selected_values() == (selected,)
+    picker.values_list.item(0).setCheckState(Qt.CheckState.Unchecked)
+    assert picker.selected_values() == ()
+    picker.values_list.item(0).setCheckState(Qt.CheckState.Checked)
+    assert picker.selected_values() == (entry,)
+    parent.close()
+
+
+def test_quoted_picker_values_do_not_use_numeric_equivalence():
+    parent = QWidget()
+    picker = ConditionValuePicker(parent)
+    selected = ConditionValue("string", "1.00")
+    picker.configure(0, multiple=True, enabled=True, values=(selected,))
+    picker._timer.stop()
+    picker.receive_page(ValuePage((ConditionValue("float", "1.0"),), False))
+    assert picker.values_list.item(0).checkState() == Qt.CheckState.Unchecked
+    assert picker.selected_values() == (selected,)
+    parent.close()
 
 
 def test_picker_uses_standard_button_height_and_opens_value_popup(qt_app) -> None:

@@ -26,6 +26,7 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
     ConditionColumn,
     ConditionError,
     ConditionGroup,
+    ConditionLiteralType,
     ConditionOperator,
     ConditionRule,
     format_condition,
@@ -123,13 +124,19 @@ class ConditionRuleWidget(QWidget):
             multiple=rule.operator.is_membership,
             enabled=not rule.operator.is_null_test,
             values=rule.operands,
+            literal_type=rule.column.literal_type,
         )
 
     def _configure(self) -> None:
         column = self.column.currentData()
         operator = self.selected_operator()
         position = column.position if isinstance(column, ConditionColumn) and column.available else None
-        self.picker.configure(position, multiple=operator.is_membership, enabled=not operator.is_null_test)
+        self.picker.configure(
+            position,
+            multiple=operator.is_membership,
+            enabled=not operator.is_null_test,
+            literal_type=column.literal_type if isinstance(column, ConditionColumn) else ConditionLiteralType.QUOTED,
+        )
         self.column.setToolTip(f"<qt>{html.escape(self.column.currentText())}</qt>")
         self.changed.emit()
 

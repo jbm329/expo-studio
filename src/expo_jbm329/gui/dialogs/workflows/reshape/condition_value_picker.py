@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+from decimal import Decimal
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -19,7 +20,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.services.data_operations.reshape_condition_values import ValuePage, ValuePageRequest
-from expo_jbm329.services.data_operations.reshape_conditions import ConditionValue
+from expo_jbm329.services.data_operations.reshape_conditions import ConditionLiteralType, ConditionValue
 
 
 class ConditionValuePicker(QWidget):
@@ -36,6 +37,7 @@ class ConditionValuePicker(QWidget):
         self.generation = 0
         self.page = 0
         self.multiple = False
+        self._literal_type = ConditionLiteralType.QUOTED
         self.loading = False
         self.error = False
         self._has_next = False
@@ -105,12 +107,14 @@ class ConditionValuePicker(QWidget):
         multiple: bool,
         enabled: bool,
         values: tuple[ConditionValue, ...] | None = None,
+        literal_type: ConditionLiteralType = ConditionLiteralType.QUOTED,
     ) -> None:
         """Invalidate old pages and adapt selection to the new column/operator."""
         changed_column = column_position != self.column_position
         self.invalidate()
         self.column_position = column_position
         self.multiple = multiple
+        self._literal_type = literal_type
         if changed_column or not enabled or (not multiple and len(self._selected) > 1):
             self._selected.clear()
         if values is not None:
@@ -147,7 +151,7 @@ class ConditionValuePicker(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, value)
             item.setToolTip(self._tooltip(value))
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked if value in self._selected else Qt.CheckState.Unchecked)
+            item.setCheckState(Qt.CheckState.Checked if self._matching_selections(value) else Qt.CheckState.Unchecked)
             self.values_list.addItem(item)
         self._updating = False
         self.status.setText("" if result.entries else self.tr("No matching values."))
@@ -208,14 +212,24 @@ class ConditionValuePicker(QWidget):
         if not isinstance(value, ConditionValue):
             message = "Condition value item is missing its typed value."
             raise TypeError(message)
+        matches = self._matching_selections(value)
         if item.checkState() == Qt.CheckState.Checked:
             if not self.multiple:
                 self._selected.clear()
-            self._selected[value] = None
+            if not matches or not self.multiple:
+                self._selected[value] = None
         else:
-            self._selected.pop(value, None)
+            for selected in matches:
+                self._selected.pop(selected)
         self._refresh_selection()
         self.changed.emit()
+
+    def _matching_selections(self, value: ConditionValue) -> tuple[ConditionValue, ...]:
+        # Imported literals lack picker scalar identities and may use another numeric spelling.
+        if self._literal_type == ConditionLiteralType.NUMBER:
+            number = Decimal(value.text)
+            return tuple(selected for selected in self._selected if Decimal(selected.text) == number)
+        return tuple(selected for selected in self._selected if selected.text == value.text)
 
     def _refresh_selection(self) -> None:
         self._updating = True
@@ -229,7 +243,12 @@ class ConditionValuePicker(QWidget):
             page_item = self.values_list.item(index)
             if page_item is not None:
                 value = page_item.data(Qt.ItemDataRole.UserRole)
-                page_item.setCheckState(Qt.CheckState.Checked if value in self._selected else Qt.CheckState.Unchecked)
+                if not isinstance(value, ConditionValue):
+                    message = "Condition value item is missing its typed value."
+                    raise TypeError(message)
+                page_item.setCheckState(
+                    Qt.CheckState.Checked if self._matching_selections(value) else Qt.CheckState.Unchecked
+                )
         self._updating = False
         summary = self.tr("Select values ({count} selected)").format(count=len(self._selected))
         self.button.setText(summary)
