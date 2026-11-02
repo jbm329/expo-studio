@@ -165,7 +165,7 @@ def test_create_derived_column_rejects_non_numeric_column() -> None:
     df = pd.DataFrame({"A": pd.Series([1, 2, 3], dtype="Int64"), "Text": pd.Series(["x", "y", "z"], dtype="string")})
     spec = DerivedColumnSpec(column_name="Result", formula="[A] + [Text]")
 
-    with pytest.raises(DerivedColumnFormulaError, match="unknown_column"):
+    with pytest.raises(DerivedColumnFormulaError, match="invalid_operand_type"):
         create_derived_column(df, spec)
 
 

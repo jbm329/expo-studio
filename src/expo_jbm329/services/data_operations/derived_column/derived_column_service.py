@@ -1,20 +1,25 @@
-"""Service for creating numeric derived DataFrame columns.
+"""Service for creating numeric or text derived DataFrame columns.
 
 This module provides the service layer for creating derived columns from
-simple numeric formulas.
+numeric formulas and typed conditional expressions.
 
-Supported phase 1 features:
+Supported features:
     - Numeric constants
     - Numeric column references using [Column Name]
     - Operators: +, -, *, /
     - Parentheses
-    - Nullable Float64 output
+    - Nested IF(condition; then; else), typed comparisons and Boolean logic
+    - Nullable Float64 or StringDtype output inferred from compatible branches
+    - SQL-style unknown conditions select the IF else branch
 
 Examples:
     [A] + [B]
     [A] / [B] * 100
     ([A] + [B]) / 2
     10
+    IF([Vehicle] IN('BMW', 'Volvo'); 'Cars'; 'Other')
+    IF([Column1] IS NULL; 'Empty'; [Column1])
+    IF([Age] IS NULL; 0; [Age])
 """
 
 from __future__ import annotations
@@ -27,13 +32,19 @@ import numpy as np
 import pandas as pd
 
 from expo_jbm329.services.data_operations.convert import to_nullable_float_series
+from expo_jbm329.services.data_operations.derived_column.derived_column_evaluation import evaluate_expression
+from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
+    ExpressionType,
+    ParsedFormula,
+    expression_columns,
+    parse_expression_formula,
+)
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import (
     DerivedColumnFormulaError,
     FormulaToken,
     FormulaTokenType,
     FormulaValidationResult,
     parse_formula_to_rpn,
-    validate_formula,
 )
 from expo_jbm329.services.data_operations.dtypes import (
     get_numeric_columns,
@@ -88,20 +99,20 @@ class DerivedColumnError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class DerivedColumnSpec:
-    """Specification for creating a derived numeric column.
+    """Specification for creating a derived column.
 
     Attributes:
         column_name: Name of the output column.
         formula: Formula expression entered by the user.
         overwrite_existing: Whether an existing column may be overwritten.
-        output_dtype: Output dtype strategy. Phase 1 defaults to nullable float.
+        output_dtype: Infer nullable text/numeric output, or require Float64.
         replace_inf_with_na: Whether inf/-inf should be converted to pd.NA.
     """
 
     column_name: str
     formula: str
     overwrite_existing: bool = False
-    output_dtype: Literal["Float64"] = "Float64"
+    output_dtype: Literal["auto", "Float64"] = "auto"
     replace_inf_with_na: bool = True
 
 
@@ -149,10 +160,13 @@ def validate_derived_column_spec(
     try:
         _validate_column_name(df, spec)
 
-        numeric_columns = set(get_numeric_columns(df))
-        return validate_formula(spec.formula, numeric_columns)
+        parsed = _compile_formula(df, spec)
+        return FormulaValidationResult(
+            ok=True,
+            referenced_columns=parsed.referenced_columns if isinstance(parsed, ParsedFormula) else (),
+        )
 
-    except DerivedColumnError as exc:
+    except (DerivedColumnError, DerivedColumnFormulaError) as exc:
         return FormulaValidationResult(ok=False, error=DerivedColumnFormulaError(exc.code, context=exc.context))
 
 
@@ -160,7 +174,7 @@ def create_derived_column(
     df: pd.DataFrame,
     spec: DerivedColumnSpec,
 ) -> pd.DataFrame:
-    """Create a derived numeric column from a formula.
+    """Create a derived numeric or nullable text column from a formula.
 
     Args:
         df: Source DataFrame.
@@ -183,13 +197,15 @@ def create_derived_column(
 
     _validate_column_name(df, spec)
 
-    numeric_columns = set(get_numeric_columns(df))
-
     try:
-        rpn = parse_formula_to_rpn(spec.formula, numeric_columns)
-        result = evaluate_rpn(df, rpn)
+        parsed = _compile_formula(df, spec)
+        result = (
+            evaluate_expression(df, parsed.expression)
+            if isinstance(parsed, ParsedFormula)
+            else evaluate_rpn(df, parsed)
+        )
 
-    except DerivedColumnFormulaError:
+    except (DerivedColumnFormulaError, DerivedColumnError):
         raise  # propagate unchanged
 
     except (
@@ -216,12 +232,15 @@ def create_derived_column(
             context={"error": str(exc)},
         ) from exc
 
-    result_series = _normalize_result_series(
-        result=result,
-        index=df.index,
-        output_dtype=spec.output_dtype,
-        replace_inf_with_na=spec.replace_inf_with_na,
-    )
+    if isinstance(parsed, ParsedFormula) and parsed.expression.value_type == ExpressionType.TEXT:
+        result_series = pd.Series(result, index=df.index, dtype=pd.StringDtype())
+    else:
+        result_series = _normalize_result_series(
+            result=result,
+            index=df.index,
+            output_dtype="Float64",
+            replace_inf_with_na=spec.replace_inf_with_na,
+        )
 
     new_df = df.copy()
 
@@ -272,10 +291,11 @@ def preview_derived_column(
             data=result.loc[:, preview_columns],
         )
 
-    except (DerivedColumnError, DerivedColumnFormulaError):
+    except (DerivedColumnError, DerivedColumnFormulaError) as error:
+        logger.warning("Derived column preview failed (code=%s).", error.code)
         return DerivedColumnPreview(
             ok=False,
-            message="",
+            message=error.code,
             data=None,
         )
 
@@ -344,6 +364,24 @@ def evaluate_rpn(
 # =====================================================================
 # Internal validation helpers
 # =====================================================================
+
+
+def _compile_formula(df: pd.DataFrame, spec: DerivedColumnSpec) -> ParsedFormula | list[FormulaToken]:
+    """Keep legacy numeric evaluation stable and compile expanded syntax once."""
+    if spec.output_dtype not in {"auto", "Float64"}:
+        code = "unsupported_output_dtype"
+        raise DerivedColumnError(code, context={"dtype": spec.output_dtype})
+    columns = expression_columns(list(df.columns), list(df.dtypes))
+    available = {column.name for column in columns if column.available}
+    try:
+        return parse_formula_to_rpn(spec.formula, set(get_numeric_columns(df)) & available)
+    except DerivedColumnFormulaError:
+        # The legacy grammar cannot represent IF, text, or typed predicates.
+        parsed = parse_expression_formula(spec.formula, columns)
+    if spec.output_dtype == "Float64" and parsed.expression.value_type == ExpressionType.TEXT:
+        code = "result_conversion_failed"
+        raise DerivedColumnError(code, context={"dtype": spec.output_dtype})
+    return parsed
 
 
 def _normalized_column_name(spec: DerivedColumnSpec) -> str:
