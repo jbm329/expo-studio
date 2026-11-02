@@ -8,13 +8,19 @@ import numpy as np
 import pandas as pd
 
 from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
-    ExpressionOperation as Op,
-)
-from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
+    TIME_FUNCTION_TYPES,
     ExpressionType,
     FormulaExpression,
 )
+from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
+    ExpressionOperation as Op,
+)
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import DerivedColumnFormulaError
+from expo_jbm329.services.data_operations.derived_column.derived_column_time import (
+    DEFAULT_MONTH_LABELS,
+    MonthLabels,
+    extract_time_part,
+)
 from expo_jbm329.services.data_operations.expression_primitives import compare_values, membership_mask
 
 if TYPE_CHECKING:
@@ -72,9 +78,11 @@ def _compare(left: pd.Series, right: pd.Series, operator: str) -> pd.Series:
     return compare_values(left, right, operator, preserve_unknown=True)
 
 
-def _apply(node: FormulaExpression, values: list[pd.Series]) -> pd.Series:
+def _apply(node: FormulaExpression, values: list[pd.Series], month_labels: MonthLabels) -> pd.Series:
     left = values[0]
     operation = node.operation
+    if operation in TIME_FUNCTION_TYPES:
+        return extract_time_part(left, operation, month_labels)
     if operation in {Op.IS_NULL, Op.IS_NOT_NULL}:
         return left.isna() if operation == Op.IS_NULL else left.notna()
     if operation in {Op.POSITIVE, Op.NEGATIVE}:
@@ -105,12 +113,18 @@ def _apply(node: FormulaExpression, values: list[pd.Series]) -> pd.Series:
     raise _failure(node, "unsupported_operator_runtime", operator=operation.value)
 
 
-def evaluate_expression(source: pd.DataFrame, expression: FormulaExpression) -> pd.Series:
+def evaluate_expression(
+    source: pd.DataFrame,
+    expression: FormulaExpression,
+    *,
+    month_labels: MonthLabels = DEFAULT_MONTH_LABELS,
+) -> pd.Series:
     """Evaluate a parsed expression without recursion or label-based alignment.
 
     Args:
         source: Unmodified source DataFrame matching the captured schema.
         expression: Validated expression from parse_expression_formula.
+        month_labels: Captured month names; defaults to deterministic English.
 
     Returns:
         Result values in source order with the original, possibly duplicate index.
@@ -152,7 +166,7 @@ def evaluate_expression(source: pd.DataFrame, expression: FormulaExpression) -> 
                 count = 1 if node.operation in {Op.IN, Op.NOT_IN} else len(node.operands)
                 values = results[-count:]
                 del results[-count:]
-                results.append(_apply(node, values))
+                results.append(_apply(node, values, month_labels))
             elif node.operation == Op.LITERAL:
                 literal_dtype: str | pd.StringDtype | None = None
                 if node.value_type == ExpressionType.TEXT:

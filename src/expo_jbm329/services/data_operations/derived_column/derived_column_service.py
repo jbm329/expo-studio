@@ -11,6 +11,8 @@ Supported features:
     - Nested IF(condition; then; else), typed comparisons and Boolean logic
     - Nullable Float64 or StringDtype output inferred from compatible branches
     - SQL-style unknown conditions select the IF else branch
+    - Datetime parts and calendar/ISO groups, preserving NaT and stored timezone
+    - Explicit immutable month labels, defaulting to English for service callers
 
 Examples:
     [A] + [B]
@@ -46,6 +48,7 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_parser i
     FormulaValidationResult,
     parse_formula_to_rpn,
 )
+from expo_jbm329.services.data_operations.derived_column.derived_column_time import DEFAULT_MONTH_LABELS, MonthLabels
 from expo_jbm329.services.data_operations.dtypes import (
     get_numeric_columns,
     is_numeric_series,
@@ -107,6 +110,7 @@ class DerivedColumnSpec:
         overwrite_existing: Whether an existing column may be overwritten.
         output_dtype: Infer nullable text/numeric output, or require Float64.
         replace_inf_with_na: Whether inf/-inf should be converted to pd.NA.
+        month_labels: Captured month names shared by creation and preview.
     """
 
     column_name: str
@@ -114,6 +118,7 @@ class DerivedColumnSpec:
     overwrite_existing: bool = False
     output_dtype: Literal["auto", "Float64"] = "auto"
     replace_inf_with_na: bool = True
+    month_labels: MonthLabels = DEFAULT_MONTH_LABELS
 
 
 @dataclass(frozen=True, slots=True)
@@ -200,7 +205,7 @@ def create_derived_column(
     try:
         parsed = _compile_formula(df, spec)
         result = (
-            evaluate_expression(df, parsed.expression)
+            evaluate_expression(df, parsed.expression, month_labels=spec.month_labels)
             if isinstance(parsed, ParsedFormula)
             else evaluate_rpn(df, parsed)
         )

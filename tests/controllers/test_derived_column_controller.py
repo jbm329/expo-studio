@@ -13,6 +13,7 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_parser i
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
 )
+from expo_jbm329.services.data_operations.derived_column.derived_column_time import MonthLabels
 from expo_jbm329.workbench.controllers.derived_column_controller import (
     DerivedColumnController,
 )
@@ -340,3 +341,26 @@ def test_nondatetime_time_operand_has_localized_validation_error(controller, wid
     assert result.error.code == "datetime_operand_required"
     assert message == ctrl._tr_fmt(ctrl.TR_DATETIME_OPERAND_REQUIRED, token="YEAR", position="0")
     assert not async_ops.calls
+
+
+def test_time_workflow_preserves_captured_month_labels_during_spec_normalization(controller, monkeypatch):
+    ctrl, async_ops, dialogs, apply, current_df, _ = controller
+    current_df.return_value = pd.DataFrame({"When": pd.to_datetime(["2026-01-01", None])})
+    labels = MonthLabels(full=tuple(f"Month {month}" for month in range(1, 13)))
+    spec = DerivedColumnSpec(" Group ", " MONTH([When]) ", month_labels=labels)
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.derived_column_controller.DerivedColumnDialog",
+        lambda **kwargs: type(
+            "Dialog",
+            (),
+            {"exec": lambda self: QDialog.DialogCode.Accepted, "get_result": lambda self: spec},
+        )(),
+    )
+    ctrl.create_derived_column()
+    result = async_ops.last_kwargs["work"]()
+    assert result[0]
+    assert result[1]["Group"].iloc[0] == "Month 1"
+    assert pd.isna(result[1]["Group"].iloc[1])
+    async_ops.last_kwargs["apply_result"](result)
+    assert apply.called
+    assert not dialogs.critical_calls

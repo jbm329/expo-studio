@@ -213,6 +213,7 @@ class DerivedColumnController:
             overwrite_existing=spec.overwrite_existing,
             output_dtype=spec.output_dtype,
             replace_inf_with_na=spec.replace_inf_with_na,
+            month_labels=spec.month_labels,
         )
 
         self._run_create_derived_column(df, spec)

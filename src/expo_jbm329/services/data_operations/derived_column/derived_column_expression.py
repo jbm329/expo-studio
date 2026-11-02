@@ -93,7 +93,7 @@ class ExpressionOperation(StrEnum):
     YEAR_TERTIAL = "YEARTERTIAL"
 
 
-_TIME_FUNCTION_TYPES = {
+TIME_FUNCTION_TYPES = {
     ExpressionOperation.TIME: ExpressionType.TEXT,
     ExpressionOperation.WEEK: ExpressionType.TEXT,
     ExpressionOperation.WEEK_NUMBER: ExpressionType.NUMBER,
@@ -253,7 +253,7 @@ def _tokenize(formula: str) -> list[_Token]:
             while position < len(formula) and (formula[position].isalnum() or formula[position] == "_"):
                 position += 1
             value = formula[start:position].upper()
-            if position < len(formula) and formula[position] == "#" and value + "#" in _TIME_FUNCTION_TYPES:
+            if position < len(formula) and formula[position] == "#" and value + "#" in TIME_FUNCTION_TYPES:
                 position += 1
                 value += "#"
             kind = "word"
@@ -348,7 +348,7 @@ class _Parser:
             return replace(result, start=token.start, end=end)
         if token.kind == "word" and token.value == "IF":
             return self.conditional(token)
-        if token.kind == "word" and token.value in _TIME_FUNCTION_TYPES:
+        if token.kind == "word" and token.value in TIME_FUNCTION_TYPES:
             return self.time_function(token)
         if token.kind in {"word", "symbol"} and token.value in {"+", "-", "NOT"}:
             operand = self.expression(3 if token.value == "NOT" else 6)
@@ -370,7 +370,7 @@ class _Parser:
         end = self.current.end
         self.require(")")
         operation = ExpressionOperation(token.value)
-        return FormulaExpression(operation, _TIME_FUNCTION_TYPES[operation], token.start, end, (operand,))
+        return FormulaExpression(operation, TIME_FUNCTION_TYPES[operation], token.start, end, (operand,))
 
     def conditional(self, token: _Token) -> FormulaExpression:
         self.require("(")
