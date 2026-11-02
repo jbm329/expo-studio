@@ -9,6 +9,7 @@ from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog
 
 from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import DerivedColumnDialog
+from expo_jbm329.gui.dialogs.workflows.derived_column.month_labels import capture_month_labels
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
     validate_derived_column_spec,
@@ -46,7 +47,7 @@ def test_dialog_accepts_conditional_formulas_without_insertion_controls(formula,
     assert not hasattr(dialog, "_insert_btn")
     dialog._on_accept()
     assert dialog.result() == QDialog.DialogCode.Accepted
-    assert dialog.get_result() == DerivedColumnSpec("Group", formula)
+    assert dialog.get_result() == DerivedColumnSpec("Group", formula, month_labels=capture_month_labels())
 
 
 def test_text_only_dialog_completes_text_columns_and_rejects_without_a_result():

@@ -11140,4 +11140,130 @@ Shortcut: Ctrl+Z</source>
         <translation type="unfinished" />
     </message>
 </context>
+<context>
+    <name>DerivedColumnMonths</name>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="9" />
+        <source>January</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="10" />
+        <source>February</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="11" />
+        <source>March</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="12" />
+        <source>April</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="13" />
+        <source>May</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="14" />
+        <source>June</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="15" />
+        <source>July</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="16" />
+        <source>August</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="17" />
+        <source>September</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="18" />
+        <source>October</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="19" />
+        <source>November</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="20" />
+        <source>December</source>
+        <translation type="unfinished" />
+    </message>
+</context>
+<context>
+    <name>DerivedColumnShortMonths</name>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="23" />
+        <source>Jan</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="24" />
+        <source>Feb</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="25" />
+        <source>Mar</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="26" />
+        <source>Apr</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="27" />
+        <source>May</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="28" />
+        <source>Jun</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="29" />
+        <source>Jul</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="30" />
+        <source>Aug</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="31" />
+        <source>Sep</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="32" />
+        <source>Oct</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="33" />
+        <source>Nov</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\workflows\derived_column\month_labels.py" line="34" />
+        <source>Dec</source>
+        <translation type="unfinished" />
+    </message>
+</context>
 </TS>
