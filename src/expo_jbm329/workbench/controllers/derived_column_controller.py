@@ -15,6 +15,7 @@ from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog impo
 )
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import (
     DerivedColumnFormulaError,
+    FormulaValidationResult,
 )
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnError,
@@ -22,7 +23,6 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_service 
     create_derived_column,
     validate_derived_column_spec,
 )
-from expo_jbm329.services.data_operations.dtypes import get_numeric_columns
 from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
@@ -188,11 +188,8 @@ class DerivedColumnController:
         if df is None:
             return
 
-        numeric_columns = get_numeric_columns(df)
-
         dialog = DerivedColumnDialog(
             df=df,
-            numeric_columns=numeric_columns,
             validate_callback=self._validate,
             parent=self._main_window,
         )
@@ -221,7 +218,7 @@ class DerivedColumnController:
     # Validation
     # ==================================================================
 
-    def _validate(self, column_name: str, formula: str) -> tuple[bool, str]:
+    def _validate(self, column_name: str, formula: str) -> tuple[FormulaValidationResult, str]:
         """Validation callback used by dialog.
 
         Args:
@@ -229,12 +226,12 @@ class DerivedColumnController:
             formula: Formula string.
 
         Returns:
-            Tuple(ok, message)
+            Structured validation result and localized message.
         """
         df = self._get_active_dataframe()
 
         if df is None:
-            return False, self._tr(self.TR_NO_ACTIVE_TAB)
+            return FormulaValidationResult(ok=False), self._tr(self.TR_NO_ACTIVE_TAB)
 
         spec = DerivedColumnSpec(
             column_name=column_name,
@@ -244,12 +241,12 @@ class DerivedColumnController:
         result = validate_derived_column_spec(df, spec)
 
         if result.ok:
-            return True, self._tr(self.TR_VALID_FORMULA)
+            return result, self._tr(self.TR_VALID_FORMULA)
 
         exc = result.error
         if exc is None:
             exc = DerivedColumnFormulaError(code="unknown")
-        return False, self._format_error(exc)
+        return result, self._format_error(exc)
 
     # ==================================================================
     # Internal helpers

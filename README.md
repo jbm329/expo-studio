@@ -249,9 +249,13 @@ Age replacement requires a numeric column. Nonmissing values pass through
 without automatic text/numeric conversion. Both branches are validated even
 when only one is selected. Division by zero produces missing output by default.
 
-Text-only datasets are supported. The existing insertion dropdown lists numeric
-columns; type text-column references manually. Editor autocomplete/linting and
-alignment with Reshape conditions are not part of this feature.
+Text-only datasets are supported. Type `[` in the multiline formula editor to
+complete an available column name. Suggestions filter without case sensitivity;
+press Enter or Tab to insert a name, or Escape to dismiss suggestions. Closing
+brackets in names are escaped automatically. No column dropdown or Insert button
+is needed. Syntax, column references, and compatible types are checked without
+evaluating source values; errors are underlined with a tooltip explaining the
+problem. Output-column name errors appear separately below the editor.
 
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.

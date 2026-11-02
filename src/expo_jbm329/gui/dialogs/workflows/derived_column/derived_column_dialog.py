@@ -6,21 +6,22 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFormLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
-    QPushButton,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
+    ExpressionType,
+    expression_columns,
+)
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
 )
@@ -30,6 +31,8 @@ if TYPE_CHECKING:
 
     import pandas as pd
 
+    from expo_jbm329.services.data_operations.derived_column.derived_column_parser import FormulaValidationResult
+
 
 class DerivedColumnDialog(QDialog):
     """Dialog for creating a derived column."""
@@ -38,22 +41,19 @@ class DerivedColumnDialog(QDialog):
         self,
         *,
         df: pd.DataFrame,
-        numeric_columns: list[str],
-        validate_callback: Callable[[str, str], tuple[bool, str]],
+        validate_callback: Callable[[str, str], tuple[FormulaValidationResult, str]],
         parent: QWidget | None = None,
     ) -> None:
         """Initialize dialog.
 
         Args:
             df: Current DataFrame.
-            numeric_columns: List of numeric column names.
-            validate_callback: Callback(column_name, formula) -> (ok, message)
+            validate_callback: Callback returning structured validation and a localized message.
             parent: Optional parent widget.
         """
         super().__init__(parent)
 
-        self._df = df
-        self._numeric_columns = numeric_columns
+        self._columns = expression_columns(list(df.columns), list(df.dtypes))
         self._validate_callback = validate_callback
 
         self._result: DerivedColumnSpec | None = None
@@ -90,33 +90,26 @@ class DerivedColumnDialog(QDialog):
         self._column_name_edit.setPlaceholderText(self.tr("New column name"))
         form.addRow(self.tr("Column name:"), self._column_name_edit)
 
-        self._formula_edit = QTextEdit()
+        self._formula_edit = FormulaEditor(
+            [
+                column.name
+                for column in self._columns
+                if column.available and column.value_type != ExpressionType.UNSUPPORTED
+            ],
+            self,
+        )
         self._formula_edit.setPlaceholderText("[A] / [B] * 100")
+        self._formula_edit.setAccessibleName(self.tr("f(x):"))
         self._formula_edit.setFixedHeight(80)
         form.addRow(self.tr("f(x):"), self._formula_edit)
 
         layout.addLayout(form)
 
         # ------------------------------------------
-        # Insert column row
-        # ------------------------------------------
-        insert_layout = QHBoxLayout()
-
-        self._column_combo = QComboBox()
-        self._column_combo.addItems(self._numeric_columns)
-
-        self._insert_btn = QPushButton(self.tr("Insert"))
-        self._insert_btn.setEnabled(bool(self._numeric_columns))
-        insert_layout.addWidget(QLabel(self.tr("Numeric columns:")))
-        insert_layout.addWidget(self._column_combo)
-        insert_layout.addWidget(self._insert_btn)
-
-        layout.addLayout(insert_layout)
-
-        # ------------------------------------------
         # Validation label
         # ------------------------------------------
         self._validation_label = QLabel()
+        self._validation_label.setTextFormat(Qt.TextFormat.PlainText)
         self._validation_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._validation_label.setWordWrap(True)
 
@@ -140,7 +133,6 @@ class DerivedColumnDialog(QDialog):
     # ==============================================================
 
     def _connect_signals(self) -> None:
-        self._insert_btn.clicked.connect(self._on_insert_column)
         self._buttons.accepted.connect(self._on_accept)
         self._buttons.rejected.connect(self.reject)
 
@@ -151,20 +143,10 @@ class DerivedColumnDialog(QDialog):
     # Event handlers
     # ==============================================================
 
-    def _on_insert_column(self) -> None:
-        column = self._column_combo.currentText()
-        if not column:
-            return
-
-        insert_text = "[" + column.replace("]", "]]") + "] "
-
-        cursor = self._formula_edit.textCursor()
-        cursor.insertText(insert_text)
-
-        self._formula_edit.setFocus()
-        self._update_validation()
-
     def _on_accept(self) -> None:
+        self._update_validation()
+        if self._ok_button is None or not self._ok_button.isEnabled():
+            return
         column_name = self._column_name_edit.text().strip()
         formula = self._formula_edit.toPlainText().strip()
 
@@ -182,15 +164,17 @@ class DerivedColumnDialog(QDialog):
     def _update_validation(self) -> None:
 
         column_name = self._column_name_edit.text().strip()
-        formula = self._formula_edit.toPlainText().strip()
+        formula = self._formula_edit.toPlainText()
 
-        if not column_name or not formula:
+        if not column_name or not formula.strip():
+            self._formula_edit.set_diagnostic(None)
             self._set_validation_state(False, self.tr("Enter column name and formula."))
             return
 
-        ok, message = self._validate_callback(column_name, formula)
+        result, message = self._validate_callback(column_name, formula)
+        self._formula_edit.set_diagnostic(result.error, message)
 
-        self._set_validation_state(ok, message)
+        self._set_validation_state(result.ok, message)
 
     def _set_validation_state(self, ok: bool, message: str) -> None:
         """Update validation label and OK button."""

@@ -6,22 +6,24 @@ import html
 from typing import TYPE_CHECKING, override
 
 from PyQt6.QtCore import QEvent, QPoint, QSignalBlocker, Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QFocusEvent, QHelpEvent, QKeyEvent, QTextCharFormat, QTextCursor
+from PyQt6.QtGui import QFocusEvent, QHelpEvent, QKeyEvent, QTextCursor
 from PyQt6.QtWidgets import (
     QApplication,
-    QCompleter,
     QFrame,
     QHBoxLayout,
     QLineEdit,
     QPlainTextEdit,
     QPushButton,
-    QTextEdit,
     QToolTip,
     QVBoxLayout,
     QWidget,
 )
 
-from expo_jbm329.services.data_operations.reshape_condition_completion import column_completion
+from expo_jbm329.gui.widgets.expression_editor_support import (
+    ColumnCompletionSupport,
+    qt_text_position,
+    underline_diagnostics,
+)
 from expo_jbm329.services.data_operations.reshape_condition_import import (
     ConditionBuilderDiagnostic,
     ConditionImportResult,
@@ -83,12 +85,6 @@ class ConditionEditor(QWidget):
         self._open_timer = QTimer(self)
         self._open_timer.setSingleShot(True)
         self._open_timer.timeout.connect(self._show_popup)
-        self.text.installEventFilter(self)
-        self.popup.installEventFilter(self)
-        self.expanded_text.installEventFilter(self)
-        viewport = self.expanded_text.viewport()
-        if viewport is not None:
-            viewport.installEventFilter(self)
         self._lint_timer = QTimer(self)
         self._lint_timer.setSingleShot(True)
         self._lint_timer.setInterval(200)
@@ -97,61 +93,21 @@ class ConditionEditor(QWidget):
         self.text.textChanged.connect(self._update_collapsed_display)
         self.text.textChanged.connect(self._schedule_lint)
         self.expanded_text.textChanged.connect(self._sync_inline_text)
-        names: list[str] = sorted({column.name for column in self._columns if column.available}, key=str.casefold)
-        self.completer = QCompleter(names, self)
-        self.completer.setWidget(self.expanded_text)
-        self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-        self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-        self.completer.activated[str].connect(self._insert_completion)
-        self.expanded_text.textChanged.connect(self._update_completion)
-        self.expanded_text.cursorPositionChanged.connect(self._update_completion)
-
-    def _completion_context(self) -> tuple[str, int]:
-        value = self.expanded_text.toPlainText()
-        qt_position = self.expanded_text.textCursor().position()
-        position = len(value.encode("utf-16-le")[: qt_position * 2].decode("utf-16-le"))
-        return value, position
-
-    def _update_completion(self) -> None:
-        popup = self.completer.popup()
-        if popup is None:
-            return
-        value, position = self._completion_context()
-        context = column_completion(value, position)
-        if not self.popup.isVisible() or context is None or self.expanded_text.textCursor().hasSelection():
-            popup.hide()
-            return
-        self.completer.setCompletionPrefix(context.prefix)
-        if self.completer.completionCount() == 0:
-            popup.hide()
-            return
-        model = self.completer.completionModel()
-        if model is None:
-            return
-        popup.setCurrentIndex(model.index(0, 0))
-        rectangle = self.expanded_text.cursorRect()
-        scrollbar = popup.verticalScrollBar()
-        scrollbar_width = scrollbar.sizeHint().width() if scrollbar is not None else 0
-        width = max(240, popup.sizeHintForColumn(0) + scrollbar_width + 2 * popup.frameWidth())
-        screen = self.expanded_text.screen()
-        if screen is not None:
-            width = min(width, screen.availableGeometry().width())
-        rectangle.setWidth(width)
-        self.completer.complete(rectangle)
+        self._completion = ColumnCompletionSupport(
+            self.expanded_text,
+            [column.name for column in self._columns if column.available],
+            enabled=self.popup.isVisible,
+        )
+        self.completer = self._completion.completer
+        self.text.installEventFilter(self)
+        self.popup.installEventFilter(self)
+        self.expanded_text.installEventFilter(self)
+        viewport = self.expanded_text.viewport()
+        if viewport is not None:
+            viewport.installEventFilter(self)
 
     def _insert_completion(self, name: str) -> None:
-        value, position = self._completion_context()
-        context = column_completion(value, position)
-        if context is None:
-            return
-        cursor = self.expanded_text.textCursor()
-        cursor.setPosition(self._qt_position(value, context.start))
-        cursor.setPosition(self._qt_position(value, context.end), QTextCursor.MoveMode.KeepAnchor)
-        cursor.insertText("[" + name.replace("]", "]]") + "]")
-        self.expanded_text.setTextCursor(cursor)
-        popup = self.completer.popup()
-        if popup is not None:
-            popup.hide()
+        self._completion.insert(name)
 
     @property
     def condition_valid(self) -> bool:
@@ -215,27 +171,13 @@ class ConditionEditor(QWidget):
 
     @staticmethod
     def _qt_position(text: str, position: int) -> int:
-        return len(text[:position].encode("utf-16-le")) // 2
+        return qt_text_position(text, position)
 
     def _render_diagnostics(self) -> None:
         error_style = "border: 1px solid #d32f2f;" if self.diagnostics else ""
         self.text.setStyleSheet(error_style)
         self.expanded_text.setStyleSheet(error_style)
-        selections: list[QTextEdit.ExtraSelection] = []
-        text = self.expanded_text.toPlainText()
-        for diagnostic in self.diagnostics:
-            start, end = diagnostic.start, diagnostic.end
-            if start == end:
-                start = max(0, start - 1)
-            cursor = self.expanded_text.textCursor()
-            cursor.setPosition(self._qt_position(text, start))
-            cursor.setPosition(self._qt_position(text, end), QTextCursor.MoveMode.KeepAnchor)
-            selection = QTextEdit.ExtraSelection()
-            selection.cursor = cursor
-            selection.format.setUnderlineStyle(QTextCharFormat.UnderlineStyle.WaveUnderline)
-            selection.format.setUnderlineColor(QColor("#d32f2f"))
-            selections.append(selection)
-        self.expanded_text.setExtraSelections(selections)
+        underline_diagnostics(self.expanded_text, ((item.start, item.end) for item in self.diagnostics))
         self._update_tooltips()
 
     def _update_tooltips(self) -> None:
@@ -296,11 +238,7 @@ class ConditionEditor(QWidget):
             and a1.type() == QEvent.Type.KeyPress
         ):
             if completion_popup is not None and completion_popup.isVisible():
-                if a1.key() in {Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab}:
-                    self._insert_completion(completion_popup.currentIndex().data())
-                    return True
-                if a1.key() == Qt.Key.Key_Escape:
-                    completion_popup.hide()
+                if self._completion.handle_key(a1.key()):
                     return True
             elif a0 is self.expanded_text and a1.key() == Qt.Key.Key_Escape:
                 self.popup.hide()
