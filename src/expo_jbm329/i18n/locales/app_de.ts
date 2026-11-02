@@ -3760,6 +3760,11 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
         <source>No numeric columns found in the dataset.</source>
         <translation type="vanished">Im Datensatz wurden keine numerischen Spalten gefunden.</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="112" />
+        <source>Function '{token}' at position {position} requires a datetime column. Convert text dates before using it.</source>
+        <translation>Die Funktion '{token}' an Position {position} erfordert eine Datetime-Spalte. Konvertieren Sie Textdaten vor der Verwendung.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>

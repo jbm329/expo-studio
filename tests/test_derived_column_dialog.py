@@ -93,7 +93,28 @@ def test_completion_filters_all_supported_unique_columns():
     frame = pd.DataFrame([[1, 2, 3, 4, "BMW", True, pd.Timestamp("2020-01-01")]])
     frame.columns = ["dup", "dup", 2, "Age", "Vehicle", "Flag", "Date"]
     dialog = make_dialog(frame)
-    assert dialog._formula_edit.completer.model().stringList() == ["Age", "Flag", "Vehicle"]
+    assert dialog._formula_edit.completer.model().stringList() == ["Age", "Date", "Flag", "Vehicle"]
+    dialog.close()
+
+
+def test_datetime_completion_and_positioned_time_function_validation(qt_app):
+    dialog = make_dialog(pd.DataFrame({"When": pd.to_datetime(["2026-01-01"]), "Age": [1]}))
+    dialog._column_name_edit.setText("Year")
+    dialog.show()
+    editor = dialog._formula_edit
+    editor.setFocus()
+    QTest.keyClicks(editor, "YEAR([Wh")
+    assert editor.completer.completionCount() == 1
+    assert editor.completer.popup().isVisible()
+    QTest.keyClick(editor, Qt.Key.Key_Tab)
+    QTest.keyClicks(editor, ")")
+    assert editor.toPlainText() == "YEAR([When])"
+    assert dialog._ok_button.isEnabled()
+    assert not editor.extraSelections()
+    editor.setPlainText("YEAR([Age])")
+    assert not dialog._ok_button.isEnabled()
+    assert editor.extraSelections()[0].cursor.selectedText() == "YEAR"
+    assert "datetime_operand_required" in editor.toolTip()
     dialog.close()
 
 

@@ -238,6 +238,7 @@ def test_worker_returns_formula_failure_for_localized_presentation(controller):
         "unsupported_column_type",
         "non_text_column",
         "expression_evaluation_failed",
+        "datetime_operand_required",
     ],
 )
 def test_every_new_error_has_translatable_actionable_message(controller, code, widget_language):
@@ -302,6 +303,7 @@ def test_new_errors_are_present_in_compiled_locales_with_matching_placeholders(l
         "TR_UNSUPPORTED_COLUMN_TYPE",
         "TR_NON_TEXT_COLUMN",
         "TR_EXPRESSION_EVALUATION_FAILED",
+        "TR_DATETIME_OPERAND_REQUIRED",
     ]
     for marker in markers:
         source = getattr(DerivedColumnController, marker)
@@ -328,4 +330,13 @@ def test_invalid_condition_is_presented_in_validation_without_dispatch(controlle
     assert not result.ok
     assert result.error.code == "incompatible_branch_types"
     assert message == ctrl._tr(ctrl.TR_INCOMPATIBLE_BRANCHES)
+    assert not async_ops.calls
+
+
+def test_nondatetime_time_operand_has_localized_validation_error(controller, widget_language):
+    ctrl, async_ops, _, _, _, _ = controller
+    result, message = ctrl._validate("Year", "YEAR([n])")
+    assert not result.ok
+    assert result.error.code == "datetime_operand_required"
+    assert message == ctrl._tr_fmt(ctrl.TR_DATETIME_OPERAND_REQUIRED, token="YEAR", position="0")
     assert not async_ops.calls
