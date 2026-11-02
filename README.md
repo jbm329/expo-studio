@@ -209,6 +209,50 @@ The REST feature is intended primarily for:
 - statistical APIs, including SCB Statistikdatabasen
 - exploratory and analytical workflows
 
+### Derived columns
+
+Derived columns support numeric arithmetic (`+`, `-`, `*`, `/`) and nested
+`IF(condition; then; else)` expressions. Reference columns with `[Column Name]`,
+quote text with single quotes, separate IF arguments with semicolons, and
+separate IN-list values with commas. Keywords are case-insensitive.
+
+```text
+IF([Age] BETWEEN 0 AND 20; 'Youth'; IF([Age] BETWEEN 21 AND 40; 'Midlife'; 'Oldies'))
+IF([Vehicle] IN('BMW', 'Volvo'); 'Cars'; 'Other')
+IF([Column1] IS NULL; 'Empty'; [Column1])
+IF([Age] IS NULL; 0; [Age])
+```
+
+Conditions support `=`, `!=`, `<`, `<=`, `>`, `>=`, `BETWEEN`, `NOT BETWEEN`,
+`IN`, `NOT IN`, `IS NULL`, and `IS NOT NULL`. Combine them with `NOT`, `AND`,
+`OR`, and parentheses. Arithmetic and column-to-column comparisons work too:
+`IF([Age] + 1 > [Limit]; [Age]; 0)`. Precedence is arithmetic, comparisons,
+NOT, AND, then OR. Parentheses override precedence. IN lists contain literals.
+Escape an apostrophe by doubling it (`'O''Brien'`) and a closing bracket in a
+column name by doubling it (`[a]]b]` references `a]b`).
+
+BETWEEN includes both bounds. The age-group example leaves decimal ages
+between 20 and 21, values outside the listed ranges, and missing ages in
+`Oldies`. For continuous ages with an explicit missing group, use:
+
+```text
+IF([Age] IS NULL; 'Unknown'; IF([Age] < 21; 'Youth'; IF([Age] <= 40; 'Midlife'; 'Oldies')))
+```
+
+Comparisons and membership tests on missing cells produce an unknown condition.
+NOT, AND, and OR preserve SQL-style three-valued logic; IF selects else for
+unknown. Use IS NULL to handle missing values explicitly. Empty text is not
+missing. Both result branches must be text or both numeric; `NULL` is allowed
+in either. Text results use nullable string storage, and numeric results use
+nullable Float64. The Column1 replacement example requires a text column; the
+Age replacement requires a numeric column. Nonmissing values pass through
+without automatic text/numeric conversion. Both branches are validated even
+when only one is selected. Division by zero produces missing output by default.
+
+Text-only datasets are supported. The existing insertion dropdown lists numeric
+columns; type text-column references manually. Editor autocomplete/linting and
+alignment with Reshape conditions are not part of this feature.
+
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.
 - **Languages**: English, Swedish, German, French, Italian, Spanish, and Polish.

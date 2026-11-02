@@ -1,4 +1,4 @@
-"""Dialog for creating a derived numeric column."""
+"""Dialog for creating a derived numeric or text column."""
 
 from __future__ import annotations
 
@@ -106,6 +106,7 @@ class DerivedColumnDialog(QDialog):
         self._column_combo.addItems(self._numeric_columns)
 
         self._insert_btn = QPushButton(self.tr("Insert"))
+        self._insert_btn.setEnabled(bool(self._numeric_columns))
         insert_layout.addWidget(QLabel(self.tr("Numeric columns:")))
         insert_layout.addWidget(self._column_combo)
         insert_layout.addWidget(self._insert_btn)
@@ -152,8 +153,10 @@ class DerivedColumnDialog(QDialog):
 
     def _on_insert_column(self) -> None:
         column = self._column_combo.currentText()
+        if not column:
+            return
 
-        insert_text = f"[{column}] "
+        insert_text = "[" + column.replace("]", "]]") + "] "
 
         cursor = self._formula_edit.textCursor()
         cursor.insertText(insert_text)
@@ -192,7 +195,7 @@ class DerivedColumnDialog(QDialog):
     def _set_validation_state(self, ok: bool, message: str) -> None:
         """Update validation label and OK button."""
         if ok:
-            self._validation_label.setText(self.tr(f"✅ {message or 'Invalid formula.'}"))
+            self._validation_label.setText(f"✅ {message}")
             self._validation_label.setStyleSheet("color: #2e7d32;")
         else:
             self._validation_label.setText(f"❌ {message}")

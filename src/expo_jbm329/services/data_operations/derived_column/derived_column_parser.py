@@ -17,6 +17,9 @@ Examples:
 The parser intentionally does not evaluate arbitrary Python code. It tokenizes
 the formula, validates references, and converts the expression to Reverse Polish
 Notation (RPN) using the shunting-yard algorithm.
+
+Conditional expressions use the typed parser in derived_column_expression.
+The RPN APIs here retain their numeric-only contract.
 """
 
 from __future__ import annotations

@@ -6,6 +6,10 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING, NoReturn
 
+from expo_jbm329.services.data_operations.expression_primitives import (
+    UnclosedLiteralError,
+    decode_delimited_literal,
+)
 from expo_jbm329.services.data_operations.reshape_conditions import (
     NUMBER_LITERAL,
     ConditionColumn,
@@ -76,23 +80,12 @@ def _tokens(text: str) -> tuple[list[_Token], ConditionDiagnostic | None]:
             position += 1
             continue
         if character in {"[", "'"}:
-            closing = "]" if character == "[" else "'"
-            position += 1
-            decoded: list[str] = []
-            while position < len(text):
-                if text[position] != closing:
-                    decoded.append(text[position])
-                    position += 1
-                elif position + 1 < len(text) and text[position + 1] == closing:
-                    decoded.append(closing)
-                    position += 2
-                else:
-                    position += 1
-                    result.append(_Token("column" if character == "[" else "value", "".join(decoded), start, position))
-                    break
-            else:
+            try:
+                decoded, position = decode_delimited_literal(text, start)
+            except UnclosedLiteralError as error:
                 code = ConditionLintCode.BRACKET if character == "[" else ConditionLintCode.QUOTE
-                return result, ConditionDiagnostic(code, start, len(text))
+                return result, ConditionDiagnostic(code, error.start, error.end)
+            result.append(_Token("column" if character == "[" else "value", decoded, start, position))
         elif character in "+-.0123456789" and (number := NUMBER_LITERAL.match(text, position)) is not None:
             position = number.end()
             result.append(_Token("number", number[0], start, position))

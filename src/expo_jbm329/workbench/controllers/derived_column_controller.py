@@ -55,7 +55,6 @@ class DerivedColumnController:
 
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column")
-    TR_NO_NUMERIC_COLUMNS = QT_TR_NOOP("No numeric columns found in the dataset.")
     TR_CREATED_COLUMN = QT_TR_NOOP("Derived column '{column_name}' created successfully.")
     TR_CREATING_COLUMN = QT_TR_NOOP("Creating derived column '{column_name}'")
     TR_NO_ACTIVE_TAB = QT_TR_NOOP("No active tab found.")
@@ -88,6 +87,28 @@ class DerivedColumnController:
     TR_FORMULA_MISSING_VALUE = QT_TR_NOOP("Formula must contain at least one value.")
     TR_UNSUPPORTED_TOKEN = QT_TR_NOOP("Unsupported token '{token}'.")
     TR_UNSUPPORTED_OPERATOR = QT_TR_NOOP("Unsupported operator '{token}'.")
+    TR_UNCLOSED_STRING = QT_TR_NOOP("Unclosed text literal at position {position}. Use single quotes around text.")
+    TR_INVALID_NUMBER = QT_TR_NOOP("Invalid or nonfinite number at position {position}.")
+    TR_EXPECTED_TOKEN = QT_TR_NOOP("Expected '{expected}' at position {position}.")
+    TR_EXPECTED_EXPRESSION = QT_TR_NOOP("Expected a value or expression at position {position}.")
+    TR_EXPECTED_LITERAL = QT_TR_NOOP("Expected a literal value in the IN list at position {position}.")
+    TR_UNEXPECTED_TOKEN = QT_TR_NOOP("Unexpected token '{token}' at position {position}.")
+    TR_NESTING_LIMIT = QT_TR_NOOP("Formula nesting is too deep (limit {limit}). Simplify the expression.")
+    TR_INVALID_OPERAND_TYPE = QT_TR_NOOP(
+        "Incompatible operand at position {position}. Use numbers for arithmetic and conditions for Boolean logic."
+    )
+    TR_INCOMPATIBLE_OPERANDS = QT_TR_NOOP(
+        "Comparison operands must have compatible types at position {position}. Do not mix text and numbers."
+    )
+    TR_INCOMPATIBLE_BRANCHES = QT_TR_NOOP("IF results must both be text or both be numeric. NULL is allowed in either.")
+    TR_INVALID_RESULT_TYPE = QT_TR_NOOP("The formula must return text, a number, or NULL, not a condition.")
+    TR_UNSUPPORTED_COLUMN_TYPE = QT_TR_NOOP(
+        "Unsupported column type at position {position}. Use numeric or text values, or test with IS NULL."
+    )
+    TR_NON_TEXT_COLUMN = QT_TR_NOOP("Column '{column}' contains nontext values. Text expressions require text values.")
+    TR_EXPRESSION_EVALUATION_FAILED = QT_TR_NOOP(
+        "Could not evaluate the expression at position {position}. Check operand values and types."
+    )
 
     # ---------------------------
     # Service / runtime errors
@@ -169,14 +190,6 @@ class DerivedColumnController:
 
         numeric_columns = get_numeric_columns(df)
 
-        if not numeric_columns:
-            self._dialogs.info(
-                parent=self._main_window,
-                title=self._tr(self.TR_DERIVED_COLUMN),
-                text=self._tr(self.TR_NO_NUMERIC_COLUMNS),
-            )
-            return
-
         dialog = DerivedColumnDialog(
             df=df,
             numeric_columns=numeric_columns,
@@ -198,6 +211,8 @@ class DerivedColumnController:
             column_name=spec.column_name.strip(),
             formula=spec.formula.strip(),
             overwrite_existing=spec.overwrite_existing,
+            output_dtype=spec.output_dtype,
+            replace_inf_with_na=spec.replace_inf_with_na,
         )
 
         self._run_create_derived_column(df, spec)
@@ -279,7 +294,7 @@ class DerivedColumnController:
             try:
                 new_df = create_derived_column(safe_df, safe_spec)
 
-            except DerivedColumnError as exc:
+            except (DerivedColumnError, DerivedColumnFormulaError) as exc:
                 return False, None, exc
             else:
                 return True, new_df, None
@@ -413,6 +428,32 @@ class DerivedColumnController:
     def _format_error(self, exc: Exception) -> str:
         code = getattr(exc, "code", "unknown")
         ctx = getattr(exc, "context", {})
+
+        expression_errors = {
+            "unclosed_string_literal": self.TR_UNCLOSED_STRING,
+            "invalid_number_literal": self.TR_INVALID_NUMBER,
+            "expected_token": self.TR_EXPECTED_TOKEN,
+            "expected_expression": self.TR_EXPECTED_EXPRESSION,
+            "expected_literal": self.TR_EXPECTED_LITERAL,
+            "unexpected_token": self.TR_UNEXPECTED_TOKEN,
+            "expression_nesting_limit": self.TR_NESTING_LIMIT,
+            "invalid_operand_type": self.TR_INVALID_OPERAND_TYPE,
+            "incompatible_operand_types": self.TR_INCOMPATIBLE_OPERANDS,
+            "incompatible_branch_types": self.TR_INCOMPATIBLE_BRANCHES,
+            "invalid_result_type": self.TR_INVALID_RESULT_TYPE,
+            "unsupported_column_type": self.TR_UNSUPPORTED_COLUMN_TYPE,
+            "non_text_column": self.TR_NON_TEXT_COLUMN,
+            "expression_evaluation_failed": self.TR_EXPRESSION_EVALUATION_FAILED,
+        }
+        if code in expression_errors:
+            return self._tr_fmt(
+                expression_errors[code],
+                position=str(ctx.get("position", "?")),
+                expected=str(ctx.get("expected", "")),
+                token=str(ctx.get("token", "")),
+                limit=str(ctx.get("limit", "")),
+                column=str(ctx.get("column", "")),
+            )
 
         # ---------------------------
         # Parser / formula errors

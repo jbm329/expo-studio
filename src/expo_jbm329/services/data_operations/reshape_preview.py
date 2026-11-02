@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
+from expo_jbm329.services.data_operations.expression_primitives import compare_values, membership_mask
 from expo_jbm329.services.data_operations.reshape_conditions import (
     ConditionColumn,
     ConditionError,
@@ -238,27 +239,13 @@ def _predicate(source: pd.DataFrame, rule: ConditionRule) -> pd.Series:
         raise ReshapeError(ReshapeProblem.VALUE, rule.column.name) from error
     try:
         if operator.is_membership:
-            mask = series.isin(values)
-            if operator == ConditionOperator.NOT_IN:
-                mask = ~mask
-        else:
-            value = values.iloc[0]
-            match operator:
-                case ConditionOperator.EQUAL:
-                    mask = series.eq(value)
-                case ConditionOperator.NOT_EQUAL:
-                    mask = series.ne(value)
-                case ConditionOperator.GREATER:
-                    mask = series.gt(value)
-                case ConditionOperator.GREATER_EQUAL:
-                    mask = series.ge(value)
-                case ConditionOperator.LESS:
-                    mask = series.lt(value)
-                case ConditionOperator.LESS_EQUAL:
-                    mask = series.le(value)
-                case _:
-                    raise ReshapeError(ReshapeProblem.CONFIGURATION, rule.column.name)
-        return (mask.fillna(False) & series.notna()).astype(bool)
+            return membership_mask(
+                series,
+                values,
+                negate=operator == ConditionOperator.NOT_IN,
+                preserve_unknown=False,
+            )
+        return compare_values(series, values.iloc[0], operator.value, preserve_unknown=False)
     except (TypeError, ValueError, OverflowError) as error:
         raise ReshapeError(ReshapeProblem.DATA, rule.column.name) from error
 
