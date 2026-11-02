@@ -3760,6 +3760,11 @@ Consultez les journaux pour plus d'informations.</translation>
         <source>No numeric columns found in the dataset.</source>
         <translation type="vanished">Aucune colonne numérique trouvée dans le jeu de données.</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="112" />
+        <source>Function '{token}' at position {position} requires a datetime column. Convert text dates before using it.</source>
+        <translation>La fonction '{token}' à la position {position} nécessite une colonne datetime. Convertissez les dates textuelles avant de l'utiliser.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>

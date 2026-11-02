@@ -3760,6 +3760,11 @@ Vänligen se loggfil för mer information.</translation>
         <source>No numeric columns found in the dataset.</source>
         <translation type="vanished">Inga numeriska kolumner hittades i dataset.</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="112" />
+        <source>Function '{token}' at position {position} requires a datetime column. Convert text dates before using it.</source>
+        <translation>Funktionen '{token}' vid position {position} kräver en datetime-kolumn. Konvertera textdatum innan du använder den.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>

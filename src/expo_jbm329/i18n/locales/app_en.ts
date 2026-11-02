@@ -3716,6 +3716,11 @@ Please see logs for more information.</source>
         <source>Failed to evaluate formula.</source>
         <translation type="unfinished" />
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="112" />
+        <source>Function '{token}' at position {position} requires a datetime column. Convert text dates before using it.</source>
+        <translation type="unfinished" />
+    </message>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>

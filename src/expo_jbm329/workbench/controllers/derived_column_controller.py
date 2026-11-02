@@ -109,6 +109,9 @@ class DerivedColumnController:
     TR_EXPRESSION_EVALUATION_FAILED = QT_TR_NOOP(
         "Could not evaluate the expression at position {position}. Check operand values and types."
     )
+    TR_DATETIME_OPERAND_REQUIRED = QT_TR_NOOP(
+        "Function '{token}' at position {position} requires a datetime column. Convert text dates before using it."
+    )
 
     # ---------------------------
     # Service / runtime errors
@@ -427,6 +430,7 @@ class DerivedColumnController:
         ctx = getattr(exc, "context", {})
 
         expression_errors = {
+            "datetime_operand_required": self.TR_DATETIME_OPERAND_REQUIRED,
             "unclosed_string_literal": self.TR_UNCLOSED_STRING,
             "invalid_number_literal": self.TR_INVALID_NUMBER,
             "expected_token": self.TR_EXPECTED_TOKEN,
