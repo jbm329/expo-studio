@@ -257,6 +257,62 @@ is needed. Syntax, column references, and compatible types are checked without
 evaluating source values; errors are underlined with a tooltip explaining the
 problem. Output-column name errors appear separately below the editor.
 
+#### Time hierarchies and groups
+
+Time functions take one datetime column, for example `YEAR([Created])`.
+Function names are case-insensitive; columns containing text dates must be
+converted to datetime first. Missing dates produce missing results. Components
+are read in the column's stored timezone, without converting to UTC or the
+computer's timezone. `TIME` uses 24-hour `HH:mm`, ignoring seconds without rounding.
+
+| Function | Example output | Meaning |
+|---|---|---|
+| `TIME([Created])` | `14:33` | Hour and minute |
+| `WEEK([Created])` | `W01` | Zero-padded ISO week |
+| `WEEK#([Created])` | `1` | Numeric ISO week, 1–53 |
+| `MONTH([Created])` | `January` | Full month name in the app language |
+| `MONTHSHORT([Created])` | `Jan` | Abbreviated month name in the app language |
+| `MONTH#([Created])` | `1` | Numeric month, 1–12 |
+| `TERTIAL([Created])` | `T1` | Four-month period: Jan–Apr, May–Aug, Sep–Dec |
+| `TERTIAL#([Created])` | `1` | Numeric tertial, 1–3 |
+| `QUARTER([Created])` | `Q1` | Calendar quarter: Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec |
+| `QUARTER#([Created])` | `1` | Numeric quarter, 1–4 |
+| `YEAR([Created])` | `2026` | Calendar year |
+| `ISOYEAR([Created])` | `2026` | ISO week-numbering year |
+| `YEARWEEK([Created])` | `2026-W01` | ISO year and week |
+| `YEARMONTH([Created])` | `2026-01` | Calendar year and month |
+| `YEARQUARTER([Created])` | `2026-Q1` | Calendar year and quarter |
+| `YEARTERTIAL([Created])` | `2026-T1` | Calendar year and tertial |
+
+ISO weeks start on Monday; week 1 contains January 4. ISO years can differ from
+calendar years: January 1, 2021 has `YEAR` = 2021, `ISOYEAR` = 2020, and
+`YEARWEEK` = `2020-W53`. Use `YEARWEEK` rather than calendar year plus week number
+to group weeks correctly across New Year.
+
+Text outputs use nullable string storage, and numeric outputs use nullable
+Float64, including whole-number years and period numbers. Month labels are
+captured from the app language when you accept the dialog, before background
+execution. Changing the language afterward does not relabel an existing column.
+Abbreviations retain their language-specific spelling, punctuation and casing.
+`W`, `Q`, `T` and year-qualified formats stay fixed in every language. Labels do
+not add categorical sorting: use numeric month/period functions for chronological
+ordering within a year, or year-qualified labels to distinguish multiple years.
+
+Time functions compose with arithmetic and conditional formulas:
+
+```text
+IF([Created] IS NULL; 'Unknown'; MONTH([Created]))
+IF(MONTH#([Created]) <= 6; 'H1'; 'H2')
+YEAR([Created]) + 1
+```
+
+Use numeric month conditions when a formula should be language-independent.
+Direct datetime results, datetime-valued IF branches, date comparisons, implicit
+date parsing, fiscal calendars and timezone conversion are not supported here.
+For service callers, `DerivedColumnSpec.month_labels` accepts an immutable
+`MonthLabels` snapshot shared by creation and preview; the default is English,
+independent of the UI or operating-system locale.
+
 ### 🌍 Internationalization
 - **Multilingual UI**: Built-in i18n support using Qt translations.
 - **Languages**: English, Swedish, German, French, Italian, Spanish, and Polish.

@@ -109,6 +109,9 @@ class DerivedColumnController:
     TR_EXPRESSION_EVALUATION_FAILED = QT_TR_NOOP(
         "Could not evaluate the expression at position {position}. Check operand values and types."
     )
+    TR_DATETIME_OPERAND_REQUIRED = QT_TR_NOOP(
+        "Function '{token}' at position {position} requires a datetime column. Convert text dates before using it."
+    )
 
     # ---------------------------
     # Service / runtime errors
@@ -210,6 +213,7 @@ class DerivedColumnController:
             overwrite_existing=spec.overwrite_existing,
             output_dtype=spec.output_dtype,
             replace_inf_with_na=spec.replace_inf_with_na,
+            month_labels=spec.month_labels,
         )
 
         self._run_create_derived_column(df, spec)
@@ -427,6 +431,7 @@ class DerivedColumnController:
         ctx = getattr(exc, "context", {})
 
         expression_errors = {
+            "datetime_operand_required": self.TR_DATETIME_OPERAND_REQUIRED,
             "unclosed_string_literal": self.TR_UNCLOSED_STRING,
             "invalid_number_literal": self.TR_INVALID_NUMBER,
             "expected_token": self.TR_EXPECTED_TOKEN,

@@ -8,6 +8,9 @@ Column metadata determines result compatibility, never sampled cell values;
 NULL is compatible with either text or numeric results, but mixing them fails.
 Validation and future evaluation consume the same parsed, typed expression.
 Legacy arithmetic RPN entry points remain in derived_column_parser.
+
+Time hierarchy functions accept datetime operands and return text or numbers;
+datetime values themselves are not final results or comparable operands.
 """
 
 from __future__ import annotations
@@ -40,6 +43,7 @@ class ExpressionType(StrEnum):
     NUMBER = "number"
     TEXT = "text"
     BOOLEAN = "boolean"
+    DATETIME = "datetime"
     NULL = "null"
     UNSUPPORTED = "unsupported"
 
@@ -71,6 +75,42 @@ class ExpressionOperation(StrEnum):
     NOT = "NOT"
     AND = "AND"
     OR = "OR"
+    TIME = "TIME"
+    WEEK = "WEEK"
+    WEEK_NUMBER = "WEEK#"
+    MONTH = "MONTH"
+    MONTH_SHORT = "MONTHSHORT"
+    MONTH_NUMBER = "MONTH#"
+    TERTIAL = "TERTIAL"
+    TERTIAL_NUMBER = "TERTIAL#"
+    QUARTER = "QUARTER"
+    QUARTER_NUMBER = "QUARTER#"
+    YEAR = "YEAR"
+    ISO_YEAR = "ISOYEAR"
+    YEAR_WEEK = "YEARWEEK"
+    YEAR_MONTH = "YEARMONTH"
+    YEAR_QUARTER = "YEARQUARTER"
+    YEAR_TERTIAL = "YEARTERTIAL"
+
+
+TIME_FUNCTION_TYPES = {
+    ExpressionOperation.TIME: ExpressionType.TEXT,
+    ExpressionOperation.WEEK: ExpressionType.TEXT,
+    ExpressionOperation.WEEK_NUMBER: ExpressionType.NUMBER,
+    ExpressionOperation.MONTH: ExpressionType.TEXT,
+    ExpressionOperation.MONTH_SHORT: ExpressionType.TEXT,
+    ExpressionOperation.MONTH_NUMBER: ExpressionType.NUMBER,
+    ExpressionOperation.TERTIAL: ExpressionType.TEXT,
+    ExpressionOperation.TERTIAL_NUMBER: ExpressionType.NUMBER,
+    ExpressionOperation.QUARTER: ExpressionType.TEXT,
+    ExpressionOperation.QUARTER_NUMBER: ExpressionType.NUMBER,
+    ExpressionOperation.YEAR: ExpressionType.NUMBER,
+    ExpressionOperation.ISO_YEAR: ExpressionType.NUMBER,
+    ExpressionOperation.YEAR_WEEK: ExpressionType.TEXT,
+    ExpressionOperation.YEAR_MONTH: ExpressionType.TEXT,
+    ExpressionOperation.YEAR_QUARTER: ExpressionType.TEXT,
+    ExpressionOperation.YEAR_TERTIAL: ExpressionType.TEXT,
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,7 +202,9 @@ def expression_columns(labels: Sequence[object], dtypes: Sequence[object]) -> tu
         dtype_name = (
             str(getattr(dtype.categories, "dtype", "object")) if isinstance(dtype, pd.CategoricalDtype) else str(dtype)
         )
-        if pd.api.types.is_bool_dtype(dtype_name):
+        if not isinstance(dtype, pd.CategoricalDtype) and pd.api.types.is_datetime64_any_dtype(dtype_name):
+            value_type = ExpressionType.DATETIME
+        elif pd.api.types.is_bool_dtype(dtype_name):
             value_type = ExpressionType.BOOLEAN
         elif pd.api.types.is_integer_dtype(dtype_name) or pd.api.types.is_float_dtype(dtype_name):
             value_type = ExpressionType.NUMBER
@@ -211,6 +253,9 @@ def _tokenize(formula: str) -> list[_Token]:
             while position < len(formula) and (formula[position].isalnum() or formula[position] == "_"):
                 position += 1
             value = formula[start:position].upper()
+            if position < len(formula) and formula[position] == "#" and value + "#" in TIME_FUNCTION_TYPES:
+                position += 1
+                value += "#"
             kind = "word"
         elif character in "=!<>":
             position += 1
@@ -303,6 +348,8 @@ class _Parser:
             return replace(result, start=token.start, end=end)
         if token.kind == "word" and token.value == "IF":
             return self.conditional(token)
+        if token.kind == "word" and token.value in TIME_FUNCTION_TYPES:
+            return self.time_function(token)
         if token.kind in {"word", "symbol"} and token.value in {"+", "-", "NOT"}:
             operand = self.expression(3 if token.value == "NOT" else 6)
             operation = {
@@ -314,6 +361,16 @@ class _Parser:
             self.check_type(operand, value_type, token)
             return FormulaExpression(operation, value_type, token.start, operand.end, (operand,))
         _fail("expected_expression", token)
+
+    def time_function(self, token: _Token) -> FormulaExpression:
+        self.require("(")
+        operand = self.expression()
+        if operand.value_type != ExpressionType.DATETIME:
+            _fail("datetime_operand_required", token)
+        end = self.current.end
+        self.require(")")
+        operation = ExpressionOperation(token.value)
+        return FormulaExpression(operation, TIME_FUNCTION_TYPES[operation], token.start, end, (operand,))
 
     def conditional(self, token: _Token) -> FormulaExpression:
         self.require("(")
@@ -343,7 +400,7 @@ class _Parser:
         code: str = "incompatible_operand_types",
     ) -> ExpressionType:
         types = {operand.value_type for operand in operands} - {ExpressionType.NULL}
-        if ExpressionType.UNSUPPORTED in types:
+        if types & {ExpressionType.UNSUPPORTED, ExpressionType.DATETIME}:
             _fail("unsupported_column_type", token)
         if len(types) > 1:
             _fail(code, token)

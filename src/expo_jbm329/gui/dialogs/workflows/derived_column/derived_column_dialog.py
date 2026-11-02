@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
+from expo_jbm329.gui.dialogs.workflows.derived_column.month_labels import capture_month_labels
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
     ExpressionType,
@@ -153,6 +154,7 @@ class DerivedColumnDialog(QDialog):
         self._result = DerivedColumnSpec(
             column_name=column_name,
             formula=formula,
+            month_labels=capture_month_labels(),
         )
 
         self.accept()
