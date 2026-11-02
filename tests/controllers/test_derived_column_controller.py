@@ -69,9 +69,9 @@ def test_validate_reports_missing_active_dataframe():
         main_window=QWidget(),
     )
 
-    ok, message = ctrl._validate("new_col", "n + 1")
+    result, message = ctrl._validate("new_col", "n + 1")
 
-    assert ok is False
+    assert result.ok is False
     assert message
 
 
@@ -93,10 +93,6 @@ def test_get_active_dataframe_missing_tab_shows_info():
 def test_create_derived_column_runs_async(controller, monkeypatch):
     ctrl, async_ops, _, _, _, _ = controller
 
-    monkeypatch.setattr(
-        "expo_jbm329.workbench.controllers.derived_column_controller.get_numeric_columns",
-        lambda df: ["n"],
-    )
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.derived_column_controller.DerivedColumnDialog",
         lambda **kwargs: type(
@@ -165,9 +161,8 @@ def test_conditional_workflow_validates_dispatches_and_applies(controller, monke
         dialog,
     )
     ctrl.create_derived_column()
-    assert captured["validate_callback"]("Group", formula)[0]
-    if "Age" not in frame.columns:
-        assert captured["numeric_columns"] == []
+    assert captured["validate_callback"]("Group", formula)[0].ok
+    assert "numeric_columns" not in captured
     assert not dialogs.info_calls
     operation = async_ops.last_kwargs
     assert operation["runner"] == "pool"
@@ -329,7 +324,8 @@ def test_missing_active_view_does_not_dispatch_or_apply(controller):
 def test_invalid_condition_is_presented_in_validation_without_dispatch(controller, widget_language):
     ctrl, async_ops, _, _, current_df, _ = controller
     current_df.return_value = pd.DataFrame({"Age": [1]})
-    ok, message = ctrl._validate("Result", "IF([Age] IS NULL; 'Empty'; [Age])")
-    assert not ok
+    result, message = ctrl._validate("Result", "IF([Age] IS NULL; 'Empty'; [Age])")
+    assert not result.ok
+    assert result.error.code == "incompatible_branch_types"
     assert message == ctrl._tr(ctrl.TR_INCOMPATIBLE_BRANCHES)
     assert not async_ops.calls

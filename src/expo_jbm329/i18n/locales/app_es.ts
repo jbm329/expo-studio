@@ -3763,39 +3763,38 @@ Consulte los registros para obtener más información.</translation>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="61" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="61" />
         <source>Derived column</source>
         <translation>Columna derivada</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="90" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="90" />
         <source>New column name</source>
         <translation>Nombre de la nueva columna</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="91" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="91" />
         <source>Column name:</source>
         <translation>Nombre de la columna:</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="96" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="104" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="102" />
         <source>f(x):</source>
         <translation>f(x):</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="108" />
-        <source>Insert</source>
-        <translation>Insertar</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="110" />
-        <source>Numeric columns:</source>
-        <translation>Columnas numéricas:</translation>
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\workflows\derived_column\derived_column_dialog.py" line="188" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="171" />
         <source>Enter column name and formula.</source>
         <translation>Introduzca el nombre de la columna y la fórmula.</translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="vanished">Insertar</translation>
+    </message>
+    <message>
+        <source>Numeric columns:</source>
+        <translation type="vanished">Columnas numéricas:</translation>
     </message>
 </context><context>
     <name>DocumentController</name>
