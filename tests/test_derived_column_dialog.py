@@ -76,18 +76,22 @@ def test_completion_accepts_before_dialog_and_escapes_column_names(qt_app, key):
     dialog = make_dialog(pd.DataFrame({"a]b": [1], "Age": [20], "Vehicle": ["BMW"]}))
     dialog._column_name_edit.setText("Group")
     dialog.show()
-    editor = dialog._formula_edit
-    editor.setFocus()
-    QTest.keyClicks(editor, "[a]]")
-    qt_app.processEvents()
-    assert editor.completer.popup().isVisible()
-    assert editor.completer.completionCount() == 1
-    QTest.keyClick(editor, key)
-    assert editor.toPlainText() == "[a]]b]"
-    assert not editor.completer.popup().isVisible()
-    assert dialog.isVisible()
-    assert dialog.get_result() is None
-    dialog.close()
+    try:
+        dialog.activateWindow()
+        assert QTest.qWaitForWindowActive(dialog)
+        editor = dialog._formula_edit
+        editor.setFocus()
+        QTest.keyClicks(editor, "[a]]")
+        qt_app.processEvents()
+        assert editor.completer.popup().isVisible()
+        assert editor.completer.completionCount() == 1
+        QTest.keyClick(editor, key)
+        assert editor.toPlainText() == "[a]]b]"
+        assert not editor.completer.popup().isVisible()
+        assert dialog.isVisible()
+        assert dialog.get_result() is None
+    finally:
+        dialog.close()
 
 
 def test_completion_filters_all_supported_unique_columns():
