@@ -138,6 +138,7 @@ class ResultTabColumnHeaderContextMenu:
     # Split / merge
     TR_SPLIT = QT_TR_NOOP("Split column…")
     TR_MERGE = QT_TR_NOOP("Merge columns…")
+    TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column…")
 
     @staticmethod
     def _tr(text: str) -> str:
@@ -514,7 +515,14 @@ class ResultTabColumnHeaderContextMenu:
 
         menu.addSeparator()
 
-        # ---- split / merge -----------------------------------------
+        # ---- split / merge / derive ---------------------------------
+        self._add_menu_action(
+            menu,
+            action_map,
+            self._tr(self.TR_DERIVED_COLUMN),
+            "column.derived",
+            enabled=one,
+        )
         self._add_menu_action(
             menu,
             action_map,

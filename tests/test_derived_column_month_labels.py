@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
 from PyQt6.QtCore import QTranslator
-from PyQt6.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
 from expo_jbm329.gui.dialogs.workflows.derived_column import month_labels as month_capture
 from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import DerivedColumnDialog
@@ -111,11 +111,10 @@ def test_real_dialog_captures_at_acceptance_and_worker_does_not_consult_locale(q
     german, swedish = load_catalog("de"), load_catalog("sv")
     async_ops, apply = MagicMock(), MagicMock()
     source = pd.DataFrame({"When": pd.to_datetime(["2026-03-01", "2026-04-01", "2026-05-01", None])})
+    view = QTableView()
     controller = DerivedColumnController(
         async_ops=async_ops,
-        current_df=lambda: source,
-        get_active_view=lambda: QWidget(),
-        apply_to_active_tab=apply,
+        apply_to_view=apply,
         dialogs=MagicMock(),
         main_window=QWidget(),
     )
@@ -143,7 +142,7 @@ def test_real_dialog_captures_at_acceptance_and_worker_does_not_consult_locale(q
     monkeypatch.setattr(DerivedColumnDialog, "exec", accept_with_language_switch)
     qt_app.installTranslator(german)
     try:
-        controller.create_derived_column()
+        controller.create_derived_column(view, source, 0)
         assert len(calls) == 24
         assert captured[0].month_labels.full[0] == "januari"
         qt_app.removeTranslator(swedish)
@@ -158,7 +157,7 @@ def test_real_dialog_captures_at_acceptance_and_worker_does_not_consult_locale(q
         preview = preview_derived_column(source, captured[0])
         assert_series_equal(preview.data["Group"], result[1]["Group"])
         async_ops.run_dataframe_operation.call_args.kwargs["apply_result"](result)
-        assert_series_equal(apply.call_args.kwargs["df"]["Group"], result[1]["Group"])
+        assert_series_equal(apply.call_args.args[1]["Group"], result[1]["Group"])
         assert captured[0].month_labels.full[0] == "januari"
     finally:
         qt_app.removeTranslator(german)

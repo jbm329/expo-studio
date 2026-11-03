@@ -196,7 +196,6 @@ class ResultTabManager:
     TR_CLOSE_OTHERS = QT_TR_NOOP("Close others")
     TR_CLOSE_RIGHT = QT_TR_NOOP("Close all to the right")
     TR_CLOSE_ALL = QT_TR_NOOP("Close all")
-    TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column…")
     TR_JOIN = QT_TR_NOOP("Join…")
     TR_CONCATENATE = QT_TR_NOOP("Concatenate…")
     TR_RESHAPE = QT_TR_NOOP("Reshape…")
@@ -1160,9 +1159,6 @@ class ResultTabManager:
         act_close_all.setEnabled(has_multiple)
         menu.addSeparator()
 
-        act_derived = QAction(self._tr(self.TR_DERIVED_COLUMN), menu)
-        menu.addAction(act_derived)
-        act_derived.setEnabled(self._tabs.count() > 0)
         act_join = QAction(self._tr(self.TR_JOIN), menu)
         menu.addAction(act_join)
         act_join.setEnabled(self._tabs.count() > 1)
@@ -1206,27 +1202,6 @@ class ResultTabManager:
             self.close_tabs_to_right(tab_id)
         elif chosen == act_close_all:
             self.close_all_tabs()
-
-        elif chosen == act_derived:
-            if self._derived_column_controller is None:
-                self._logger.warning("ResultTabManager: Derived column controller is not available.")
-                return
-            try:
-                self._derived_column_controller.create_derived_column()
-            except (
-                AttributeError,
-                ConnectionError,
-                FileNotFoundError,
-                IndexError,
-                KeyError,
-                LookupError,
-                OSError,
-                RuntimeError,
-                TypeError,
-                ValueError,
-            ):
-                self._logger.exception("Derived column failed to start.")
-            return
 
         elif chosen == act_join:
             if self._join_controller is None:
@@ -1533,8 +1508,19 @@ class ResultTabManager:
             return
 
         # ============================================================
-        # Split/Merge
+        # Split/Merge/Derive
         # ============================================================
+        if action_id == "column.derived":
+            if not ctx.only_one_selected:
+                return
+            if self._derived_column_controller is None:
+                self._logger.warning("ResultTabManager: Derived column controller is not available.")
+                return
+            ok, df, _, _ = self._resolve_df_col_series(view, column)
+            if ok and df is not None:
+                self._derived_column_controller.create_derived_column(view, df, column)
+            return
+
         if action_id == "column.split":
             self._header_column_actions.split_column(view, column)
             return
@@ -2201,6 +2187,16 @@ class ResultTabManager:
             invalidate_cache=True,
             status=status,
         )
+
+    def apply_to_view(self, view: QTableView, df: pd.DataFrame, status: str) -> None:
+        """Apply an asynchronous column operation to its originating view.
+
+        Args:
+            view: Result view that initiated the operation.
+            df: Updated dataset.
+            status: Success message to display.
+        """
+        self._apply_with_cache_invalidation(view, df, status)
 
     def _apply_without_cache_invalidation(
         self,

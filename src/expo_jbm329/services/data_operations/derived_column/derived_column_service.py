@@ -178,18 +178,24 @@ def validate_derived_column_spec(
 def create_derived_column(
     df: pd.DataFrame,
     spec: DerivedColumnSpec,
+    *,
+    insertion_index: int | None = None,
 ) -> pd.DataFrame:
     """Create a derived numeric or nullable text column from a formula.
 
     Args:
         df: Source DataFrame.
         spec: Derived column specification.
+        insertion_index: Zero-based position for a new column, from zero to
+            the number of source columns. Defaults to appending. Ignored
+            when overwriting an existing column.
 
     Returns:
         A new DataFrame with the derived column added or overwritten.
 
     Raises:
         DerivedColumnError: If the specification is invalid or evaluation fails.
+        IndexError: If the insertion index for a new column is out of bounds.
     """
     output_column = _normalized_column_name(spec)
 
@@ -201,6 +207,12 @@ def create_derived_column(
     )
 
     _validate_column_name(df, spec)
+
+    overwrite = output_column in df.columns and spec.overwrite_existing
+    position = len(df.columns) if insertion_index is None else insertion_index
+    if not overwrite and not 0 <= position <= len(df.columns):
+        msg = f"Invalid insertion index: {position}"
+        raise IndexError(msg)
 
     try:
         parsed = _compile_formula(df, spec)
@@ -249,10 +261,10 @@ def create_derived_column(
 
     new_df = df.copy()
 
-    if output_column in new_df.columns and spec.overwrite_existing:
+    if overwrite:
         new_df[output_column] = result_series
     else:
-        new_df.insert(len(new_df.columns), output_column, result_series)
+        new_df.insert(position, output_column, result_series)
 
     logger.info(
         "Derived column created (column=%r, rows=%s, dtype=%s)",

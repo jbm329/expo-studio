@@ -177,6 +177,53 @@ def test_order_menu_uses_extracted_compiled_translations(extracted_messages, lan
         qt_app.removeTranslator(translator)
 
 
+@pytest.mark.parametrize("language", [language.value for language in Language])
+def test_derived_menu_uses_moved_extracted_compiled_translation(extracted_messages, language: str, qt_app) -> None:
+    import pandas as pd
+    from PyQt6.QtWidgets import QTableView
+
+    from expo_jbm329.gui.menus.result_tab_column_header_context_menu import ResultTabColumnHeaderContextMenu
+    from expo_jbm329.gui.menus.result_tab_header_context import build_header_context
+
+    context = "ResultTabColumnHeaderContextMenu"
+    source = "Derived column…"
+    key = (context, source, "")
+    assert key in extracted_messages
+    assert ("ResultTabManager", source, "") not in extracted_messages
+    catalog = _catalog_messages(ElementTree.parse(build_i18n.locales_dir() / f"app_{language}.ts").getroot())
+    translation = catalog[key].find("translation")
+    assert translation is not None
+    translator = QTranslator()
+    assert translator.load(str(build_i18n.locales_dir() / f"app_{language}.qm"))
+    if language == "en":
+        assert translation.get("type") == "unfinished"
+        assert not translation.text
+        expected = source
+    else:
+        assert translation.get("type") is None
+        assert translation.text
+        expected = translation.text
+
+    qt_app.installTranslator(translator)
+    try:
+        assert QCoreApplication.translate(context, source) == expected
+        view = QTableView()
+        for one in (True, False):
+            ctx = build_header_context(
+                view=view,
+                df=pd.DataFrame({"a": [1], "b": [2]}),
+                column=0,
+                column_name="a",
+                only_one_selected=one,
+            )
+            _, action_map = ResultTabColumnHeaderContextMenu(view).build(ctx)
+            action = next(action for action, action_id in action_map.items() if action_id == "column.derived")
+            assert action.text() == expected
+            assert action.isEnabled() is one
+    finally:
+        qt_app.removeTranslator(translator)
+
+
 @pytest.mark.parametrize(
     ("context", "old_source", "source"),
     [
