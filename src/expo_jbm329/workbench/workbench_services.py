@@ -540,9 +540,7 @@ class WorkbenchServices:
         # ============================================================
         derived_column = DerivedColumnController(
             async_ops=async_ops,
-            current_df=results.current_df,
-            get_active_view=results.active_view,
-            apply_to_active_tab=results.apply_to_active_tab,
+            apply_to_view=results.apply_to_view,
             dialogs=app.dialogs,
             main_window=ui.parent,
             logger=app.log_ui,

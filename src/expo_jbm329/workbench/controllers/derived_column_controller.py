@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import TYPE_CHECKING, Protocol
+from functools import partial
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
 from PyQt6.QtWidgets import QDialog, QTableView, QWidget
@@ -36,20 +37,6 @@ if TYPE_CHECKING:
     )
 
 
-class ApplyToActiveTab(Protocol):
-    """Protocol for applying a result to an active tab."""
-
-    def __call__(
-        self,
-        df: pd.DataFrame,
-        *,
-        status: str,
-        message: str | None = None,
-    ) -> None:
-        """Apply a DataFrame to the active tab."""
-        ...
-
-
 class DerivedColumnController:
     """Controller for derived column workflow."""
 
@@ -57,7 +44,6 @@ class DerivedColumnController:
     TR_DERIVED_COLUMN = QT_TR_NOOP("Derived column")
     TR_CREATED_COLUMN = QT_TR_NOOP("Derived column '{column_name}' created successfully.")
     TR_CREATING_COLUMN = QT_TR_NOOP("Creating derived column '{column_name}'")
-    TR_NO_ACTIVE_TAB = QT_TR_NOOP("No active tab found.")
     TR_VALID_FORMULA = QT_TR_NOOP("Valid formula.")
 
     # Errors
@@ -141,11 +127,9 @@ class DerivedColumnController:
         return translate_fmt("DerivedColumnController", text, **kwargs)
 
     __slots__ = (
-        "_apply_to_active_tab",
+        "_apply_to_view",
         "_async_ops",
         "_dialogs",
-        "_get_active_view",
-        "_get_current_df",
         "_logger",
         "_main_window",
     )
@@ -154,9 +138,7 @@ class DerivedColumnController:
         self,
         *,
         async_ops: AsyncOperationController,
-        current_df: Callable[[], pd.DataFrame | None],
-        get_active_view: Callable[[], QTableView | None],
-        apply_to_active_tab: ApplyToActiveTab,
+        apply_to_view: Callable[[QTableView, pd.DataFrame, str], None],
         dialogs: DialogService | None = None,
         main_window: QWidget,
         logger: logging.Logger | None = None,
@@ -165,17 +147,13 @@ class DerivedColumnController:
 
         Args:
             async_ops: Async operation controller.
-            current_df: Callback for retrieving the current DataFrame.
-            get_active_view: Callback for retrieving the active view.
-            apply_to_active_tab: Callback for applying a result to an active tab.
+            apply_to_view: Callback for applying a result to its originating view.
             dialogs: Dialog service for error/info dialogs.
             main_window: Parent window.
             logger: Optional logger.
         """
         self._async_ops = async_ops
-        self._get_current_df = current_df
-        self._get_active_view = get_active_view
-        self._apply_to_active_tab = apply_to_active_tab
+        self._apply_to_view = apply_to_view
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._logger = logger if logger is not None else logging.getLogger("applogger.ui")
         self._main_window = main_window
@@ -184,16 +162,24 @@ class DerivedColumnController:
     # Public API
     # ==================================================================
 
-    def create_derived_column(self) -> None:
-        """Open dialog and create a derived column."""
-        df = self._get_active_dataframe()
+    def create_derived_column(self, view: QTableView, df: pd.DataFrame, column: int) -> None:
+        """Open the dialog and insert a derived column after the clicked header.
 
-        if df is None:
-            return
+        Args:
+            view: Originating result view.
+            df: Source dataset resolved from the originating view.
+            column: Zero-based position of the clicked column.
+
+        Raises:
+            IndexError: If the clicked column is outside the source dataset.
+        """
+        if not 0 <= column < len(df.columns):
+            msg = f"Invalid source column index: {column}"
+            raise IndexError(msg)
 
         dialog = DerivedColumnDialog(
             df=df,
-            validate_callback=self._validate,
+            validate_callback=partial(self._validate, df),
             parent=self._main_window,
         )
 
@@ -216,27 +202,23 @@ class DerivedColumnController:
             month_labels=spec.month_labels,
         )
 
-        self._run_create_derived_column(df, spec)
+        self._run_create_derived_column(view, df, spec, insertion_index=column + 1)
 
     # ==================================================================
     # Validation
     # ==================================================================
 
-    def _validate(self, column_name: str, formula: str) -> tuple[FormulaValidationResult, str]:
+    def _validate(self, df: pd.DataFrame, column_name: str, formula: str) -> tuple[FormulaValidationResult, str]:
         """Validation callback used by dialog.
 
         Args:
+            df: Source dataset captured when the dialog was opened.
             column_name: Proposed column name.
             formula: Formula string.
 
         Returns:
             Structured validation result and localized message.
         """
-        df = self._get_active_dataframe()
-
-        if df is None:
-            return FormulaValidationResult(ok=False), self._tr(self.TR_NO_ACTIVE_TAB)
-
         spec = DerivedColumnSpec(
             column_name=column_name,
             formula=formula,
@@ -257,20 +239,13 @@ class DerivedColumnController:
     # ==================================================================
     def _run_create_derived_column(
         self,
+        view: QTableView,
         df: pd.DataFrame,
         spec: DerivedColumnSpec,
+        *,
+        insertion_index: int,
     ) -> None:
         """Create a derived column asynchronously and apply the result."""
-        view = self._get_active_view()
-        if view is None:
-            self._logger.warning("DerivedColumnController: no active view available for async derived column.")
-            self._dialogs.info(
-                parent=self._main_window,
-                title=self._tr(self.TR_DERIVED_COLUMN),
-                text=self._tr(self.TR_NO_ACTIVE_TAB),
-            )
-            return
-
         safe_df = df
         safe_spec = spec
         corr_id = uuid.uuid4().hex
@@ -293,7 +268,7 @@ class DerivedColumnController:
                 return None
 
             try:
-                new_df = create_derived_column(safe_df, safe_spec)
+                new_df = create_derived_column(safe_df, safe_spec, insertion_index=insertion_index)
 
             except (DerivedColumnError, DerivedColumnFormulaError) as exc:
                 return False, None, exc
@@ -333,7 +308,7 @@ class DerivedColumnController:
                 corr_id,
             )
 
-            self._apply_result(new_df, safe_spec)
+            self._apply_result(view, new_df, safe_spec)
 
         self._async_ops.run_dataframe_operation(
             view=view,
@@ -349,61 +324,24 @@ class DerivedColumnController:
             corr_id=corr_id,
         )
 
-    def _get_active_dataframe(self) -> pd.DataFrame | None:
-        """Get active DataFrame from result tabs."""
-        try:
-            df = self._get_current_df()
-
-            if df is None:
-                self._dialogs.info(
-                    parent=self._main_window,
-                    title=self._tr(self.TR_DERIVED_COLUMN),
-                    text=self._tr(self.TR_NO_ACTIVE_TAB),
-                )
-                return None
-
-        except (
-            AttributeError,
-            ConnectionError,
-            FileNotFoundError,
-            IndexError,
-            KeyError,
-            LookupError,
-            OSError,
-            RuntimeError,
-            TypeError,
-            ValueError,
-        ) as exc:
-            self._logger.exception("Failed to get active DataFrame")
-            self._dialogs.critical(
-                parent=self._main_window,
-                title=self._tr(self.TR_FAILURE),
-                text=str(exc),
-            )
-            return None
-        else:
-            return df
-
     def _apply_result(
         self,
+        view: QTableView,
         new_df: pd.DataFrame,
         spec: DerivedColumnSpec,
     ) -> None:
-        """Apply the result DataFrame back to result tabs.
+        """Apply the result DataFrame back to its originating result view.
 
         Args:
+            view: Originating result view.
             new_df: Updated DataFrame.
             spec: Column specification.
         """
         try:
-            # ------------------------------------------------------
-            # OPTION A:
-            # replace current tab
-            # ------------------------------------------------------
-            self._apply_to_active_tab(
-                df=new_df,
-                status=self._tr_fmt(self.TR_CREATED_COLUMN, column_name=spec.column_name),
-                message=self._tr_fmt(self.TR_CREATING_COLUMN, column_name=spec.column_name),
+            self._apply_to_view(
+                view,
+                new_df,
+                self._tr_fmt(self.TR_CREATED_COLUMN, column_name=spec.column_name),
             )
 
         except (
