@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-11-03
+
+### Added
+- Derived columns now support typed conditional expressions, including text-only datasets
+- Datetime grouping functions for derived columns, including localized full and abbreviated month names
+- Multiline derived-column formula editor with column autocomplete and inline syntax diagnostics
+- Choose where to insert a derived column, or create one directly to the right of a column from its header menu
+- Reorder dataset columns with undo support while preserving column metadata and formatting
+- Reshape metrics now include median and ordered FIRST/LAST values
+
+### Changed
+- SQL autocomplete recognizes quoted identifiers and inserts names using the active database dialect's quoting rules
+- Valid handwritten reshape metric conditions can now be opened and edited in the visual condition builder
+- Updated fg-data-profiling to 4.20.0 and Pillow to 13.0.0.0
+
 ## [1.2.0] - 2026-10-28
 
 ### Added
