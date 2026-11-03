@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
-from pandas.testing import assert_series_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import (
     DerivedColumnFormulaError,
@@ -139,12 +139,75 @@ def test_create_derived_column_addition(numeric_df: pd.DataFrame) -> None:
     assert_series_equal(result["Result"], pd.Series([12.0, 24.0, 35.0], name="Result", dtype="Float64"))
 
 
-def test_create_derived_column_overwrites_when_allowed(numeric_df: pd.DataFrame) -> None:
+@pytest.mark.parametrize("insertion_index", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("row_count", [0, 3])
+@pytest.mark.parametrize(
+    ("formula", "source_column", "output_dtype"),
+    [
+        ("[int_col] + 1", "int_col", "Float64"),
+        ("IF(TRUE; [string_col]; 'Other')", "string_col", "string"),
+    ],
+)
+def test_create_derived_column_inserts_at_requested_position(
+    mixed_df: pd.DataFrame,
+    insertion_index: int,
+    row_count: int,
+    formula: str,
+    source_column: str,
+    output_dtype: str,
+) -> None:
+    source = mixed_df.copy(deep=True)
+    source.index = pd.Index([30, 10, 30], name="row")
+    source = source.iloc[:row_count]
+    source.attrs["source"] = "original"
+    original = source.copy(deep=True)
+
+    result = create_derived_column(source, DerivedColumnSpec("Result", formula), insertion_index=insertion_index)
+
+    expected_columns = list(original.columns)
+    expected_columns.insert(insertion_index, "Result")
+    assert list(result.columns) == expected_columns
+    assert_frame_equal(result.loc[:, original.columns], original)
+    expected = original[source_column]
+    if source_column == "int_col":
+        expected = expected + 1
+    assert_series_equal(result["Result"], expected.astype(output_dtype).rename("Result"))
+    assert result.attrs == original.attrs
+    assert_frame_equal(source, original)
+    assert source.attrs == original.attrs
+
+
+@pytest.mark.parametrize("insertion_index", [-1, 4])
+def test_create_derived_column_rejects_invalid_insertion_index(
+    numeric_df: pd.DataFrame,
+    insertion_index: int,
+) -> None:
+    original = numeric_df.copy(deep=True)
+
+    with pytest.raises(IndexError, match="Invalid insertion index"):
+        create_derived_column(
+            numeric_df,
+            DerivedColumnSpec("Result", "[A] + [B]"),
+            insertion_index=insertion_index,
+        )
+
+    assert_frame_equal(numeric_df, original)
+
+
+@pytest.mark.parametrize("insertion_index", [None, 0, 2, 3, -1, 4])
+def test_create_derived_column_overwrites_when_allowed(
+    numeric_df: pd.DataFrame,
+    insertion_index: int | None,
+) -> None:
+    original = numeric_df.copy(deep=True)
     spec = DerivedColumnSpec(column_name="A", formula="[A] + [B]", overwrite_existing=True)
 
-    result = create_derived_column(numeric_df, spec)
+    result = create_derived_column(numeric_df, spec, insertion_index=insertion_index)
 
+    assert list(result.columns) == list(original.columns)
     assert_series_equal(result["A"], pd.Series([12.0, 24.0, 35.0], name="A", dtype="Float64"))
+    assert_frame_equal(result.loc[:, ["B", "C"]], original.loc[:, ["B", "C"]])
+    assert_frame_equal(numeric_df, original)
 
 
 def test_create_derived_column_rejects_existing_column_without_overwrite(numeric_df: pd.DataFrame) -> None:
