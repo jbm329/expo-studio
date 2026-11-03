@@ -72,10 +72,16 @@ dev = [
 profiling = [
     "fg-data-profiling>=4.20.0",
 ]
+
 # Build dependencies
 build = [
     "pyinstaller>=6.4",
     "pillow>=13.0.0.0"
+]
+
+# Documentation dependencies
+docs = [
+    "zensical>=0.0.74",
 ]
 
 # -------------------------------
@@ -279,3 +285,5 @@ reportUnknownMemberType = false
 reportUnknownArgumentType = false
 
 pythonVersion = "3.13"
+
+
