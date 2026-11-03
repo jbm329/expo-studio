@@ -211,6 +211,13 @@ The REST feature is intended primarily for:
 
 ### Derived columns
 
+Right-click a column header and choose **Derived column…** beside Split/Merge.
+The new column is inserted immediately to the right of that header (or at the
+end when you right-click the last column). This action is available when no
+more than one column is selected; it is no longer in the result-tab context
+menu. The clicked column determines placement only: formulas can reference
+any column in the dataset.
+
 Derived columns support numeric arithmetic (`+`, `-`, `*`, `/`) and nested
 `IF(condition; then; else)` expressions. Reference columns with `[Column Name]`,
 quote text with single quotes, separate IF arguments with semicolons, and

@@ -3497,262 +3497,261 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>DerivedColumnController</name>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="57" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="44" />
         <source>Derived column</source>
         <translation>Colonne calculée</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="58" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="45" />
         <source>Derived column '{column_name}' created successfully.</source>
         <translation>Colonne calculée « {column_name} » créée.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="59" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="46" />
         <source>Creating derived column '{column_name}'</source>
         <translation>Création de la colonne calculée « {column_name} »</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="60" />
         <source>No active tab found.</source>
-        <translation>Aucun onglet actif trouvé.</translation>
+        <translation type="vanished">Aucun onglet actif trouvé.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="61" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="47" />
         <source>Valid formula.</source>
         <translation>Formule valide.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="64" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="50" />
         <source>Failure</source>
         <translation>Échec</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="69" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="55" />
         <source>Invalid expression.</source>
         <translation>Expression invalide.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="70" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="56" />
         <source>Unknown error.</source>
         <translation>Erreur inconnue.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="71" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="57" />
         <source>Operator missing before position {position}.</source>
         <translation>Opérateur manquant avant la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="72" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="58" />
         <source>Unsupported character '{char}' at position {position}.</source>
         <translation>Caractère « {char} » non pris en charge à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="73" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="59" />
         <source>Column '{column}' does not exist (position {position}).</source>
         <translation>La colonne « {column} » n'existe pas (position {position}).</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="74" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="60" />
         <source>Formula cannot be empty.</source>
         <translation>La formule ne peut pas être vide.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="76" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="62" />
         <source>Unclosed column reference at position {position}.</source>
         <translation>Référence de colonne non fermée à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="77" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="63" />
         <source>Empty column reference at position {position}.</source>
         <translation>Référence de colonne vide à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="78" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="64" />
         <source>Missing operand before operator '{operator}' at position {position}.</source>
         <translation>Opérande manquant avant l'opérateur « {operator} » à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="81" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="67" />
         <source>Missing operand before ')' at position {position}.</source>
         <translation>Opérande manquant avant ')' à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="82" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="68" />
         <source>Missing operator before '(' at position {position}.</source>
         <translation>Opérateur manquant avant '(' à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="83" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="69" />
         <source>Unmatched closing parenthesis at position {position}.</source>
         <translation>Parenthèse fermante sans correspondance à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="84" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="70" />
         <source>Unmatched opening parenthesis.</source>
         <translation>Parenthèse ouvrante sans correspondance.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="85" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="71" />
         <source>Formula cannot end with operator '{operator}'.</source>
         <translation>La formule ne peut pas se terminer par l'opérateur « {operator} ».</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="86" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="72" />
         <source>Incomplete formula.</source>
         <translation>Formule incomplète.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="87" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="73" />
         <source>Formula must contain at least one value.</source>
         <translation>La formule doit contenir au moins une valeur.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="88" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="74" />
         <source>Unsupported token '{token}'.</source>
         <translation>Élément « {token} » non pris en charge.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="89" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="75" />
         <source>Unsupported operator '{token}'.</source>
         <translation>Opérateur « {token} » non pris en charge.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="90" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="76" />
         <source>Unclosed text literal at position {position}. Use single quotes around text.</source>
         <translation>Littéral de texte non fermé à la position {position}. Encadrez le texte par des apostrophes.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="91" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="77" />
         <source>Invalid or nonfinite number at position {position}.</source>
         <translation>Nombre invalide ou non fini à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="92" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="78" />
         <source>Expected '{expected}' at position {position}.</source>
         <translation>'{expected}' attendu à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="93" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="79" />
         <source>Expected a value or expression at position {position}.</source>
         <translation>Valeur ou expression attendue à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="94" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="80" />
         <source>Expected a literal value in the IN list at position {position}.</source>
         <translation>Valeur littérale attendue dans la liste IN à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="95" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="81" />
         <source>Unexpected token '{token}' at position {position}.</source>
         <translation>Élément inattendu '{token}' à la position {position}.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="96" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="82" />
         <source>Formula nesting is too deep (limit {limit}). Simplify the expression.</source>
         <translation>La formule est trop imbriquée (limite {limit}). Simplifiez l'expression.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="97" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="83" />
         <source>Incompatible operand at position {position}. Use numbers for arithmetic and conditions for Boolean logic.</source>
         <translation>Opérande incompatible à la position {position}. Utilisez des nombres pour l'arithmétique et des conditions pour la logique booléenne.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="100" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="86" />
         <source>Comparison operands must have compatible types at position {position}. Do not mix text and numbers.</source>
         <translation>Les opérandes de comparaison doivent avoir des types compatibles à la position {position}. Ne mélangez pas texte et nombres.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="103" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="89" />
         <source>IF results must both be text or both be numeric. NULL is allowed in either.</source>
         <translation>Les deux résultats de IF doivent être du texte ou des nombres. NULL est autorisé dans les deux cas.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="104" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="90" />
         <source>The formula must return text, a number, or NULL, not a condition.</source>
         <translation>La formule doit renvoyer du texte, un nombre ou NULL, pas une condition.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="105" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="91" />
         <source>Unsupported column type at position {position}. Use numeric or text values, or test with IS NULL.</source>
         <translation>Type de colonne non pris en charge à la position {position}. Utilisez des nombres ou du texte, ou testez avec IS NULL.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="108" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="94" />
         <source>Column '{column}' contains nontext values. Text expressions require text values.</source>
         <translation>La colonne '{column}' contient des valeurs non textuelles. Les expressions de texte nécessitent des valeurs textuelles.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="109" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="95" />
         <source>Could not evaluate the expression at position {position}. Check operand values and types.</source>
         <translation>Impossible d'évaluer l'expression à la position {position}. Vérifiez les valeurs et les types des opérandes.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="117" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="106" />
         <source>Column name is required.</source>
         <translation>Le nom de colonne est obligatoire.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="118" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="107" />
         <source>Column name cannot contain '[' or ']'.</source>
         <translation>Le nom de colonne ne peut pas contenir '[' ou ']'.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="119" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="108" />
         <source>Column '{column}' already exists.</source>
         <translation>La colonne « {column} » existe déjà.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="120" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="109" />
         <source>Column '{column}' is not numeric.</source>
         <translation>La colonne « {column} » n'est pas numérique.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="121" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="110" />
         <source>Column '{column}' is not unique.</source>
         <translation>La colonne « {column} » n'est pas unique.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="122" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="111" />
         <source>Column '{column}' does not exist.</source>
         <translation>La colonne « {column} » n'existe pas.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="123" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="112" />
         <source>Missing operand for operator '{operator}'.</source>
         <translation>Opérande manquant pour l'opérateur « {operator} ».</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="124" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="113" />
         <source>Unsupported token '{token}' in evaluation.</source>
         <translation>Élément « {token} » non pris en charge lors de l'évaluation.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="125" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="114" />
         <source>Formula did not produce a valid result.</source>
         <translation>La formule n'a pas produit de résultat valide.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="126" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="115" />
         <source>Error applying operator '{operator}'.</source>
         <translation>Erreur lors de l'application de l'opérateur « {operator} ».</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="127" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="116" />
         <source>Unsupported operator '{operator}'.</source>
         <translation>Opérateur « {operator} » non pris en charge.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="128" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="117" />
         <source>Unsupported output type '{dtype}'.</source>
         <translation>Type de sortie « {dtype} » non pris en charge.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="129" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="118" />
         <source>Could not convert result to '{dtype}'.</source>
         <translation>Impossible de convertir le résultat en « {dtype} ».</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="130" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="119" />
         <source>Failed to evaluate formula.</source>
         <translation>Échec de l'évaluation de la formule.</translation>
     </message>
@@ -3761,7 +3760,7 @@ Consultez les journaux pour plus d'informations.</translation>
         <translation type="vanished">Aucune colonne numérique trouvée dans le jeu de données.</translation>
     </message>
     <message>
-        <location filename="..\..\workbench\controllers\derived_column_controller.py" line="112" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="98" />
         <source>Function '{token}' at position {position} requires a datetime column. Convert text dates before using it.</source>
         <translation>La fonction '{token}' à la position {position} nécessite une colonne datetime. Convertissez les dates textuelles avant de l'utiliser.</translation>
     </message>
@@ -8833,6 +8832,11 @@ Durée : {sec:.2f}s{sample}</translation>
         <source>Merge columns…</source>
         <translation>Fusionner les colonnes…</translation>
     </message>
+    <message>
+        <location filename="../../gui/menus/result_tab_column_header_context_menu.py" line="141" />
+        <source>Derived column…</source>
+        <translation>Colonne dérivée…</translation>
+    </message>
 </context><context>
     <name>ResultTabColumnPropertiesController</name>
     <message>
@@ -9983,52 +9987,51 @@ Durée : {sec:.2f}s{sample}</translation>
         <translation>Tout fermer</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
         <source>Derived column…</source>
-        <translation>Colonne dérivée…</translation>
+        <translation type="vanished">Colonne dérivée…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
         <source>Join…</source>
         <translation>Jointure…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
         <source>Concatenate…</source>
         <translation>Concaténer…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="202" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
         <source>Reshape…</source>
         <translation>Remodeler…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="204" />
         <source>Processing data…</source>
         <translation>Traitement des données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
         <source>Updating table…</source>
         <translation>Mise à jour de la table…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
         <source>Loading data…</source>
         <translation>Chargement des données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
         <source>Preparing dataset…</source>
         <translation>Préparation du jeu de données…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
         <source>pending…</source>
         <translation>en attente…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="210" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
         <source>Formatting cell values…</source>
         <translation>Formatage des valeurs des cellules…</translation>
     </message>
