@@ -14,6 +14,7 @@ latest_stable_tag = HELPER["latest_stable_tag"]
 require_latest_stable_tag = HELPER["require_latest_stable_tag"]
 validate_commit_sha = HELPER["validate_commit_sha"]
 require_commit = HELPER["require_commit"]
+require_ancestor = HELPER["require_ancestor"]
 
 
 @pytest.mark.parametrize(
@@ -260,3 +261,53 @@ def test_require_commit_rejects_invalid_sha_before_running_git(tmp_path: Path) -
 def test_require_commit_surfaces_invalid_repository(tmp_path: Path) -> None:
     with pytest.raises(subprocess.CalledProcessError):
         require_commit(tmp_path, "a" * 40)
+
+
+def create_test_commit(repository: Path, message: str = "Test descendant") -> str:
+    run_git(repository, "-c", "commit.gpgsign=false", "commit", "--allow-empty", "--quiet", "-m", message)
+    return run_git(repository, "rev-parse", "HEAD")
+
+
+def test_require_ancestor_accepts_same_commit(git_repository: Path) -> None:
+    commit_sha = run_git(git_repository, "rev-parse", "HEAD")
+
+    assert require_ancestor(git_repository, commit_sha, commit_sha) is None
+
+
+def test_require_ancestor_accepts_transitive_history(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    create_test_commit(git_repository)
+    descendant = create_test_commit(git_repository)
+
+    assert require_ancestor(git_repository, baseline.upper(), descendant.upper()) is None
+
+
+def test_require_ancestor_rejects_reversed_history(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    descendant = create_test_commit(git_repository)
+
+    with pytest.raises(ValueError, match="is not an ancestor of") as error:
+        require_ancestor(git_repository, descendant, baseline)
+
+    assert baseline in str(error.value)
+    assert descendant in str(error.value)
+
+
+def test_require_ancestor_rejects_divergent_history(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    first = create_test_commit(git_repository)
+    run_git(git_repository, "checkout", "--quiet", "--detach", baseline)
+    second = create_test_commit(git_repository, "Divergent test descendant")
+
+    assert first != second
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_ancestor(git_repository, first, second)
+
+
+@pytest.mark.parametrize("missing_ancestor", [False, True])
+def test_require_ancestor_surfaces_missing_commit(git_repository: Path, missing_ancestor: bool) -> None:
+    existing = run_git(git_repository, "rev-parse", "HEAD")
+    ancestor, descendant = ("0" * 40, existing) if missing_ancestor else (existing, "0" * 40)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        require_ancestor(git_repository, ancestor, descendant)

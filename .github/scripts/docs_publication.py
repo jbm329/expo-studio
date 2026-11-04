@@ -168,3 +168,35 @@ def require_commit(repository: Path, source_sha: str) -> str:
         raise ValueError(message)
 
     return commit_sha
+
+
+def require_ancestor(repository: Path, ancestor_sha: str, descendant_sha: str) -> None:
+    """Require one commit to be an ancestor of another, allowing equality.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        ancestor_sha: Full commit ID of the required baseline.
+        descendant_sha: Full commit ID whose history must include the baseline.
+
+    Raises:
+        ValueError: If either ID is invalid or the ancestry requirement fails.
+        subprocess.CalledProcessError: If Git cannot inspect the commits or history.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        The repository must contain the history needed to establish ancestry.
+    """
+    ancestor = require_commit(repository, ancestor_sha)
+    descendant = require_commit(repository, descendant_sha)
+    # Git uses status 1 for a valid query with no ancestor relationship.
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "merge-base", "--is-ancestor", ancestor, descendant],  # noqa: S607
+        cwd=repository,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 1:
+        message = f"Commit {ancestor!r} is not an ancestor of {descendant!r}."
+        raise ValueError(message)
+    result.check_returncode()
