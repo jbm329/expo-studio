@@ -22,6 +22,7 @@ resolve_stable_tag_commit = HELPER["resolve_stable_tag_commit"]
 require_correction_source = HELPER["require_correction_source"]
 require_documentation_setup = HELPER["require_documentation_setup"]
 require_release_source = HELPER["require_release_source"]
+require_bootstrap_content = HELPER["require_bootstrap_content"]
 
 
 @pytest.mark.parametrize(
@@ -668,3 +669,66 @@ def test_release_source_rejects_baseline_without_documentation(git_repository: P
 
     with pytest.raises(ValueError, match="lacks required regular documentation files"):
         require_release_source(git_repository, "v1.3.0", baseline, releases)
+
+
+@pytest.fixture
+def bootstrap_history(git_repository: Path) -> tuple[Path, str]:
+    docs = git_repository / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text(
+        "# Expo Studio User Manual\n\nThe user manual is under construction.\n", encoding="utf-8"
+    )
+    return git_repository, commit_all(git_repository)
+
+
+def test_bootstrap_content_accepts_committed_placeholder(bootstrap_history: tuple[Path, str]) -> None:
+    repository, source = bootstrap_history
+    (repository / "docs" / "index.md").write_text("Uncommitted content.\n", encoding="utf-8")
+
+    assert require_bootstrap_content(repository, source) is None
+
+
+@pytest.mark.parametrize("extra_path", ["guide.md", "assets/image.png", ".hidden.md"])
+def test_bootstrap_content_rejects_additional_files(bootstrap_history: tuple[Path, str], extra_path: str) -> None:
+    repository, _ = bootstrap_history
+    extra = repository.joinpath("docs", *extra_path.split("/"))
+    extra.parent.mkdir(parents=True, exist_ok=True)
+    extra.write_text("Extra content.\n", encoding="utf-8")
+    source = commit_all(repository)
+
+    with pytest.raises(ValueError, match="must contain only the regular docs/index.md"):
+        require_bootstrap_content(repository, source)
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "# Expo Studio User Manual\n\nActual feature instructions.\n",
+        "# Expo Studio User Manual\n\nThe user manual is under construction.\n\n<script>alert(1)</script>",
+        "# Expo Studio User Manual\n\nThe user manual is under construction.\n\n[Guide](guide.md)",
+        "",
+    ],
+)
+def test_bootstrap_content_rejects_unapproved_landing_text(bootstrap_history: tuple[Path, str], content: str) -> None:
+    repository, _ = bootstrap_history
+    (repository / "docs" / "index.md").write_text(content, encoding="utf-8")
+    source = commit_all(repository)
+
+    with pytest.raises(ValueError, match="approved under-construction heading and message"):
+        require_bootstrap_content(repository, source)
+
+
+def test_bootstrap_content_rejects_missing_docs(git_repository: Path) -> None:
+    source = run_git(git_repository, "rev-parse", "HEAD")
+
+    with pytest.raises(ValueError, match="must contain only the regular docs/index.md"):
+        require_bootstrap_content(git_repository, source)
+
+
+def test_bootstrap_content_rejects_executable_placeholder(bootstrap_history: tuple[Path, str]) -> None:
+    repository, _ = bootstrap_history
+    run_git(repository, "update-index", "--chmod=+x", "docs/index.md")
+    source = create_test_commit(repository)
+
+    with pytest.raises(ValueError, match="must contain only the regular docs/index.md"):
+        require_bootstrap_content(repository, source)

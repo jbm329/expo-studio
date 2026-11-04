@@ -474,3 +474,48 @@ def require_release_source(
         raise ValueError(message)
     require_documentation_setup(repository, release_commit)
     return release_commit
+
+
+def require_bootstrap_content(repository: Path, source_sha: str) -> None:
+    """Restrict the committed bootstrap manual to the approved placeholder.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        source_sha: Full commit ID containing the proposed bootstrap content.
+
+    Raises:
+        ValueError: If the documentation tree or landing-page text is unexpected.
+        subprocess.CalledProcessError: If Git cannot inspect the source.
+        OSError: If Git cannot be started or the working directory is invalid.
+        UnicodeDecodeError: If the landing page is not valid UTF-8.
+
+    Notes:
+        Configuration routing and release eligibility are checked separately.
+    """
+    source = require_commit(repository, source_sha)
+    tree = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "ls-tree", "-r", "-z", source, "--", "docs"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    entries = [entry for entry in tree.stdout.split(b"\0") if entry]
+    if len(entries) != 1:
+        message = "Bootstrap documentation must contain only the regular docs/index.md placeholder."
+        raise ValueError(message)
+    metadata, path = entries[0].split(b"\t", 1)
+    mode, object_type, _ = metadata.split()
+    if path != b"docs/index.md" or mode != b"100644" or object_type != b"blob":
+        message = "Bootstrap documentation must contain only the regular docs/index.md placeholder."
+        raise ValueError(message)
+    page = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "show", f"{source}:docs/index.md"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    content = page.stdout.decode("utf-8").replace("\r\n", "\n").strip()
+    expected = "# Expo Studio User Manual\n\nThe user manual is under construction."
+    if content != expected:
+        message = "Bootstrap landing page must contain only the approved under-construction heading and message."
+        raise ValueError(message)
