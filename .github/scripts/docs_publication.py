@@ -11,6 +11,7 @@ import tomllib
 from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path, PurePosixPath
+from stat import S_ISDIR, S_ISREG
 from typing import TYPE_CHECKING, Literal, TypedDict
 from urllib.request import Request, urlopen
 
@@ -781,8 +782,9 @@ def require_site_manifest(site: Path, expected: PublicationManifest) -> None:
         expected: Validated provenance supplied separately from the website.
 
     Raises:
-        ValueError: If required output is not regular, the landing page is empty,
-            or website provenance differs from the proposal.
+        ValueError: If output contains links or special files, required output
+            is not regular, the landing page is empty, or provenance differs
+            from the proposal.
         OSError: If required files cannot be inspected or read.
         UnicodeDecodeError: If provenance is not valid UTF-8.
 
@@ -792,12 +794,12 @@ def require_site_manifest(site: Path, expected: PublicationManifest) -> None:
         build/deployment wiring must be checked separately.
     """
     manifest = parse_publication_manifest(expected)
-    if site.is_symlink() or not site.is_dir():
+    if site.is_symlink() or site.is_junction() or not site.is_dir():
         message = "Publication artifact requires a regular website directory."
         raise ValueError(message)
     for name in ("index.html", "publication.json"):
         path = site / name
-        if path.is_symlink() or not path.is_file():
+        if path.is_symlink() or path.is_junction() or not path.is_file():
             message = f"Publication artifact requires a regular {name} file."
             raise ValueError(message)
     if (site / "index.html").stat().st_size == 0:
@@ -806,6 +808,21 @@ def require_site_manifest(site: Path, expected: PublicationManifest) -> None:
     if read_publication_manifest(site / "publication.json") != manifest:
         message = "Website publication metadata does not match the validated proposal."
         raise ValueError(message)
+    directories = [site]
+    while directories:
+        directory = directories.pop()
+        for path in directory.iterdir():
+            if path.is_symlink() or path.is_junction():
+                message = f"Publication artifact must not contain links: {path.relative_to(site)}"
+                raise ValueError(message)
+            mode = path.lstat().st_mode
+            if S_ISDIR(mode):
+                directories.append(path)
+            elif not S_ISREG(mode):
+                message = (
+                    f"Publication artifact must contain only regular files and directories: {path.relative_to(site)}"
+                )
+                raise ValueError(message)
 
 
 def parse_stable_tag(tag: str) -> tuple[int, int, int]:

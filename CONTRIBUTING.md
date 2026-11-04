@@ -163,6 +163,10 @@ checks an extracted website against a separately validated proposal. It requires
 a regular website directory, a nonempty regular `index.html`, and a regular
 `publication.json` matching every validated provenance field. It does not execute
 website content or prove the origin of all website bytes.
+Before Pages packaging, verification also walks the entire extracted website,
+rejecting symlinks, Windows junctions, and special files anywhere in the tree.
+Only regular files and directories are accepted; unreadable directories fail
+explicitly. This prevents the Pages packager from following links in its input.
 
 The manual workflow runs this command in a separate read-only `verify` job
 after the preview build. It downloads the website and validated proposal from

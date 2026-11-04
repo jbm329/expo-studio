@@ -4,8 +4,10 @@ import json
 import subprocess
 import sys
 import tomllib
+from collections.abc import Iterator
 from pathlib import Path
 from runpy import run_path
+from stat import S_IFIFO
 from unittest.mock import MagicMock, Mock
 from urllib.error import HTTPError, URLError
 
@@ -130,6 +132,65 @@ def test_verify_site_command_rejects_symlink_outputs(
     monkeypatch.setattr(Path, "is_symlink", lambda path: path == target or original(path))
 
     with pytest.raises(ValueError, match="regular"):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
+def test_verify_site_command_accepts_nested_regular_assets(publication_site: tuple[Path, Path]) -> None:
+    site, proposed = publication_site
+    assets = site / "assets" / "images"
+    assets.mkdir(parents=True)
+    image = assets / "example.png"
+    image.write_bytes(b"example image bytes")
+    (site / "empty-directory").mkdir()
+
+    main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+    assert image.read_bytes() == b"example image bytes"
+
+
+@pytest.mark.parametrize("kind", ["file-link", "directory-link", "junction", "special-file"])
+def test_verify_site_command_rejects_unsafe_nested_assets(
+    monkeypatch: pytest.MonkeyPatch, publication_site: tuple[Path, Path], kind: str
+) -> None:
+    site, proposed = publication_site
+    assets = site / "assets"
+    assets.mkdir()
+    target = assets / "unsafe"
+    if kind in ("directory-link", "junction"):
+        target.mkdir()
+    else:
+        target.write_bytes(b"not a regular asset")
+    if kind == "special-file":
+        original_stat = Path.lstat
+        monkeypatch.setattr(
+            Path, "lstat", lambda path: Mock(st_mode=S_IFIFO) if path == target else original_stat(path)
+        )
+    else:
+        method = "is_junction" if kind == "junction" else "is_symlink"
+        original_check = getattr(Path, method)
+        monkeypatch.setattr(Path, method, lambda path: path == target or original_check(path))
+
+    with pytest.raises(ValueError, match="links|only regular files"):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
+def test_verify_site_command_propagates_tree_inspection_failure(
+    monkeypatch: pytest.MonkeyPatch, publication_site: tuple[Path, Path]
+) -> None:
+    site, proposed = publication_site
+    assets = site / "assets"
+    assets.mkdir()
+    original = Path.iterdir
+
+    def inspect_directory(path: Path) -> Iterator[Path]:
+        if path == assets:
+            message = "Cannot inspect asset directory"
+            raise PermissionError(message)
+        return original(path)
+
+    monkeypatch.setattr(Path, "iterdir", inspect_directory)
+
+    with pytest.raises(PermissionError, match="Cannot inspect"):
         main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
 
 
