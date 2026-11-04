@@ -534,6 +534,65 @@ def require_manual_publication_run(
     return attempt
 
 
+def require_pages_artifact(repository_slug: str, artifact_id: str, run_id: str) -> None:
+    """Verify the identity and availability of a packaged Pages artifact.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        artifact_id: Immutable artifact ID returned by the trusted packaging job.
+        run_id: Expected workflow run ID.
+
+    Raises:
+        ValueError: If identifiers or returned artifact metadata do not match.
+        TypeError: If the API response is not an artifact object.
+        subprocess.CalledProcessError: If the API request or authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. This checks API metadata only,
+        not archive contents or run attempt. Expiration or deletion after the
+        check remains possible; deployment must fail rather than substitute
+        another artifact.
+    """
+    _require_repository_slug(repository_slug)
+    for identifier in (artifact_id, run_id):
+        if not isinstance(identifier, str) or re.fullmatch(r"[1-9][0-9]*", identifier) is None:
+            message = "Pages artifact verification requires positive decimal artifact and run IDs."
+            raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            f"repos/{repository_slug}/actions/artifacts/{artifact_id}",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    artifact = json.loads(result.stdout)
+    if not isinstance(artifact, dict):
+        message = "GitHub artifact response must be an object."
+        raise TypeError(message)
+    workflow_run = artifact.get("workflow_run")
+    size = artifact.get("size_in_bytes")
+    if (
+        type(artifact.get("id")) is not int
+        or artifact["id"] != int(artifact_id)
+        or artifact.get("name") != "github-pages"
+        or artifact.get("expired") is not False
+        or type(size) is not int
+        or size <= 0
+        or not isinstance(workflow_run, dict)
+        or type(workflow_run.get("id")) is not int
+        or workflow_run["id"] != int(run_id)
+    ):
+        message = "Pages artifact must be nonempty, unexpired, and match the expected artifact name, ID, and run."
+        raise ValueError(message)
+
+
 def require_publication_job(
     repository_slug: str,
     status: GitHubDeploymentStatus,

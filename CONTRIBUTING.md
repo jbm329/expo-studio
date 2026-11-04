@@ -193,6 +193,13 @@ of the verified website, including `publication.json`. Packaging does not publis
 the site or require Pages write permissions. A later eligibility recheck can
 still fail even though this artifact was uploaded.
 
+The helper can independently check the packaged artifact's GitHub API metadata:
+the immutable ID, `github-pages` name, and workflow run must match, and the
+artifact must be nonempty and unexpired. API failures and missing metadata fail
+explicitly. This checks identity and availability, not archive contents or run
+attempt; it is not wired into the workflow yet. Later deletion or expiration
+must fail deployment rather than trigger an artifact substitution.
+
 Publication runs share the fixed `documentation-publication` concurrency group,
 independent of source branch, commit, or mode. An active run is not automatically
 cancelled when another request arrives. GitHub does not guarantee queue order

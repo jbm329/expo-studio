@@ -51,6 +51,126 @@ fetch_manual_publication_metadata = HELPER["fetch_manual_publication_metadata"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
+require_pages_artifact = HELPER["require_pages_artifact"]
+
+
+@pytest.fixture
+def pages_artifact_metadata() -> dict[str, object]:
+    return {
+        "id": 456,
+        "name": "github-pages",
+        "expired": False,
+        "size_in_bytes": 1024,
+        "workflow_run": {"id": 123},
+    }
+
+
+def test_require_pages_artifact_checks_api_identity(
+    monkeypatch: pytest.MonkeyPatch, pages_artifact_metadata: dict[str, object]
+) -> None:
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages_artifact_metadata)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    require_pages_artifact("jbm329/expo-studio", "456", "123")
+
+    runner.assert_called_once_with(
+        ["gh", "api", "--method", "GET", "repos/jbm329/expo-studio/actions/artifacts/456"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", 457),
+        ("id", "456"),
+        ("id", True),
+        ("name", "documentation-publication-preview"),
+        ("expired", True),
+        ("expired", 0),
+        ("expired", None),
+        ("size_in_bytes", 0),
+        ("size_in_bytes", -1),
+        ("size_in_bytes", True),
+        ("size_in_bytes", "1024"),
+        ("workflow_run", None),
+        ("workflow_run", {"id": 124}),
+        ("workflow_run", {"id": "123"}),
+        ("workflow_run", {"id": True}),
+    ],
+)
+def test_require_pages_artifact_rejects_mismatches(
+    monkeypatch: pytest.MonkeyPatch, pages_artifact_metadata: dict[str, object], field: str, value: object
+) -> None:
+    metadata = {**pages_artifact_metadata, field: value}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(metadata)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="Pages artifact must"):
+        require_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+@pytest.mark.parametrize("field", ["id", "name", "expired", "size_in_bytes", "workflow_run"])
+def test_require_pages_artifact_requires_metadata(
+    monkeypatch: pytest.MonkeyPatch, pages_artifact_metadata: dict[str, object], field: str
+) -> None:
+    del pages_artifact_metadata[field]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages_artifact_metadata)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError):
+        require_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+@pytest.mark.parametrize("identifier", ["", "0", "-1", "01", "123/extra", "123\n", True, None])
+@pytest.mark.parametrize("field", ["artifact", "run"])
+def test_require_pages_artifact_rejects_bad_ids_before_api(
+    monkeypatch: pytest.MonkeyPatch, identifier: object, field: str
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="positive decimal"):
+        require_pages_artifact(
+            "jbm329/expo-studio", identifier if field == "artifact" else "456", identifier if field == "run" else "123"
+        )
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("response", "error"), [("null", TypeError), ("[]", TypeError), ("{}", ValueError), ("{", ValueError)]
+)
+def test_require_pages_artifact_rejects_bad_response(
+    monkeypatch: pytest.MonkeyPatch, response: str, error: type[Exception]
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(error):
+        require_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_require_pages_artifact_propagates_api_failure(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        require_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+def test_require_pages_artifact_rejects_bad_repository_before_api(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="owner/repository"):
+        require_pages_artifact("owner/repo?query=1", "456", "123")
+
+    runner.assert_not_called()
 
 
 @pytest.fixture
