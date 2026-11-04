@@ -399,6 +399,16 @@ jobs:
             --output "$RUNNER_TEMP/rechecked-inspection.json" \
             "${confirmation[@]}"
 
+      - name: Verify packaged Pages artifact identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ARTIFACT_ID: ${{ needs.verify.outputs.pages_artifact_id }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-pages-artifact \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --artifact-id "$PAGES_ARTIFACT_ID" \
+            --run-id "$GITHUB_RUN_ID"
+
       - name: Upload post-build publication inspection
         uses: actions/upload-artifact@v7
         with:
@@ -408,12 +418,15 @@ jobs:
           retention-days: 7
 
       - name: Summarize publication recheck
+        env:
+          PAGES_ARTIFACT_ID: ${{ needs.verify.outputs.pages_artifact_id }}
         run: |
           {
             echo "## Documentation source and publication progress rechecked"
             echo
             echo "The same validated proposal remains eligible against freshly fetched releases and refs."
             echo "Deployed metadata was inspected again and source progress checked where a published source exists."
+            echo "Packaged Pages artifact identity and availability checked for this run: $PAGES_ARTIFACT_ID"
             echo "See documentation-publication-recheck for the result. No deployment records is not bootstrap authorization."
             echo "These read-only checks do not authorize deployment or prove published artifact contents."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -365,7 +365,16 @@ def test_prepare_command_does_not_write_output_after_failure(
 
 @pytest.mark.parametrize(
     "arguments",
-    [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"], ["inspect-published"], ["verify-site"]],
+    [
+        [],
+        ["deploy"],
+        ["prepare"],
+        ["check-progress"],
+        ["fetch-published"],
+        ["inspect-published"],
+        ["verify-site"],
+        ["verify-pages-artifact"],
+    ],
 )
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
@@ -382,8 +391,41 @@ def test_publication_script_help_runs_without_side_effects() -> None:
         text=True,
     )
 
-    assert "{prepare,check-progress,fetch-published,inspect-published,verify-site}" in result.stdout
+    assert "verify-pages-artifact" in result.stdout
+    assert "inspect-published" in result.stdout
     assert "without building or deploying" in result.stdout
+
+
+def test_verify_pages_artifact_command_passes_explicit_identity(monkeypatch: pytest.MonkeyPatch) -> None:
+    verify = Mock()
+    monkeypatch.setitem(main.__globals__, "require_pages_artifact", verify)
+
+    main([
+        "verify-pages-artifact",
+        "--repository-slug",
+        "jbm329/expo-studio",
+        "--artifact-id",
+        "456",
+        "--run-id",
+        "123",
+    ])
+
+    verify.assert_called_once_with("jbm329/expo-studio", "456", "123")
+
+
+def test_verify_pages_artifact_command_propagates_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(main.__globals__, "require_pages_artifact", Mock(side_effect=ValueError("Artifact rejected")))
+
+    with pytest.raises(ValueError, match="Artifact rejected"):
+        main([
+            "verify-pages-artifact",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--artifact-id",
+            "456",
+            "--run-id",
+            "123",
+        ])
 
 
 @pytest.mark.parametrize("has_publication", [False, True])

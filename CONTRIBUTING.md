@@ -197,7 +197,12 @@ The helper can independently check the packaged artifact's GitHub API metadata:
 the immutable ID, `github-pages` name, and workflow run must match, and the
 artifact must be nonempty and unexpired. API failures and missing metadata fail
 explicitly. This checks identity and availability, not archive contents or run
-attempt; it is not wired into the workflow yet. Later deletion or expiration
+attempt. The post-build `recheck` job now runs this check using the exact Pages
+artifact ID exposed by `verify` and the current workflow run ID. It calls
+`verify-pages-artifact --repository-slug <owner/repo> --artifact-id <id>
+--run-id <id>` through the trusted helper, with the job's existing read-only
+Actions permission. Failure stops the job before the successful recheck summary.
+Later deletion or expiration
 must fail deployment rather than trigger an artifact substitution.
 
 Publication runs share the fixed `documentation-publication` concurrency group,
