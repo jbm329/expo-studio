@@ -119,6 +119,13 @@ window but does not establish artifact contents. The deploy job has not been
 added yet; artifact verification and final deployment wiring remain unfinished,
 and no workflow permissions have been expanded.
 
+`fetch_manual_publication_metadata` connects the current-deployment, public
+manifest, run-association, manual-run, and job checks. It rechecks the selected
+deployment after inspection and rejects a changed deployment or status.
+Only an initially empty deployment history returns no metadata; every failed
+check propagates as an error. This is still metadata inspection, not artifact
+verification or permission to publish, and is not wired into the workflow yet.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛

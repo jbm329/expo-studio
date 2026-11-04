@@ -629,6 +629,44 @@ def require_publication_job(
         raise ValueError(message)
 
 
+def fetch_manual_publication_metadata(repository_slug: str) -> PublicationManifest | None:
+    """Retrieve public manual provenance and cross-check its deployment metadata.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+
+    Returns:
+        Public provenance associated with the selected manual publishing run,
+        or None only when the initial deployment query returns no records.
+
+    Raises:
+        ValueError: If metadata checks fail or the selected deployment changes.
+        TypeError: If GitHub API metadata is malformed.
+        subprocess.CalledProcessError: If a GitHub API request fails.
+        OSError: If an API command or public website request fails.
+        UnicodeDecodeError: If public provenance is not valid UTF-8.
+
+    Notes:
+        None does not authorize bootstrap. This composes metadata checks only,
+        not artifact or workflow-content verification. Reads are not atomic;
+        rechecking the selected deployment detects changes during inspection,
+        but deployment serialization and final eligibility checks remain needed.
+        Automatic release provenance is not accepted by this manual-only path.
+    """
+    current = fetch_current_pages_deployment(repository_slug)
+    if current is None:
+        return None
+    deployment, status = current
+    manifest = fetch_published_manifest()
+    require_deployment_run(repository_slug, status, manifest)
+    attempt = require_manual_publication_run(repository_slug, deployment, manifest)
+    require_publication_job(repository_slug, status, manifest, attempt)
+    if fetch_current_pages_deployment(repository_slug) != current:
+        message = "Pages deployment changed during provenance inspection; retry against current state."
+        raise ValueError(message)
+    return manifest
+
+
 def prepare_publication(
     repository: Path,
     repository_slug: str,

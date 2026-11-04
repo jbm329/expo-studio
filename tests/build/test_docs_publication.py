@@ -45,6 +45,7 @@ fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 require_deployment_run = HELPER["require_deployment_run"]
 require_manual_publication_run = HELPER["require_manual_publication_run"]
 require_publication_job = HELPER["require_publication_job"]
+fetch_manual_publication_metadata = HELPER["fetch_manual_publication_metadata"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -407,6 +408,81 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+@pytest.fixture
+def manual_metadata_checks(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    deployment_success: dict[str, object],
+) -> Mock:
+    checks = Mock()
+    checks.current.return_value = ({"id": 1, "sha": "a" * 40}, deployment_success)
+    checks.manifest.return_value = {**publication_manifest, "mode": "bootstrap"}
+    checks.run.return_value = 2
+    dependencies = {
+        "fetch_current_pages_deployment": checks.current,
+        "fetch_published_manifest": checks.manifest,
+        "require_deployment_run": checks.association,
+        "require_manual_publication_run": checks.run,
+        "require_publication_job": checks.job,
+    }
+    for name, dependency in dependencies.items():
+        monkeypatch.setitem(fetch_manual_publication_metadata.__globals__, name, dependency)
+    return checks
+
+
+def test_fetch_manual_publication_metadata_connects_checks(manual_metadata_checks: Mock) -> None:
+    checks = manual_metadata_checks
+    slug = "jbm329/expo-studio"
+    deployment, status = checks.current.return_value
+    manifest = checks.manifest.return_value
+
+    assert fetch_manual_publication_metadata(slug) == manifest
+
+    assert [item[0] for item in checks.mock_calls] == ["current", "manifest", "association", "run", "job", "current"]
+    checks.association.assert_called_once_with(slug, status, manifest)
+    checks.run.assert_called_once_with(slug, deployment, manifest)
+    checks.job.assert_called_once_with(slug, status, manifest, 2)
+
+
+def test_fetch_manual_publication_metadata_distinguishes_no_history(manual_metadata_checks: Mock) -> None:
+    manual_metadata_checks.current.return_value = None
+
+    assert fetch_manual_publication_metadata("jbm329/expo-studio") is None
+
+    assert [item[0] for item in manual_metadata_checks.mock_calls] == ["current"]
+
+
+@pytest.mark.parametrize("failure_point", ["current", "manifest", "association", "run", "job"])
+def test_fetch_manual_publication_metadata_stops_on_failure(manual_metadata_checks: Mock, failure_point: str) -> None:
+    sequence = ["current", "manifest", "association", "run", "job"]
+    getattr(manual_metadata_checks, failure_point).side_effect = ValueError("Verification failed")
+
+    with pytest.raises(ValueError, match="Verification failed"):
+        fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    assert [item[0] for item in manual_metadata_checks.mock_calls] == sequence[: sequence.index(failure_point) + 1]
+
+
+@pytest.mark.parametrize("change", ["deployment", "status", "missing", "api-failure"])
+def test_fetch_manual_publication_metadata_rejects_changes_during_inspection(
+    manual_metadata_checks: Mock, change: str
+) -> None:
+    deployment, status = manual_metadata_checks.current.return_value
+    changed = {
+        "deployment": ({**deployment, "id": 2}, status),
+        "status": (deployment, {**status, "id": 2}),
+        "missing": None,
+        "api-failure": subprocess.CalledProcessError(1, ["gh", "api"]),
+    }
+    manual_metadata_checks.current.side_effect = [(deployment, status), changed[change]]
+
+    with pytest.raises(subprocess.CalledProcessError if change == "api-failure" else ValueError):
+        fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    manual_metadata_checks.job.assert_called_once()
+    assert manual_metadata_checks.current.call_count == 2
 
 
 @pytest.fixture
