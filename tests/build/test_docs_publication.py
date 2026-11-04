@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 from runpy import run_path
@@ -37,6 +38,76 @@ parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
+main = HELPER["main"]
+
+
+def test_prepare_command_writes_validated_manifest(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    request_path = tmp_path / "request.json"
+    output_path = tmp_path / "validated.json"
+    write_publication_manifest(request_path, publication_manifest)
+    prepare = Mock(return_value=publication_manifest)
+    monkeypatch.setitem(main.__globals__, "prepare_publication", prepare)
+
+    main([
+        "prepare",
+        "--repository",
+        str(tmp_path),
+        "--repository-slug",
+        "jbm329/expo-studio",
+        "--request",
+        str(request_path),
+        "--output",
+        str(output_path),
+    ])
+
+    prepare.assert_called_once_with(tmp_path, "jbm329/expo-studio", publication_manifest)
+    assert read_publication_manifest(output_path) == publication_manifest
+
+
+def test_prepare_command_does_not_write_output_after_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    request_path = tmp_path / "request.json"
+    output_path = tmp_path / "validated.json"
+    write_publication_manifest(request_path, publication_manifest)
+    monkeypatch.setitem(main.__globals__, "prepare_publication", Mock(side_effect=ValueError("Source rejected")))
+
+    with pytest.raises(ValueError, match="Source rejected"):
+        main([
+            "prepare",
+            "--repository",
+            str(tmp_path),
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--request",
+            str(request_path),
+            "--output",
+            str(output_path),
+        ])
+
+    assert not output_path.exists()
+
+
+@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"]])
+def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
+    with pytest.raises(SystemExit) as error:
+        main(arguments)
+
+    assert error.value.code == 2
+
+
+def test_publication_script_help_runs_without_side_effects() -> None:
+    result = subprocess.run(
+        [sys.executable, str(HELPER_PATH), "--help"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "{prepare}" in result.stdout
+    assert "without building or deploying" in result.stdout
 
 
 @pytest.mark.parametrize("mode", ["bootstrap", "release", "correction"])

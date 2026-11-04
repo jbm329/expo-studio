@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import subprocess
 import tomllib
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal, TypedDict
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from pathlib import Path
 
 
 class GitHubRelease(TypedDict):
@@ -936,3 +936,34 @@ def require_bootstrap_source(
     require_bootstrap_configuration(repository, source)
     require_bootstrap_content(repository, source)
     return baseline
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    """Run publication preparation from an explicit JSON request.
+
+    Args:
+        argv: Command-line arguments, or None to use the process arguments.
+
+    Raises:
+        SystemExit: If command-line arguments are invalid or help is requested.
+        ValueError: If request metadata or publication eligibility is invalid.
+        TypeError: If GitHub release metadata is malformed.
+        subprocess.CalledProcessError: If Git or GitHub CLI operations fail.
+        OSError: If a command or required file is unavailable.
+        UnicodeDecodeError: If input text is not valid UTF-8.
+    """
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    prepare = commands.add_parser("prepare", help="Validate a source without building or deploying.")
+    prepare.add_argument("--repository", type=Path, required=True, help="Dedicated full-history checkout.")
+    prepare.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    prepare.add_argument("--request", type=Path, required=True, help="Publication request JSON file.")
+    prepare.add_argument("--output", type=Path, required=True, help="Validated manifest JSON output file.")
+    arguments = parser.parse_args(argv)
+    request = read_publication_manifest(arguments.request)
+    manifest = prepare_publication(arguments.repository, arguments.repository_slug, request)
+    write_publication_manifest(arguments.output, manifest)
+
+
+if __name__ == "__main__":
+    main()
