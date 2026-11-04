@@ -27,6 +27,12 @@ exact job-specific Actions log URL. Run-only URLs and other jobs are insufficien
 This identity cross-check does not itself exclude records or authorize publishing;
 independent current-job/attempt resolution and integration remain required.
 The history checker still rejects all unfinished deployments.
+Current-job lookup now queries every jobs page for the exact run attempt,
+requiring one in-progress `Deploy documentation` job with the expected workflow
+commit and runner name. It returns the numeric job ID, with malformed responses
+and mismatches failing explicitly. Runtime identifiers must come from the trusted
+runner context, not manual inputs. Lookup and pending-record exclusion are not
+wired into the workflow yet.
 
 The helper's `verify-published --repository-slug <owner/repo> --proposed <manifest>`
 command checks the latest stable release and requires the public website's

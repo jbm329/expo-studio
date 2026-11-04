@@ -54,6 +54,142 @@ main = HELPER["main"]
 require_pages_artifact = HELPER["require_pages_artifact"]
 require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
 require_current_deployment_identity = HELPER["require_current_deployment_identity"]
+fetch_executing_publication_job = HELPER["fetch_executing_publication_job"]
+
+
+@pytest.fixture
+def executing_publication_job() -> dict[str, object]:
+    return {
+        "id": 456,
+        "name": "Deploy documentation",
+        "run_id": 123,
+        "run_attempt": 2,
+        "head_sha": "a" * 40,
+        "runner_name": "Hosted runner",
+        "status": "in_progress",
+        "conclusion": None,
+    }
+
+
+def test_fetch_executing_publication_job_reads_all_pages(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object]
+) -> None:
+    pages = [{"jobs": [{"name": "prepare"}]}, {"jobs": [executing_publication_job]}]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert (
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="A" * 40, runner_name="Hosted runner"
+        )
+        == "456"
+    )
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/actions/runs/123/attempts/2/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 0),
+        ("run_id", 124),
+        ("run_id", "123"),
+        ("run_attempt", 1),
+        ("run_attempt", "2"),
+        ("head_sha", "b" * 40),
+        ("runner_name", "Different runner"),
+        ("status", "completed"),
+        ("status", "queued"),
+        ("conclusion", "failure"),
+        ("name", "Other job"),
+    ],
+)
+def test_fetch_executing_publication_job_rejects_context_mismatch(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object], field: str, value: object
+) -> None:
+    pages = [{"jobs": [{**executing_publication_job, field: value}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
+
+
+@pytest.mark.parametrize("count", [0, 2])
+def test_fetch_executing_publication_job_requires_unique_match(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object], count: int
+) -> None:
+    pages = [{"jobs": [executing_publication_job] * count}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("run_id", "0"),
+        ("run_id", "123/extra"),
+        ("run_attempt", True),
+        ("run_attempt", 0),
+        ("workflow_sha", "main"),
+        ("runner_name", ""),
+        ("runner_name", "  "),
+    ],
+)
+def test_fetch_executing_publication_job_rejects_bad_context_before_api(
+    monkeypatch: pytest.MonkeyPatch, field: str, value: object
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+    context = {
+        "run_id": "123",
+        "run_attempt": 2,
+        "workflow_sha": "a" * 40,
+        "runner_name": "Hosted runner",
+        field: value,
+    }
+
+    with pytest.raises(ValueError):
+        fetch_executing_publication_job("jbm329/expo-studio", **context)
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_fetch_executing_publication_job_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
 
 
 @pytest.mark.parametrize("state", ["queued", "pending", "in_progress"])

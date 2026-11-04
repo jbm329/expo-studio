@@ -697,6 +697,105 @@ def require_unique_pages_artifact(repository_slug: str, artifact_id: str, run_id
         raise ValueError(message)
 
 
+def _fetch_publication_jobs(repository_slug: str, run_id: str, run_attempt: int) -> list[dict[str, object]]:
+    """Fetch all job pages for an explicitly identified workflow run attempt."""
+    _require_repository_slug(repository_slug)
+    if not isinstance(run_id, str) or re.fullmatch(r"[1-9][0-9]*", run_id) is None:
+        message = "Publication job lookup requires a positive decimal run ID."
+        raise ValueError(message)
+    if type(run_attempt) is not int or run_attempt <= 0:
+        message = "Publication job verification requires a positive integer run attempt."
+        raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/actions/runs/{run_id}/attempts/{run_attempt}/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "GitHub jobs response must be a list of pages."
+        raise TypeError(message)
+    jobs: list[dict[str, object]] = []
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
+            message = "GitHub jobs response page requires a jobs list."
+            raise TypeError(message)
+        for job in page["jobs"]:
+            if not isinstance(job, dict) or not isinstance(job.get("name"), str):
+                message = "GitHub job requires an object with a string name."
+                raise TypeError(message)
+            jobs.append(job)
+    return jobs
+
+
+def fetch_executing_publication_job(
+    repository_slug: str, *, run_id: str, run_attempt: int, workflow_sha: str, runner_name: str
+) -> str:
+    """Resolve the executing deployment job from trusted runtime context.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        run_id: Current GITHUB_RUN_ID.
+        run_attempt: Current GITHUB_RUN_ATTEMPT converted to an integer.
+        workflow_sha: Current GITHUB_SHA for the trusted workflow checkout.
+        runner_name: Current RUNNER_NAME.
+
+    Returns:
+        Positive decimal numeric ID of the uniquely matching deployment job.
+
+    Raises:
+        ValueError: If context is invalid or the matching job is absent,
+            ambiguous, finished, or inconsistent with the execution context.
+        TypeError: If job API responses are malformed.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Context must come from the runner,
+        not user inputs. This resolves job identity only; it does not exclude
+        deployment records or authorize publication.
+    """
+    sha = validate_commit_sha(workflow_sha)
+    if not isinstance(runner_name, str) or not runner_name.strip():
+        message = "Executing publication job lookup requires a runner name."
+        raise ValueError(message)
+    jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
+    matching = [job for job in jobs if job["name"] == "Deploy documentation"]
+    if len(matching) != 1:
+        message = "Current attempt must contain exactly one Deploy documentation job."
+        raise ValueError(message)
+    job = matching[0]
+    identifier = job.get("id")
+    expected = {
+        "run_id": int(run_id),
+        "run_attempt": run_attempt,
+        "head_sha": sha,
+        "runner_name": runner_name,
+        "status": "in_progress",
+    }
+    if (
+        type(identifier) is not int
+        or identifier <= 0
+        or type(job.get("run_id")) is not int
+        or type(job.get("run_attempt")) is not int
+        or any(job.get(key) != value for key, value in expected.items())
+        or job.get("conclusion") is not None
+    ):
+        message = "Executing deployment job does not match the current run attempt, commit, and runner."
+        raise ValueError(message)
+    return str(identifier)
+
+
 def require_publication_job(
     repository_slug: str,
     status: GitHubDeploymentStatus,
@@ -725,39 +824,11 @@ def require_publication_job(
         This is a metadata cross-check, not proof of artifact contents.
     """
     require_deployment_run(repository_slug, status, manifest)
-    if type(run_attempt) is not int or run_attempt <= 0:
-        message = "Publication job verification requires a positive integer run attempt."
-        raise ValueError(message)
-    result = subprocess.run(  # noqa: S603
-        [  # noqa: S607
-            "gh",
-            "api",
-            "--method",
-            "GET",
-            "--paginate",
-            "--slurp",
-            f"repos/{repository_slug}/actions/runs/{manifest['run_id']}/attempts/{run_attempt}/jobs?per_page=100",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    pages = json.loads(result.stdout)
-    if not isinstance(pages, list):
-        message = "GitHub jobs response must be a list of pages."
-        raise TypeError(message)
-    matching: list[dict[str, object]] = []
-    for page in pages:
-        if not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
-            message = "GitHub jobs response page requires a jobs list."
-            raise TypeError(message)
-        for job in page["jobs"]:
-            if not isinstance(job, dict) or not isinstance(job.get("name"), str):
-                message = "GitHub job requires an object with a string name."
-                raise TypeError(message)
-            if job["name"] == "Deploy documentation":
-                matching.append(job)
+    matching = [
+        job
+        for job in _fetch_publication_jobs(repository_slug, manifest["run_id"], run_attempt)
+        if job["name"] == "Deploy documentation"
+    ]
     if len(matching) != 1:
         message = "Run attempt must contain exactly one Deploy documentation job."
         raise ValueError(message)
