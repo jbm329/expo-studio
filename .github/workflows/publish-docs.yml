@@ -1,0 +1,432 @@
+name: Documentation publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Validate and build a preview only; this workflow does not deploy yet"
+        required: true
+        type: choice
+        options:
+          - bootstrap
+          - correction
+      baseline_tag:
+        description: "Latest published stable application tag, for example v1.3.0"
+        required: true
+        type: string
+      source_sha:
+        description: "Full 40-character reviewed source commit SHA"
+        required: true
+        type: string
+      confirm_initial_bootstrap:
+        description: "I confirm this is the initial placeholder publication (only for empty deployment history)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-publication
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.validated-source.outputs.source_sha }}
+      manifest_artifact_id: ${{ steps.manifest-artifact.outputs.artifact-id }}
+
+    steps:
+      - name: Require trusted main workflow
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow from main, not from the source branch."
+            exit 1
+          fi
+
+      - name: Checkout trusted policy and full source history
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Write publication request
+        env:
+          PUBLICATION_MODE: ${{ inputs.mode }}
+          BASELINE_TAG: ${{ inputs.baseline_tag }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          request = {
+              "schema_version": 1,
+              "mode": os.environ["PUBLICATION_MODE"],
+              "baseline_tag": os.environ["BASELINE_TAG"],
+              "source_sha": os.environ["SOURCE_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+          }
+          path = Path(os.environ["RUNNER_TEMP"]) / "publication-request.json"
+          path.write_text(json.dumps(request), encoding="utf-8")
+          PY
+
+      - name: Validate publication source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py prepare \
+            --repository "$GITHUB_WORKSPACE" \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --request "$RUNNER_TEMP/publication-request.json" \
+            --output "$RUNNER_TEMP/validated-publication.json"
+
+      - name: Expose validated source commit
+        id: validated-source
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["RUNNER_TEMP"]) / "validated-publication.json"
+          manifest = json.loads(path.read_text(encoding="utf-8"))
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"source_sha={manifest['source_sha']}\n")
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write(
+                  "## Validated documentation preview request\n\n"
+                  f"- Mode: `{manifest['mode']}`\n"
+                  f"- Application baseline: `{manifest['baseline_tag']}`\n"
+                  f"- Source commit: `{manifest['source_sha']}`\n"
+                  f"- Workflow run: `{manifest['run_id']}`\n\n"
+                  "This validates the source only; it does not confirm a build or deployment.\n"
+                  "For bootstrap, the baseline identifies the existing application release, "
+                  "not manual coverage.\n"
+              )
+          PY
+
+      - name: Upload validated publication manifest
+        id: manifest-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: validated-documentation-publication
+          path: ${{ runner.temp }}/validated-publication.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Require immutable manifest artifact ID
+        env:
+          MANIFEST_ARTIFACT_ID: ${{ steps.manifest-artifact.outputs.artifact-id }}
+        run: |
+          if [[ ! "$MANIFEST_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Validation did not provide a valid manifest artifact ID."
+            exit 1
+          fi
+
+  inspect:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+
+    steps:
+      - name: Checkout trusted inspection policy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download proposed publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/proposed-publication
+
+      - name: Inspect publication metadata and source progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CONFIRM_INITIAL_BOOTSTRAP: ${{ inputs.confirm_initial_bootstrap }}
+        run: |
+          confirmation=()
+          if [ "$CONFIRM_INITIAL_BOOTSTRAP" = "true" ]; then
+            confirmation+=(--confirm-initial-bootstrap)
+          fi
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --repository "$GITHUB_WORKSPACE" \
+            --proposed "$RUNNER_TEMP/proposed-publication/validated-publication.json" \
+            --output "$RUNNER_TEMP/publication-inspection.json" \
+            "${confirmation[@]}"
+
+      - name: Upload publication inspection report
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-inspection
+          path: ${{ runner.temp }}/publication-inspection.json
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    outputs:
+      site_artifact_id: ${{ steps.site-artifact.outputs.artifact-id }}
+
+    steps:
+      - name: Checkout exact validated documentation source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Check dependency lockfile
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra docs
+
+      - name: Build documentation
+        run: uv run --frozen --extra docs zensical build --clean --strict
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/publication-metadata
+
+      - name: Include validated provenance in preview
+        env:
+          VALIDATED_SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path(os.environ["RUNNER_TEMP"]) / "publication-metadata" / "validated-publication.json"
+          content = source.read_bytes()
+          manifest = json.loads(content)
+          if manifest["source_sha"] != os.environ["VALIDATED_SOURCE_SHA"]:
+              raise SystemExit("Publication manifest does not match the validated source commit.")
+          if manifest["run_id"] != os.environ["GITHUB_RUN_ID"]:
+              raise SystemExit("Publication manifest does not belong to this workflow run.")
+          site = Path("site")
+          if site.is_symlink() or not site.is_dir():
+              raise SystemExit("Expected a regular site output directory.")
+          destination = site / "publication.json"
+          with destination.open("xb") as output:
+              output.write(content)
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write(
+                  "## Documentation preview built\n\n"
+                  "Download `documentation-publication-preview` from this run's artifacts.\n"
+                  "Its `publication.json` records the validated source and application baseline.\n\n"
+                  "This is a review artifact, not a deployed website.\n"
+              )
+          PY
+
+      - name: Upload documentation publication preview
+        id: site-artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-preview
+          path: site
+          if-no-files-found: error
+          retention-days: 7
+
+  verify:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    outputs:
+      pages_artifact_id: ${{ steps.pages-artifact.outputs.artifact_id }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout trusted artifact verification policy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Require immutable website artifact ID
+        env:
+          SITE_ARTIFACT_ID: ${{ needs.build.outputs.site_artifact_id }}
+        run: |
+          if [[ ! "$SITE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::The build did not provide a valid website artifact ID."
+            exit 1
+          fi
+
+      - name: Download built website by immutable ID
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.site_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/publication-site
+
+      - name: Verify website publication metadata
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-site \
+            --site "$RUNNER_TEMP/publication-site" \
+            --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
+
+      - name: Package verified website for GitHub Pages
+        id: pages-artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/publication-site
+          retention-days: 7
+
+      - name: Require immutable Pages artifact ID
+        env:
+          PAGES_ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
+        run: |
+          if [[ ! "$PAGES_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Packaging did not provide a valid Pages artifact ID."
+            exit 1
+          fi
+
+      - name: Summarize artifact verification
+        env:
+          SITE_ARTIFACT_ID: ${{ needs.build.outputs.site_artifact_id }}
+          PAGES_ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
+        run: |
+          {
+            echo "## Documentation preview metadata verified"
+            echo
+            echo "The downloaded website has a nonempty landing page and provenance matching the validated proposal."
+            echo "Verified website artifact ID: $SITE_ARTIFACT_ID"
+            echo "Packaged github-pages artifact ID: $PAGES_ARTIFACT_ID"
+            echo "This checks structure and metadata, not every website file's origin, and does not authorize deployment."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  recheck:
+    needs: [prepare, inspect, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+
+    steps:
+      - name: Checkout trusted eligibility policy and full source history
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Recheck source against current releases and refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py prepare \
+            --repository "$GITHUB_WORKSPACE" \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --request "$RUNNER_TEMP/validated-proposal/validated-publication.json" \
+            --output "$RUNNER_TEMP/rechecked-publication.json"
+          cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json" "$RUNNER_TEMP/rechecked-publication.json"
+
+      - name: Recheck deployed provenance and publication progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CONFIRM_INITIAL_BOOTSTRAP: ${{ inputs.confirm_initial_bootstrap }}
+        run: |
+          confirmation=()
+          if [ "$CONFIRM_INITIAL_BOOTSTRAP" = "true" ]; then
+            confirmation+=(--confirm-initial-bootstrap)
+          fi
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --repository "$GITHUB_WORKSPACE" \
+            --proposed "$RUNNER_TEMP/rechecked-publication.json" \
+            --output "$RUNNER_TEMP/rechecked-inspection.json" \
+            "${confirmation[@]}"
+
+      - name: Verify packaged Pages artifact identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ARTIFACT_ID: ${{ needs.verify.outputs.pages_artifact_id }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-pages-artifact \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --artifact-id "$PAGES_ARTIFACT_ID" \
+            --run-id "$GITHUB_RUN_ID"
+
+      - name: Upload post-build publication inspection
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-recheck
+          path: ${{ runner.temp }}/rechecked-inspection.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Summarize publication recheck
+        env:
+          PAGES_ARTIFACT_ID: ${{ needs.verify.outputs.pages_artifact_id }}
+        run: |
+          {
+            echo "## Documentation source and publication progress rechecked"
+            echo
+            echo "The same validated proposal remains eligible against freshly fetched releases and refs."
+            echo "Deployed metadata was inspected again and source progress checked where a published source exists."
+            echo "Packaged Pages artifact identity and availability checked for this run: $PAGES_ARTIFACT_ID"
+            echo "See documentation-publication-recheck for the result. No deployment records is not bootstrap authorization."
+            echo "These read-only checks do not authorize deployment or prove published artifact contents."
+          } >> "$GITHUB_STEP_SUMMARY"

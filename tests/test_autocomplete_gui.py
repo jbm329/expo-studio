@@ -14,7 +14,13 @@ from expo_jbm329.gui.autocomplete.popup import SqlEditorAutoCompletePopup
 
 @pytest.fixture
 def editor(qt_app):
-    return QPlainTextEdit()
+    widget = QPlainTextEdit()
+    widget.show()
+    QTest.qWaitForWindowExposed(widget)
+    yield widget
+    widget.close()
+    widget.deleteLater()
+    qt_app.processEvents()
 
 
 @pytest.fixture
@@ -154,6 +160,25 @@ def test_controller_force_suggestions(editor, controller):
     assert controller.popup.list.count() == 4
 
 
+def test_popup_uses_exposed_editor_as_transient_parent(editor, controller, qt_app):
+    controller.set_schema({"public": {"users": ["select"]}})
+    controller.set_dialect("mssql")
+    set_editor_cursor(editor, "SELECT ")
+
+    QTest.keyClick(editor, Qt.Key.Key_Space, Qt.KeyboardModifier.ControlModifier)
+    qt_app.processEvents()
+
+    popup = controller.popup
+    editor_window = editor.windowHandle()
+    popup_window = popup.windowHandle()
+    assert editor_window is not None
+    assert popup_window is not None
+    assert popup_window.transientParent() is editor_window
+    assert popup.isVisible()
+    qt_app.processEvents()
+    assert popup.isVisible()
+
+
 def set_editor_cursor(editor, before, after=""):
     editor.setPlainText(before + after)
     cursor = editor.textCursor()
@@ -208,6 +233,7 @@ def test_forced_completion_preserves_metadata_characters(editor, controller, qt_
     set_editor_cursor(editor, "SELECT ")
     QTest.keyClick(editor, Qt.Key.Key_Space, Qt.KeyboardModifier.ControlModifier)
     qt_app.processEvents()
+    assert controller.popup.isVisible()
     assert name in select_suggestion(controller, name)
     QTest.keyClick(editor, Qt.Key.Key_Tab)
     assert editor.toPlainText() == "SELECT " + quote_identifier(name, dialect)
