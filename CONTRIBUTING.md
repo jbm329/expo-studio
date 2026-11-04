@@ -152,6 +152,11 @@ website content or prove the origin of all website bytes.
 The manual workflow runs this command in a separate read-only `verify` job
 after the preview build. It downloads the website and validated proposal from
 the same Actions run into separate directories outside the trusted checkout.
+The build exposes the website upload's immutable artifact ID; verification
+requires a positive numeric ID and downloads that exact artifact, not a
+name-based replacement. The verified ID appears in the Actions summary.
+Missing or deleted artifacts fail verification rather than falling back to
+another preview. The ID is available for the future deployment step to reuse.
 Only the trusted helper is executed, without installing application dependencies
 or retaining checkout credentials. Its Actions summary confirms successful
 structure and metadata checks, not authorization to deploy. Deployment wiring

@@ -168,6 +168,8 @@ jobs:
   build:
     needs: prepare
     runs-on: ubuntu-latest
+    outputs:
+      site_artifact_id: ${{ steps.site-artifact.outputs.artifact-id }}
 
     steps:
       - name: Checkout exact validated documentation source
@@ -229,6 +231,7 @@ jobs:
           PY
 
       - name: Upload documentation publication preview
+        id: site-artifact
         uses: actions/upload-artifact@v7
         with:
           name: documentation-publication-preview
@@ -261,10 +264,20 @@ jobs:
           name: validated-documentation-publication
           path: ${{ runner.temp }}/validated-proposal
 
-      - name: Download built website
+      - name: Require immutable website artifact ID
+        env:
+          SITE_ARTIFACT_ID: ${{ needs.build.outputs.site_artifact_id }}
+        run: |
+          if [[ ! "$SITE_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::The build did not provide a valid website artifact ID."
+            exit 1
+          fi
+
+      - name: Download built website by immutable ID
         uses: actions/download-artifact@v8
         with:
-          name: documentation-publication-preview
+          artifact-ids: ${{ needs.build.outputs.site_artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/publication-site
 
       - name: Verify website publication metadata
@@ -274,11 +287,14 @@ jobs:
             --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
 
       - name: Summarize artifact verification
+        env:
+          SITE_ARTIFACT_ID: ${{ needs.build.outputs.site_artifact_id }}
         run: |
           {
             echo "## Documentation preview metadata verified"
             echo
             echo "The downloaded website has a nonempty landing page and provenance matching the validated proposal."
+            echo "Verified website artifact ID: $SITE_ARTIFACT_ID"
             echo "This checks structure and metadata, not every website file's origin, and does not authorize deployment."
           } >> "$GITHUB_STEP_SUMMARY"
 
