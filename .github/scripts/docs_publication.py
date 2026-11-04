@@ -85,13 +85,18 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
     return releases
 
 
+def _require_repository_slug(repository_slug: str) -> None:
+    """Require a plain GitHub owner/repository identifier."""
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", repository_slug) is None:
+        message = "Expected a GitHub repository identifier in owner/repository form."
+        raise ValueError(message)
+
+
 def _fetch_github_list_pages(
     repository_slug: str, resource: Literal["releases", "deployments"], *, deployment_id: int | None = None
 ) -> list[object]:
     """Fetch paginated release, Pages deployment, or deployment status lists."""
-    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", repository_slug) is None:
-        message = "Expected a GitHub repository identifier in owner/repository form."
-        raise ValueError(message)
+    _require_repository_slug(repository_slug)
     query = "per_page=100"
     if deployment_id is not None:
         if resource != "deployments" or type(deployment_id) is not int or deployment_id <= 0:
@@ -422,6 +427,35 @@ def parse_publication_manifest(value: object) -> PublicationManifest:
         "source_sha": source,
         "run_id": run_id,
     }
+
+
+def require_deployment_run(repository_slug: str, status: GitHubDeploymentStatus, manifest: PublicationManifest) -> None:
+    """Require a successful deployment status to reference the manifest's run.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        status: Validated latest status of the selected Pages deployment.
+        manifest: Public publication metadata to validate and associate.
+
+    Raises:
+        ValueError: If the repository or manifest is invalid, the status is not
+            successful, or its log URL does not identify the expected run.
+
+    Notes:
+        Accepts canonical HTTPS Actions run links with an optional job suffix.
+        This checks association only. Status log URLs are supplied metadata,
+        not proof of a trusted workflow, successful run, artifact contents, or
+        matching run attempt. Those require independent GitHub verification.
+    """
+    _require_repository_slug(repository_slug)
+    validated = parse_publication_manifest(manifest)
+    if status["state"] != "success":
+        message = "Published provenance requires a successful deployment status."
+        raise ValueError(message)
+    expected = re.escape(f"https://github.com/{repository_slug}/actions/runs/{validated['run_id']}")
+    if re.fullmatch(expected + r"(?:/job/[1-9][0-9]*)?", status["log_url"]) is None:
+        message = "Deployment log URL does not match the publication repository and workflow run."
+        raise ValueError(message)
 
 
 def prepare_publication(

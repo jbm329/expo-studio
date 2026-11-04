@@ -99,8 +99,12 @@ attempts, missing status histories, or conflicting successes stop the check.
 No deployment records is distinguished from existing history with no current
 success, but neither result authorizes bootstrap on its own. These API reads
 are not atomic and must run before creating a proposed deployment record.
-Verifying the selected deployment's workflow against the public manifest and
-wiring the final deployment checks remain unfinished integration steps.
+The helper can check that the selected success status links to the repository
+and Actions run recorded in the public manifest. This association check accepts
+canonical HTTPS run links with an optional job suffix; it does not fetch the link
+or prove a trusted workflow, matching run attempt, or artifact contents.
+Independent workflow verification and the final deployment wiring remain
+unfinished integration steps.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

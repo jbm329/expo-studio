@@ -42,6 +42,7 @@ fetch_pages_deployments = HELPER["fetch_pages_deployments"]
 fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
 latest_deployment_status = HELPER["latest_deployment_status"]
 fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
+require_deployment_run = HELPER["require_deployment_run"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -404,6 +405,69 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+@pytest.mark.parametrize("suffix", ["", "/job/987654321"])
+def test_require_deployment_run_accepts_matching_run(publication_manifest: dict[str, object], suffix: str) -> None:
+    status = {
+        "id": 1,
+        "state": "success",
+        "log_url": f"https://github.com/jbm329/expo-studio/actions/runs/123456789{suffix}",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+
+    require_deployment_run("jbm329/expo-studio", status, publication_manifest)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456788",
+        "https://github.com/another/repo/actions/runs/123456789",
+        "https://github.com.evil.example/jbm329/expo-studio/actions/runs/123456789",
+        "http://github.com/jbm329/expo-studio/actions/runs/123456789",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789?run=1",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789#summary",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789/job/0",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789/job/01",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789/",
+        "https://github.com/jbm329/expo-studio/actions/runs/123456789\n",
+    ],
+)
+def test_require_deployment_run_rejects_nonmatching_url(publication_manifest: dict[str, object], url: str) -> None:
+    status = {"id": 1, "state": "success", "log_url": url, "created_at": "2026-11-04T12:00:00Z"}
+
+    with pytest.raises(ValueError, match="does not match"):
+        require_deployment_run("jbm329/expo-studio", status, publication_manifest)
+
+
+@pytest.mark.parametrize("state", ["error", "failure", "inactive", "in_progress", "queued", "pending"])
+def test_require_deployment_run_rejects_unsuccessful_status(
+    publication_manifest: dict[str, object], state: str
+) -> None:
+    status = {
+        "id": 1,
+        "state": state,
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123456789",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+
+    with pytest.raises(ValueError, match="successful deployment"):
+        require_deployment_run("jbm329/expo-studio", status, publication_manifest)
+
+
+def test_require_deployment_run_validates_manifest_and_repository(publication_manifest: dict[str, object]) -> None:
+    status = {
+        "id": 1,
+        "state": "success",
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123456789",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+    with pytest.raises(ValueError, match="owner/repository"):
+        require_deployment_run("owner/repo?query=1", status, publication_manifest)
+    with pytest.raises(ValueError, match="run ID"):
+        require_deployment_run("jbm329/expo-studio", status, {**publication_manifest, "run_id": "123456789/extra"})
 
 
 @pytest.mark.parametrize(
