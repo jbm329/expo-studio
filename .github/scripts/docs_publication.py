@@ -560,3 +560,50 @@ def require_bootstrap_configuration(repository: Path, source_sha: str) -> None:
     if configuration != expected:
         message = "Bootstrap configuration must match the approved site identity, URL, and source/output directories."
         raise ValueError(message)
+
+
+def require_bootstrap_source(
+    repository: Path,
+    expected_tag: str,
+    source_sha: str,
+    releases: Sequence[GitHubRelease],
+) -> str:
+    """Validate the initial landing-page publication against a pre-docs release.
+
+    Args:
+        repository: Repository with freshly fetched release tags and origin refs.
+        expected_tag: Latest stable release, which must predate site configuration.
+        source_sha: Full commit ID of the approved bootstrap source on main.
+        releases: Current release metadata collected from GitHub.
+
+    Returns:
+        The resolved stable-release baseline commit ID.
+
+    Raises:
+        ValueError: If the baseline already contains site configuration or any
+            release, source, branch, content, or configuration check fails.
+        subprocess.CalledProcessError: If Git cannot inspect required objects.
+        OSError: If Git cannot be started or the working directory is invalid.
+        UnicodeDecodeError: If source text is not valid UTF-8.
+
+    Notes:
+        Any committed zensical.toml entry closes bootstrap, even if incomplete.
+        Deployment provenance and website buildability are checked separately.
+    """
+    source = validate_commit_sha(source_sha)
+    require_latest_stable_tag(expected_tag, releases)
+    baseline = resolve_stable_tag_commit(repository, expected_tag)
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "ls-tree", "-z", baseline, "--", "zensical.toml"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    if result.stdout:
+        message = f"Bootstrap is unavailable: stable release {expected_tag!r} already contains site configuration."
+        raise ValueError(message)
+    require_remote_branch_contains_commit(repository, "main", source)
+    require_ancestor(repository, baseline, source)
+    require_bootstrap_configuration(repository, source)
+    require_bootstrap_content(repository, source)
+    return baseline

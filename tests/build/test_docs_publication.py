@@ -25,6 +25,7 @@ require_documentation_setup = HELPER["require_documentation_setup"]
 require_release_source = HELPER["require_release_source"]
 require_bootstrap_content = HELPER["require_bootstrap_content"]
 require_bootstrap_configuration = HELPER["require_bootstrap_configuration"]
+require_bootstrap_source = HELPER["require_bootstrap_source"]
 
 
 @pytest.mark.parametrize(
@@ -794,3 +795,69 @@ def test_bootstrap_configuration_requires_regular_config_file(correction_history
 
     with pytest.raises(ValueError, match="lacks required regular documentation files"):
         require_bootstrap_configuration(repository, source)
+
+
+@pytest.fixture
+def bootstrap_source_history(bootstrap_history: tuple[Path, str]) -> tuple[Path, str, str]:
+    repository, placeholder = bootstrap_history
+    baseline = run_git(repository, "rev-parse", f"{placeholder}^")
+    run_git(repository, "-c", "tag.gpgsign=false", "tag", "v1.3.0", baseline)
+    (repository / "zensical.toml").write_text(BOOTSTRAP_CONFIGURATION, encoding="utf-8")
+    (repository / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    (repository / "uv.lock").write_text("version = 1\n", encoding="utf-8")
+    source = commit_all(repository)
+    run_git(repository, "update-ref", "refs/remotes/origin/main", source)
+    return repository, baseline, source
+
+
+def test_bootstrap_source_accepts_initial_publication(bootstrap_source_history: tuple[Path, str, str]) -> None:
+    repository, baseline, source = bootstrap_source_history
+    releases = [{"tag_name": "v1.3.0", "draft": False, "prerelease": False}]
+
+    assert require_bootstrap_source(repository, "v1.3.0", source, releases) == baseline
+
+
+def test_bootstrap_source_closes_after_docs_release(bootstrap_source_history: tuple[Path, str, str]) -> None:
+    repository, _, source = bootstrap_source_history
+    run_git(repository, "-c", "tag.gpgsign=false", "tag", "v1.4.0", source)
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="already contains site configuration"):
+        require_bootstrap_source(repository, "v1.4.0", source, releases)
+
+
+def test_bootstrap_source_rejects_unmerged_source(bootstrap_source_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = bootstrap_source_history
+    source = create_test_commit(repository)
+    releases = [{"tag_name": "v1.3.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_bootstrap_source(repository, "v1.3.0", source, releases)
+
+
+@pytest.mark.parametrize("change_config", [False, True])
+def test_bootstrap_source_enforces_content_and_configuration(
+    bootstrap_source_history: tuple[Path, str, str], change_config: bool
+) -> None:
+    repository, _, _ = bootstrap_source_history
+    if change_config:
+        (repository / "zensical.toml").write_text('[project]\ndocs_dir = "src"\n', encoding="utf-8")
+    else:
+        (repository / "docs" / "guide.md").write_text("Unreleased guide.\n", encoding="utf-8")
+    source = commit_all(repository)
+    run_git(repository, "update-ref", "refs/remotes/origin/main", source)
+    releases = [{"tag_name": "v1.3.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="Bootstrap"):
+        require_bootstrap_source(repository, "v1.3.0", source, releases)
+
+
+def test_bootstrap_source_rejects_superseded_baseline(bootstrap_source_history: tuple[Path, str, str]) -> None:
+    repository, _, source = bootstrap_source_history
+    releases = [
+        {"tag_name": "v1.3.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False},
+    ]
+
+    with pytest.raises(ValueError, match="is not the latest published stable release"):
+        require_bootstrap_source(repository, "v1.3.0", source, releases)
