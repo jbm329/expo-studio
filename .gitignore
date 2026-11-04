@@ -15,6 +15,9 @@ __pycache__/
 /dist/
 /release/
 
+# Documentation website
+/site/
+
 # System
 .DS_Store
 Thumbs.db
