@@ -81,6 +81,13 @@ are errors, not evidence that no previous deployment exists. Public metadata
 must still be checked against trusted GitHub deployment history before it is
 used to authorize publication; that integration is not implemented yet.
 
+The helper can also query every page of GitHub's `github-pages` deployment
+records using a token with `deployments: read`. API failures and malformed
+records fail explicitly rather than producing an empty history. These records
+do not establish deployment success or verify public provenance yet, and an
+empty history alone does not authorize a first publication. No workflow
+permissions have been expanded for this query yet.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛

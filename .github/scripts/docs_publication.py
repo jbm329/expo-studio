@@ -78,9 +78,20 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
         The caller configures GitHub CLI authentication, normally with GH_TOKEN.
         CLI failures are propagated rather than returning an empty release list.
     """
+    releases: list[GitHubRelease] = []
+    for page in _fetch_github_list_pages(repository_slug, "releases"):
+        releases.extend(parse_github_releases(page))
+    return releases
+
+
+def _fetch_github_list_pages(repository_slug: str, resource: Literal["releases", "deployments"]) -> list[object]:
+    """Fetch paginated release or Pages deployment lists with explicit API failures."""
     if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", repository_slug) is None:
         message = "Expected a GitHub repository identifier in owner/repository form."
         raise ValueError(message)
+    query = "per_page=100"
+    if resource == "deployments":
+        query += "&environment=github-pages"
     result = subprocess.run(  # noqa: S603
         [  # noqa: S607
             "gh",
@@ -89,7 +100,7 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
             "GET",
             "--paginate",
             "--slurp",
-            f"repos/{repository_slug}/releases?per_page=100",
+            f"repos/{repository_slug}/{resource}?{query}",
         ],
         check=True,
         capture_output=True,
@@ -98,12 +109,60 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
     )
     pages = json.loads(result.stdout)
     if not isinstance(pages, list):
-        message = "Paginated GitHub release response must be a list of pages."
+        message = f"Paginated GitHub {resource} response must be a list of pages."
         raise TypeError(message)
-    releases: list[GitHubRelease] = []
-    for page in pages:
-        releases.extend(parse_github_releases(page))
-    return releases
+    return pages
+
+
+class GitHubPagesDeployment(TypedDict):
+    """GitHub deployment identity; its SHA is not necessarily the manual source."""
+
+    id: int
+    sha: str
+
+
+def fetch_pages_deployments(repository_slug: str) -> list[GitHubPagesDeployment]:
+    """Retrieve all github-pages deployment records through the authenticated CLI.
+
+    Args:
+        repository_slug: GitHub repository identifier in owner/repository form.
+
+    Returns:
+        Deployment IDs and commit SHAs, without assuming API ordering or success.
+        An empty list means the successful query returned no deployment records.
+
+    Raises:
+        ValueError: If the repository identifier, JSON, or deployment SHA is invalid.
+        TypeError: If deployment metadata has an invalid shape, ID, or environment.
+        subprocess.CalledProcessError: If the API request or authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        The caller needs deployments: read permission and GH_TOKEN. Records
+        include failed and pending deployments; inspect statuses separately.
+        The SHA can identify the trusted workflow rather than the manual source.
+        Empty history alone does not authorize bootstrap or prove a site never
+        existed, since deployment records can be deleted.
+    """
+    deployments: list[GitHubPagesDeployment] = []
+    for page in _fetch_github_list_pages(repository_slug, "deployments"):
+        if not isinstance(page, list):
+            message = "GitHub deployment response page must be a list."
+            raise TypeError(message)
+        for entry in page:
+            if not isinstance(entry, dict):
+                message = "GitHub deployment entry must be an object."
+                raise TypeError(message)
+            deployment_id = entry.get("id")
+            sha = entry.get("sha")
+            if type(deployment_id) is not int or deployment_id <= 0 or not isinstance(sha, str):
+                message = "GitHub deployment requires a positive integer ID and string SHA."
+                raise TypeError(message)
+            if entry.get("environment") != "github-pages":
+                message = "GitHub deployment must belong to the github-pages environment."
+                raise TypeError(message)
+            deployments.append({"id": deployment_id, "sha": validate_commit_sha(sha)})
+    return deployments
 
 
 def refresh_publication_refs(repository: Path) -> None:

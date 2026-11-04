@@ -38,6 +38,7 @@ fetch_published_manifest = HELPER["fetch_published_manifest"]
 write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
+fetch_pages_deployments = HELPER["fetch_pages_deployments"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -400,6 +401,100 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+def test_fetch_pages_deployments_combines_and_validates_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    first = {"id": 20, "sha": "A" * 40, "environment": "github-pages", "extra": "ignored"}
+    second = {"id": 10, "sha": "b" * 40, "environment": "github-pages"}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[first], [], [second]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert fetch_pages_deployments("jbm329/expo-studio") == [
+        {"id": 20, "sha": "a" * 40},
+        {"id": 10, "sha": "b" * 40},
+    ]
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/deployments?per_page=100&environment=github-pages",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize("response", ["[]", "[[]]"])
+def test_fetch_pages_deployments_accepts_empty_history(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    assert fetch_pages_deployments("jbm329/expo-studio") == []
+
+
+@pytest.mark.parametrize("response", ["null", "{}", "[null]", "[[null]]", "[[{}]]"])
+def test_fetch_pages_deployments_rejects_bad_response(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        fetch_pages_deployments("jbm329/expo-studio")
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "error"),
+    [
+        ("id", True, TypeError),
+        ("id", 1.0, TypeError),
+        ("id", "1", TypeError),
+        ("id", 0, TypeError),
+        ("id", -1, TypeError),
+        ("sha", None, TypeError),
+        ("sha", "main", ValueError),
+        ("environment", "production", TypeError),
+        ("environment", None, TypeError),
+    ],
+)
+def test_fetch_pages_deployments_rejects_bad_fields(
+    monkeypatch: pytest.MonkeyPatch, field: str, value: object, error: type[Exception]
+) -> None:
+    entry = {"id": 1, "sha": "a" * 40, "environment": "github-pages", field: value}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[entry]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(error):
+        fetch_pages_deployments("jbm329/expo-studio")
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_fetch_pages_deployments_propagates_cli_failure(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_pages_deployments("jbm329/expo-studio")
+
+
+def test_fetch_pages_deployments_rejects_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout="{")))
+
+    with pytest.raises(json.JSONDecodeError):
+        fetch_pages_deployments("jbm329/expo-studio")
+
+
+def test_fetch_pages_deployments_rejects_bad_repository_before_cli(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="owner/repository"):
+        fetch_pages_deployments("owner/repo?environment=production")
+
+    runner.assert_not_called()
 
 
 def test_fetch_github_releases_combines_all_pages(monkeypatch: pytest.MonkeyPatch) -> None:
