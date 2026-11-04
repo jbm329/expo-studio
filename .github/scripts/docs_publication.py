@@ -8,6 +8,7 @@ import re
 import secrets
 import subprocess
 import tomllib
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal, TypedDict
@@ -180,6 +181,41 @@ class GitHubDeploymentStatus(TypedDict):
     id: int
     state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "success"]
     log_url: str
+    created_at: str
+
+
+def _parse_status_timestamp(value: str) -> datetime:
+    """Parse the UTC timestamp format returned by GitHub deployment statuses."""
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
+
+
+def latest_deployment_status(statuses: Sequence[GitHubDeploymentStatus]) -> GitHubDeploymentStatus:
+    """Select the uniquely latest status from validated GitHub metadata.
+
+    Args:
+        statuses: Validated status records, in any response order.
+
+    Returns:
+        The record with the most recent creation timestamp.
+
+    Raises:
+        ValueError: If no statuses exist, a timestamp is invalid, or the latest
+            timestamp is shared by distinct records.
+
+    Notes:
+        GitHub timestamps have second precision. Ambiguous latest records fail
+        rather than guessing chronology from IDs or preferring success.
+        Identical duplicate records from pagination do not create ambiguity.
+    """
+    if not statuses:
+        message = "Cannot establish deployment state without status records."
+        raise ValueError(message)
+    latest = max(statuses, key=lambda status: _parse_status_timestamp(status["created_at"]))
+    timestamp = _parse_status_timestamp(latest["created_at"])
+    if any(_parse_status_timestamp(status["created_at"]) == timestamp and status != latest for status in statuses):
+        message = "Latest deployment status is ambiguous: distinct records share its timestamp."
+        raise ValueError(message)
+    return latest
 
 
 def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[GitHubDeploymentStatus]:
@@ -194,8 +230,8 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
         statuses were returned, not that the deployment succeeded.
 
     Raises:
-        ValueError: If the repository identifier, deployment ID, JSON, or state is invalid.
-        TypeError: If status entries, IDs, or log URLs have invalid types.
+        ValueError: If the repository identifier, deployment ID, JSON, state, or timestamp is invalid.
+        TypeError: If status entries, IDs, log URLs, or timestamps have invalid types.
         subprocess.CalledProcessError: If the API request or authentication fails.
         OSError: If the GitHub CLI cannot be started.
 
@@ -220,13 +256,18 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
             status_id = entry.get("id")
             state = entry.get("state")
             log_url = entry.get("log_url")
+            created_at = entry.get("created_at")
             if type(status_id) is not int or status_id <= 0 or not isinstance(log_url, str):
                 message = "GitHub deployment status requires a positive integer ID and string log_url."
                 raise TypeError(message)
             if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "success"):
                 message = "Unsupported GitHub deployment status state."
                 raise ValueError(message)
-            statuses.append({"id": status_id, "state": state, "log_url": log_url})
+            if not isinstance(created_at, str):
+                message = "GitHub deployment status requires a string created_at timestamp."
+                raise TypeError(message)
+            _parse_status_timestamp(created_at)
+            statuses.append({"id": status_id, "state": state, "log_url": log_url, "created_at": created_at})
     return statuses
 
 

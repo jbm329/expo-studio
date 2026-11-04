@@ -90,9 +90,11 @@ permissions have been expanded for this query yet.
 
 Deployment status retrieval preserves all reported states, including pending,
 failed, successful, and inactive records. It does not assume API ordering or
-treat an empty status list as success. Selecting the authoritative deployment
-and verifying its workflow against the public manifest are still separate,
-unfinished integration steps.
+treat an empty status list as success. The latest status is selected by its
+validated UTC creation timestamp, not its ID, state, or response position.
+Distinct records tied for the latest timestamp are rejected as ambiguous.
+Selecting the authoritative deployment and verifying its workflow against the
+public manifest are still separate, unfinished integration steps.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

@@ -40,6 +40,7 @@ parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
 fetch_pages_deployments = HELPER["fetch_pages_deployments"]
 fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
+latest_deployment_status = HELPER["latest_deployment_status"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -405,8 +406,13 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
 
 
 def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatch) -> None:
-    success = {"id": 10, "state": "success", "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123"}
-    inactive = {"id": 20, "state": "inactive", "log_url": ""}
+    success = {
+        "id": 10,
+        "state": "success",
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+    inactive = {"id": 20, "state": "inactive", "log_url": "", "created_at": "2026-11-04T12:01:00Z"}
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[inactive], [], [success]])))
     monkeypatch.setattr(subprocess, "run", runner)
 
@@ -430,7 +436,7 @@ def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatc
 
 @pytest.mark.parametrize("state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "success"])
 def test_fetch_deployment_statuses_preserves_states(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
-    status = {"id": 1, "state": state, "log_url": ""}
+    status = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
     monkeypatch.setattr(subprocess, "run", runner)
 
@@ -464,12 +470,23 @@ def test_fetch_deployment_statuses_rejects_bad_response(monkeypatch: pytest.Monk
         ("state", None, ValueError),
         ("log_url", None, TypeError),
         ("log_url", 123, TypeError),
+        ("created_at", None, TypeError),
+        ("created_at", 123, TypeError),
+        ("created_at", "invalid", ValueError),
+        ("created_at", "2026-11-04T12:00:00", ValueError),
+        ("created_at", "2026-11-04T12:00:00+01:00", ValueError),
     ],
 )
 def test_fetch_deployment_statuses_rejects_bad_fields(
     monkeypatch: pytest.MonkeyPatch, field: str, value: object, error: type[Exception]
 ) -> None:
-    status = {"id": 1, "state": "success", "log_url": "", field: value}
+    status = {
+        "id": 1,
+        "state": "success",
+        "log_url": "",
+        "created_at": "2026-11-04T12:00:00Z",
+        field: value,
+    }
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
     monkeypatch.setattr(subprocess, "run", runner)
 
@@ -515,6 +532,47 @@ def test_fetch_deployment_statuses_rejects_bad_repository_before_cli(monkeypatch
         fetch_deployment_statuses("owner/repo?query=1", 42)
 
     runner.assert_not_called()
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+@pytest.mark.parametrize("state", ["success", "inactive", "failure", "in_progress"])
+def test_latest_deployment_status_uses_timestamp_not_id_or_state(reverse: bool, state: str) -> None:
+    older = {"id": 99, "state": "success", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    newer = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:01:00Z"}
+    statuses = [older, newer]
+    if reverse:
+        statuses.reverse()
+
+    assert latest_deployment_status(statuses) == newer
+
+
+def test_latest_deployment_status_rejects_empty_history() -> None:
+    with pytest.raises(ValueError, match="without status records"):
+        latest_deployment_status([])
+
+
+def test_latest_deployment_status_rejects_ambiguous_latest_records() -> None:
+    success = {"id": 1, "state": "success", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    inactive = {**success, "id": 2, "state": "inactive"}
+
+    with pytest.raises(ValueError, match="ambiguous"):
+        latest_deployment_status([success, inactive])
+
+
+def test_latest_deployment_status_allows_identical_duplicates_and_older_ties() -> None:
+    older = {"id": 1, "state": "pending", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    latest = {**older, "id": 3, "state": "success", "created_at": "2026-11-04T12:01:00Z"}
+
+    assert latest_deployment_status([older, {**older, "id": 2}, latest, latest.copy()]) == latest
+
+
+def test_fetch_deployment_statuses_requires_timestamp(monkeypatch: pytest.MonkeyPatch) -> None:
+    status = {"id": 1, "state": "success", "log_url": ""}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(TypeError, match="created_at"):
+        fetch_deployment_statuses("jbm329/expo-studio", 42)
 
 
 def test_fetch_pages_deployments_combines_and_validates_pages(monkeypatch: pytest.MonkeyPatch) -> None:
