@@ -22,6 +22,40 @@ class GitHubRelease(TypedDict):
     prerelease: bool
 
 
+def parse_github_releases(value: object) -> list[GitHubRelease]:
+    """Validate a decoded GitHub release-list response.
+
+    Args:
+        value: JSON-decoded release list from one API page or combined pages.
+
+    Returns:
+        Release metadata containing only fields used by publication policy.
+
+    Raises:
+        TypeError: If the response is not a list of correctly typed releases.
+
+    Notes:
+        Additional API fields are ignored. Unsupported tag formats are retained
+        for the stable-release filter, not treated as malformed API data.
+    """
+    if not isinstance(value, list):
+        message = "GitHub release response must be a list."
+        raise TypeError(message)
+    releases: list[GitHubRelease] = []
+    for index, entry in enumerate(value):
+        if not isinstance(entry, dict):
+            message = f"GitHub release at index {index} must be an object."
+            raise TypeError(message)
+        tag = entry.get("tag_name")
+        draft = entry.get("draft")
+        prerelease = entry.get("prerelease")
+        if not isinstance(tag, str) or not isinstance(draft, bool) or not isinstance(prerelease, bool):
+            message = f"GitHub release at index {index} requires a string tag_name and boolean draft/prerelease flags."
+            raise TypeError(message)
+        releases.append({"tag_name": tag, "draft": draft, "prerelease": prerelease})
+    return releases
+
+
 class PublicationManifest(TypedDict):
     """Versioned provenance stored alongside the published website."""
 

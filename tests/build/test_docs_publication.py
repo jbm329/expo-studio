@@ -32,6 +32,75 @@ parse_publication_manifest = HELPER["parse_publication_manifest"]
 require_manifest_progress = HELPER["require_manifest_progress"]
 read_publication_manifest = HELPER["read_publication_manifest"]
 write_publication_manifest = HELPER["write_publication_manifest"]
+parse_github_releases = HELPER["parse_github_releases"]
+
+
+def test_parse_github_releases_preserves_required_metadata() -> None:
+    response = [
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False, "id": 123},
+        {"tag_name": "v1.5.0-rc1", "draft": False, "prerelease": True},
+        {"tag_name": "unrelated", "draft": True, "prerelease": False},
+    ]
+
+    releases = parse_github_releases(response)
+
+    assert releases == [
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.5.0-rc1", "draft": False, "prerelease": True},
+        {"tag_name": "unrelated", "draft": True, "prerelease": False},
+    ]
+    assert response[0]["id"] == 123
+    assert latest_stable_tag(releases) == "v1.4.0"
+
+
+def test_parse_github_releases_accepts_empty_page() -> None:
+    assert parse_github_releases([]) == []
+
+
+@pytest.mark.parametrize("response", [None, {}, {"message": "API error"}, "releases", [None], [[]]])
+def test_parse_github_releases_rejects_invalid_response(response: object) -> None:
+    with pytest.raises(TypeError, match="GitHub release"):
+        parse_github_releases(response)
+
+
+@pytest.mark.parametrize("field", ["tag_name", "draft", "prerelease"])
+def test_parse_github_releases_rejects_missing_fields(field: str) -> None:
+    release = {"tag_name": "v1.4.0", "draft": False, "prerelease": False}
+    del release[field]
+
+    with pytest.raises(TypeError, match="requires a string tag_name and boolean"):
+        parse_github_releases([release])
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("tag_name", None),
+        ("tag_name", 123),
+        ("draft", "false"),
+        ("draft", 0),
+        ("draft", None),
+        ("prerelease", "false"),
+        ("prerelease", 1),
+        ("prerelease", None),
+    ],
+)
+def test_parse_github_releases_rejects_invalid_field_types(field: str, value: object) -> None:
+    release = {"tag_name": "v1.4.0", "draft": False, "prerelease": False}
+    release[field] = value
+
+    with pytest.raises(TypeError, match="requires a string tag_name and boolean"):
+        parse_github_releases([release])
+
+
+def test_parse_github_releases_rejects_invalid_entry_after_valid_release() -> None:
+    response = [
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.5.0", "draft": False},
+    ]
+
+    with pytest.raises(TypeError, match="index 1"):
+        parse_github_releases(response)
 
 
 @pytest.fixture
