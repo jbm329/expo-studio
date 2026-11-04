@@ -21,6 +21,12 @@ Thanks for your interest in contributing 🎉
 
 ## Documentation infrastructure
 
+The publication policy tests also parse the manual workflow to protect its
+default-off deployment input, permission boundaries, prerequisite jobs, final
+check ordering, immutable package selection, and separate public verification.
+PyYAML is an explicit development dependency for these checks; the loader
+preserves GitHub's `on` key rather than interpreting it as a YAML 1.1 boolean.
+
 Before final deployment checks can ignore an environment job's own pending
 record, the helper requires matching workflow commit, current run ID, and an
 exact job-specific Actions log URL. Run-only URLs and other jobs are insufficient.

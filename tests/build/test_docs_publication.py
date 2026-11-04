@@ -12,9 +12,87 @@ from unittest.mock import MagicMock, Mock
 from urllib.error import HTTPError, URLError
 
 import pytest
+import yaml
 
 HELPER_PATH = Path(__file__).resolve().parents[2] / ".github" / "scripts" / "docs_publication.py"
 HELPER = run_path(str(HELPER_PATH))
+
+
+@pytest.fixture
+def publication_workflow() -> dict[str, object]:
+    path = HELPER_PATH.parents[1] / "workflows" / "publish-docs.yml"
+    return yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+
+
+def test_publication_workflow_requires_explicit_deployment(publication_workflow: dict[str, object]) -> None:
+    workflow = publication_workflow
+    assert set(workflow["on"]) == {"workflow_dispatch"}
+    inputs = workflow["on"]["workflow_dispatch"]["inputs"]
+    for name in ("deploy_website", "confirm_initial_bootstrap"):
+        assert inputs[name]["type"] == "boolean"
+        assert inputs[name]["default"] == "false"
+    assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"] == {"group": "documentation-publication", "cancel-in-progress": "false"}
+    deploy = workflow["jobs"]["deploy"]
+    assert deploy["if"] == "${{ inputs.deploy_website }}"
+    assert set(deploy["needs"]) == {"prepare", "inspect", "build", "verify", "recheck"}
+
+
+def test_publication_workflow_limits_write_permissions(publication_workflow: dict[str, object]) -> None:
+    jobs = publication_workflow["jobs"]
+    deploy = jobs["deploy"]
+    assert deploy["name"] == "Deploy documentation"
+    assert deploy["environment"]["name"] == "github-pages"
+    assert deploy["permissions"] == {
+        "contents": "read",
+        "actions": "read",
+        "deployments": "read",
+        "pages": "write",
+        "id-token": "write",
+    }
+    for name, job in jobs.items():
+        if name != "deploy":
+            assert "write" not in job.get("permissions", {}).values()
+
+
+def test_publication_workflow_rechecks_before_deploying(publication_workflow: dict[str, object]) -> None:
+    steps = publication_workflow["jobs"]["deploy"]["steps"]
+    checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
+    assert checkout["with"] == {
+        "ref": "${{ github.sha }}",
+        "fetch-depth": "0",
+        "persist-credentials": "false",
+    }
+    download = next(step for step in steps if step.get("uses", "").startswith("actions/download-artifact@"))
+    assert download["with"]["artifact-ids"] == "${{ needs.prepare.outputs.manifest_artifact_id }}"
+    assert "artifact-name" not in download["with"]
+    final = steps[-4:]
+    assert "docs_publication.py prepare" in final[0]["run"]
+    assert 'cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json"' in final[0]["run"]
+    assert "docs_publication.py inspect-published" in final[1]["run"]
+    assert "--current-job" in final[1]["run"]
+    assert "--confirm-initial-bootstrap" in final[1]["run"]
+    assert final[1]["env"]["CONFIRM_INITIAL_BOOTSTRAP"] == "${{ inputs.confirm_initial_bootstrap }}"
+    assert "docs_publication.py verify-pages-artifact" in final[2]["run"]
+    assert final[2]["env"]["PAGES_ARTIFACT_ID"] == "${{ needs.verify.outputs.pages_artifact_id }}"
+    assert final[3]["uses"] == "actions/deploy-pages@v4"
+    assert final[3]["with"] == {"artifact_name": "github-pages"}
+    assert all("uv sync" not in step.get("run", "") for step in steps)
+
+
+def test_publication_workflow_verifies_publication_separately(publication_workflow: dict[str, object]) -> None:
+    verify = publication_workflow["jobs"]["verify-publication"]
+    assert set(verify["needs"]) == {"prepare", "deploy"}
+    assert verify["permissions"] == {"contents": "read"}
+    assert "environment" not in verify
+    steps = verify["steps"]
+    check = next(step for step in steps if "verify-published" in step.get("run", ""))
+    assert '--proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"' in check["run"]
+    url_check = next(step for step in steps if "PAGE_URL" in step.get("env", {}))
+    assert url_check["env"]["PAGE_URL"] == "${{ needs.deploy.outputs.page_url }}"
+    assert '!= "https://jbm329.github.io/expo-studio/"' in url_check["run"]
+
+
 parse_stable_tag = HELPER["parse_stable_tag"]
 is_stable_release = HELPER["is_stable_release"]
 latest_stable_tag = HELPER["latest_stable_tag"]
