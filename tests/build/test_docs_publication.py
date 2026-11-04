@@ -20,6 +20,7 @@ require_correction_file = HELPER["require_correction_file"]
 require_correction_changes = HELPER["require_correction_changes"]
 resolve_stable_tag_commit = HELPER["resolve_stable_tag_commit"]
 require_correction_source = HELPER["require_correction_source"]
+require_documentation_setup = HELPER["require_documentation_setup"]
 
 
 @pytest.mark.parametrize(
@@ -519,6 +520,9 @@ def correction_history(git_repository: Path) -> tuple[Path, str, str]:
     docs = git_repository / "docs"
     docs.mkdir()
     (docs / "index.md").write_text("Released instructions.\n", encoding="utf-8")
+    (git_repository / "zensical.toml").write_text('[project]\nsite_name = "Test manual"\n', encoding="utf-8")
+    (git_repository / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    (git_repository / "uv.lock").write_text("version = 1\n", encoding="utf-8")
     baseline = commit_all(git_repository)
     run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.4.0", baseline)
     (docs / "index.md").write_text("Corrected instructions.\n", encoding="utf-8")
@@ -573,3 +577,51 @@ def test_correction_source_rejects_branch_outside_release_history(correction_his
 
     with pytest.raises(ValueError, match="is not an ancestor of"):
         require_correction_source(repository, "v1.4.0", older, releases)
+
+
+def test_documentation_setup_uses_committed_files(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, _ = correction_history
+    (repository / "zensical.toml").unlink()
+
+    assert require_documentation_setup(repository, baseline) is None
+
+
+@pytest.mark.parametrize("path", ["zensical.toml", "pyproject.toml", "uv.lock", "docs/index.md"])
+def test_documentation_setup_rejects_missing_entry_file(correction_history: tuple[Path, str, str], path: str) -> None:
+    repository, _, _ = correction_history
+    repository.joinpath(*path.split("/")).unlink()
+    source = commit_all(repository)
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files") as error:
+        require_documentation_setup(repository, source)
+
+    assert path in str(error.value)
+
+
+def test_documentation_setup_rejects_executable_entry_file(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    run_git(repository, "update-index", "--chmod=+x", "zensical.toml")
+    source = create_test_commit(repository)
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files"):
+        require_documentation_setup(repository, source)
+
+
+def test_correction_source_rejects_baseline_without_documentation(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.3.0", baseline)
+    releases = [{"tag_name": "v1.3.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files"):
+        require_correction_source(git_repository, "v1.3.0", baseline, releases)
+
+
+def test_correction_source_rejects_deleted_landing_page(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    (repository / "docs" / "index.md").unlink()
+    source = commit_all(repository)
+    run_git(repository, "update-ref", "refs/remotes/origin/docs/1.4.0", source)
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files"):
+        require_correction_source(repository, "v1.4.0", source, releases)

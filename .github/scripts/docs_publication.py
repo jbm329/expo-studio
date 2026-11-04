@@ -362,6 +362,43 @@ def require_correction_file(path: str, mode: str) -> None:
         raise ValueError(message)
 
 
+def require_documentation_setup(repository: Path, source_sha: str) -> None:
+    """Require the documentation entry files to exist in a commit.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        source_sha: Full commit ID to inspect without checking it out.
+
+    Raises:
+        ValueError: If the commit ID is invalid or required regular files are missing.
+        subprocess.CalledProcessError: If Git cannot inspect the commit.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        File presence does not establish valid configuration or buildability.
+    """
+    source = require_commit(repository, source_sha)
+    required_paths = ("zensical.toml", "pyproject.toml", "uv.lock", "docs/index.md")
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "ls-tree", "-r", "-z", source, "--", *required_paths],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    regular_paths = set()
+    for entry in result.stdout.split(b"\0"):
+        if not entry:
+            continue
+        metadata, path = entry.split(b"\t", 1)
+        mode, object_type, _ = metadata.split()
+        if mode == b"100644" and object_type == b"blob":
+            regular_paths.add(path.decode("utf-8"))
+    missing = sorted(set(required_paths) - regular_paths)
+    if missing:
+        message = f"Commit {source!r} lacks required regular documentation files: {', '.join(missing)}."
+        raise ValueError(message)
+
+
 def require_correction_source(
     repository: Path,
     expected_tag: str,
@@ -380,7 +417,8 @@ def require_correction_source(
         The resolved release-baseline commit ID.
 
     Raises:
-        ValueError: If release eligibility, source format, ancestry, or scope fails.
+        ValueError: If release eligibility, source format, required documentation
+            files, ancestry, or correction scope fails.
         subprocess.CalledProcessError: If required Git objects or refs are missing,
             or Git cannot inspect the history.
         OSError: If Git cannot be started or the working directory is invalid.
@@ -393,6 +431,8 @@ def require_correction_source(
     source = validate_commit_sha(source_sha)
     require_latest_stable_tag(expected_tag, releases)
     baseline = resolve_stable_tag_commit(repository, expected_tag)
+    require_documentation_setup(repository, baseline)
     require_remote_branch_contains_commit(repository, f"docs/{expected_tag.removeprefix('v')}", source)
     require_correction_changes(repository, baseline, source)
+    require_documentation_setup(repository, source)
     return baseline
