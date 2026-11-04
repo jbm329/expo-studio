@@ -1,0 +1,89 @@
+name: Documentation publication
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Validation mode only; this workflow does not deploy yet"
+        required: true
+        type: choice
+        options:
+          - bootstrap
+          - correction
+      baseline_tag:
+        description: "Latest published stable application tag, for example v1.3.0"
+        required: true
+        type: string
+      source_sha:
+        description: "Full 40-character reviewed source commit SHA"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require trusted main workflow
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
+            echo "::error::Run this workflow from main, not from the source branch."
+            exit 1
+          fi
+
+      - name: Checkout trusted policy and full source history
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Write publication request
+        env:
+          PUBLICATION_MODE: ${{ inputs.mode }}
+          BASELINE_TAG: ${{ inputs.baseline_tag }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          request = {
+              "schema_version": 1,
+              "mode": os.environ["PUBLICATION_MODE"],
+              "baseline_tag": os.environ["BASELINE_TAG"],
+              "source_sha": os.environ["SOURCE_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+          }
+          path = Path(os.environ["RUNNER_TEMP"]) / "publication-request.json"
+          path.write_text(json.dumps(request), encoding="utf-8")
+          PY
+
+      - name: Validate publication source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py prepare \
+            --repository "$GITHUB_WORKSPACE" \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --request "$RUNNER_TEMP/publication-request.json" \
+            --output "$RUNNER_TEMP/validated-publication.json"
+
+      - name: Upload validated publication manifest
+        uses: actions/upload-artifact@v7
+        with:
+          name: validated-documentation-publication
+          path: ${{ runner.temp }}/validated-publication.json
+          if-no-files-found: error
+          retention-days: 7
