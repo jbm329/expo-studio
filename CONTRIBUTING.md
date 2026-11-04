@@ -180,6 +180,15 @@ or retaining checkout credentials. Its Actions summary confirms successful
 structure and metadata checks, not authorization to deploy. Deployment wiring
 and verification of the previously published artifact remain unfinished.
 
+After metadata verification, that same job uses `actions/upload-pages-artifact`
+to package the downloaded website in GitHub Pages' required archive format.
+The `github-pages` artifact is retained for seven days, and its immutable ID is
+checked, exposed as a job output, and included in the Actions summary. This is
+a separate artifact from the browsable preview; it contains the Pages archive
+of the verified website, including `publication.json`. Packaging does not publish
+the site or require Pages write permissions. A later eligibility recheck can
+still fail even though this artifact was uploaded.
+
 Publication runs share the fixed `documentation-publication` concurrency group,
 independent of source branch, commit, or mode. An active run is not automatically
 cancelled when another request arrives. GitHub does not guarantee queue order

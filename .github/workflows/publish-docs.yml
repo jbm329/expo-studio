@@ -266,6 +266,8 @@ jobs:
   verify:
     needs: [prepare, build]
     runs-on: ubuntu-latest
+    outputs:
+      pages_artifact_id: ${{ steps.pages-artifact.outputs.artifact_id }}
     permissions:
       contents: read
 
@@ -311,15 +313,34 @@ jobs:
             --site "$RUNNER_TEMP/publication-site" \
             --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
 
+      - name: Package verified website for GitHub Pages
+        id: pages-artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/publication-site
+          retention-days: 7
+
+      - name: Require immutable Pages artifact ID
+        env:
+          PAGES_ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
+        run: |
+          if [[ ! "$PAGES_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Packaging did not provide a valid Pages artifact ID."
+            exit 1
+          fi
+
       - name: Summarize artifact verification
         env:
           SITE_ARTIFACT_ID: ${{ needs.build.outputs.site_artifact_id }}
+          PAGES_ARTIFACT_ID: ${{ steps.pages-artifact.outputs.artifact_id }}
         run: |
           {
             echo "## Documentation preview metadata verified"
             echo
             echo "The downloaded website has a nonempty landing page and provenance matching the validated proposal."
             echo "Verified website artifact ID: $SITE_ARTIFACT_ID"
+            echo "Packaged github-pages artifact ID: $PAGES_ARTIFACT_ID"
             echo "This checks structure and metadata, not every website file's origin, and does not authorize deployment."
           } >> "$GITHUB_STEP_SUMMARY"
 
