@@ -228,6 +228,7 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
 
     main([
         "inspect-published",
+        "--confirm-initial-bootstrap",
         "--repository-slug",
         "jbm329/expo-studio",
         "--repository",
@@ -246,6 +247,7 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         "proposed": proposed,
         "progress_check": "passed" if has_publication else "no-published-source",
         "deployment_authorized": False,
+        "initial_bootstrap_confirmed": not has_publication,
     }
 
 
@@ -267,6 +269,7 @@ def test_inspect_published_command_requires_bootstrap_when_history_is_empty(
     with pytest.raises(ValueError, match="explicitly validated bootstrap"):
         main([
             "inspect-published",
+            "--confirm-initial-bootstrap",
             "--repository-slug",
             "jbm329/expo-studio",
             "--repository",
@@ -279,6 +282,30 @@ def test_inspect_published_command_requires_bootstrap_when_history_is_empty(
 
     inspect.assert_called_once_with("jbm329/expo-studio")
     progress.assert_not_called()
+    assert not output.exists()
+
+
+def test_inspect_published_command_requires_explicit_initial_confirmation(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", Mock(return_value=None))
+    proposed = tmp_path / "proposed.json"
+    write_publication_manifest(proposed, {**publication_manifest, "mode": "bootstrap"})
+    output = tmp_path / "inspection.json"
+
+    with pytest.raises(ValueError, match="explicit operator confirmation"):
+        main([
+            "inspect-published",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed),
+            "--output",
+            str(output),
+        ])
+
     assert not output.exists()
 
 
@@ -295,6 +322,7 @@ def test_inspect_published_command_does_not_write_report_after_failure(
     with pytest.raises(ValueError, match="Inspection failed"):
         main([
             "inspect-published",
+            "--confirm-initial-bootstrap",
             "--repository-slug",
             "jbm329/expo-studio",
             "--repository",
@@ -327,6 +355,7 @@ def test_inspect_published_command_rejects_source_regression(
     with pytest.raises(ValueError, match="ancestor"):
         main([
             "inspect-published",
+            "--confirm-initial-bootstrap",
             "--repository-slug",
             "jbm329/expo-studio",
             "--repository",

@@ -18,6 +18,11 @@ on:
         description: "Full 40-character reviewed source commit SHA"
         required: true
         type: string
+      confirm_initial_bootstrap:
+        description: "I confirm this is the initial placeholder publication (only for empty deployment history)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -162,12 +167,18 @@ jobs:
       - name: Inspect publication metadata and source progress
         env:
           GH_TOKEN: ${{ github.token }}
+          CONFIRM_INITIAL_BOOTSTRAP: ${{ inputs.confirm_initial_bootstrap }}
         run: |
+          confirmation=()
+          if [ "$CONFIRM_INITIAL_BOOTSTRAP" = "true" ]; then
+            confirmation+=(--confirm-initial-bootstrap)
+          fi
           uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
             --repository-slug "$GITHUB_REPOSITORY" \
             --repository "$GITHUB_WORKSPACE" \
             --proposed "$RUNNER_TEMP/proposed-publication/validated-publication.json" \
-            --output "$RUNNER_TEMP/publication-inspection.json"
+            --output "$RUNNER_TEMP/publication-inspection.json" \
+            "${confirmation[@]}"
 
       - name: Upload publication inspection report
         uses: actions/upload-artifact@v7
@@ -354,12 +365,18 @@ jobs:
       - name: Recheck deployed provenance and publication progress
         env:
           GH_TOKEN: ${{ github.token }}
+          CONFIRM_INITIAL_BOOTSTRAP: ${{ inputs.confirm_initial_bootstrap }}
         run: |
+          confirmation=()
+          if [ "$CONFIRM_INITIAL_BOOTSTRAP" = "true" ]; then
+            confirmation+=(--confirm-initial-bootstrap)
+          fi
           uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
             --repository-slug "$GITHUB_REPOSITORY" \
             --repository "$GITHUB_WORKSPACE" \
             --proposed "$RUNNER_TEMP/rechecked-publication.json" \
-            --output "$RUNNER_TEMP/rechecked-inspection.json"
+            --output "$RUNNER_TEMP/rechecked-inspection.json" \
+            "${confirmation[@]}"
 
       - name: Upload post-build publication inspection
         uses: actions/upload-artifact@v7

@@ -147,7 +147,16 @@ release proposals fail without a report. Bootstrap eligibility must already have
 passed source preparation, including the placeholder-only and pre-documentation
 release checks. This restriction applies to both initial and post-build
 inspection. It does not prove that a site never existed (records can be deleted)
-or replace the separate first-deployment verification still to be implemented.
+or authorize deployment by itself.
+
+For empty deployment history, the operator must also select the manual workflow's
+`confirm_initial_bootstrap` checkbox, which defaults to unchecked. The CLI
+equivalent is `--confirm-initial-bootstrap`. Both inspection passes require
+this confirmation and record `initial_bootstrap_confirmed: true` when used for
+empty history. Confirmation never bypasses API failures, known deployment
+checks, source eligibility, or regression checks. With existing deployment
+metadata, normal checks still apply and the report records the field as false.
+This is an explicit operator assertion, not automated proof that no site existed.
 
 The helper's `verify-site --site <directory> --proposed <manifest>` command
 checks an extracted website against a separately validated proposal. It requires

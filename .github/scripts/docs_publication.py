@@ -1503,6 +1503,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     inspect.add_argument("--repository", type=Path, required=True, help="Full-history checkout for source comparison.")
     inspect.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
+    inspect.add_argument(
+        "--confirm-initial-bootstrap",
+        action="store_true",
+        help="Operator confirms an initial placeholder publication; never bypasses existing deployment checks.",
+    )
     verify_site = commands.add_parser("verify-site", help="Check built website metadata against a validated proposal.")
     verify_site.add_argument("--site", type=Path, required=True, help="Extracted website artifact directory.")
     verify_site.add_argument("--proposed", type=Path, required=True, help="Independently validated manifest JSON file.")
@@ -1516,6 +1521,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         if published is None and proposed["mode"] != "bootstrap":
             message = "Empty Pages deployment history requires an explicitly validated bootstrap proposal."
             raise ValueError(message)
+        if published is None and not arguments.confirm_initial_bootstrap:
+            message = "Initial placeholder publication requires explicit operator confirmation."
+            raise ValueError(message)
         if published is not None:
             require_manifest_progress(arguments.repository, published, proposed)
         report = {
@@ -1525,6 +1533,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             "proposed": proposed,
             "progress_check": "no-published-source" if published is None else "passed",
             "deployment_authorized": False,
+            "initial_bootstrap_confirmed": published is None and arguments.confirm_initial_bootstrap,
         }
         arguments.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
         return
