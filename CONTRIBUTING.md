@@ -39,7 +39,13 @@ The provenance inspector passes this optional context to both history reads,
 resolving the executing job independently on each read. When no prior history
 remains, it also rechecks before returning that state; this does not authorize
 bootstrap or bypass its explicit confirmation.
-This optional path is not wired into publication commands or the workflow yet.
+`inspect-published --current-job` enables this path using `GITHUB_RUN_ID`,
+`GITHUB_RUN_ATTEMPT`, `GITHUB_SHA`, and `RUNNER_NAME` from the trusted runner
+environment. Missing context, invalid attempts, and a run ID different from the
+proposal fail before inspection. The commit identifies the workflow checkout,
+not the potentially different documentation source commit. Do not populate
+these variables from manual inputs. Without the flag, preview behavior is
+unchanged. This option is not wired into the workflow yet.
 Public environment-deployment metadata confirms job-specific log URLs are used;
 the first hosted run must still verify this repository's actual metadata.
 

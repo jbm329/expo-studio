@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import secrets
 import subprocess
@@ -1814,6 +1815,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     inspect.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
     inspect.add_argument(
+        "--current-job",
+        action="store_true",
+        help="Read trusted GitHub runner context to exclude only this job's verified unfinished deployment.",
+    )
+    inspect.add_argument(
         "--confirm-initial-bootstrap",
         action="store_true",
         help="Operator confirms an initial placeholder publication; never bypasses existing deployment checks.",
@@ -1849,7 +1855,27 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
     if arguments.command == "inspect-published":
         proposed = read_publication_manifest(arguments.proposed)
-        published = fetch_manual_publication_metadata(arguments.repository_slug)
+        if arguments.current_job:
+            required = ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_SHA", "RUNNER_NAME")
+            if any(not os.environ.get(name, "").strip() for name in required):
+                message = (
+                    "Current-job inspection requires GitHub run, attempt, commit, and runner environment variables."
+                )
+                raise ValueError(message)
+            run_id = os.environ["GITHUB_RUN_ID"]
+            attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+            if run_id != proposed["run_id"] or re.fullmatch(r"[1-9][0-9]*", attempt) is None:
+                message = "Current-job inspection requires the proposal's run ID and a positive decimal run attempt."
+                raise ValueError(message)
+            context: PublicationExecutionContext = {
+                "run_id": run_id,
+                "run_attempt": int(attempt),
+                "workflow_sha": validate_commit_sha(os.environ["GITHUB_SHA"]),
+                "runner_name": os.environ["RUNNER_NAME"],
+            }
+            published = fetch_manual_publication_metadata(arguments.repository_slug, execution_context=context)
+        else:
+            published = fetch_manual_publication_metadata(arguments.repository_slug)
         if published is None and proposed["mode"] != "bootstrap":
             message = "Empty Pages deployment history requires an explicitly validated bootstrap proposal."
             raise ValueError(message)

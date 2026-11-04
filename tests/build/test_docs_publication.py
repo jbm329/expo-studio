@@ -868,12 +868,14 @@ def test_verify_pages_artifact_command_propagates_rejection(monkeypatch: pytest.
 
 
 @pytest.mark.parametrize("has_publication", [False, True])
+@pytest.mark.parametrize("current_job", [False, True])
 def test_inspect_published_command_reports_state_without_authorizing_deployment(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     publication_manifest: dict[str, object],
     correction_history: tuple[Path, str, str],
     has_publication: bool,
+    current_job: bool,
 ) -> None:
     repository, baseline, correction = correction_history
     published = {**publication_manifest, "source_sha": baseline} if has_publication else None
@@ -887,9 +889,23 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
     inspect = Mock(return_value=published)
     monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
     output = tmp_path / "inspection.json"
+    context = {
+        "run_id": str(proposed["run_id"]),
+        "run_attempt": 2,
+        "workflow_sha": "b" * 40,
+        "runner_name": "Hosted runner",
+    }
+    for name, value in {
+        "GITHUB_RUN_ID": context["run_id"],
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "B" * 40,
+        "RUNNER_NAME": context["runner_name"],
+    }.items():
+        monkeypatch.setenv(name, str(value))
 
     main([
         "inspect-published",
+        *(["--current-job"] if current_job else []),
         "--confirm-initial-bootstrap",
         "--repository-slug",
         "jbm329/expo-studio",
@@ -901,7 +917,10 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         str(output),
     ])
 
-    inspect.assert_called_once_with("jbm329/expo-studio")
+    if current_job:
+        inspect.assert_called_once_with("jbm329/expo-studio", execution_context=context)
+    else:
+        inspect.assert_called_once_with("jbm329/expo-studio")
     assert json.loads(output.read_text(encoding="utf-8")) == {
         "schema_version": 1,
         "state": "metadata-cross-checked" if has_publication else "no-deployment-records",
@@ -911,6 +930,63 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         "deployment_authorized": False,
         "initial_bootstrap_confirmed": not has_publication,
     }
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("GITHUB_RUN_ID", None),
+        ("GITHUB_RUN_ATTEMPT", None),
+        ("GITHUB_SHA", None),
+        ("RUNNER_NAME", None),
+        ("RUNNER_NAME", "  "),
+        ("GITHUB_RUN_ID", "999"),
+        ("GITHUB_RUN_ATTEMPT", "0"),
+        ("GITHUB_RUN_ATTEMPT", "02"),
+        ("GITHUB_RUN_ATTEMPT", "2\n"),
+        ("GITHUB_SHA", "main"),
+    ],
+)
+def test_current_job_command_rejects_bad_environment_before_inspection(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    name: str,
+    value: str | None,
+) -> None:
+    for key, item in {
+        "GITHUB_RUN_ID": str(publication_manifest["run_id"]),
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "a" * 40,
+        "RUNNER_NAME": "Hosted runner",
+    }.items():
+        monkeypatch.setenv(key, item)
+    if value is None:
+        monkeypatch.delenv(name)
+    else:
+        monkeypatch.setenv(name, value)
+    inspect = Mock()
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
+    proposed = tmp_path / "proposed.json"
+    output = tmp_path / "inspection.json"
+    write_publication_manifest(proposed, publication_manifest)
+
+    with pytest.raises(ValueError):
+        main([
+            "inspect-published",
+            "--current-job",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed),
+            "--output",
+            str(output),
+        ])
+
+    inspect.assert_not_called()
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("mode", ["correction", "release"])
@@ -947,9 +1023,17 @@ def test_inspect_published_command_requires_bootstrap_when_history_is_empty(
     assert not output.exists()
 
 
+@pytest.mark.parametrize("current_job", [False, True])
 def test_inspect_published_command_requires_explicit_initial_confirmation(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], current_job: bool
 ) -> None:
+    for key, value in {
+        "GITHUB_RUN_ID": str(publication_manifest["run_id"]),
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "a" * 40,
+        "RUNNER_NAME": "Hosted runner",
+    }.items():
+        monkeypatch.setenv(key, value)
     monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", Mock(return_value=None))
     proposed = tmp_path / "proposed.json"
     write_publication_manifest(proposed, {**publication_manifest, "mode": "bootstrap"})
@@ -958,6 +1042,7 @@ def test_inspect_published_command_requires_explicit_initial_confirmation(
     with pytest.raises(ValueError, match="explicit operator confirmation"):
         main([
             "inspect-published",
+            *(["--current-job"] if current_job else []),
             "--repository-slug",
             "jbm329/expo-studio",
             "--repository",
