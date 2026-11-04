@@ -27,3 +27,31 @@ def parse_stable_tag(tag: str) -> tuple[int, int, int]:
 
     major, minor, patch = match.groups()
     return int(major), int(minor), int(patch)
+
+
+def is_stable_release(
+    tag: str,
+    *,
+    draft: bool,
+    prerelease: bool,
+) -> bool:
+    """Return whether a GitHub release is eligible for stable-version selection.
+
+    Args:
+        tag: Release tag reported by GitHub.
+        draft: Whether GitHub marks the release as a draft.
+        prerelease: Whether GitHub marks the release as a prerelease.
+
+    Returns:
+        True for a published stable release with a supported tag format.
+    """
+    if draft or prerelease:
+        return False
+
+    try:
+        parse_stable_tag(tag)
+    except ValueError:
+        # Unsupported tags are excluded when filtering GitHub releases.
+        return False
+
+    return True

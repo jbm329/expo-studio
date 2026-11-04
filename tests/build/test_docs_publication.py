@@ -6,7 +6,9 @@ from runpy import run_path
 import pytest
 
 HELPER_PATH = Path(__file__).resolve().parents[2] / ".github" / "scripts" / "docs_publication.py"
-parse_stable_tag = run_path(str(HELPER_PATH))["parse_stable_tag"]
+HELPER = run_path(str(HELPER_PATH))
+parse_stable_tag = HELPER["parse_stable_tag"]
+is_stable_release = HELPER["is_stable_release"]
 
 
 @pytest.mark.parametrize(
@@ -43,6 +45,31 @@ def test_parse_stable_tag(tag: str, expected: tuple[int, int, int]) -> None:
 def test_parse_stable_tag_rejects_invalid_tags(tag: str) -> None:
     with pytest.raises(ValueError, match="Unsupported stable release tag"):
         parse_stable_tag(tag)
+
+
+@pytest.mark.parametrize(
+    ("tag", "draft", "prerelease", "expected"),
+    [
+        ("v1.4.0", False, False, True),
+        ("v0.0.0", False, False, True),
+        ("v1.4.0", True, False, False),
+        ("v1.4.0", False, True, False),
+        ("v1.4.0", True, True, False),
+        ("v1.4.0-rc1", False, False, False),
+        ("v1.4.0-a1", False, False, False),
+        ("v1.4.0-b1", False, False, False),
+        ("1.4.0", False, False, False),
+        ("v01.4.0", False, False, False),
+        ("", False, False, False),
+    ],
+)
+def test_is_stable_release(
+    tag: str,
+    draft: bool,
+    prerelease: bool,
+    expected: bool,
+) -> None:
+    assert is_stable_release(tag, draft=draft, prerelease=prerelease) is expected
 
 
 def test_stable_versions_compare_numerically() -> None:
