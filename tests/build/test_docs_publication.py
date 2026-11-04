@@ -43,6 +43,7 @@ fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
 latest_deployment_status = HELPER["latest_deployment_status"]
 fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 require_deployment_run = HELPER["require_deployment_run"]
+require_manual_publication_run = HELPER["require_manual_publication_run"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -405,6 +406,123 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+@pytest.fixture
+def manual_publication_run() -> dict[str, object]:
+    return {
+        "id": 123456789,
+        "path": ".github/workflows/publish-docs.yml",
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": "a" * 40,
+        "status": "completed",
+        "conclusion": "success",
+        "repository": {"full_name": "jbm329/expo-studio"},
+        "head_repository": {"full_name": "jbm329/expo-studio"},
+        "run_attempt": 2,
+    }
+
+
+def test_require_manual_publication_run_checks_api_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+) -> None:
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(manual_publication_run)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    attempt = require_manual_publication_run(
+        "jbm329/expo-studio", {"id": 1, "sha": "A" * 40}, {**publication_manifest, "mode": "bootstrap"}
+    )
+
+    assert attempt == 2
+    runner.assert_called_once_with(
+        ["gh", "api", "--method", "GET", "repos/jbm329/expo-studio/actions/runs/123456789"],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 123456788),
+        ("id", "123456789"),
+        ("path", ".github/workflows/other.yml"),
+        ("event", "pull_request"),
+        ("head_branch", "correction-branch"),
+        ("head_sha", "b" * 40),
+        ("status", "in_progress"),
+        ("conclusion", "failure"),
+        ("conclusion", None),
+        ("repository", {"full_name": "another/repo"}),
+        ("head_repository", {"full_name": "another/repo"}),
+        ("head_repository", None),
+        ("run_attempt", True),
+        ("run_attempt", 0),
+        ("run_attempt", "2"),
+    ],
+)
+def test_require_manual_publication_run_rejects_mismatches(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+    field: str,
+    value: object,
+) -> None:
+    run = {**manual_publication_run, field: value}
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(run)))
+    )
+
+    with pytest.raises(ValueError):
+        require_manual_publication_run(
+            "jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, {**publication_manifest, "mode": "correction"}
+        )
+
+
+@pytest.mark.parametrize(
+    ("response", "error"), [("null", TypeError), ("[]", TypeError), ("{}", ValueError), ("{", ValueError)]
+)
+def test_require_manual_publication_run_rejects_bad_response(
+    monkeypatch: pytest.MonkeyPatch, publication_manifest: dict[str, object], response: str, error: type[Exception]
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(error):
+        require_manual_publication_run(
+            "jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, {**publication_manifest, "mode": "bootstrap"}
+        )
+
+
+def test_require_manual_publication_run_rejects_release_before_api(
+    monkeypatch: pytest.MonkeyPatch, publication_manifest: dict[str, object]
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="automatic release"):
+        require_manual_publication_run("jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, publication_manifest)
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_require_manual_publication_run_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch, publication_manifest: dict[str, object], error: Exception
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        require_manual_publication_run(
+            "jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, {**publication_manifest, "mode": "bootstrap"}
+        )
 
 
 @pytest.mark.parametrize("suffix", ["", "/job/987654321"])

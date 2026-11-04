@@ -103,8 +103,14 @@ The helper can check that the selected success status links to the repository
 and Actions run recorded in the public manifest. This association check accepts
 canonical HTTPS run links with an optional job suffix; it does not fetch the link
 or prove a trusted workflow, matching run attempt, or artifact contents.
-Independent workflow verification and the final deployment wiring remain
-unfinished integration steps.
+For manual bootstrap/correction provenance, a further read-only Actions API
+check requires a completed successful `publish-docs.yml` dispatch from `main`,
+the expected repository (including the source repository), and the deployment's
+workflow commit SHA. It returns the current run-attempt number for subsequent
+verification. This does not verify workflow file contents, the deployment's
+exact attempt, or artifact contents. Automatic release runs are not accepted by
+this manual check. Attempt/artifact verification and final deployment wiring
+remain unfinished; no workflow permissions have been expanded yet.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

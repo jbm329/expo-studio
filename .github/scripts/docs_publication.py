@@ -458,6 +458,81 @@ def require_deployment_run(repository_slug: str, status: GitHubDeploymentStatus,
         raise ValueError(message)
 
 
+def require_manual_publication_run(
+    repository_slug: str,
+    deployment: GitHubPagesDeployment,
+    manifest: PublicationManifest,
+) -> int:
+    """Verify manual publishing run metadata through the GitHub Actions API.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        deployment: Selected Pages deployment with its workflow commit SHA.
+        manifest: Public publication metadata identifying the workflow run.
+
+    Returns:
+        The API's current positive run-attempt number, for further verification.
+
+    Raises:
+        ValueError: If metadata does not identify a completed successful manual
+            publishing run from main at the deployment's workflow commit.
+        TypeError: If the API response is not a workflow run object.
+        subprocess.CalledProcessError: If the API request or authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. This checks API metadata, not
+        workflow file contents, the deployment's exact run attempt, or artifact
+        contents. A rerun may change the API's current attempt. Automatic
+        release publishing is deliberately not accepted by this manual check.
+    """
+    _require_repository_slug(repository_slug)
+    validated = parse_publication_manifest(manifest)
+    workflow_sha = validate_commit_sha(deployment["sha"])
+    if validated["mode"] == "release":
+        message = "Manual publishing run verification does not accept automatic release provenance."
+        raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            f"repos/{repository_slug}/actions/runs/{validated['run_id']}",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    run = json.loads(result.stdout)
+    if not isinstance(run, dict):
+        message = "GitHub workflow run response must be an object."
+        raise TypeError(message)
+    expected = {
+        "id": int(validated["run_id"]),
+        "path": ".github/workflows/publish-docs.yml",
+        "event": "workflow_dispatch",
+        "head_branch": "main",
+        "head_sha": workflow_sha,
+        "status": "completed",
+        "conclusion": "success",
+    }
+    if type(run.get("id")) is not int or any(run.get(key) != value for key, value in expected.items()):
+        message = "GitHub run does not match the successful manual publishing workflow and deployment commit."
+        raise ValueError(message)
+    for field in ("repository", "head_repository"):
+        repository = run.get(field)
+        if not isinstance(repository, dict) or repository.get("full_name") != repository_slug:
+            message = "GitHub publishing run must belong to and use source from the expected repository."
+            raise ValueError(message)
+    attempt = run.get("run_attempt")
+    if type(attempt) is not int or attempt <= 0:
+        message = "GitHub publishing run requires a positive integer run_attempt."
+        raise ValueError(message)
+    return attempt
+
+
 def prepare_publication(
     repository: Path,
     repository_slug: str,
