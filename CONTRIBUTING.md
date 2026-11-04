@@ -157,6 +157,16 @@ or retaining checkout credentials. Its Actions summary confirms successful
 structure and metadata checks, not authorization to deploy. Deployment wiring
 and verification of the previously published artifact remain unfinished.
 
+Publication runs share the fixed `documentation-publication` concurrency group,
+independent of source branch, commit, or mode. An active run is not automatically
+cancelled when another request arrives. GitHub does not guarantee queue order
+and may replace an older pending run with a newer request; inspect run status
+and retry a still-relevant request if needed. The future automatic release path
+must use this same group without adding a conflicting group to its caller.
+The read-only PR preview workflow is not serialized by this group. Concurrency
+does not freeze release metadata or public deployment state, so final eligibility
+and progress rechecks are still required before deployment.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛

@@ -22,6 +22,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: documentation-publication
+  cancel-in-progress: false
+
 jobs:
   prepare:
     runs-on: ubuntu-latest
