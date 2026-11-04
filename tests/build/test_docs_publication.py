@@ -28,6 +28,7 @@ require_bootstrap_configuration = HELPER["require_bootstrap_configuration"]
 require_bootstrap_source = HELPER["require_bootstrap_source"]
 require_publication_progress = HELPER["require_publication_progress"]
 parse_publication_manifest = HELPER["parse_publication_manifest"]
+require_manifest_progress = HELPER["require_manifest_progress"]
 
 
 @pytest.fixture
@@ -993,3 +994,74 @@ def test_publication_progress_surfaces_missing_published_commit(correction_histo
 
     with pytest.raises(subprocess.CalledProcessError):
         require_publication_progress(repository, "v1.4.0", "0" * 40, "v1.4.0", source)
+
+
+@pytest.mark.parametrize("published_mode", ["release", "correction"])
+def test_manifest_progress_prevents_bootstrap_after_released_manual(
+    correction_history: tuple[Path, str, str],
+    publication_manifest: dict[str, object],
+    published_mode: str,
+) -> None:
+    repository, _, source = correction_history
+    published = parse_publication_manifest({
+        **publication_manifest,
+        "mode": published_mode,
+        "source_sha": source,
+    })
+    proposed = parse_publication_manifest({
+        **published,
+        "mode": "bootstrap",
+        "baseline_tag": "v1.5.0",
+        "run_id": "999999999",
+    })
+
+    with pytest.raises(ValueError, match="Bootstrap cannot replace"):
+        require_manifest_progress(repository, published, proposed)
+
+
+def test_manifest_progress_accepts_bootstrap_to_new_release(
+    correction_history: tuple[Path, str, str], publication_manifest: dict[str, object]
+) -> None:
+    repository, baseline, source = correction_history
+    published = parse_publication_manifest({
+        **publication_manifest,
+        "mode": "bootstrap",
+        "baseline_tag": "v1.3.0",
+        "source_sha": baseline,
+    })
+    proposed = parse_publication_manifest({**publication_manifest, "source_sha": source})
+
+    assert require_manifest_progress(repository, published, proposed) is None
+
+
+def test_manifest_progress_allows_identical_bootstrap_retry(
+    correction_history: tuple[Path, str, str], publication_manifest: dict[str, object]
+) -> None:
+    repository, _, source = correction_history
+    published = parse_publication_manifest({
+        **publication_manifest,
+        "mode": "bootstrap",
+        "source_sha": source,
+    })
+    proposed = parse_publication_manifest({**published, "run_id": "1"})
+
+    assert require_manifest_progress(repository, published, proposed) is None
+
+
+def test_manifest_progress_rejects_stale_correction_despite_newer_run_id(
+    correction_history: tuple[Path, str, str], publication_manifest: dict[str, object]
+) -> None:
+    repository, baseline, source = correction_history
+    published = parse_publication_manifest({
+        **publication_manifest,
+        "mode": "correction",
+        "source_sha": source,
+    })
+    proposed = parse_publication_manifest({
+        **published,
+        "source_sha": baseline,
+        "run_id": "999999999",
+    })
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_manifest_progress(repository, published, proposed)

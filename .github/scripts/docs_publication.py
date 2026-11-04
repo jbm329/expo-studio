@@ -657,6 +657,40 @@ def require_publication_progress(
         require_ancestor(repository, published_source, source)
 
 
+def require_manifest_progress(
+    repository: Path,
+    published: PublicationManifest,
+    proposed: PublicationManifest,
+) -> None:
+    """Require a publication to advance or repeat the deployed provenance.
+
+    Args:
+        repository: Repository containing both publication source commits.
+        published: Validated provenance of the existing deployment.
+        proposed: Validated provenance of the proposed deployment.
+
+    Raises:
+        ValueError: If bootstrap would replace a released manual, the application
+            baseline moves backward, or same-version source history regresses.
+        subprocess.CalledProcessError: If required Git commits cannot be inspected.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        Validate both manifests before calling. Source eligibility must also be
+        checked independently; run IDs are provenance, not publication ordering.
+    """
+    if published["mode"] != "bootstrap" and proposed["mode"] == "bootstrap":
+        message = "Bootstrap cannot replace an already published released manual."
+        raise ValueError(message)
+    require_publication_progress(
+        repository,
+        published["baseline_tag"],
+        published["source_sha"],
+        proposed["baseline_tag"],
+        proposed["source_sha"],
+    )
+
+
 def require_bootstrap_source(
     repository: Path,
     expected_tag: str,
