@@ -18,6 +18,7 @@ require_ancestor = HELPER["require_ancestor"]
 require_remote_branch_contains_commit = HELPER["require_remote_branch_contains_commit"]
 require_correction_file = HELPER["require_correction_file"]
 require_correction_changes = HELPER["require_correction_changes"]
+resolve_stable_tag_commit = HELPER["resolve_stable_tag_commit"]
 
 
 @pytest.mark.parametrize(
@@ -473,3 +474,40 @@ def test_correction_changes_rejects_executable_markdown(git_repository: Path) ->
 
     with pytest.raises(ValueError, match="outside the permitted manual content scope"):
         require_correction_changes(git_repository, baseline, source)
+
+
+@pytest.mark.parametrize("annotated", [False, True])
+def test_resolve_stable_tag_commit_accepts_tag_types(git_repository: Path, annotated: bool) -> None:
+    expected = run_git(git_repository, "rev-parse", "HEAD")
+    if annotated:
+        run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "-a", "v1.4.0", "-m", "Test release")
+    else:
+        run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.4.0")
+    create_test_commit(git_repository)
+
+    assert resolve_stable_tag_commit(git_repository, "v1.4.0") == expected
+
+
+def test_resolve_stable_tag_commit_does_not_use_matching_branch(git_repository: Path) -> None:
+    run_git(git_repository, "branch", "v1.4.0")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        resolve_stable_tag_commit(git_repository, "v1.4.0")
+
+
+@pytest.mark.parametrize("annotated", [False, True])
+def test_resolve_stable_tag_commit_rejects_non_commit_tags(git_repository: Path, annotated: bool) -> None:
+    blob = run_git(git_repository, "rev-parse", "HEAD:example.txt")
+    if annotated:
+        run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "-a", "v1.4.0", blob, "-m", "Blob tag")
+    else:
+        run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.4.0", blob)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        resolve_stable_tag_commit(git_repository, "v1.4.0")
+
+
+@pytest.mark.parametrize("tag", ["v1.4.0-rc1", "HEAD", "v1.4.0^{commit}", ""])
+def test_resolve_stable_tag_commit_rejects_invalid_tag_before_git(tmp_path: Path, tag: str) -> None:
+    with pytest.raises(ValueError, match="Unsupported stable release tag"):
+        resolve_stable_tag_commit(tmp_path / "nonexistent", tag)

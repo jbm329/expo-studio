@@ -220,6 +220,37 @@ def require_commit(repository: Path, source_sha: str) -> str:
     return commit_sha
 
 
+def resolve_stable_tag_commit(repository: Path, tag: str) -> str:
+    """Resolve an exact stable release tag to its underlying commit.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        tag: Stable release tag in vMAJOR.MINOR.PATCH format.
+
+    Returns:
+        The lowercase commit ID, peeling annotated tags when necessary.
+
+    Raises:
+        ValueError: If the tag format is unsupported.
+        subprocess.CalledProcessError: If the exact tag is missing, does not
+            resolve to a commit, or Git cannot inspect it.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        The caller must fetch the release tags before resolving them.
+        A local tag does not establish that a GitHub Release was published.
+    """
+    parse_stable_tag(tag)
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "rev-parse", "--verify", f"refs/tags/{tag}^{{commit}}"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return require_commit(repository, result.stdout.strip())
+
+
 def require_ancestor(repository: Path, ancestor_sha: str, descendant_sha: str) -> None:
     """Require one commit to be an ancestor of another, allowing equality.
 
