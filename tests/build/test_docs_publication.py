@@ -35,6 +35,67 @@ read_publication_manifest = HELPER["read_publication_manifest"]
 write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
+refresh_publication_refs = HELPER["refresh_publication_refs"]
+
+
+def test_refresh_publication_refs_updates_branches_and_tags(git_repository: Path) -> None:
+    remote = git_repository / "remote.git"
+    run_git(git_repository, "init", "--bare", "--quiet", str(remote))
+    run_git(git_repository, "remote", "add", "origin", str(remote))
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    run_git(git_repository, "push", "--quiet", "origin", f"{baseline}:refs/heads/main")
+    run_git(git_repository, "push", "--quiet", "origin", f"{baseline}:refs/tags/v1.4.0")
+    run_git(git_repository, "update-ref", "refs/remotes/origin/deleted-branch", baseline)
+    tip = create_test_commit(git_repository)
+    run_git(git_repository, "push", "--quiet", "origin", f"{tip}:refs/heads/docs/1.4.0")
+    head_before = run_git(git_repository, "rev-parse", "HEAD")
+
+    refresh_publication_refs(git_repository)
+
+    assert run_git(git_repository, "rev-parse", "refs/remotes/origin/main") == baseline
+    assert run_git(git_repository, "rev-parse", "refs/remotes/origin/docs/1.4.0") == tip
+    assert resolve_stable_tag_commit(git_repository, "v1.4.0") == baseline
+    assert run_git(git_repository, "rev-parse", "HEAD") == head_before
+    with pytest.raises(subprocess.CalledProcessError):
+        run_git(git_repository, "show-ref", "--verify", "refs/remotes/origin/deleted-branch")
+
+
+@pytest.mark.parametrize("response", ["true\n", "", "unexpected\n"])
+def test_refresh_publication_refs_requires_full_history(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, response: str
+) -> None:
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="full-history checkout"):
+        refresh_publication_refs(tmp_path)
+
+    assert runner.call_count == 1
+
+
+def test_refresh_publication_refs_surfaces_fetch_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout="false\n"),
+            subprocess.CalledProcessError(1, ["git", "fetch"]),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        refresh_publication_refs(tmp_path)
+
+    assert runner.call_count == 2
+
+
+def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    runner = Mock(side_effect=subprocess.CalledProcessError(128, ["git", "rev-parse"]))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        refresh_publication_refs(tmp_path)
+
+    assert runner.call_count == 1
 
 
 def test_fetch_github_releases_combines_all_pages(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -103,6 +103,49 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
     return releases
 
 
+def refresh_publication_refs(repository: Path) -> None:
+    """Fetch current origin branches and tags in a full-history workflow checkout.
+
+    Args:
+        repository: Dedicated workflow checkout with an origin remote.
+
+    Raises:
+        ValueError: If the checkout is shallow or Git reports unexpected state.
+        subprocess.CalledProcessError: If repository inspection or fetching fails.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        Use checkout with fetch-depth: 0. This updates and prunes local refs,
+        including tags, but does not check out files or alter branch history.
+        Conflicting moved tags fail rather than being force-updated.
+    """
+    result = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout.strip() != "false":
+        message = "Publication validation requires a full-history checkout (fetch-depth: 0)."
+        raise ValueError(message)
+    subprocess.run(
+        [  # noqa: S607
+            "git",
+            "fetch",
+            "--prune",
+            "--no-recurse-submodules",
+            "origin",
+            "+refs/heads/*:refs/remotes/origin/*",
+            "refs/tags/*:refs/tags/*",
+        ],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+
 class PublicationManifest(TypedDict):
     """Versioned provenance stored alongside the published website."""
 
