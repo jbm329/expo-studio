@@ -95,3 +95,25 @@ def latest_stable_tag(releases: Sequence[GitHubRelease]) -> str:
         raise ValueError(message)
 
     return max(eligible_tags, key=parse_stable_tag)
+
+
+def validate_commit_sha(source_sha: str) -> str:
+    """Validate a full SHA-1 commit ID and normalize its hexadecimal casing.
+
+    Args:
+        source_sha: Explicit source commit ID supplied for publication.
+
+    Returns:
+        The lowercase, 40-character hexadecimal commit ID.
+
+    Raises:
+        ValueError: If the input is not a full SHA-1 object ID.
+
+    Notes:
+        This checks syntax only, not whether the object exists or is a commit.
+    """
+    if re.fullmatch(r"[0-9a-fA-F]{40}", source_sha) is None:
+        message = f"Expected a full 40-character hexadecimal commit SHA: {source_sha!r}"
+        raise ValueError(message)
+
+    return source_sha.lower()

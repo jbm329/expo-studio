@@ -10,6 +10,7 @@ HELPER = run_path(str(HELPER_PATH))
 parse_stable_tag = HELPER["parse_stable_tag"]
 is_stable_release = HELPER["is_stable_release"]
 latest_stable_tag = HELPER["latest_stable_tag"]
+validate_commit_sha = HELPER["validate_commit_sha"]
 
 
 @pytest.mark.parametrize(
@@ -120,3 +121,37 @@ def test_latest_stable_tag_excludes_ineligible_releases() -> None:
 def test_latest_stable_tag_requires_an_eligible_release(releases: list[dict[str, object]]) -> None:
     with pytest.raises(ValueError, match="No supported published stable release"):
         latest_stable_tag(releases)
+
+
+@pytest.mark.parametrize(
+    "source_sha",
+    [
+        "0123456789abcdef0123456789abcdef01234567",
+        "0123456789ABCDEF0123456789ABCDEF01234567",
+        "0123456789aBcDeF0123456789AbCdEf01234567",
+    ],
+)
+def test_validate_commit_sha_normalizes_full_ids(source_sha: str) -> None:
+    assert validate_commit_sha(source_sha) == source_sha.lower()
+
+
+@pytest.mark.parametrize(
+    "source_sha",
+    [
+        "",
+        "main",
+        "v1.3.0",
+        "abcdef0",
+        "a" * 39,
+        "a" * 41,
+        "a" * 64,
+        "g" * 40,
+        " " + "a" * 40,
+        "a" * 40 + "\n",
+        "a" * 40 + "^{commit}",
+        "-" + "a" * 39,
+    ],
+)
+def test_validate_commit_sha_rejects_non_full_ids(source_sha: str) -> None:
+    with pytest.raises(ValueError, match="Expected a full 40-character hexadecimal commit SHA"):
+        validate_commit_sha(source_sha)
