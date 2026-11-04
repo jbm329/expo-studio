@@ -321,17 +321,31 @@ def require_current_deployment_identity(
         raise ValueError(message)
 
 
+class PublicationExecutionContext(TypedDict):
+    """Trusted runner context used to resolve the executing publication job."""
+
+    run_id: str
+    run_attempt: int
+    workflow_sha: str
+    runner_name: str
+
+
 def fetch_current_pages_deployment(
     repository_slug: str,
+    *,
+    execution_context: PublicationExecutionContext | None = None,
 ) -> tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None:
     """Find the unique currently successful Pages deployment and its status.
 
     Args:
         repository_slug: GitHub repository identifier in owner/repository form.
+        execution_context: Optional trusted current runner context. Resolve its
+            job through GitHub before excluding its single unfinished record.
 
     Returns:
         The deployment and latest success status, or None only when the
-        deployment-history query returned no records.
+        deployment-history query returned no prior records after excluding at
+        most one verified current job record.
 
     Raises:
         ValueError: If status history is missing or ambiguous, an attempt is
@@ -345,12 +359,18 @@ def fetch_current_pages_deployment(
         Failed and inactive attempts do not replace a current success. No
         records is not authorization for bootstrap. These separate API reads
         are not atomic; deployment serialization and final rechecks are still
-        required. Call before creating the proposed deployment record.
+        required. Without execution context, every unfinished record is rejected.
+        Context-aware selection is not yet wired into publication commands.
     """
+    current_job_id = None
+    if execution_context is not None:
+        current_job_id = fetch_executing_publication_job(repository_slug, **execution_context)
     deployments = fetch_pages_deployments(repository_slug)
     if not deployments:
         return None
     seen: set[int] = set()
+    excluded_current = False
+    prior_records = 0
     current: tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None = None
     for deployment in deployments:
         deployment_id = deployment["id"]
@@ -360,14 +380,29 @@ def fetch_current_pages_deployment(
         seen.add(deployment_id)
         status = latest_deployment_status(fetch_deployment_statuses(repository_slug, deployment_id))
         if status["state"] in ("queued", "pending", "in_progress"):
+            if execution_context is not None and current_job_id is not None:
+                require_current_deployment_identity(
+                    repository_slug,
+                    deployment,
+                    status,
+                    workflow_sha=execution_context["workflow_sha"],
+                    run_id=execution_context["run_id"],
+                    job_id=current_job_id,
+                )
+                if excluded_current:
+                    message = "Multiple unfinished deployments identify the current job; history is ambiguous."
+                    raise ValueError(message)
+                excluded_current = True
+                continue
             message = f"Pages deployment {deployment_id} is unfinished; retry after it completes."
             raise ValueError(message)
+        prior_records += 1
         if status["state"] == "success":
             if current is not None:
                 message = "Multiple currently successful Pages deployments prevent authoritative selection."
                 raise ValueError(message)
             current = deployment, status
-    if current is None:
+    if current is None and prior_records:
         message = "Existing Pages deployment history has no currently successful deployment."
         raise ValueError(message)
     return current

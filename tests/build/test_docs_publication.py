@@ -1804,6 +1804,103 @@ def test_fetch_current_pages_deployment_distinguishes_empty_history(monkeypatch:
 
 
 @pytest.mark.parametrize(
+    ("prior_states", "message"),
+    [
+        ([], None),
+        (["success"], None),
+        (["failure", "inactive"], "no currently successful"),
+        (["success", "success"], "Multiple currently successful"),
+        (["pending"], "exact current workflow job"),
+    ],
+)
+def test_current_job_exclusion_preserves_prior_history_rules(
+    monkeypatch: pytest.MonkeyPatch, prior_states: list[str], message: str | None
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    deployments = [{"id": index + 1, "sha": "a" * 40} for index in range(len(prior_states) + 1)]
+    statuses = [
+        {
+            "id": 10,
+            "state": "in_progress",
+            "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+            "created_at": "2026-11-04T12:00:00Z",
+        },
+        *[
+            {"id": index + 11, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+            for index, state in enumerate(prior_states)
+        ],
+    ]
+    resolve = Mock(return_value="456")
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_executing_publication_job", resolve)
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=deployments)
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_deployment_statuses",
+        Mock(side_effect=lambda slug, identifier: [statuses[identifier - 1]]),
+    )
+
+    if message is not None:
+        with pytest.raises(ValueError, match=message):
+            fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+    else:
+        expected = (deployments[1], statuses[1]) if prior_states else None
+        assert fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context) == expected
+    resolve.assert_called_once_with("jbm329/expo-studio", **context)
+
+
+@pytest.mark.parametrize("mismatch", ["commit", "run", "job", "run-only", "duplicate"])
+def test_current_job_exclusion_rejects_mismatched_or_duplicate_records(
+    monkeypatch: pytest.MonkeyPatch, mismatch: str
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    deployment = {"id": 1, "sha": "b" * 40 if mismatch == "commit" else "a" * 40}
+    urls = {
+        "run": "https://github.com/jbm329/expo-studio/actions/runs/124/job/456",
+        "job": "https://github.com/jbm329/expo-studio/actions/runs/123/job/457",
+        "run-only": "https://github.com/jbm329/expo-studio/actions/runs/123",
+    }
+    status = {
+        "id": 10,
+        "state": "pending",
+        "created_at": "2026-11-04T12:00:00Z",
+        "log_url": urls.get(mismatch, "https://github.com/jbm329/expo-studio/actions/runs/123/job/456"),
+    }
+    deployments = [deployment]
+    if mismatch == "duplicate":
+        deployments.append({**deployment, "id": 2})
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_executing_publication_job", Mock(return_value="456")
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=deployments)
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", Mock(return_value=[status])
+    )
+
+    with pytest.raises(ValueError, match="Multiple unfinished|does not"):
+        fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+
+
+def test_current_job_exclusion_requires_job_lookup_before_reading_history(monkeypatch: pytest.MonkeyPatch) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    history = Mock()
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", history)
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_executing_publication_job",
+        Mock(side_effect=ValueError("Job identity mismatch")),
+    )
+
+    with pytest.raises(ValueError, match="Job identity mismatch"):
+        fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+
+    history.assert_not_called()
+
+
+@pytest.mark.parametrize(
     ("states", "message"),
     [
         (["success", "success"], "Multiple currently successful"),

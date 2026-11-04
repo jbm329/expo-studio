@@ -24,15 +24,19 @@ Thanks for your interest in contributing 🎉
 Before final deployment checks can ignore an environment job's own pending
 record, the helper requires matching workflow commit, current run ID, and an
 exact job-specific Actions log URL. Run-only URLs and other jobs are insufficient.
-This identity cross-check does not itself exclude records or authorize publishing;
-independent current-job/attempt resolution and integration remain required.
-The history checker still rejects all unfinished deployments.
+This identity cross-check alone does not authorize excluding records or publishing.
 Current-job lookup now queries every jobs page for the exact run attempt,
 requiring one in-progress `Deploy documentation` job with the expected workflow
 commit and runner name. It returns the numeric job ID, with malformed responses
 and mismatches failing explicitly. Runtime identifiers must come from the trusted
-runner context, not manual inputs. Lookup and pending-record exclusion are not
-wired into the workflow yet.
+runner context, not manual inputs.
+The history selector now optionally resolves this trusted execution context and
+excludes at most one unfinished record matching the verified job and commit.
+Other unfinished records, duplicate current-job records, and failed-only prior
+history remain errors. Only the current job's record is equivalent to no prior
+history; initial-bootstrap confirmation is still required by publication policy.
+This optional path is not wired into publication commands or the workflow yet;
+GitHub's actual environment-deployment log URL shape still needs verification.
 
 The helper's `verify-published --repository-slug <owner/repo> --proposed <manifest>`
 command checks the latest stable release and requires the public website's
