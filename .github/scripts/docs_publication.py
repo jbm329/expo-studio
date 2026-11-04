@@ -84,13 +84,22 @@ def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
     return releases
 
 
-def _fetch_github_list_pages(repository_slug: str, resource: Literal["releases", "deployments"]) -> list[object]:
-    """Fetch paginated release or Pages deployment lists with explicit API failures."""
+def _fetch_github_list_pages(
+    repository_slug: str, resource: Literal["releases", "deployments"], *, deployment_id: int | None = None
+) -> list[object]:
+    """Fetch paginated release, Pages deployment, or deployment status lists."""
     if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", repository_slug) is None:
         message = "Expected a GitHub repository identifier in owner/repository form."
         raise ValueError(message)
     query = "per_page=100"
-    if resource == "deployments":
+    if deployment_id is not None:
+        if resource != "deployments" or type(deployment_id) is not int or deployment_id <= 0:
+            message = "Deployment statuses require a positive integer deployment ID."
+            raise ValueError(message)
+        endpoint = f"deployments/{deployment_id}/statuses"
+    else:
+        endpoint = resource
+    if resource == "deployments" and deployment_id is None:
         query += "&environment=github-pages"
     result = subprocess.run(  # noqa: S603
         [  # noqa: S607
@@ -100,7 +109,7 @@ def _fetch_github_list_pages(repository_slug: str, resource: Literal["releases",
             "GET",
             "--paginate",
             "--slurp",
-            f"repos/{repository_slug}/{resource}?{query}",
+            f"repos/{repository_slug}/{endpoint}?{query}",
         ],
         check=True,
         capture_output=True,
@@ -163,6 +172,62 @@ def fetch_pages_deployments(repository_slug: str) -> list[GitHubPagesDeployment]
                 raise TypeError(message)
             deployments.append({"id": deployment_id, "sha": validate_commit_sha(sha)})
     return deployments
+
+
+class GitHubDeploymentStatus(TypedDict):
+    """Status identity and reported workflow log location, not verified provenance."""
+
+    id: int
+    state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "success"]
+    log_url: str
+
+
+def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[GitHubDeploymentStatus]:
+    """Retrieve and validate every status page for a GitHub deployment.
+
+    Args:
+        repository_slug: GitHub repository identifier in owner/repository form.
+        deployment_id: Positive integer ID from the Pages deployment history.
+
+    Returns:
+        Status records without assuming response order. An empty list means no
+        statuses were returned, not that the deployment succeeded.
+
+    Raises:
+        ValueError: If the repository identifier, deployment ID, JSON, or state is invalid.
+        TypeError: If status entries, IDs, or log URLs have invalid types.
+        subprocess.CalledProcessError: If the API request or authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        The caller needs deployments: read permission and GH_TOKEN. Historical
+        success does not establish the deployment's current state. Log URLs are
+        returned as metadata only; they are not fetched or trusted as evidence
+        of workflow identity without further verification.
+    """
+    if type(deployment_id) is not int or deployment_id <= 0:
+        message = "Deployment statuses require a positive integer deployment ID."
+        raise ValueError(message)
+    statuses: list[GitHubDeploymentStatus] = []
+    for page in _fetch_github_list_pages(repository_slug, "deployments", deployment_id=deployment_id):
+        if not isinstance(page, list):
+            message = "GitHub deployment status page must be a list."
+            raise TypeError(message)
+        for entry in page:
+            if not isinstance(entry, dict):
+                message = "GitHub deployment status entry must be an object."
+                raise TypeError(message)
+            status_id = entry.get("id")
+            state = entry.get("state")
+            log_url = entry.get("log_url")
+            if type(status_id) is not int or status_id <= 0 or not isinstance(log_url, str):
+                message = "GitHub deployment status requires a positive integer ID and string log_url."
+                raise TypeError(message)
+            if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "success"):
+                message = "Unsupported GitHub deployment status state."
+                raise ValueError(message)
+            statuses.append({"id": status_id, "state": state, "log_url": log_url})
+    return statuses
 
 
 def refresh_publication_refs(repository: Path) -> None:

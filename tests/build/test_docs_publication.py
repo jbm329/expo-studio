@@ -39,6 +39,7 @@ write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
 fetch_pages_deployments = HELPER["fetch_pages_deployments"]
+fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -401,6 +402,119 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    success = {"id": 10, "state": "success", "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123"}
+    inactive = {"id": 20, "state": "inactive", "log_url": ""}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[inactive], [], [success]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert fetch_deployment_statuses("jbm329/expo-studio", 42) == [inactive, success]
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/deployments/42/statuses?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize("state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "success"])
+def test_fetch_deployment_statuses_preserves_states(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
+    status = {"id": 1, "state": state, "log_url": ""}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert fetch_deployment_statuses("jbm329/expo-studio", 42) == [status]
+
+
+@pytest.mark.parametrize("response", ["[]", "[[]]"])
+def test_fetch_deployment_statuses_accepts_empty_results(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    assert fetch_deployment_statuses("jbm329/expo-studio", 42) == []
+
+
+@pytest.mark.parametrize("response", ["null", "{}", "[null]", "[[null]]", "[[{}]]"])
+def test_fetch_deployment_statuses_rejects_bad_response(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        fetch_deployment_statuses("jbm329/expo-studio", 42)
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "error"),
+    [
+        ("id", True, TypeError),
+        ("id", 1.0, TypeError),
+        ("id", "1", TypeError),
+        ("id", 0, TypeError),
+        ("id", -1, TypeError),
+        ("state", "unknown", ValueError),
+        ("state", None, ValueError),
+        ("log_url", None, TypeError),
+        ("log_url", 123, TypeError),
+    ],
+)
+def test_fetch_deployment_statuses_rejects_bad_fields(
+    monkeypatch: pytest.MonkeyPatch, field: str, value: object, error: type[Exception]
+) -> None:
+    status = {"id": 1, "state": "success", "log_url": "", field: value}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(error):
+        fetch_deployment_statuses("jbm329/expo-studio", 42)
+
+
+@pytest.mark.parametrize("deployment_id", [None, True, 1.0, "42", 0, -1])
+def test_fetch_deployment_statuses_rejects_bad_id_before_cli(
+    monkeypatch: pytest.MonkeyPatch, deployment_id: object
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="positive integer"):
+        fetch_deployment_statuses("jbm329/expo-studio", deployment_id)
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_fetch_deployment_statuses_propagates_cli_failure(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_deployment_statuses("jbm329/expo-studio", 42)
+
+
+def test_fetch_deployment_statuses_rejects_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout="{")))
+
+    with pytest.raises(json.JSONDecodeError):
+        fetch_deployment_statuses("jbm329/expo-studio", 42)
+
+
+def test_fetch_deployment_statuses_rejects_bad_repository_before_cli(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="owner/repository"):
+        fetch_deployment_statuses("owner/repo?query=1", 42)
+
+    runner.assert_not_called()
 
 
 def test_fetch_pages_deployments_combines_and_validates_pages(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -88,6 +88,12 @@ do not establish deployment success or verify public provenance yet, and an
 empty history alone does not authorize a first publication. No workflow
 permissions have been expanded for this query yet.
 
+Deployment status retrieval preserves all reported states, including pending,
+failed, successful, and inactive records. It does not assume API ordering or
+treat an empty status list as success. Selecting the authoritative deployment
+and verifying its workflow against the public manifest are still separate,
+unfinished integration steps.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛
