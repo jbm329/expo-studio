@@ -21,6 +21,13 @@ Thanks for your interest in contributing 🎉
 
 ## Documentation infrastructure
 
+Before final deployment checks can ignore an environment job's own pending
+record, the helper requires matching workflow commit, current run ID, and an
+exact job-specific Actions log URL. Run-only URLs and other jobs are insufficient.
+This identity cross-check does not itself exclude records or authorize publishing;
+independent current-job/attempt resolution and integration remain required.
+The history checker still rejects all unfinished deployments.
+
 The helper's `verify-published --repository-slug <owner/repo> --proposed <manifest>`
 command checks the latest stable release and requires the public website's
 provenance to match the deployed proposal. It can run while the current workflow

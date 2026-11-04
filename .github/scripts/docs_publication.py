@@ -277,6 +277,50 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
     return statuses
 
 
+def require_current_deployment_identity(
+    repository_slug: str,
+    deployment: GitHubPagesDeployment,
+    status: GitHubDeploymentStatus,
+    *,
+    workflow_sha: str,
+    run_id: str,
+    job_id: str,
+) -> None:
+    """Cross-check a pending deployment against the executing workflow job.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        deployment: Pages deployment metadata retrieved through GitHub.
+        status: Its validated latest status.
+        workflow_sha: Workflow commit from the trusted execution context.
+        run_id: Current workflow run ID from the trusted execution context.
+        job_id: Current job's numeric ID, independently resolved through GitHub.
+
+    Raises:
+        ValueError: If context IDs, commit, state, or job-specific log URL differ.
+
+    Notes:
+        This is a metadata cross-check, not authorization to ignore a deployment.
+        The caller must independently verify current job identity and attempt.
+        Run-only URLs are deliberately insufficient for this check.
+    """
+    _require_repository_slug(repository_slug)
+    for identifier in (run_id, job_id):
+        if not isinstance(identifier, str) or re.fullmatch(r"[1-9][0-9]*", identifier) is None:
+            message = "Current deployment identity requires positive decimal run and job IDs."
+            raise ValueError(message)
+    if validate_commit_sha(deployment["sha"]) != validate_commit_sha(workflow_sha):
+        message = "Pending deployment does not match the current workflow commit."
+        raise ValueError(message)
+    if status["state"] not in ("queued", "pending", "in_progress"):
+        message = "Current deployment identification requires an unfinished deployment status."
+        raise ValueError(message)
+    expected = f"https://github.com/{repository_slug}/actions/runs/{run_id}/job/{job_id}"
+    if status["log_url"] != expected:
+        message = "Pending deployment does not identify the exact current workflow job."
+        raise ValueError(message)
+
+
 def fetch_current_pages_deployment(
     repository_slug: str,
 ) -> tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None:

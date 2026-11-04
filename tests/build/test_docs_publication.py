@@ -53,6 +53,71 @@ prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
 require_pages_artifact = HELPER["require_pages_artifact"]
 require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
+require_current_deployment_identity = HELPER["require_current_deployment_identity"]
+
+
+@pytest.mark.parametrize("state", ["queued", "pending", "in_progress"])
+def test_current_deployment_identity_requires_exact_job_and_commit(state: str) -> None:
+    require_current_deployment_identity(
+        "jbm329/expo-studio",
+        {"id": 1, "sha": "A" * 40},
+        {
+            "id": 2,
+            "state": state,
+            "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+            "created_at": "2026-11-04T12:00:00Z",
+        },
+        workflow_sha="a" * 40,
+        run_id="123",
+        job_id="456",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("sha", "b" * 40),
+        ("sha", "main"),
+        ("state", "success"),
+        ("state", "failure"),
+        ("state", "inactive"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/123"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/124/job/456"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/123/job/457"),
+        ("log_url", "https://github.com/another/repo/actions/runs/123/job/456"),
+    ],
+)
+def test_current_deployment_identity_rejects_other_deployments(field: str, value: str) -> None:
+    deployment = {"id": 1, "sha": "a" * 40}
+    status = {
+        "id": 2,
+        "state": "in_progress",
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+    if field == "sha":
+        deployment[field] = value
+    else:
+        status[field] = value
+
+    with pytest.raises(ValueError):
+        require_current_deployment_identity(
+            "jbm329/expo-studio", deployment, status, workflow_sha="a" * 40, run_id="123", job_id="456"
+        )
+
+
+@pytest.mark.parametrize("identifier", ["", "0", "01", "123/extra", "123\n", None, True])
+@pytest.mark.parametrize("field", ["run", "job"])
+def test_current_deployment_identity_rejects_invalid_context(identifier: object, field: str) -> None:
+    with pytest.raises(ValueError, match="positive decimal"):
+        require_current_deployment_identity(
+            "jbm329/expo-studio",
+            {"id": 1, "sha": "a" * 40},
+            {"id": 2, "state": "in_progress", "log_url": "", "created_at": "2026-11-04T12:00:00Z"},
+            workflow_sha="a" * 40,
+            run_id=identifier if field == "run" else "123",
+            job_id=identifier if field == "job" else "456",
+        )
 
 
 def test_require_unique_pages_artifact_checks_every_page(monkeypatch: pytest.MonkeyPatch) -> None:
