@@ -97,6 +97,24 @@ def latest_stable_tag(releases: Sequence[GitHubRelease]) -> str:
     return max(eligible_tags, key=parse_stable_tag)
 
 
+def require_latest_stable_tag(expected_tag: str, releases: Sequence[GitHubRelease]) -> None:
+    """Require the requested baseline to match the newest stable release.
+
+    Args:
+        expected_tag: Stable release tag the caller intends to document.
+        releases: Release metadata collected from GitHub.
+
+    Raises:
+        ValueError: If the requested tag is unsupported, no stable release is
+            available, or the requested tag is not the newest stable release.
+    """
+    parse_stable_tag(expected_tag)
+    latest_tag = latest_stable_tag(releases)
+    if expected_tag != latest_tag:
+        message = f"Requested release {expected_tag!r} is not the latest published stable release {latest_tag!r}."
+        raise ValueError(message)
+
+
 def validate_commit_sha(source_sha: str) -> str:
     """Validate a full SHA-1 commit ID and normalize its hexadecimal casing.
 

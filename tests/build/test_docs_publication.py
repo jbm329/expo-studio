@@ -10,6 +10,7 @@ HELPER = run_path(str(HELPER_PATH))
 parse_stable_tag = HELPER["parse_stable_tag"]
 is_stable_release = HELPER["is_stable_release"]
 latest_stable_tag = HELPER["latest_stable_tag"]
+require_latest_stable_tag = HELPER["require_latest_stable_tag"]
 validate_commit_sha = HELPER["validate_commit_sha"]
 
 
@@ -121,6 +122,56 @@ def test_latest_stable_tag_excludes_ineligible_releases() -> None:
 def test_latest_stable_tag_requires_an_eligible_release(releases: list[dict[str, object]]) -> None:
     with pytest.raises(ValueError, match="No supported published stable release"):
         latest_stable_tag(releases)
+
+
+def test_require_latest_stable_tag_accepts_current_baseline() -> None:
+    releases = [
+        {"tag_name": "v1.9.0", "draft": False, "prerelease": False},
+        {"tag_name": "v2.0.0", "draft": True, "prerelease": False},
+        {"tag_name": "v1.11.0", "draft": False, "prerelease": True},
+        {"tag_name": "v1.10.0", "draft": False, "prerelease": False},
+    ]
+
+    assert require_latest_stable_tag("v1.10.0", releases) is None
+
+
+@pytest.mark.parametrize("expected_tag", ["v1.9.0", "v1.11.0", "v2.0.0"])
+def test_require_latest_stable_tag_rejects_other_baselines(expected_tag: str) -> None:
+    releases = [
+        {"tag_name": "v1.9.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.10.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.11.0", "draft": False, "prerelease": True},
+        {"tag_name": "v2.0.0", "draft": True, "prerelease": False},
+    ]
+
+    with pytest.raises(ValueError, match="is not the latest published stable release") as error:
+        require_latest_stable_tag(expected_tag, releases)
+
+    assert expected_tag in str(error.value)
+    assert "v1.10.0" in str(error.value)
+
+
+@pytest.mark.parametrize("expected_tag", ["v1.10.0-rc1", "main", ""])
+def test_require_latest_stable_tag_rejects_unsupported_tags(expected_tag: str) -> None:
+    releases = [{"tag_name": "v1.10.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="Unsupported stable release tag"):
+        require_latest_stable_tag(expected_tag, releases)
+
+
+def test_require_latest_stable_tag_rejects_missing_stable_release() -> None:
+    with pytest.raises(ValueError, match="No supported published stable release"):
+        require_latest_stable_tag("v1.10.0", [])
+
+
+def test_require_latest_stable_tag_rejects_superseded_baseline() -> None:
+    releases = [{"tag_name": "v1.10.0", "draft": False, "prerelease": False}]
+    require_latest_stable_tag("v1.10.0", releases)
+
+    releases.append({"tag_name": "v1.11.0", "draft": False, "prerelease": False})
+
+    with pytest.raises(ValueError, match="is not the latest published stable release"):
+        require_latest_stable_tag("v1.10.0", releases)
 
 
 @pytest.mark.parametrize(
