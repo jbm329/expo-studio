@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import tomllib
@@ -77,6 +78,38 @@ def parse_publication_manifest(value: object) -> PublicationManifest:
         "source_sha": source,
         "run_id": run_id,
     }
+
+
+def read_publication_manifest(path: Path) -> PublicationManifest:
+    """Read and validate a UTF-8 JSON publication manifest.
+
+    Args:
+        path: Local manifest file to read.
+
+    Returns:
+        Validated publication provenance.
+
+    Raises:
+        ValueError: If JSON or publication metadata is invalid.
+        OSError: If the manifest cannot be read, including when it is missing.
+        UnicodeDecodeError: If the file is not valid UTF-8.
+    """
+    return parse_publication_manifest(json.loads(path.read_text(encoding="utf-8")))
+
+
+def write_publication_manifest(path: Path, manifest: PublicationManifest) -> None:
+    """Validate and write deterministic UTF-8 JSON publication provenance.
+
+    Args:
+        path: Output manifest file in an existing directory.
+        manifest: Publication provenance to validate and serialize.
+
+    Raises:
+        ValueError: If the publication metadata is invalid.
+        OSError: If the manifest cannot be written.
+    """
+    validated = parse_publication_manifest(manifest)
+    path.write_text(json.dumps(validated, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
 def parse_stable_tag(tag: str) -> tuple[int, int, int]:

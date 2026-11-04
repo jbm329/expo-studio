@@ -1,5 +1,6 @@
 """Tests for documentation publication policy."""
 
+import json
 import subprocess
 import tomllib
 from pathlib import Path
@@ -29,6 +30,8 @@ require_bootstrap_source = HELPER["require_bootstrap_source"]
 require_publication_progress = HELPER["require_publication_progress"]
 parse_publication_manifest = HELPER["parse_publication_manifest"]
 require_manifest_progress = HELPER["require_manifest_progress"]
+read_publication_manifest = HELPER["read_publication_manifest"]
+write_publication_manifest = HELPER["write_publication_manifest"]
 
 
 @pytest.fixture
@@ -109,6 +112,57 @@ def test_publication_manifest_rejects_invalid_values(
 
     with pytest.raises(ValueError):
         parse_publication_manifest(publication_manifest)
+
+
+def test_manifest_file_round_trip(tmp_path: Path, publication_manifest: dict[str, object]) -> None:
+    path = tmp_path / "publication.json"
+
+    write_publication_manifest(path, publication_manifest)
+
+    assert read_publication_manifest(path) == publication_manifest
+    expected = json.dumps(publication_manifest, indent=2, sort_keys=True) + "\n"
+    assert path.read_bytes() == expected.encode("utf-8")
+
+
+def test_read_manifest_surfaces_missing_file(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        read_publication_manifest(tmp_path / "missing.json")
+
+
+@pytest.mark.parametrize("content", ["{", "null", "[]", "{}"])
+def test_read_manifest_rejects_invalid_file_content(tmp_path: Path, content: str) -> None:
+    path = tmp_path / "publication.json"
+    path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        read_publication_manifest(path)
+
+
+def test_read_manifest_surfaces_invalid_encoding(tmp_path: Path) -> None:
+    path = tmp_path / "publication.json"
+    path.write_bytes(b"\xff")
+
+    with pytest.raises(UnicodeDecodeError):
+        read_publication_manifest(path)
+
+
+def test_write_manifest_validates_before_replacing_file(
+    tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    path = tmp_path / "publication.json"
+    write_publication_manifest(path, publication_manifest)
+    original = path.read_bytes()
+    publication_manifest["mode"] = "invalid"
+
+    with pytest.raises(ValueError, match="Unsupported publication manifest mode"):
+        write_publication_manifest(path, publication_manifest)
+
+    assert path.read_bytes() == original
+
+
+def test_write_manifest_surfaces_invalid_destination(tmp_path: Path, publication_manifest: dict[str, object]) -> None:
+    with pytest.raises(FileNotFoundError):
+        write_publication_manifest(tmp_path / "missing-directory" / "publication.json", publication_manifest)
 
 
 @pytest.mark.parametrize(
