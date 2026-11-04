@@ -204,6 +204,49 @@ def parse_publication_manifest(value: object) -> PublicationManifest:
     }
 
 
+def prepare_publication(
+    repository: Path,
+    repository_slug: str,
+    request: PublicationManifest,
+) -> PublicationManifest:
+    """Refresh release information and validate a publication source by mode.
+
+    Args:
+        repository: Dedicated full-history workflow checkout.
+        repository_slug: GitHub repository identifier in owner/repository form.
+        request: Proposed publication provenance, validated before fetching.
+
+    Returns:
+        Validated provenance for the eligible source commit.
+
+    Raises:
+        ValueError: If request metadata or source eligibility is invalid.
+        TypeError: If GitHub release metadata is malformed.
+        subprocess.CalledProcessError: If Git or GitHub CLI operations fail.
+        OSError: If required commands or repository files are unavailable.
+        UnicodeDecodeError: If source text is not valid UTF-8.
+
+    Notes:
+        This does not build, write files, check deployed provenance, or deploy.
+        Release mode still requires a trusted caller enforcing release success.
+    """
+    manifest = parse_publication_manifest(request)
+    refresh_publication_refs(repository)
+    releases = fetch_github_releases(repository_slug)
+    validators = {
+        "bootstrap": require_bootstrap_source,
+        "release": require_release_source,
+        "correction": require_correction_source,
+    }
+    validators[manifest["mode"]](
+        repository,
+        manifest["baseline_tag"],
+        manifest["source_sha"],
+        releases,
+    )
+    return manifest
+
+
 def read_publication_manifest(path: Path) -> PublicationManifest:
     """Read and validate a UTF-8 JSON publication manifest.
 

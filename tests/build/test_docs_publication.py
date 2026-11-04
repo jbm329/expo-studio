@@ -36,6 +36,79 @@ write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
+prepare_publication = HELPER["prepare_publication"]
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "release", "correction"])
+def test_prepare_publication_connects_source_checks(
+    monkeypatch: pytest.MonkeyPatch,
+    request: pytest.FixtureRequest,
+    publication_manifest: dict[str, object],
+    mode: str,
+) -> None:
+    if mode == "bootstrap":
+        repository, _, source = request.getfixturevalue("bootstrap_source_history")
+        tag = "v1.3.0"
+    else:
+        repository, baseline, correction = request.getfixturevalue("correction_history")
+        source = baseline if mode == "release" else correction
+        tag = "v1.4.0"
+    publication = {**publication_manifest, "mode": mode, "baseline_tag": tag, "source_sha": source.upper()}
+    refresh = Mock()
+    fetch = Mock(return_value=[{"tag_name": tag, "draft": False, "prerelease": False}])
+    monkeypatch.setitem(prepare_publication.__globals__, "refresh_publication_refs", refresh)
+    monkeypatch.setitem(prepare_publication.__globals__, "fetch_github_releases", fetch)
+
+    manifest = prepare_publication(repository, "jbm329/expo-studio", publication)
+
+    assert manifest == {**publication, "source_sha": source}
+    refresh.assert_called_once_with(repository)
+    fetch.assert_called_once_with("jbm329/expo-studio")
+
+
+def test_prepare_publication_rejects_bad_request_before_fetching(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    refresh = Mock()
+    monkeypatch.setitem(prepare_publication.__globals__, "refresh_publication_refs", refresh)
+    publication_manifest["mode"] = "preview"
+
+    with pytest.raises(ValueError, match="Unsupported publication manifest mode"):
+        prepare_publication(tmp_path, "jbm329/expo-studio", publication_manifest)
+
+    refresh.assert_not_called()
+
+
+def test_prepare_publication_stops_after_refresh_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    refresh = Mock(side_effect=subprocess.CalledProcessError(1, ["git", "fetch"]))
+    fetch = Mock()
+    monkeypatch.setitem(prepare_publication.__globals__, "refresh_publication_refs", refresh)
+    monkeypatch.setitem(prepare_publication.__globals__, "fetch_github_releases", fetch)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        prepare_publication(tmp_path, "jbm329/expo-studio", publication_manifest)
+
+    fetch.assert_not_called()
+
+
+def test_prepare_publication_propagates_source_rejection(
+    monkeypatch: pytest.MonkeyPatch,
+    correction_history: tuple[Path, str, str],
+    publication_manifest: dict[str, object],
+) -> None:
+    repository, _, correction = correction_history
+    request = {**publication_manifest, "mode": "release", "source_sha": correction}
+    monkeypatch.setitem(prepare_publication.__globals__, "refresh_publication_refs", Mock())
+    monkeypatch.setitem(
+        prepare_publication.__globals__,
+        "fetch_github_releases",
+        Mock(return_value=[{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]),
+    )
+
+    with pytest.raises(ValueError, match="does not match release"):
+        prepare_publication(repository, "jbm329/expo-studio", request)
 
 
 def test_refresh_publication_refs_updates_branches_and_tags(git_repository: Path) -> None:
