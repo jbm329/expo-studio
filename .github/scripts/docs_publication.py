@@ -360,3 +360,39 @@ def require_correction_file(path: str, mode: str) -> None:
     if mode != "100644" or not canonical or not (markdown or image):
         message = f"Correction file is outside the permitted manual content scope: {path!r} (mode {mode!r})."
         raise ValueError(message)
+
+
+def require_correction_source(
+    repository: Path,
+    expected_tag: str,
+    source_sha: str,
+    releases: Sequence[GitHubRelease],
+) -> str:
+    """Validate a correction's release baseline, branch history, and changed files.
+
+    Args:
+        repository: Repository with freshly fetched release tags and origin refs.
+        expected_tag: Published stable release the correction must document.
+        source_sha: Full commit ID of the proposed corrected documentation.
+        releases: Current release metadata collected from GitHub.
+
+    Returns:
+        The resolved release-baseline commit ID.
+
+    Raises:
+        ValueError: If release eligibility, source format, ancestry, or scope fails.
+        subprocess.CalledProcessError: If required Git objects or refs are missing,
+            or Git cannot inspect the history.
+        OSError: If Git cannot be started or the working directory is invalid.
+        UnicodeDecodeError: If a changed path is not valid UTF-8.
+
+    Notes:
+        This does not yet check website buildability or deployed provenance.
+        Maintenance-branch reachability does not prove pull-request approval.
+    """
+    source = validate_commit_sha(source_sha)
+    require_latest_stable_tag(expected_tag, releases)
+    baseline = resolve_stable_tag_commit(repository, expected_tag)
+    require_remote_branch_contains_commit(repository, f"docs/{expected_tag.removeprefix('v')}", source)
+    require_correction_changes(repository, baseline, source)
+    return baseline

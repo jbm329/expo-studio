@@ -19,6 +19,7 @@ require_remote_branch_contains_commit = HELPER["require_remote_branch_contains_c
 require_correction_file = HELPER["require_correction_file"]
 require_correction_changes = HELPER["require_correction_changes"]
 resolve_stable_tag_commit = HELPER["resolve_stable_tag_commit"]
+require_correction_source = HELPER["require_correction_source"]
 
 
 @pytest.mark.parametrize(
@@ -511,3 +512,64 @@ def test_resolve_stable_tag_commit_rejects_non_commit_tags(git_repository: Path,
 def test_resolve_stable_tag_commit_rejects_invalid_tag_before_git(tmp_path: Path, tag: str) -> None:
     with pytest.raises(ValueError, match="Unsupported stable release tag"):
         resolve_stable_tag_commit(tmp_path / "nonexistent", tag)
+
+
+@pytest.fixture
+def correction_history(git_repository: Path) -> tuple[Path, str, str]:
+    docs = git_repository / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("Released instructions.\n", encoding="utf-8")
+    baseline = commit_all(git_repository)
+    run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.4.0", baseline)
+    (docs / "index.md").write_text("Corrected instructions.\n", encoding="utf-8")
+    source = commit_all(git_repository)
+    run_git(git_repository, "update-ref", "refs/remotes/origin/docs/1.4.0", source)
+    return git_repository, baseline, source
+
+
+def test_correction_source_accepts_matching_release_branch_and_scope(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, source = correction_history
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    assert require_correction_source(repository, "v1.4.0", source.upper(), releases) == baseline
+
+
+def test_correction_source_rejects_newer_release(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, source = correction_history
+    releases = [
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.5.0", "draft": False, "prerelease": False},
+    ]
+
+    with pytest.raises(ValueError, match="is not the latest published stable release"):
+        require_correction_source(repository, "v1.4.0", source, releases)
+
+
+def test_correction_source_rejects_unmerged_changes(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    source = create_test_commit(repository)
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_correction_source(repository, "v1.4.0", source, releases)
+
+
+def test_correction_source_rejects_merged_code_changes(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    (repository / "example.txt").write_text("Application change.\n", encoding="utf-8")
+    source = commit_all(repository)
+    run_git(repository, "update-ref", "refs/remotes/origin/docs/1.4.0", source)
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_source(repository, "v1.4.0", source, releases)
+
+
+def test_correction_source_rejects_branch_outside_release_history(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, _ = correction_history
+    older = run_git(repository, "rev-parse", f"{baseline}^")
+    run_git(repository, "update-ref", "refs/remotes/origin/docs/1.4.0", older)
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_correction_source(repository, "v1.4.0", older, releases)
