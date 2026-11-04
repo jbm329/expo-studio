@@ -127,35 +127,124 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     publication_manifest: dict[str, object],
+    correction_history: tuple[Path, str, str],
     has_publication: bool,
 ) -> None:
-    published = {**publication_manifest, "mode": "bootstrap"} if has_publication else None
+    repository, baseline, correction = correction_history
+    published = {**publication_manifest, "source_sha": baseline} if has_publication else None
+    proposed = {**publication_manifest, "source_sha": correction}
+    proposed_path = tmp_path / "proposed.json"
+    write_publication_manifest(proposed_path, proposed)
     inspect = Mock(return_value=published)
     monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
     output = tmp_path / "inspection.json"
 
-    main(["inspect-published", "--repository-slug", "jbm329/expo-studio", "--output", str(output)])
+    main([
+        "inspect-published",
+        "--repository-slug",
+        "jbm329/expo-studio",
+        "--repository",
+        str(repository),
+        "--proposed",
+        str(proposed_path),
+        "--output",
+        str(output),
+    ])
 
     inspect.assert_called_once_with("jbm329/expo-studio")
     assert json.loads(output.read_text(encoding="utf-8")) == {
         "schema_version": 1,
         "state": "metadata-cross-checked" if has_publication else "no-deployment-records",
         "publication": published,
+        "proposed": proposed,
+        "progress_check": "passed" if has_publication else "no-published-source",
         "deployment_authorized": False,
     }
 
 
 def test_inspect_published_command_does_not_write_report_after_failure(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
 ) -> None:
     monkeypatch.setitem(
         main.__globals__, "fetch_manual_publication_metadata", Mock(side_effect=ValueError("Inspection failed"))
     )
     output = tmp_path / "inspection.json"
+    proposed_path = tmp_path / "proposed.json"
+    write_publication_manifest(proposed_path, publication_manifest)
 
     with pytest.raises(ValueError, match="Inspection failed"):
-        main(["inspect-published", "--repository-slug", "jbm329/expo-studio", "--output", str(output)])
+        main([
+            "inspect-published",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed_path),
+            "--output",
+            str(output),
+        ])
 
+    assert not output.exists()
+
+
+def test_inspect_published_command_rejects_source_regression(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    correction_history: tuple[Path, str, str],
+) -> None:
+    repository, baseline, correction = correction_history
+    monkeypatch.setitem(
+        main.__globals__,
+        "fetch_manual_publication_metadata",
+        Mock(return_value={**publication_manifest, "source_sha": correction}),
+    )
+    proposed_path = tmp_path / "proposed.json"
+    write_publication_manifest(proposed_path, {**publication_manifest, "source_sha": baseline})
+    output = tmp_path / "inspection.json"
+
+    with pytest.raises(ValueError, match="ancestor"):
+        main([
+            "inspect-published",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(repository),
+            "--proposed",
+            str(proposed_path),
+            "--output",
+            str(output),
+        ])
+
+    assert not output.exists()
+
+
+@pytest.mark.parametrize("failure", ["missing", "malformed"])
+def test_inspect_published_command_requires_proposed_manifest_before_fetch(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, failure: str
+) -> None:
+    inspect = Mock()
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
+    proposed = tmp_path / "proposed.json"
+    if failure == "malformed":
+        proposed.write_text("{}", encoding="utf-8")
+    output = tmp_path / "inspection.json"
+
+    with pytest.raises(FileNotFoundError if failure == "missing" else ValueError):
+        main([
+            "inspect-published",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed),
+            "--output",
+            str(output),
+        ])
+
+    inspect.assert_not_called()
     assert not output.exists()
 
 

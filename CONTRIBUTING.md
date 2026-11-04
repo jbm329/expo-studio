@@ -128,12 +128,20 @@ The manual workflow now runs this inspection in a separate trusted-policy job
 with `contents: read`, `actions: read`, and `deployments: read`. It does not
 install or execute the selected documentation source. Its
 `documentation-publication-inspection` artifact is retained for seven days.
-The `inspect-published --repository-slug <owner/repo> --output <path>` command
+The `inspect-published --repository-slug <owner/repo> --repository <checkout>
+--proposed <manifest> --output <path>` command
 writes either `no-deployment-records` or `metadata-cross-checked`, explicitly
 recording `deployment_authorized: false`. Inspection errors fail the job without
 writing a report; they are not reported as empty history. The preview build
 remains independent of inspection after source validation. There are still no
 Pages write permissions or deployment steps.
+
+Inspection also compares the downloaded proposed manifest with the cross-checked
+published source using the full-history trusted checkout. Regressions fail the
+inspection job without a report. Successful reports include the proposed
+metadata and a `progress_check` of `passed` or `no-published-source`; the latter
+means there was nothing to compare, not that bootstrap is authorized. This is
+an early review check, not the serialized final check required for deployment.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

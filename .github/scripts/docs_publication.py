@@ -1465,14 +1465,21 @@ def main(argv: Sequence[str] | None = None) -> None:
         "inspect-published", help="Report manual deployment metadata without authorizing publication."
     )
     inspect.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    inspect.add_argument("--repository", type=Path, required=True, help="Full-history checkout for source comparison.")
+    inspect.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
     arguments = parser.parse_args(argv)
     if arguments.command == "inspect-published":
+        proposed = read_publication_manifest(arguments.proposed)
         published = fetch_manual_publication_metadata(arguments.repository_slug)
+        if published is not None:
+            require_manifest_progress(arguments.repository, published, proposed)
         report = {
             "schema_version": 1,
             "state": "no-deployment-records" if published is None else "metadata-cross-checked",
             "publication": published,
+            "proposed": proposed,
+            "progress_check": "no-published-source" if published is None else "passed",
             "deployment_authorized": False,
         }
         arguments.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
