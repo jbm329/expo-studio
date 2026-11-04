@@ -200,3 +200,46 @@ def require_ancestor(repository: Path, ancestor_sha: str, descendant_sha: str) -
         message = f"Commit {ancestor!r} is not an ancestor of {descendant!r}."
         raise ValueError(message)
     result.check_returncode()
+
+
+def require_remote_branch_contains_commit(repository: Path, branch: str, source_sha: str) -> str:
+    """Require the source commit to be reachable from an origin branch.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        branch: Branch name, such as main or docs/1.4.0, without a ref prefix.
+        source_sha: Full commit ID to check for branch membership.
+
+    Returns:
+        The resolved branch-tip commit ID.
+
+    Raises:
+        ValueError: If the source ID is invalid or is not in the branch history.
+        subprocess.CalledProcessError: If the branch name is invalid, the remote
+            branch is missing, or Git cannot inspect the history.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        This inspects local remote-tracking refs. The caller must fetch fresh
+        origin branch refs and sufficient history before calling it. Reachability
+        does not establish that a pull request was reviewed or approved.
+    """
+    source = require_commit(repository, source_sha)
+    remote_ref = f"refs/remotes/origin/{branch}"
+    subprocess.run(  # noqa: S603
+        ["git", "check-ref-format", remote_ref],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "show-ref", "--verify", "--hash", remote_ref],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    branch_tip = require_commit(repository, result.stdout.strip())
+    require_ancestor(repository, source, branch_tip)
+    return branch_tip

@@ -15,6 +15,7 @@ require_latest_stable_tag = HELPER["require_latest_stable_tag"]
 validate_commit_sha = HELPER["validate_commit_sha"]
 require_commit = HELPER["require_commit"]
 require_ancestor = HELPER["require_ancestor"]
+require_remote_branch_contains_commit = HELPER["require_remote_branch_contains_commit"]
 
 
 @pytest.mark.parametrize(
@@ -311,3 +312,38 @@ def test_require_ancestor_surfaces_missing_commit(git_repository: Path, missing_
 
     with pytest.raises(subprocess.CalledProcessError):
         require_ancestor(git_repository, ancestor, descendant)
+
+
+@pytest.mark.parametrize("branch", ["main", "docs/1.4.0"])
+def test_remote_branch_contains_tip_and_ancestors(git_repository: Path, branch: str) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    tip = create_test_commit(git_repository)
+    run_git(git_repository, "update-ref", f"refs/remotes/origin/{branch}", tip)
+
+    assert require_remote_branch_contains_commit(git_repository, branch, tip) == tip
+    assert require_remote_branch_contains_commit(git_repository, branch, baseline) == tip
+
+
+def test_remote_branch_rejects_unmerged_descendant(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    run_git(git_repository, "update-ref", "refs/remotes/origin/main", baseline)
+    unmerged = create_test_commit(git_repository)
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_remote_branch_contains_commit(git_repository, "main", unmerged)
+
+
+def test_remote_branch_does_not_fall_back_to_local_branch(git_repository: Path) -> None:
+    source = run_git(git_repository, "rev-parse", "HEAD")
+    run_git(git_repository, "branch", "docs/1.4.0", source)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        require_remote_branch_contains_commit(git_repository, "docs/1.4.0", source)
+
+
+@pytest.mark.parametrize("branch", ["main~1", "main^{commit}", "../main", "main\n", "main space"])
+def test_remote_branch_rejects_invalid_ref_names(git_repository: Path, branch: str) -> None:
+    source = run_git(git_repository, "rev-parse", "HEAD")
+
+    with pytest.raises(subprocess.CalledProcessError):
+        require_remote_branch_contains_commit(git_repository, branch, source)
