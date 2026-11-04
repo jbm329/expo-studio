@@ -5,6 +5,7 @@ import subprocess
 import tomllib
 from pathlib import Path
 from runpy import run_path
+from unittest.mock import Mock
 
 import pytest
 
@@ -33,6 +34,90 @@ require_manifest_progress = HELPER["require_manifest_progress"]
 read_publication_manifest = HELPER["read_publication_manifest"]
 write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
+fetch_github_releases = HELPER["fetch_github_releases"]
+
+
+def test_fetch_github_releases_combines_all_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    older = {"tag_name": "v1.9.0", "draft": False, "prerelease": False}
+    newer = {"tag_name": "v1.10.0", "draft": False, "prerelease": False}
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[older], [newer], []])))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    releases = fetch_github_releases("jbm329/expo-studio")
+
+    assert releases == [older, newer]
+    assert latest_stable_tag(releases) == "v1.10.0"
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/releases?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize("response", ["[[]]", "[]"])
+def test_fetch_github_releases_accepts_empty_results(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    assert fetch_github_releases("jbm329/expo-studio") == []
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        "null",
+        "{}",
+        "[null]",
+        '[{"tag_name": "v1.4.0", "draft": false, "prerelease": false}]',
+        '[[{"tag_name": "v1.4.0"}]]',
+    ],
+)
+def test_fetch_github_releases_rejects_invalid_pages(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        fetch_github_releases("jbm329/expo-studio")
+
+
+def test_fetch_github_releases_rejects_invalid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout="{")))
+
+    with pytest.raises(json.JSONDecodeError):
+        fetch_github_releases("jbm329/expo-studio")
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_fetch_github_releases_surfaces_cli_failure(monkeypatch: pytest.MonkeyPatch, error: Exception) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_github_releases("jbm329/expo-studio")
+
+
+@pytest.mark.parametrize(
+    "slug", ["", "expo-studio", "../repo", "owner/repo/extra", "owner/repo?query=1", "-owner/repo"]
+)
+def test_fetch_github_releases_rejects_invalid_repository_before_cli(
+    monkeypatch: pytest.MonkeyPatch, slug: str
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="owner/repository"):
+        fetch_github_releases(slug)
+
+    runner.assert_not_called()
 
 
 def test_parse_github_releases_preserves_required_metadata() -> None:

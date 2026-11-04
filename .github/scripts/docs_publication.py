@@ -56,6 +56,53 @@ def parse_github_releases(value: object) -> list[GitHubRelease]:
     return releases
 
 
+def fetch_github_releases(repository_slug: str) -> list[GitHubRelease]:
+    """Fetch and validate every release page through the authenticated GitHub CLI.
+
+    Args:
+        repository_slug: GitHub repository identifier in owner/repository form.
+
+    Returns:
+        Validated release metadata from all response pages.
+
+    Raises:
+        ValueError: If the repository identifier or JSON response is invalid.
+        TypeError: If response pages contain incorrectly typed release metadata.
+        subprocess.CalledProcessError: If the API request or CLI authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        The caller configures GitHub CLI authentication, normally with GH_TOKEN.
+        CLI failures are propagated rather than returning an empty release list.
+    """
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*", repository_slug) is None:
+        message = "Expected a GitHub repository identifier in owner/repository form."
+        raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/releases?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "Paginated GitHub release response must be a list of pages."
+        raise TypeError(message)
+    releases: list[GitHubRelease] = []
+    for page in pages:
+        releases.extend(parse_github_releases(page))
+    return releases
+
+
 class PublicationManifest(TypedDict):
     """Versioned provenance stored alongside the published website."""
 
