@@ -186,7 +186,7 @@ class GitHubDeploymentStatus(TypedDict):
     """Status identity and reported workflow log location, not verified provenance."""
 
     id: int
-    state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "success"]
+    state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"]
     log_url: str
     created_at: str
 
@@ -267,7 +267,7 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
             if type(status_id) is not int or status_id <= 0 or not isinstance(log_url, str):
                 message = "GitHub deployment status requires a positive integer ID and string log_url."
                 raise TypeError(message)
-            if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "success"):
+            if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"):
                 message = "Unsupported GitHub deployment status state."
                 raise ValueError(message)
             if not isinstance(created_at, str):
@@ -313,7 +313,7 @@ def require_current_deployment_identity(
     if validate_commit_sha(deployment["sha"]) != validate_commit_sha(workflow_sha):
         message = "Pending deployment does not match the current workflow commit."
         raise ValueError(message)
-    if status["state"] not in ("queued", "pending", "in_progress"):
+    if status["state"] not in ("queued", "pending", "in_progress", "waiting"):
         message = "Current deployment identification requires an unfinished deployment status."
         raise ValueError(message)
     expected = f"https://github.com/{repository_slug}/actions/runs/{run_id}/job/{job_id}"
@@ -380,7 +380,7 @@ def fetch_current_pages_deployment(
             raise ValueError(message)
         seen.add(deployment_id)
         status = latest_deployment_status(fetch_deployment_statuses(repository_slug, deployment_id))
-        if status["state"] in ("queued", "pending", "in_progress"):
+        if status["state"] in ("queued", "pending", "in_progress", "waiting"):
             if execution_context is not None and current_job_id is not None:
                 require_current_deployment_identity(
                     repository_slug,

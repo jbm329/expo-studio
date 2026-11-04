@@ -246,7 +246,7 @@ def test_fetch_executing_publication_job_propagates_api_failure(
         )
 
 
-@pytest.mark.parametrize("state", ["queued", "pending", "in_progress"])
+@pytest.mark.parametrize("state", ["queued", "pending", "in_progress", "waiting"])
 def test_current_deployment_identity_requires_exact_job_and_commit(state: str) -> None:
     require_current_deployment_identity(
         "jbm329/expo-studio",
@@ -1996,15 +1996,16 @@ def test_fetch_current_pages_deployment_distinguishes_empty_history(monkeypatch:
         (["pending"], "exact current workflow job"),
     ],
 )
+@pytest.mark.parametrize("current_state", ["in_progress", "waiting"])
 def test_current_job_exclusion_preserves_prior_history_rules(
-    monkeypatch: pytest.MonkeyPatch, prior_states: list[str], message: str | None
+    monkeypatch: pytest.MonkeyPatch, prior_states: list[str], message: str | None, current_state: str
 ) -> None:
     context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
     deployments = [{"id": index + 1, "sha": "a" * 40} for index in range(len(prior_states) + 1)]
     statuses = [
         {
             "id": 10,
-            "state": "in_progress",
+            "state": current_state,
             "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
             "created_at": "2026-11-04T12:00:00Z",
         },
@@ -2089,6 +2090,7 @@ def test_current_job_exclusion_requires_job_lookup_before_reading_history(monkey
         (["success", "success"], "Multiple currently successful"),
         (["failure", "inactive", "error"], "no currently successful"),
         (["pending", "success"], "unfinished"),
+        (["waiting", "success"], "unfinished"),
         (["success", "queued"], "unfinished"),
         (["in_progress"], "unfinished"),
     ],
@@ -2189,7 +2191,9 @@ def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatc
     )
 
 
-@pytest.mark.parametrize("state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "success"])
+@pytest.mark.parametrize(
+    "state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"]
+)
 def test_fetch_deployment_statuses_preserves_states(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
     status = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
@@ -2290,7 +2294,7 @@ def test_fetch_deployment_statuses_rejects_bad_repository_before_cli(monkeypatch
 
 
 @pytest.mark.parametrize("reverse", [False, True])
-@pytest.mark.parametrize("state", ["success", "inactive", "failure", "in_progress"])
+@pytest.mark.parametrize("state", ["success", "inactive", "failure", "in_progress", "waiting"])
 def test_latest_deployment_status_uses_timestamp_not_id_or_state(reverse: bool, state: str) -> None:
     older = {"id": 99, "state": "success", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
     newer = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:01:00Z"}
@@ -2299,6 +2303,21 @@ def test_latest_deployment_status_uses_timestamp_not_id_or_state(reverse: bool, 
         statuses.reverse()
 
     assert latest_deployment_status(statuses) == newer
+
+
+def test_current_deployment_accepts_success_after_environment_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
+    deployment = {"id": 42, "sha": "a" * 40, "environment": "github-pages"}
+    waiting = {"id": 1, "state": "waiting", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    success = {**waiting, "id": 2, "state": "success", "created_at": "2026-11-04T12:01:00Z"}
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([[deployment]])),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([[success, waiting]])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert fetch_current_pages_deployment("jbm329/expo-studio") == ({"id": 42, "sha": "a" * 40}, success)
 
 
 def test_latest_deployment_status_rejects_empty_history() -> None:

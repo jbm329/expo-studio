@@ -25,6 +25,10 @@ Before final deployment checks can ignore an environment job's own pending
 record, the helper requires matching workflow commit, current run ID, and an
 exact job-specific Actions log URL. Run-only URLs and other jobs are insufficient.
 This identity cross-check alone does not authorize excluding records or publishing.
+GitHub environment histories can include `waiting` statuses. They are parsed
+as unfinished states, not failures or successful publications. An older
+`waiting` status does not invalidate a later success; a latest `waiting` status
+blocks publication unless it identifies the independently verified current job.
 Current-job lookup now queries every jobs page for the exact run attempt,
 requiring one in-progress `Deploy documentation` job with the expected workflow
 commit and runner name. It returns the numeric job ID, with malformed responses
