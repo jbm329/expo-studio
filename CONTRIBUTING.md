@@ -46,9 +46,15 @@ uv run --frozen --extra docs zensical build --clean --strict
 The generated website is written to `site/`. Do not edit or commit that
 directory.
 
-The Documentation GitHub Actions workflow builds relevant pull requests
-and uploads a `documentation-site` artifact for review. It does not publish
-the website. Public hosting is not configured yet.
+The Documentation GitHub Actions workflow checks relevant pull requests
+targeting `main` or a `docs/*` maintenance branch. It builds the website,
+uploads a `documentation-site` artifact for review, and runs the publication
+policy tests and checks. It has read-only repository permissions and does
+not publish the website.
+
+The separate Documentation publication workflow currently validates manual
+bootstrap or correction requests from `main` and uploads a validated manifest.
+It does not build or deploy the website yet.
 
 ## Notes
 This is a spare-time project, so response times may vary.  
