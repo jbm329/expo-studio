@@ -215,7 +215,11 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
 ) -> None:
     repository, baseline, correction = correction_history
     published = {**publication_manifest, "source_sha": baseline} if has_publication else None
-    proposed = {**publication_manifest, "source_sha": correction}
+    proposed = {
+        **publication_manifest,
+        "source_sha": correction,
+        "mode": "release" if has_publication else "bootstrap",
+    }
     proposed_path = tmp_path / "proposed.json"
     write_publication_manifest(proposed_path, proposed)
     inspect = Mock(return_value=published)
@@ -243,6 +247,39 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         "progress_check": "passed" if has_publication else "no-published-source",
         "deployment_authorized": False,
     }
+
+
+@pytest.mark.parametrize("mode", ["correction", "release"])
+def test_inspect_published_command_requires_bootstrap_when_history_is_empty(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    mode: str,
+) -> None:
+    inspect = Mock(return_value=None)
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
+    progress = Mock()
+    monkeypatch.setitem(main.__globals__, "require_manifest_progress", progress)
+    proposed = tmp_path / "proposed.json"
+    write_publication_manifest(proposed, {**publication_manifest, "mode": mode})
+    output = tmp_path / "inspection.json"
+
+    with pytest.raises(ValueError, match="explicitly validated bootstrap"):
+        main([
+            "inspect-published",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed),
+            "--output",
+            str(output),
+        ])
+
+    inspect.assert_called_once_with("jbm329/expo-studio")
+    progress.assert_not_called()
+    assert not output.exists()
 
 
 def test_inspect_published_command_does_not_write_report_after_failure(

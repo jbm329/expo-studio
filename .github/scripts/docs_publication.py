@@ -1513,6 +1513,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     if arguments.command == "inspect-published":
         proposed = read_publication_manifest(arguments.proposed)
         published = fetch_manual_publication_metadata(arguments.repository_slug)
+        if published is None and proposed["mode"] != "bootstrap":
+            message = "Empty Pages deployment history requires an explicitly validated bootstrap proposal."
+            raise ValueError(message)
         if published is not None:
             require_manifest_progress(arguments.repository, published, proposed)
         report = {

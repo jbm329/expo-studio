@@ -142,6 +142,12 @@ inspection job without a report. Successful reports include the proposed
 metadata and a `progress_check` of `passed` or `no-published-source`; the latter
 means there was nothing to compare, not that bootstrap is authorized. This is
 an early review check, not the serialized final check required for deployment.
+When history is empty, inspection requires a bootstrap proposal; correction and
+release proposals fail without a report. Bootstrap eligibility must already have
+passed source preparation, including the placeholder-only and pre-documentation
+release checks. This restriction applies to both initial and post-build
+inspection. It does not prove that a site never existed (records can be deleted)
+or replace the separate first-deployment verification still to be implemented.
 
 The helper's `verify-site --site <directory> --proposed <manifest>` command
 checks an extracted website against a separately validated proposal. It requires
