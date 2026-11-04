@@ -157,6 +157,9 @@ requires a positive numeric ID and downloads that exact artifact, not a
 name-based replacement. The verified ID appears in the Actions summary.
 Missing or deleted artifacts fail verification rather than falling back to
 another preview. The ID is available for the future deployment step to reuse.
+Validation likewise exposes and checks the manifest upload's immutable artifact
+ID. The build, inspection, verification, and post-build recheck all download
+that exact proposal by ID, without falling back to an artifact name.
 Only the trusted helper is executed, without installing application dependencies
 or retaining checkout credentials. Its Actions summary confirms successful
 structure and metadata checks, not authorization to deploy. Deployment wiring

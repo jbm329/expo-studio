@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       source_sha: ${{ steps.validated-source.outputs.source_sha }}
+      manifest_artifact_id: ${{ steps.manifest-artifact.outputs.artifact-id }}
 
     steps:
       - name: Require trusted main workflow
@@ -112,12 +113,22 @@ jobs:
           PY
 
       - name: Upload validated publication manifest
+        id: manifest-artifact
         uses: actions/upload-artifact@v7
         with:
           name: validated-documentation-publication
           path: ${{ runner.temp }}/validated-publication.json
           if-no-files-found: error
           retention-days: 7
+
+      - name: Require immutable manifest artifact ID
+        env:
+          MANIFEST_ARTIFACT_ID: ${{ steps.manifest-artifact.outputs.artifact-id }}
+        run: |
+          if [[ ! "$MANIFEST_ARTIFACT_ID" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::Validation did not provide a valid manifest artifact ID."
+            exit 1
+          fi
 
   inspect:
     needs: prepare
@@ -144,7 +155,8 @@ jobs:
       - name: Download proposed publication manifest
         uses: actions/download-artifact@v8
         with:
-          name: validated-documentation-publication
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/proposed-publication
 
       - name: Inspect publication metadata and source progress
@@ -196,7 +208,8 @@ jobs:
       - name: Download validated publication manifest
         uses: actions/download-artifact@v8
         with:
-          name: validated-documentation-publication
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/publication-metadata
 
       - name: Include validated provenance in preview
@@ -261,7 +274,8 @@ jobs:
       - name: Download validated publication manifest
         uses: actions/download-artifact@v8
         with:
-          name: validated-documentation-publication
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/validated-proposal
 
       - name: Require immutable website artifact ID
@@ -299,7 +313,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   recheck:
-    needs: [inspect, verify]
+    needs: [prepare, inspect, verify]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -322,7 +336,8 @@ jobs:
       - name: Download validated publication manifest
         uses: actions/download-artifact@v8
         with:
-          name: validated-documentation-publication
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
           path: ${{ runner.temp }}/validated-proposal
 
       - name: Recheck source against current releases and refs
