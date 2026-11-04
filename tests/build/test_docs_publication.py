@@ -6,7 +6,8 @@ import sys
 import tomllib
 from pathlib import Path
 from runpy import run_path
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
+from urllib.error import HTTPError, URLError
 
 import pytest
 
@@ -33,6 +34,7 @@ require_publication_progress = HELPER["require_publication_progress"]
 parse_publication_manifest = HELPER["parse_publication_manifest"]
 require_manifest_progress = HELPER["require_manifest_progress"]
 read_publication_manifest = HELPER["read_publication_manifest"]
+fetch_published_manifest = HELPER["fetch_published_manifest"]
 write_publication_manifest = HELPER["write_publication_manifest"]
 parse_github_releases = HELPER["parse_github_releases"]
 fetch_github_releases = HELPER["fetch_github_releases"]
@@ -90,7 +92,7 @@ def test_prepare_command_does_not_write_output_after_failure(
     assert not output_path.exists()
 
 
-@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"], ["check-progress"]])
+@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"]])
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(arguments)
@@ -106,8 +108,102 @@ def test_publication_script_help_runs_without_side_effects() -> None:
         text=True,
     )
 
-    assert "{prepare,check-progress}" in result.stdout
+    assert "{prepare,check-progress,fetch-published}" in result.stdout
     assert "without building or deploying" in result.stdout
+
+
+def test_fetch_published_manifest_reads_fixed_site(
+    monkeypatch: pytest.MonkeyPatch, publication_manifest: dict[str, object]
+) -> None:
+    response = MagicMock()
+    response.status = 200
+    response.read.return_value = json.dumps(publication_manifest).encode("utf-8")
+    response.geturl.side_effect = lambda: opener.call_args.args[0].full_url
+    opener = MagicMock()
+    opener.return_value.__enter__.return_value = response
+    monkeypatch.setitem(fetch_published_manifest.__globals__, "urlopen", opener)
+
+    assert fetch_published_manifest() == publication_manifest
+    first_url = opener.call_args.args[0].full_url
+    assert fetch_published_manifest() == publication_manifest
+    request = opener.call_args.args[0]
+    assert request.full_url.startswith("https://jbm329.github.io/expo-studio/publication.json?check=")
+    assert request.full_url != first_url
+    assert request.get_header("Cache-control") == "no-cache"
+    assert request.get_header("Accept") == "application/json"
+    assert opener.call_args.kwargs == {"timeout": 30}
+    response.read.assert_called_with(65_537)
+
+
+@pytest.mark.parametrize(
+    ("content", "error"),
+    [(b"{}", ValueError), (b"not json", ValueError), (b"\xff", UnicodeDecodeError), (b"x" * 65_537, ValueError)],
+    ids=["invalid-schema", "invalid-json", "invalid-utf8", "oversized"],
+)
+def test_fetch_published_manifest_rejects_bad_content(
+    monkeypatch: pytest.MonkeyPatch, content: bytes, error: type[Exception]
+) -> None:
+    response = MagicMock()
+    response.status = 200
+    response.read.return_value = content
+    opener = MagicMock()
+    response.geturl.side_effect = lambda: opener.call_args.args[0].full_url
+    opener.return_value.__enter__.return_value = response
+    monkeypatch.setitem(fetch_published_manifest.__globals__, "urlopen", opener)
+
+    with pytest.raises(error):
+        fetch_published_manifest()
+
+
+@pytest.mark.parametrize("failure", ["status", "redirect"])
+def test_fetch_published_manifest_rejects_unexpected_response(monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
+    response = MagicMock()
+    opener = MagicMock()
+    response.status = 204 if failure == "status" else 200
+    response.geturl.side_effect = lambda: (
+        "https://example.com/publication.json" if failure == "redirect" else opener.call_args.args[0].full_url
+    )
+    opener.return_value.__enter__.return_value = response
+    monkeypatch.setitem(fetch_published_manifest.__globals__, "urlopen", opener)
+
+    with pytest.raises(ValueError, match="without redirection"):
+        fetch_published_manifest()
+
+    response.read.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error",
+    [HTTPError("https://jbm329.github.io", 404, "Not Found", None, None), URLError("unavailable"), TimeoutError()],
+)
+def test_fetch_published_manifest_propagates_request_failures(monkeypatch: pytest.MonkeyPatch, error: OSError) -> None:
+    monkeypatch.setitem(fetch_published_manifest.__globals__, "urlopen", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_published_manifest()
+
+
+def test_fetch_published_command_writes_manifest(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> None:
+    fetch = Mock(return_value=publication_manifest)
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", fetch)
+    output = tmp_path / "published.json"
+
+    main(["fetch-published", "--output", str(output)])
+
+    fetch.assert_called_once_with()
+    assert read_publication_manifest(output) == publication_manifest
+
+
+def test_fetch_published_command_does_not_write_after_failure(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", Mock(side_effect=URLError("unavailable")))
+    output = tmp_path / "published.json"
+
+    with pytest.raises(URLError):
+        main(["fetch-published", "--output", str(output)])
+
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("direction", ["advance", "repeat", "regress"])

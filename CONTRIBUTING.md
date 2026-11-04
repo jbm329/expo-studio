@@ -73,6 +73,14 @@ required; a missing file is not treated as an empty deployment.
 This command does not retrieve or authenticate deployed state, establish source
 eligibility, or deploy anything. It is not connected to the workflow yet.
 
+The helper's `fetch-published --output <path>` command retrieves `publication.json`
+from the fixed public website over HTTPS and validates its schema. It requests
+fresh content and rejects unexpected redirects, oversized responses, and malformed
+metadata. HTTP errors (including a missing file), timeouts, and network failures
+are errors, not evidence that no previous deployment exists. Public metadata
+must still be checked against trusted GitHub deployment history before it is
+used to authorize publication; that integration is not implemented yet.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛

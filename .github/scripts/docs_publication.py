@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import secrets
 import subprocess
 import tomllib
+from http import HTTPStatus
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Literal, TypedDict
+from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -262,6 +265,37 @@ def read_publication_manifest(path: Path) -> PublicationManifest:
         UnicodeDecodeError: If the file is not valid UTF-8.
     """
     return parse_publication_manifest(json.loads(path.read_text(encoding="utf-8")))
+
+
+def fetch_published_manifest() -> PublicationManifest:
+    """Read provenance from the fixed public documentation website.
+
+    Returns:
+        Structurally validated metadata served by the public website.
+
+    Raises:
+        ValueError: If the response status, destination, size, JSON, or metadata is invalid.
+        OSError: If the HTTPS request fails, including HTTP errors and timeouts.
+        UnicodeDecodeError: If response content is not valid UTF-8.
+
+    Notes:
+        Missing content is an error, not evidence of a first deployment.
+        A unique query and no-cache header request fresh data. This does not
+        authenticate deployment history or guarantee CDN consistency; callers
+        must independently verify provenance before authorizing a deployment.
+    """
+    url = f"https://jbm329.github.io/expo-studio/publication.json?check={secrets.token_hex(16)}"
+    request = Request(url, headers={"Accept": "application/json", "Cache-Control": "no-cache"})
+    maximum_size = 65_536
+    with urlopen(request, timeout=30) as response:  # noqa: S310 - Fixed HTTPS destination, not caller input.
+        if response.status != HTTPStatus.OK or response.geturl() != url:
+            message = "Published provenance requires HTTP 200 from the expected website without redirection."
+            raise ValueError(message)
+        content = response.read(maximum_size + 1)
+    if len(content) > maximum_size:
+        message = "Published provenance exceeds the 64 KiB response limit."
+        raise ValueError(message)
+    return parse_publication_manifest(json.loads(content.decode("utf-8")))
 
 
 def write_publication_manifest(path: Path, manifest: PublicationManifest) -> None:
@@ -939,7 +973,7 @@ def require_bootstrap_source(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Prepare a publication or check progress against existing provenance.
+    """Prepare a publication, retrieve public metadata, or check provenance progress.
 
     Args:
         argv: Command-line arguments, or None to use the process arguments.
@@ -963,7 +997,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     progress.add_argument("--repository", type=Path, required=True, help="Checkout containing both source commits.")
     progress.add_argument("--published", type=Path, required=True, help="Verified deployed manifest JSON file.")
     progress.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
+    fetch = commands.add_parser(
+        "fetch-published", help="Retrieve public provenance; deployment verification is separate."
+    )
+    fetch.add_argument("--output", type=Path, required=True, help="Public manifest JSON output file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "fetch-published":
+        write_publication_manifest(arguments.output, fetch_published_manifest())
+        return
     if arguments.command == "check-progress":
         published = read_publication_manifest(arguments.published)
         proposed = read_publication_manifest(arguments.proposed)
