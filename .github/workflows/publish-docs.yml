@@ -94,6 +94,17 @@ jobs:
           manifest = json.loads(path.read_text(encoding="utf-8"))
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
               output.write(f"source_sha={manifest['source_sha']}\n")
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write(
+                  "## Validated documentation preview request\n\n"
+                  f"- Mode: `{manifest['mode']}`\n"
+                  f"- Application baseline: `{manifest['baseline_tag']}`\n"
+                  f"- Source commit: `{manifest['source_sha']}`\n"
+                  f"- Workflow run: `{manifest['run_id']}`\n\n"
+                  "This validates the source only; it does not confirm a build or deployment.\n"
+                  "For bootstrap, the baseline identifies the existing application release, "
+                  "not manual coverage.\n"
+              )
           PY
 
       - name: Upload validated publication manifest
@@ -129,6 +140,43 @@ jobs:
 
       - name: Build documentation
         run: uv run --frozen --extra docs zensical build --clean --strict
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: validated-documentation-publication
+          path: ${{ runner.temp }}/publication-metadata
+
+      - name: Include validated provenance in preview
+        env:
+          VALIDATED_SOURCE_SHA: ${{ needs.prepare.outputs.source_sha }}
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          source = Path(os.environ["RUNNER_TEMP"]) / "publication-metadata" / "validated-publication.json"
+          content = source.read_bytes()
+          manifest = json.loads(content)
+          if manifest["source_sha"] != os.environ["VALIDATED_SOURCE_SHA"]:
+              raise SystemExit("Publication manifest does not match the validated source commit.")
+          if manifest["run_id"] != os.environ["GITHUB_RUN_ID"]:
+              raise SystemExit("Publication manifest does not belong to this workflow run.")
+          site = Path("site")
+          if site.is_symlink() or not site.is_dir():
+              raise SystemExit("Expected a regular site output directory.")
+          destination = site / "publication.json"
+          with destination.open("xb") as output:
+              output.write(content)
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as summary:
+              summary.write(
+                  "## Documentation preview built\n\n"
+                  "Download `documentation-publication-preview` from this run's artifacts.\n"
+                  "Its `publication.json` records the validated source and application baseline.\n\n"
+                  "This is a review artifact, not a deployed website.\n"
+              )
+          PY
 
       - name: Upload documentation publication preview
         uses: actions/upload-artifact@v7

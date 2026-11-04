@@ -57,7 +57,13 @@ bootstrap or correction requests from `main` and uploads a validated manifest.
 A separate read-only job checks out that exact validated source commit, checks
 its dependency lockfile, and builds the website. The resulting
 `documentation-publication-preview` artifact is available for seven days.
-The workflow does not deploy the website yet.
+It includes `publication.json`, recording the validated mode, application
+baseline, source commit, and workflow run. This filename is reserved for
+generated provenance; do not add a documentation asset with that output path.
+The Actions run summary also identifies the validated source and preview.
+For bootstrap, the baseline identifies the existing application release, not
+a claim that the placeholder documents that version. The workflow does not
+deploy the website yet.
 
 ## Notes
 This is a spare-time project, so response times may vary.  
