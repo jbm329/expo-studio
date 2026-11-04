@@ -100,7 +100,9 @@ def test_prepare_command_does_not_write_output_after_failure(
     assert not output_path.exists()
 
 
-@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"]])
+@pytest.mark.parametrize(
+    "arguments", [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"], ["inspect-published"]]
+)
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(arguments)
@@ -116,8 +118,45 @@ def test_publication_script_help_runs_without_side_effects() -> None:
         text=True,
     )
 
-    assert "{prepare,check-progress,fetch-published}" in result.stdout
+    assert "{prepare,check-progress,fetch-published,inspect-published}" in result.stdout
     assert "without building or deploying" in result.stdout
+
+
+@pytest.mark.parametrize("has_publication", [False, True])
+def test_inspect_published_command_reports_state_without_authorizing_deployment(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    has_publication: bool,
+) -> None:
+    published = {**publication_manifest, "mode": "bootstrap"} if has_publication else None
+    inspect = Mock(return_value=published)
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
+    output = tmp_path / "inspection.json"
+
+    main(["inspect-published", "--repository-slug", "jbm329/expo-studio", "--output", str(output)])
+
+    inspect.assert_called_once_with("jbm329/expo-studio")
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "schema_version": 1,
+        "state": "metadata-cross-checked" if has_publication else "no-deployment-records",
+        "publication": published,
+        "deployment_authorized": False,
+    }
+
+
+def test_inspect_published_command_does_not_write_report_after_failure(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setitem(
+        main.__globals__, "fetch_manual_publication_metadata", Mock(side_effect=ValueError("Inspection failed"))
+    )
+    output = tmp_path / "inspection.json"
+
+    with pytest.raises(ValueError, match="Inspection failed"):
+        main(["inspect-published", "--repository-slug", "jbm329/expo-studio", "--output", str(output)])
+
+    assert not output.exists()
 
 
 def test_fetch_published_manifest_reads_fixed_site(

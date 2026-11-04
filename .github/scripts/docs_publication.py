@@ -1461,7 +1461,22 @@ def main(argv: Sequence[str] | None = None) -> None:
         "fetch-published", help="Retrieve public provenance; deployment verification is separate."
     )
     fetch.add_argument("--output", type=Path, required=True, help="Public manifest JSON output file.")
+    inspect = commands.add_parser(
+        "inspect-published", help="Report manual deployment metadata without authorizing publication."
+    )
+    inspect.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "inspect-published":
+        published = fetch_manual_publication_metadata(arguments.repository_slug)
+        report = {
+            "schema_version": 1,
+            "state": "no-deployment-records" if published is None else "metadata-cross-checked",
+            "publication": published,
+            "deployment_authorized": False,
+        }
+        arguments.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+        return
     if arguments.command == "fetch-published":
         write_publication_manifest(arguments.output, fetch_published_manifest())
         return

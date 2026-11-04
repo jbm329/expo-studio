@@ -84,9 +84,8 @@ used to authorize publication; that integration is not implemented yet.
 The helper can also query every page of GitHub's `github-pages` deployment
 records using a token with `deployments: read`. API failures and malformed
 records fail explicitly rather than producing an empty history. These records
-do not establish deployment success or verify public provenance yet, and an
-empty history alone does not authorize a first publication. No workflow
-permissions have been expanded for this query yet.
+alone do not establish deployment success or verify public provenance, and an
+empty history alone does not authorize a first publication.
 
 Deployment status retrieval preserves all reported states, including pending,
 failed, successful, and inactive records. It does not assume API ordering or
@@ -116,15 +115,25 @@ A separate job check requires exactly one successful job named
 must fall within the job's execution window; a job-specific status link must
 identify that same job. This cross-check rejects a different attempt's execution
 window but does not establish artifact contents. The deploy job has not been
-added yet; artifact verification and final deployment wiring remain unfinished,
-and no workflow permissions have been expanded.
+added yet; artifact verification and final deployment wiring remain unfinished.
 
 `fetch_manual_publication_metadata` connects the current-deployment, public
 manifest, run-association, manual-run, and job checks. It rechecks the selected
 deployment after inspection and rejects a changed deployment or status.
 Only an initially empty deployment history returns no metadata; every failed
 check propagates as an error. This is still metadata inspection, not artifact
-verification or permission to publish, and is not wired into the workflow yet.
+verification or permission to publish.
+
+The manual workflow now runs this inspection in a separate trusted-policy job
+with `contents: read`, `actions: read`, and `deployments: read`. It does not
+install or execute the selected documentation source. Its
+`documentation-publication-inspection` artifact is retained for seven days.
+The `inspect-published --repository-slug <owner/repo> --output <path>` command
+writes either `no-deployment-records` or `metadata-cross-checked`, explicitly
+recording `deployment_authorized: false`. Inspection errors fail the job without
+writing a report; they are not reported as empty history. The preview build
+remains independent of inspection after source validation. There are still no
+Pages write permissions or deployment steps.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

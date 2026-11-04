@@ -115,6 +115,43 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  inspect:
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+
+    steps:
+      - name: Checkout trusted inspection policy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Inspect existing publication metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --output "$RUNNER_TEMP/publication-inspection.json"
+
+      - name: Upload publication inspection report
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-inspection
+          path: ${{ runner.temp }}/publication-inspection.json
+          if-no-files-found: error
+          retention-days: 7
+
   build:
     needs: prepare
     runs-on: ubuntu-latest
