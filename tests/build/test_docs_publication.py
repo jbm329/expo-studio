@@ -468,6 +468,7 @@ def test_prepare_command_does_not_write_output_after_failure(
         ["inspect-published"],
         ["verify-site"],
         ["verify-pages-artifact"],
+        ["verify-published"],
     ],
 )
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
@@ -475,6 +476,58 @@ def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> No
         main(arguments)
 
     assert error.value.code == 2
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_verify_published_command_checks_served_provenance_and_release(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], mode: str
+) -> None:
+    proposal = {**publication_manifest, "mode": mode}
+    path = tmp_path / "proposed.json"
+    write_publication_manifest(path, proposal)
+    fetch = Mock(return_value=[{"tag_name": "v1.4.0", "draft": False, "prerelease": False}])
+    public = Mock(return_value=proposal)
+    monkeypatch.setitem(main.__globals__, "fetch_github_releases", fetch)
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", public)
+
+    main(["verify-published", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    fetch.assert_called_once_with("jbm329/expo-studio")
+    public.assert_called_once_with()
+    assert read_publication_manifest(path) == proposal
+
+
+@pytest.mark.parametrize("failure", ["superseded", "mismatch", "network", "release-api", "missing-proposal"])
+def test_verify_published_command_fails_explicitly(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], failure: str
+) -> None:
+    path = tmp_path / "proposed.json"
+    if failure != "missing-proposal":
+        write_publication_manifest(path, publication_manifest)
+    tag = "v1.5.0" if failure == "superseded" else "v1.4.0"
+    releases = Mock(return_value=[{"tag_name": tag, "draft": False, "prerelease": False}])
+    public = Mock(return_value={**publication_manifest, "run_id": "987"})
+    if failure == "network":
+        public.side_effect = URLError("unavailable")
+    if failure == "release-api":
+        releases.side_effect = subprocess.CalledProcessError(1, ["gh", "api"])
+    monkeypatch.setitem(main.__globals__, "fetch_github_releases", releases)
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", public)
+    error = {
+        "superseded": ValueError,
+        "mismatch": ValueError,
+        "network": URLError,
+        "release-api": subprocess.CalledProcessError,
+        "missing-proposal": FileNotFoundError,
+    }[failure]
+
+    with pytest.raises(error):
+        main(["verify-published", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    if failure in ("superseded", "release-api", "missing-proposal"):
+        public.assert_not_called()
+    if failure == "missing-proposal":
+        releases.assert_not_called()
 
 
 def test_publication_script_help_runs_without_side_effects() -> None:

@@ -21,6 +21,15 @@ Thanks for your interest in contributing 🎉
 
 ## Documentation infrastructure
 
+The helper's `verify-published --repository-slug <owner/repo> --proposed <manifest>`
+command checks the latest stable release and requires the public website's
+provenance to match the deployed proposal. It can run while the current workflow
+is active, without requiring that workflow or its deployment job to have finished.
+It is not wired into deployment yet. A mismatch, superseding release, or request
+failure is an error, not a rollback: the website may already have been published.
+CDN propagation may delay matching metadata; do not treat a failed check as proof
+that deployment did not happen.
+
 The deployment helper also checks name-based Pages artifact selection: after
 checking package identity, it lists every artifact page for the run and requires
 exactly one `github-pages` entry with the verified immutable ID. Missing,

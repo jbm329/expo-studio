@@ -1653,7 +1653,20 @@ def main(argv: Sequence[str] | None = None) -> None:
     verify_artifact.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     verify_artifact.add_argument("--artifact-id", required=True, help="Immutable Pages artifact ID.")
     verify_artifact.add_argument("--run-id", required=True, help="Expected workflow run ID.")
+    verify_published = commands.add_parser(
+        "verify-published", help="Check served provenance and latest release after deployment; never rolls back."
+    )
+    verify_published.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    verify_published.add_argument("--proposed", type=Path, required=True, help="Validated deployed proposal JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "verify-published":
+        proposed = read_publication_manifest(arguments.proposed)
+        releases = fetch_github_releases(arguments.repository_slug)
+        require_latest_stable_tag(proposed["baseline_tag"], releases)
+        if fetch_published_manifest() != proposed:
+            message = "Public provenance does not match the deployed proposal; the website may already have changed."
+            raise ValueError(message)
+        return
     if arguments.command == "verify-pages-artifact":
         require_unique_pages_artifact(arguments.repository_slug, arguments.artifact_id, arguments.run_id)
         return
