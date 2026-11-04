@@ -773,6 +773,41 @@ def write_publication_manifest(path: Path, manifest: PublicationManifest) -> Non
     path.write_text(json.dumps(validated, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
 
 
+def require_site_manifest(site: Path, expected: PublicationManifest) -> None:
+    """Check built-site metadata against the independently validated proposal.
+
+    Args:
+        site: Extracted website directory in a dedicated artifact location.
+        expected: Validated provenance supplied separately from the website.
+
+    Raises:
+        ValueError: If required output is not regular, the landing page is empty,
+            or website provenance differs from the proposal.
+        OSError: If required files cannot be inspected or read.
+        UnicodeDecodeError: If provenance is not valid UTF-8.
+
+    Notes:
+        Does not execute website content. Matching metadata does not prove all
+        website bytes came from that source; artifact identity and trusted
+        build/deployment wiring must be checked separately.
+    """
+    manifest = parse_publication_manifest(expected)
+    if site.is_symlink() or not site.is_dir():
+        message = "Publication artifact requires a regular website directory."
+        raise ValueError(message)
+    for name in ("index.html", "publication.json"):
+        path = site / name
+        if path.is_symlink() or not path.is_file():
+            message = f"Publication artifact requires a regular {name} file."
+            raise ValueError(message)
+    if (site / "index.html").stat().st_size == 0:
+        message = "Publication artifact landing page must not be empty."
+        raise ValueError(message)
+    if read_publication_manifest(site / "publication.json") != manifest:
+        message = "Website publication metadata does not match the validated proposal."
+        raise ValueError(message)
+
+
 def parse_stable_tag(tag: str) -> tuple[int, int, int]:
     """Parse a stable application release tag for numeric comparison.
 
@@ -1468,7 +1503,13 @@ def main(argv: Sequence[str] | None = None) -> None:
     inspect.add_argument("--repository", type=Path, required=True, help="Full-history checkout for source comparison.")
     inspect.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
+    verify_site = commands.add_parser("verify-site", help="Check built website metadata against a validated proposal.")
+    verify_site.add_argument("--site", type=Path, required=True, help="Extracted website artifact directory.")
+    verify_site.add_argument("--proposed", type=Path, required=True, help="Independently validated manifest JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "verify-site":
+        require_site_manifest(arguments.site, read_publication_manifest(arguments.proposed))
+        return
     if arguments.command == "inspect-published":
         proposed = read_publication_manifest(arguments.proposed)
         published = fetch_manual_publication_metadata(arguments.repository_slug)

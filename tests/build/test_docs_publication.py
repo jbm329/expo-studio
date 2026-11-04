@@ -51,6 +51,88 @@ prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
 
 
+@pytest.fixture
+def publication_site(tmp_path: Path, publication_manifest: dict[str, object]) -> tuple[Path, Path]:
+    site = tmp_path / "site"
+    site.mkdir()
+    (site / "index.html").write_text("<!doctype html><title>Manual</title>", encoding="utf-8")
+    write_publication_manifest(site / "publication.json", publication_manifest)
+    proposed = tmp_path / "proposed.json"
+    write_publication_manifest(proposed, publication_manifest)
+    return site, proposed
+
+
+def test_verify_site_command_accepts_matching_artifact(publication_site: tuple[Path, Path]) -> None:
+    site, proposed = publication_site
+    before = {path.name: path.read_bytes() for path in site.iterdir()}
+
+    main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+    assert {path.name: path.read_bytes() for path in site.iterdir()} == before
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("mode", "correction"),
+        ("baseline_tag", "v1.5.0"),
+        ("source_sha", "a" * 40),
+        ("run_id", "987654321"),
+    ],
+)
+def test_verify_site_command_rejects_mismatched_metadata(
+    publication_site: tuple[Path, Path], publication_manifest: dict[str, object], field: str, value: str
+) -> None:
+    site, proposed = publication_site
+    write_publication_manifest(site / "publication.json", {**publication_manifest, field: value})
+
+    with pytest.raises(ValueError, match="does not match"):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
+@pytest.mark.parametrize("name", ["index.html", "publication.json"])
+@pytest.mark.parametrize("replacement", ["missing", "directory"])
+def test_verify_site_command_requires_regular_output_files(
+    publication_site: tuple[Path, Path], name: str, replacement: str
+) -> None:
+    site, proposed = publication_site
+    (site / name).unlink()
+    if replacement == "directory":
+        (site / name).mkdir()
+
+    with pytest.raises(ValueError, match="regular"):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
+@pytest.mark.parametrize("failure", ["empty-page", "malformed-metadata", "missing-site", "missing-proposal"])
+def test_verify_site_command_rejects_incomplete_artifact(publication_site: tuple[Path, Path], failure: str) -> None:
+    site, proposed = publication_site
+    if failure == "empty-page":
+        (site / "index.html").write_bytes(b"")
+    elif failure == "malformed-metadata":
+        (site / "publication.json").write_text("{}", encoding="utf-8")
+    elif failure == "missing-site":
+        site = site / "missing"
+    else:
+        proposed.unlink()
+
+    with pytest.raises(FileNotFoundError if failure == "missing-proposal" else ValueError):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
+@pytest.mark.parametrize("name", ["site", "index.html", "publication.json"])
+def test_verify_site_command_rejects_symlink_outputs(
+    monkeypatch: pytest.MonkeyPatch, publication_site: tuple[Path, Path], name: str
+) -> None:
+    site, proposed = publication_site
+    target = site if name == "site" else site / name
+    original = Path.is_symlink
+    monkeypatch.setattr(Path, "is_symlink", lambda path: path == target or original(path))
+
+    with pytest.raises(ValueError, match="regular"):
+        main(["verify-site", "--site", str(site), "--proposed", str(proposed)])
+
+
 def test_prepare_command_writes_validated_manifest(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
 ) -> None:
@@ -101,7 +183,8 @@ def test_prepare_command_does_not_write_output_after_failure(
 
 
 @pytest.mark.parametrize(
-    "arguments", [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"], ["inspect-published"]]
+    "arguments",
+    [[], ["deploy"], ["prepare"], ["check-progress"], ["fetch-published"], ["inspect-published"], ["verify-site"]],
 )
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
@@ -118,7 +201,7 @@ def test_publication_script_help_runs_without_side_effects() -> None:
         text=True,
     )
 
-    assert "{prepare,check-progress,fetch-published,inspect-published}" in result.stdout
+    assert "{prepare,check-progress,fetch-published,inspect-published,verify-site}" in result.stdout
     assert "without building or deploying" in result.stdout
 
 
