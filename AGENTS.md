@@ -60,6 +60,20 @@ The app is centered on tabular data flows: file loads, SQL result sets, REST-nor
 
 ## Development workflow
 
+### User manual infrastructure
+
+The English-only online user manual uses Zensical (`docs/`, `zensical.toml`).
+Keep the initial under-construction landing page unchanged until manual
+authoring is explicitly requested. Do not generate or commit `site/` output
+or generated `publication.json` provenance.
+
+Follow `CONTRIBUTING.md` for documentation builds and publication policy, and
+`RELEASING.md` for manual publication recovery. Preview is the default;
+deployment requires explicit operator selection and a trusted `main` workflow.
+Do not publish, rerun publication jobs, delete deployment records, or change
+Pages settings without explicit approval. Automatic application-release
+publication and in-app help links are not implemented yet.
+
 Use `uv` from the repository root.
 
 ### Install dependencies
@@ -157,4 +171,3 @@ When adding or modifying code, use the patterns already present in the repo:
 - Do not bypass the project’s async job/result-tab lifecycle
 - Do not ever commit to git. Always wait for code review. 
 - Do not invent a new translation scheme or build workflow outside the existing commands in `pyproject.toml` and `README.md`
-

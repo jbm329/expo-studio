@@ -185,6 +185,15 @@ Never mix Swedish and English in logs.
 
 # Documentation
 
+## User manual infrastructure
+
+The English-only online manual uses Zensical. Follow the user-manual guidance
+in `AGENTS.md`, the build/publication policy in `CONTRIBUTING.md`, and recovery
+instructions in `RELEASING.md`. Preserve the placeholder until authoring is
+requested; do not generate feature documentation as part of infrastructure work.
+Do not deploy, rerun publication jobs, or alter deployment history/settings
+without explicit approval.
+
 ## Docstrings
 
 Use Google-style docstrings.

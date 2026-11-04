@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import secrets
 import subprocess
@@ -185,7 +186,7 @@ class GitHubDeploymentStatus(TypedDict):
     """Status identity and reported workflow log location, not verified provenance."""
 
     id: int
-    state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "success"]
+    state: Literal["error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"]
     log_url: str
     created_at: str
 
@@ -266,7 +267,7 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
             if type(status_id) is not int or status_id <= 0 or not isinstance(log_url, str):
                 message = "GitHub deployment status requires a positive integer ID and string log_url."
                 raise TypeError(message)
-            if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "success"):
+            if state not in ("error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"):
                 message = "Unsupported GitHub deployment status state."
                 raise ValueError(message)
             if not isinstance(created_at, str):
@@ -277,17 +278,75 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
     return statuses
 
 
+def require_current_deployment_identity(
+    repository_slug: str,
+    deployment: GitHubPagesDeployment,
+    status: GitHubDeploymentStatus,
+    *,
+    workflow_sha: str,
+    run_id: str,
+    job_id: str,
+) -> None:
+    """Cross-check a pending deployment against the executing workflow job.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        deployment: Pages deployment metadata retrieved through GitHub.
+        status: Its validated latest status.
+        workflow_sha: Workflow commit from the trusted execution context.
+        run_id: Current workflow run ID from the trusted execution context.
+        job_id: Current job's numeric ID, independently resolved through GitHub.
+
+    Raises:
+        ValueError: If context IDs, commit, state, or job-specific log URL differ.
+
+    Notes:
+        This is a metadata cross-check, not authorization to ignore a deployment.
+        The caller must independently verify current job identity and attempt.
+        Run-only URLs are deliberately insufficient for this check.
+    """
+    _require_repository_slug(repository_slug)
+    for identifier in (run_id, job_id):
+        if not isinstance(identifier, str) or re.fullmatch(r"[1-9][0-9]*", identifier) is None:
+            message = "Current deployment identity requires positive decimal run and job IDs."
+            raise ValueError(message)
+    if validate_commit_sha(deployment["sha"]) != validate_commit_sha(workflow_sha):
+        message = "Pending deployment does not match the current workflow commit."
+        raise ValueError(message)
+    if status["state"] not in ("queued", "pending", "in_progress", "waiting"):
+        message = "Current deployment identification requires an unfinished deployment status."
+        raise ValueError(message)
+    expected = f"https://github.com/{repository_slug}/actions/runs/{run_id}/job/{job_id}"
+    if status["log_url"] != expected:
+        message = "Pending deployment does not identify the exact current workflow job."
+        raise ValueError(message)
+
+
+class PublicationExecutionContext(TypedDict):
+    """Trusted runner context used to resolve the executing publication job."""
+
+    run_id: str
+    run_attempt: int
+    workflow_sha: str
+    runner_name: str
+
+
 def fetch_current_pages_deployment(
     repository_slug: str,
+    *,
+    execution_context: PublicationExecutionContext | None = None,
 ) -> tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None:
     """Find the unique currently successful Pages deployment and its status.
 
     Args:
         repository_slug: GitHub repository identifier in owner/repository form.
+        execution_context: Optional trusted current runner context. Resolve its
+            job through GitHub before excluding its single unfinished record.
 
     Returns:
         The deployment and latest success status, or None only when the
-        deployment-history query returned no records.
+        deployment-history query returned no prior records after excluding at
+        most one verified current job record.
 
     Raises:
         ValueError: If status history is missing or ambiguous, an attempt is
@@ -301,12 +360,18 @@ def fetch_current_pages_deployment(
         Failed and inactive attempts do not replace a current success. No
         records is not authorization for bootstrap. These separate API reads
         are not atomic; deployment serialization and final rechecks are still
-        required. Call before creating the proposed deployment record.
+        required. Without execution context, every unfinished record is rejected.
+        Context-aware selection is not yet wired into publication commands.
     """
+    current_job_id = None
+    if execution_context is not None:
+        current_job_id = fetch_executing_publication_job(repository_slug, **execution_context)
     deployments = fetch_pages_deployments(repository_slug)
     if not deployments:
         return None
     seen: set[int] = set()
+    excluded_current = False
+    prior_records = 0
     current: tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None = None
     for deployment in deployments:
         deployment_id = deployment["id"]
@@ -315,15 +380,30 @@ def fetch_current_pages_deployment(
             raise ValueError(message)
         seen.add(deployment_id)
         status = latest_deployment_status(fetch_deployment_statuses(repository_slug, deployment_id))
-        if status["state"] in ("queued", "pending", "in_progress"):
+        if status["state"] in ("queued", "pending", "in_progress", "waiting"):
+            if execution_context is not None and current_job_id is not None:
+                require_current_deployment_identity(
+                    repository_slug,
+                    deployment,
+                    status,
+                    workflow_sha=execution_context["workflow_sha"],
+                    run_id=execution_context["run_id"],
+                    job_id=current_job_id,
+                )
+                if excluded_current:
+                    message = "Multiple unfinished deployments identify the current job; history is ambiguous."
+                    raise ValueError(message)
+                excluded_current = True
+                continue
             message = f"Pages deployment {deployment_id} is unfinished; retry after it completes."
             raise ValueError(message)
+        prior_records += 1
         if status["state"] == "success":
             if current is not None:
                 message = "Multiple currently successful Pages deployments prevent authoritative selection."
                 raise ValueError(message)
             current = deployment, status
-    if current is None:
+    if current is None and prior_records:
         message = "Existing Pages deployment history has no currently successful deployment."
         raise ValueError(message)
     return current
@@ -475,7 +555,7 @@ def require_manual_publication_run(
         The API's current positive run-attempt number, for further verification.
 
     Raises:
-        ValueError: If metadata does not identify a completed successful manual
+        ValueError: If metadata does not identify a completed manual
             publishing run from main at the deployment's workflow commit.
         TypeError: If the API response is not a workflow run object.
         subprocess.CalledProcessError: If the API request or authentication fails.
@@ -486,6 +566,9 @@ def require_manual_publication_run(
         workflow file contents, the deployment's exact run attempt, or artifact
         contents. A rerun may change the API's current attempt. Automatic
         release publishing is deliberately not accepted by this manual check.
+        Overall run failure does not invalidate a successful deployment job:
+        later verification may fail after the site has already been published.
+        Call require_publication_job separately to require deployment success.
     """
     _require_repository_slug(repository_slug)
     validated = parse_publication_manifest(manifest)
@@ -517,10 +600,9 @@ def require_manual_publication_run(
         "head_branch": "main",
         "head_sha": workflow_sha,
         "status": "completed",
-        "conclusion": "success",
     }
     if type(run.get("id")) is not int or any(run.get(key) != value for key, value in expected.items()):
-        message = "GitHub run does not match the successful manual publishing workflow and deployment commit."
+        message = "GitHub run does not match the completed manual publishing workflow and deployment commit."
         raise ValueError(message)
     for field in ("repository", "head_repository"):
         repository = run.get(field)
@@ -593,6 +675,163 @@ def require_pages_artifact(repository_slug: str, artifact_id: str, run_id: str) 
         raise ValueError(message)
 
 
+def require_unique_pages_artifact(repository_slug: str, artifact_id: str, run_id: str) -> None:
+    """Require Pages name-based selection to identify the verified artifact.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        artifact_id: Verified immutable package ID.
+        run_id: Workflow run whose artifacts will be selected by deployment.
+
+    Raises:
+        ValueError: If artifact identity fails or the name is missing or ambiguous.
+        TypeError: If the paginated artifact list is malformed.
+        subprocess.CalledProcessError: If a GitHub API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Checks all run artifact pages, including expired entries. This is not
+        atomic with deployment; rerun immediately before name-based selection.
+    """
+    require_pages_artifact(repository_slug, artifact_id, run_id)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/actions/runs/{run_id}/artifacts?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "GitHub run artifacts response must be a list of pages."
+        raise TypeError(message)
+    matching_ids: list[int] = []
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("artifacts"), list):
+            message = "GitHub run artifacts page requires an artifacts list."
+            raise TypeError(message)
+        for artifact in page["artifacts"]:
+            if not isinstance(artifact, dict) or not isinstance(artifact.get("name"), str):
+                message = "GitHub run artifact requires an object with a string name."
+                raise TypeError(message)
+            if artifact["name"] == "github-pages":
+                identifier = artifact.get("id")
+                if type(identifier) is not int or identifier <= 0:
+                    message = "Named Pages artifact requires a positive integer ID."
+                    raise TypeError(message)
+                matching_ids.append(identifier)
+    if matching_ids != [int(artifact_id)]:
+        message = "Run must contain exactly one github-pages artifact matching the verified package ID."
+        raise ValueError(message)
+
+
+def _fetch_publication_jobs(repository_slug: str, run_id: str, run_attempt: int) -> list[dict[str, object]]:
+    """Fetch all job pages for an explicitly identified workflow run attempt."""
+    _require_repository_slug(repository_slug)
+    if not isinstance(run_id, str) or re.fullmatch(r"[1-9][0-9]*", run_id) is None:
+        message = "Publication job lookup requires a positive decimal run ID."
+        raise ValueError(message)
+    if type(run_attempt) is not int or run_attempt <= 0:
+        message = "Publication job verification requires a positive integer run attempt."
+        raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/actions/runs/{run_id}/attempts/{run_attempt}/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "GitHub jobs response must be a list of pages."
+        raise TypeError(message)
+    jobs: list[dict[str, object]] = []
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
+            message = "GitHub jobs response page requires a jobs list."
+            raise TypeError(message)
+        for job in page["jobs"]:
+            if not isinstance(job, dict) or not isinstance(job.get("name"), str):
+                message = "GitHub job requires an object with a string name."
+                raise TypeError(message)
+            jobs.append(job)
+    return jobs
+
+
+def fetch_executing_publication_job(
+    repository_slug: str, *, run_id: str, run_attempt: int, workflow_sha: str, runner_name: str
+) -> str:
+    """Resolve the executing deployment job from trusted runtime context.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        run_id: Current GITHUB_RUN_ID.
+        run_attempt: Current GITHUB_RUN_ATTEMPT converted to an integer.
+        workflow_sha: Current GITHUB_SHA for the trusted workflow checkout.
+        runner_name: Current RUNNER_NAME.
+
+    Returns:
+        Positive decimal numeric ID of the uniquely matching deployment job.
+
+    Raises:
+        ValueError: If context is invalid or the matching job is absent,
+            ambiguous, finished, or inconsistent with the execution context.
+        TypeError: If job API responses are malformed.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Context must come from the runner,
+        not user inputs. This resolves job identity only; it does not exclude
+        deployment records or authorize publication.
+    """
+    sha = validate_commit_sha(workflow_sha)
+    if not isinstance(runner_name, str) or not runner_name.strip():
+        message = "Executing publication job lookup requires a runner name."
+        raise ValueError(message)
+    jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
+    matching = [job for job in jobs if job["name"] == "Deploy documentation"]
+    if len(matching) != 1:
+        message = "Current attempt must contain exactly one Deploy documentation job."
+        raise ValueError(message)
+    job = matching[0]
+    identifier = job.get("id")
+    expected = {
+        "run_id": int(run_id),
+        "run_attempt": run_attempt,
+        "head_sha": sha,
+        "runner_name": runner_name,
+        "status": "in_progress",
+    }
+    if (
+        type(identifier) is not int
+        or identifier <= 0
+        or type(job.get("run_id")) is not int
+        or type(job.get("run_attempt")) is not int
+        or any(job.get(key) != value for key, value in expected.items())
+        or job.get("conclusion") is not None
+    ):
+        message = "Executing deployment job does not match the current run attempt, commit, and runner."
+        raise ValueError(message)
+    return str(identifier)
+
+
 def require_publication_job(
     repository_slug: str,
     status: GitHubDeploymentStatus,
@@ -617,43 +856,16 @@ def require_publication_job(
     Notes:
         Requires actions: read and GH_TOKEN. The deployment job must be named
         "Deploy documentation". A job-specific log URL must match that job;
+        its success may be recorded after job completion by GitHub.
         run-only URLs rely on the success timestamp falling within its execution.
         This is a metadata cross-check, not proof of artifact contents.
     """
     require_deployment_run(repository_slug, status, manifest)
-    if type(run_attempt) is not int or run_attempt <= 0:
-        message = "Publication job verification requires a positive integer run attempt."
-        raise ValueError(message)
-    result = subprocess.run(  # noqa: S603
-        [  # noqa: S607
-            "gh",
-            "api",
-            "--method",
-            "GET",
-            "--paginate",
-            "--slurp",
-            f"repos/{repository_slug}/actions/runs/{manifest['run_id']}/attempts/{run_attempt}/jobs?per_page=100",
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    pages = json.loads(result.stdout)
-    if not isinstance(pages, list):
-        message = "GitHub jobs response must be a list of pages."
-        raise TypeError(message)
-    matching: list[dict[str, object]] = []
-    for page in pages:
-        if not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
-            message = "GitHub jobs response page requires a jobs list."
-            raise TypeError(message)
-        for job in page["jobs"]:
-            if not isinstance(job, dict) or not isinstance(job.get("name"), str):
-                message = "GitHub job requires an object with a string name."
-                raise TypeError(message)
-            if job["name"] == "Deploy documentation":
-                matching.append(job)
+    matching = [
+        job
+        for job in _fetch_publication_jobs(repository_slug, manifest["run_id"], run_attempt)
+        if job["name"] == "Deploy documentation"
+    ]
     if len(matching) != 1:
         message = "Run attempt must contain exactly one Deploy documentation job."
         raise ValueError(message)
@@ -684,20 +896,30 @@ def require_publication_job(
         message = "Deployment job requires start and completion timestamps."
         raise TypeError(message)
     timestamp = _parse_status_timestamp(status["created_at"])
-    if not _parse_status_timestamp(started) <= timestamp <= _parse_status_timestamp(completed):
+    started_at = _parse_status_timestamp(started)
+    completed_at = _parse_status_timestamp(completed)
+    if completed_at < started_at:
+        message = "Deployment job completion timestamp precedes its start."
+        raise ValueError(message)
+    if timestamp < started_at or (status["log_url"] == run_url and timestamp > completed_at):
         message = "Deployment success timestamp is outside the verified job execution window."
         raise ValueError(message)
 
 
-def fetch_manual_publication_metadata(repository_slug: str) -> PublicationManifest | None:
+def fetch_manual_publication_metadata(
+    repository_slug: str, *, execution_context: PublicationExecutionContext | None = None
+) -> PublicationManifest | None:
     """Retrieve public manual provenance and cross-check its deployment metadata.
 
     Args:
         repository_slug: Expected GitHub owner/repository identifier.
+        execution_context: Optional trusted current runner context used to
+            identify and exclude only its own unfinished deployment record.
 
     Returns:
         Public provenance associated with the selected manual publishing run,
-        or None only when the initial deployment query returns no records.
+        or None when no prior history remains after optional current-job
+        exclusion and a second history check confirms that state.
 
     Raises:
         ValueError: If metadata checks fail or the selected deployment changes.
@@ -713,15 +935,28 @@ def fetch_manual_publication_metadata(repository_slug: str) -> PublicationManife
         but deployment serialization and final eligibility checks remain needed.
         Automatic release provenance is not accepted by this manual-only path.
     """
-    current = fetch_current_pages_deployment(repository_slug)
+    if execution_context is None:
+        current = fetch_current_pages_deployment(repository_slug)
+    else:
+        current = fetch_current_pages_deployment(repository_slug, execution_context=execution_context)
     if current is None:
+        if (
+            execution_context is not None
+            and fetch_current_pages_deployment(repository_slug, execution_context=execution_context) is not None
+        ):
+            message = "Pages deployment appeared during initial provenance inspection; retry against current state."
+            raise ValueError(message)
         return None
     deployment, status = current
     manifest = fetch_published_manifest()
     require_deployment_run(repository_slug, status, manifest)
     attempt = require_manual_publication_run(repository_slug, deployment, manifest)
     require_publication_job(repository_slug, status, manifest, attempt)
-    if fetch_current_pages_deployment(repository_slug) != current:
+    if execution_context is None:
+        rechecked = fetch_current_pages_deployment(repository_slug)
+    else:
+        rechecked = fetch_current_pages_deployment(repository_slug, execution_context=execution_context)
+    if rechecked != current:
         message = "Pages deployment changed during provenance inspection; retry against current state."
         raise ValueError(message)
     return manifest
@@ -1580,6 +1815,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     inspect.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     inspect.add_argument("--output", type=Path, required=True, help="Inspection report JSON output file.")
     inspect.add_argument(
+        "--current-job",
+        action="store_true",
+        help="Read trusted GitHub runner context to exclude only this job's verified unfinished deployment.",
+    )
+    inspect.add_argument(
         "--confirm-initial-bootstrap",
         action="store_true",
         help="Operator confirms an initial placeholder publication; never bypasses existing deployment checks.",
@@ -1587,20 +1827,55 @@ def main(argv: Sequence[str] | None = None) -> None:
     verify_site = commands.add_parser("verify-site", help="Check built website metadata against a validated proposal.")
     verify_site.add_argument("--site", type=Path, required=True, help="Extracted website artifact directory.")
     verify_site.add_argument("--proposed", type=Path, required=True, help="Independently validated manifest JSON file.")
-    verify_artifact = commands.add_parser("verify-pages-artifact", help="Check packaged Pages artifact API identity.")
+    verify_artifact = commands.add_parser(
+        "verify-pages-artifact", help="Check packaged Pages artifact identity and unique name selection."
+    )
     verify_artifact.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     verify_artifact.add_argument("--artifact-id", required=True, help="Immutable Pages artifact ID.")
     verify_artifact.add_argument("--run-id", required=True, help="Expected workflow run ID.")
+    verify_published = commands.add_parser(
+        "verify-published", help="Check served provenance and latest release after deployment; never rolls back."
+    )
+    verify_published.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    verify_published.add_argument("--proposed", type=Path, required=True, help="Validated deployed proposal JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "verify-published":
+        proposed = read_publication_manifest(arguments.proposed)
+        releases = fetch_github_releases(arguments.repository_slug)
+        require_latest_stable_tag(proposed["baseline_tag"], releases)
+        if fetch_published_manifest() != proposed:
+            message = "Public provenance does not match the deployed proposal; the website may already have changed."
+            raise ValueError(message)
+        return
     if arguments.command == "verify-pages-artifact":
-        require_pages_artifact(arguments.repository_slug, arguments.artifact_id, arguments.run_id)
+        require_unique_pages_artifact(arguments.repository_slug, arguments.artifact_id, arguments.run_id)
         return
     if arguments.command == "verify-site":
         require_site_manifest(arguments.site, read_publication_manifest(arguments.proposed))
         return
     if arguments.command == "inspect-published":
         proposed = read_publication_manifest(arguments.proposed)
-        published = fetch_manual_publication_metadata(arguments.repository_slug)
+        if arguments.current_job:
+            required = ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_SHA", "RUNNER_NAME")
+            if any(not os.environ.get(name, "").strip() for name in required):
+                message = (
+                    "Current-job inspection requires GitHub run, attempt, commit, and runner environment variables."
+                )
+                raise ValueError(message)
+            run_id = os.environ["GITHUB_RUN_ID"]
+            attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+            if run_id != proposed["run_id"] or re.fullmatch(r"[1-9][0-9]*", attempt) is None:
+                message = "Current-job inspection requires the proposal's run ID and a positive decimal run attempt."
+                raise ValueError(message)
+            context: PublicationExecutionContext = {
+                "run_id": run_id,
+                "run_attempt": int(attempt),
+                "workflow_sha": validate_commit_sha(os.environ["GITHUB_SHA"]),
+                "runner_name": os.environ["RUNNER_NAME"],
+            }
+            published = fetch_manual_publication_metadata(arguments.repository_slug, execution_context=context)
+        else:
+            published = fetch_manual_publication_metadata(arguments.repository_slug)
         if published is None and proposed["mode"] != "bootstrap":
             message = "Empty Pages deployment history requires an explicitly validated bootstrap proposal."
             raise ValueError(message)

@@ -12,9 +12,87 @@ from unittest.mock import MagicMock, Mock
 from urllib.error import HTTPError, URLError
 
 import pytest
+import yaml
 
 HELPER_PATH = Path(__file__).resolve().parents[2] / ".github" / "scripts" / "docs_publication.py"
 HELPER = run_path(str(HELPER_PATH))
+
+
+@pytest.fixture
+def publication_workflow() -> dict[str, object]:
+    path = HELPER_PATH.parents[1] / "workflows" / "publish-docs.yml"
+    return yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+
+
+def test_publication_workflow_requires_explicit_deployment(publication_workflow: dict[str, object]) -> None:
+    workflow = publication_workflow
+    assert set(workflow["on"]) == {"workflow_dispatch"}
+    inputs = workflow["on"]["workflow_dispatch"]["inputs"]
+    for name in ("deploy_website", "confirm_initial_bootstrap"):
+        assert inputs[name]["type"] == "boolean"
+        assert inputs[name]["default"] == "false"
+    assert workflow["permissions"] == {"contents": "read"}
+    assert workflow["concurrency"] == {"group": "documentation-publication", "cancel-in-progress": "false"}
+    deploy = workflow["jobs"]["deploy"]
+    assert deploy["if"] == "${{ inputs.deploy_website }}"
+    assert set(deploy["needs"]) == {"prepare", "inspect", "build", "verify", "recheck"}
+
+
+def test_publication_workflow_limits_write_permissions(publication_workflow: dict[str, object]) -> None:
+    jobs = publication_workflow["jobs"]
+    deploy = jobs["deploy"]
+    assert deploy["name"] == "Deploy documentation"
+    assert deploy["environment"]["name"] == "github-pages"
+    assert deploy["permissions"] == {
+        "contents": "read",
+        "actions": "read",
+        "deployments": "read",
+        "pages": "write",
+        "id-token": "write",
+    }
+    for name, job in jobs.items():
+        if name != "deploy":
+            assert "write" not in job.get("permissions", {}).values()
+
+
+def test_publication_workflow_rechecks_before_deploying(publication_workflow: dict[str, object]) -> None:
+    steps = publication_workflow["jobs"]["deploy"]["steps"]
+    checkout = next(step for step in steps if step.get("uses", "").startswith("actions/checkout@"))
+    assert checkout["with"] == {
+        "ref": "${{ github.sha }}",
+        "fetch-depth": "0",
+        "persist-credentials": "false",
+    }
+    download = next(step for step in steps if step.get("uses", "").startswith("actions/download-artifact@"))
+    assert download["with"]["artifact-ids"] == "${{ needs.prepare.outputs.manifest_artifact_id }}"
+    assert "artifact-name" not in download["with"]
+    final = steps[-4:]
+    assert "docs_publication.py prepare" in final[0]["run"]
+    assert 'cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json"' in final[0]["run"]
+    assert "docs_publication.py inspect-published" in final[1]["run"]
+    assert "--current-job" in final[1]["run"]
+    assert "--confirm-initial-bootstrap" in final[1]["run"]
+    assert final[1]["env"]["CONFIRM_INITIAL_BOOTSTRAP"] == "${{ inputs.confirm_initial_bootstrap }}"
+    assert "docs_publication.py verify-pages-artifact" in final[2]["run"]
+    assert final[2]["env"]["PAGES_ARTIFACT_ID"] == "${{ needs.verify.outputs.pages_artifact_id }}"
+    assert final[3]["uses"] == "actions/deploy-pages@v4"
+    assert final[3]["with"] == {"artifact_name": "github-pages"}
+    assert all("uv sync" not in step.get("run", "") for step in steps)
+
+
+def test_publication_workflow_verifies_publication_separately(publication_workflow: dict[str, object]) -> None:
+    verify = publication_workflow["jobs"]["verify-publication"]
+    assert set(verify["needs"]) == {"prepare", "deploy"}
+    assert verify["permissions"] == {"contents": "read"}
+    assert "environment" not in verify
+    steps = verify["steps"]
+    check = next(step for step in steps if "verify-published" in step.get("run", ""))
+    assert '--proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"' in check["run"]
+    url_check = next(step for step in steps if "PAGE_URL" in step.get("env", {}))
+    assert url_check["env"]["PAGE_URL"] == "${{ needs.deploy.outputs.page_url }}"
+    assert '!= "https://jbm329.github.io/expo-studio/"' in url_check["run"]
+
+
 parse_stable_tag = HELPER["parse_stable_tag"]
 is_stable_release = HELPER["is_stable_release"]
 latest_stable_tag = HELPER["latest_stable_tag"]
@@ -52,6 +130,355 @@ refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
 require_pages_artifact = HELPER["require_pages_artifact"]
+require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
+require_current_deployment_identity = HELPER["require_current_deployment_identity"]
+fetch_executing_publication_job = HELPER["fetch_executing_publication_job"]
+
+
+@pytest.fixture
+def executing_publication_job() -> dict[str, object]:
+    return {
+        "id": 456,
+        "name": "Deploy documentation",
+        "run_id": 123,
+        "run_attempt": 2,
+        "head_sha": "a" * 40,
+        "runner_name": "Hosted runner",
+        "status": "in_progress",
+        "conclusion": None,
+    }
+
+
+def test_fetch_executing_publication_job_reads_all_pages(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object]
+) -> None:
+    pages = [{"jobs": [{"name": "prepare"}]}, {"jobs": [executing_publication_job]}]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert (
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="A" * 40, runner_name="Hosted runner"
+        )
+        == "456"
+    )
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/actions/runs/123/attempts/2/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    ("suffix", "timestamp", "accepted"),
+    [
+        ("/job/987", "12:02:01", True),
+        ("/job/987", "13:00:00", True),
+        ("", "12:02:01", False),
+        ("/job/987", "11:59:59", False),
+        ("", "11:59:59", False),
+    ],
+)
+def test_require_publication_job_distinguishes_direct_identity_from_timing(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    suffix: str,
+    timestamp: str,
+    accepted: bool,
+) -> None:
+    pages = [{"jobs": [publication_job]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    status = {
+        **deployment_success,
+        "log_url": str(deployment_success["log_url"]) + suffix,
+        "created_at": f"2026-11-04T{timestamp}Z",
+    }
+
+    if accepted:
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+    else:
+        with pytest.raises(ValueError, match="execution window"):
+            require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+
+@pytest.mark.parametrize("suffix", ["", "/job/987"])
+def test_require_publication_job_rejects_reversed_job_timestamps(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    suffix: str,
+) -> None:
+    pages = [{"jobs": [{**publication_job, "completed_at": "2026-11-04T11:59:59Z"}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    status = {**deployment_success, "log_url": str(deployment_success["log_url"]) + suffix}
+
+    with pytest.raises(ValueError, match="precedes its start"):
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 0),
+        ("run_id", 124),
+        ("run_id", "123"),
+        ("run_attempt", 1),
+        ("run_attempt", "2"),
+        ("head_sha", "b" * 40),
+        ("runner_name", "Different runner"),
+        ("status", "completed"),
+        ("status", "queued"),
+        ("conclusion", "failure"),
+        ("name", "Other job"),
+    ],
+)
+def test_fetch_executing_publication_job_rejects_context_mismatch(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object], field: str, value: object
+) -> None:
+    pages = [{"jobs": [{**executing_publication_job, field: value}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
+
+
+@pytest.mark.parametrize("count", [0, 2])
+def test_fetch_executing_publication_job_requires_unique_match(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object], count: int
+) -> None:
+    pages = [{"jobs": [executing_publication_job] * count}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("run_id", "0"),
+        ("run_id", "123/extra"),
+        ("run_attempt", True),
+        ("run_attempt", 0),
+        ("workflow_sha", "main"),
+        ("runner_name", ""),
+        ("runner_name", "  "),
+    ],
+)
+def test_fetch_executing_publication_job_rejects_bad_context_before_api(
+    monkeypatch: pytest.MonkeyPatch, field: str, value: object
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+    context = {
+        "run_id": "123",
+        "run_attempt": 2,
+        "workflow_sha": "a" * 40,
+        "runner_name": "Hosted runner",
+        field: value,
+    }
+
+    with pytest.raises(ValueError):
+        fetch_executing_publication_job("jbm329/expo-studio", **context)
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_fetch_executing_publication_job_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
+
+
+@pytest.mark.parametrize("state", ["queued", "pending", "in_progress", "waiting"])
+def test_current_deployment_identity_requires_exact_job_and_commit(state: str) -> None:
+    require_current_deployment_identity(
+        "jbm329/expo-studio",
+        {"id": 1, "sha": "A" * 40},
+        {
+            "id": 2,
+            "state": state,
+            "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+            "created_at": "2026-11-04T12:00:00Z",
+        },
+        workflow_sha="a" * 40,
+        run_id="123",
+        job_id="456",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("sha", "b" * 40),
+        ("sha", "main"),
+        ("state", "success"),
+        ("state", "failure"),
+        ("state", "inactive"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/123"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/124/job/456"),
+        ("log_url", "https://github.com/jbm329/expo-studio/actions/runs/123/job/457"),
+        ("log_url", "https://github.com/another/repo/actions/runs/123/job/456"),
+    ],
+)
+def test_current_deployment_identity_rejects_other_deployments(field: str, value: str) -> None:
+    deployment = {"id": 1, "sha": "a" * 40}
+    status = {
+        "id": 2,
+        "state": "in_progress",
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+        "created_at": "2026-11-04T12:00:00Z",
+    }
+    if field == "sha":
+        deployment[field] = value
+    else:
+        status[field] = value
+
+    with pytest.raises(ValueError):
+        require_current_deployment_identity(
+            "jbm329/expo-studio", deployment, status, workflow_sha="a" * 40, run_id="123", job_id="456"
+        )
+
+
+@pytest.mark.parametrize("identifier", ["", "0", "01", "123/extra", "123\n", None, True])
+@pytest.mark.parametrize("field", ["run", "job"])
+def test_current_deployment_identity_rejects_invalid_context(identifier: object, field: str) -> None:
+    with pytest.raises(ValueError, match="positive decimal"):
+        require_current_deployment_identity(
+            "jbm329/expo-studio",
+            {"id": 1, "sha": "a" * 40},
+            {"id": 2, "state": "in_progress", "log_url": "", "created_at": "2026-11-04T12:00:00Z"},
+            workflow_sha="a" * 40,
+            run_id=identifier if field == "run" else "123",
+            job_id=identifier if field == "job" else "456",
+        )
+
+
+def test_require_unique_pages_artifact_checks_every_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    identity = Mock()
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", identity)
+    pages = [
+        {"artifacts": [{"id": 789, "name": "preview"}]},
+        {"artifacts": []},
+        {"artifacts": [{"id": 456, "name": "github-pages"}]},
+    ]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+    identity.assert_called_once_with("jbm329/expo-studio", "456", "123")
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/actions/runs/123/artifacts?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize("ids", [[], [457], [456, 457], [456, 456]])
+def test_require_unique_pages_artifact_rejects_missing_replaced_or_duplicate_package(
+    monkeypatch: pytest.MonkeyPatch, ids: list[int]
+) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    pages = [{"artifacts": [{"id": identifier, "name": "github-pages"}]} for identifier in ids]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        "null",
+        "{}",
+        "[null]",
+        "[{}]",
+        '[{"artifacts": [null]}]',
+        '[{"artifacts": [{"name": "github-pages", "id": true}]}]',
+        '[{"artifacts": [{"name": "github-pages", "id": 0}]}]',
+    ],
+)
+def test_require_unique_pages_artifact_rejects_malformed_list(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+def test_require_unique_pages_artifact_stops_after_identity_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(
+        require_unique_pages_artifact.__globals__,
+        "require_pages_artifact",
+        Mock(side_effect=ValueError("Invalid identity")),
+    )
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="Invalid identity"):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_require_unique_pages_artifact_propagates_list_failure(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
 
 
 @pytest.fixture
@@ -374,6 +801,7 @@ def test_prepare_command_does_not_write_output_after_failure(
         ["inspect-published"],
         ["verify-site"],
         ["verify-pages-artifact"],
+        ["verify-published"],
     ],
 )
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
@@ -381,6 +809,58 @@ def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> No
         main(arguments)
 
     assert error.value.code == 2
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_verify_published_command_checks_served_provenance_and_release(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], mode: str
+) -> None:
+    proposal = {**publication_manifest, "mode": mode}
+    path = tmp_path / "proposed.json"
+    write_publication_manifest(path, proposal)
+    fetch = Mock(return_value=[{"tag_name": "v1.4.0", "draft": False, "prerelease": False}])
+    public = Mock(return_value=proposal)
+    monkeypatch.setitem(main.__globals__, "fetch_github_releases", fetch)
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", public)
+
+    main(["verify-published", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    fetch.assert_called_once_with("jbm329/expo-studio")
+    public.assert_called_once_with()
+    assert read_publication_manifest(path) == proposal
+
+
+@pytest.mark.parametrize("failure", ["superseded", "mismatch", "network", "release-api", "missing-proposal"])
+def test_verify_published_command_fails_explicitly(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], failure: str
+) -> None:
+    path = tmp_path / "proposed.json"
+    if failure != "missing-proposal":
+        write_publication_manifest(path, publication_manifest)
+    tag = "v1.5.0" if failure == "superseded" else "v1.4.0"
+    releases = Mock(return_value=[{"tag_name": tag, "draft": False, "prerelease": False}])
+    public = Mock(return_value={**publication_manifest, "run_id": "987"})
+    if failure == "network":
+        public.side_effect = URLError("unavailable")
+    if failure == "release-api":
+        releases.side_effect = subprocess.CalledProcessError(1, ["gh", "api"])
+    monkeypatch.setitem(main.__globals__, "fetch_github_releases", releases)
+    monkeypatch.setitem(main.__globals__, "fetch_published_manifest", public)
+    error = {
+        "superseded": ValueError,
+        "mismatch": ValueError,
+        "network": URLError,
+        "release-api": subprocess.CalledProcessError,
+        "missing-proposal": FileNotFoundError,
+    }[failure]
+
+    with pytest.raises(error):
+        main(["verify-published", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    if failure in ("superseded", "release-api", "missing-proposal"):
+        public.assert_not_called()
+    if failure == "missing-proposal":
+        releases.assert_not_called()
 
 
 def test_publication_script_help_runs_without_side_effects() -> None:
@@ -396,9 +876,44 @@ def test_publication_script_help_runs_without_side_effects() -> None:
     assert "without building or deploying" in result.stdout
 
 
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_verify_pages_artifact_command_checks_identity_and_selection(
+    monkeypatch: pytest.MonkeyPatch, pages_artifact_metadata: dict[str, object], duplicate: bool
+) -> None:
+    artifacts = [{"id": 456, "name": "github-pages"}]
+    if duplicate:
+        artifacts.append({"id": 789, "name": "github-pages"})
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps(pages_artifact_metadata)),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([{"artifacts": artifacts}])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+    arguments = [
+        "verify-pages-artifact",
+        "--repository-slug",
+        "jbm329/expo-studio",
+        "--artifact-id",
+        "456",
+        "--run-id",
+        "123",
+    ]
+
+    if duplicate:
+        with pytest.raises(ValueError, match="exactly one"):
+            main(arguments)
+    else:
+        main(arguments)
+
+    assert runner.call_count == 2
+    assert runner.call_args_list[0].args[0][-1] == "repos/jbm329/expo-studio/actions/artifacts/456"
+    assert runner.call_args_list[1].args[0][-1] == "repos/jbm329/expo-studio/actions/runs/123/artifacts?per_page=100"
+
+
 def test_verify_pages_artifact_command_passes_explicit_identity(monkeypatch: pytest.MonkeyPatch) -> None:
     verify = Mock()
-    monkeypatch.setitem(main.__globals__, "require_pages_artifact", verify)
+    monkeypatch.setitem(main.__globals__, "require_unique_pages_artifact", verify)
 
     main([
         "verify-pages-artifact",
@@ -414,7 +929,9 @@ def test_verify_pages_artifact_command_passes_explicit_identity(monkeypatch: pyt
 
 
 def test_verify_pages_artifact_command_propagates_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(main.__globals__, "require_pages_artifact", Mock(side_effect=ValueError("Artifact rejected")))
+    monkeypatch.setitem(
+        main.__globals__, "require_unique_pages_artifact", Mock(side_effect=ValueError("Artifact rejected"))
+    )
 
     with pytest.raises(ValueError, match="Artifact rejected"):
         main([
@@ -429,12 +946,14 @@ def test_verify_pages_artifact_command_propagates_rejection(monkeypatch: pytest.
 
 
 @pytest.mark.parametrize("has_publication", [False, True])
+@pytest.mark.parametrize("current_job", [False, True])
 def test_inspect_published_command_reports_state_without_authorizing_deployment(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
     publication_manifest: dict[str, object],
     correction_history: tuple[Path, str, str],
     has_publication: bool,
+    current_job: bool,
 ) -> None:
     repository, baseline, correction = correction_history
     published = {**publication_manifest, "source_sha": baseline} if has_publication else None
@@ -448,9 +967,23 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
     inspect = Mock(return_value=published)
     monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
     output = tmp_path / "inspection.json"
+    context = {
+        "run_id": str(proposed["run_id"]),
+        "run_attempt": 2,
+        "workflow_sha": "b" * 40,
+        "runner_name": "Hosted runner",
+    }
+    for name, value in {
+        "GITHUB_RUN_ID": context["run_id"],
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "B" * 40,
+        "RUNNER_NAME": context["runner_name"],
+    }.items():
+        monkeypatch.setenv(name, str(value))
 
     main([
         "inspect-published",
+        *(["--current-job"] if current_job else []),
         "--confirm-initial-bootstrap",
         "--repository-slug",
         "jbm329/expo-studio",
@@ -462,7 +995,10 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         str(output),
     ])
 
-    inspect.assert_called_once_with("jbm329/expo-studio")
+    if current_job:
+        inspect.assert_called_once_with("jbm329/expo-studio", execution_context=context)
+    else:
+        inspect.assert_called_once_with("jbm329/expo-studio")
     assert json.loads(output.read_text(encoding="utf-8")) == {
         "schema_version": 1,
         "state": "metadata-cross-checked" if has_publication else "no-deployment-records",
@@ -472,6 +1008,63 @@ def test_inspect_published_command_reports_state_without_authorizing_deployment(
         "deployment_authorized": False,
         "initial_bootstrap_confirmed": not has_publication,
     }
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("GITHUB_RUN_ID", None),
+        ("GITHUB_RUN_ATTEMPT", None),
+        ("GITHUB_SHA", None),
+        ("RUNNER_NAME", None),
+        ("RUNNER_NAME", "  "),
+        ("GITHUB_RUN_ID", "999"),
+        ("GITHUB_RUN_ATTEMPT", "0"),
+        ("GITHUB_RUN_ATTEMPT", "02"),
+        ("GITHUB_RUN_ATTEMPT", "2\n"),
+        ("GITHUB_SHA", "main"),
+    ],
+)
+def test_current_job_command_rejects_bad_environment_before_inspection(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    name: str,
+    value: str | None,
+) -> None:
+    for key, item in {
+        "GITHUB_RUN_ID": str(publication_manifest["run_id"]),
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "a" * 40,
+        "RUNNER_NAME": "Hosted runner",
+    }.items():
+        monkeypatch.setenv(key, item)
+    if value is None:
+        monkeypatch.delenv(name)
+    else:
+        monkeypatch.setenv(name, value)
+    inspect = Mock()
+    monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", inspect)
+    proposed = tmp_path / "proposed.json"
+    output = tmp_path / "inspection.json"
+    write_publication_manifest(proposed, publication_manifest)
+
+    with pytest.raises(ValueError):
+        main([
+            "inspect-published",
+            "--current-job",
+            "--repository-slug",
+            "jbm329/expo-studio",
+            "--repository",
+            str(tmp_path),
+            "--proposed",
+            str(proposed),
+            "--output",
+            str(output),
+        ])
+
+    inspect.assert_not_called()
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("mode", ["correction", "release"])
@@ -508,9 +1101,17 @@ def test_inspect_published_command_requires_bootstrap_when_history_is_empty(
     assert not output.exists()
 
 
+@pytest.mark.parametrize("current_job", [False, True])
 def test_inspect_published_command_requires_explicit_initial_confirmation(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object], current_job: bool
 ) -> None:
+    for key, value in {
+        "GITHUB_RUN_ID": str(publication_manifest["run_id"]),
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_SHA": "a" * 40,
+        "RUNNER_NAME": "Hosted runner",
+    }.items():
+        monkeypatch.setenv(key, value)
     monkeypatch.setitem(main.__globals__, "fetch_manual_publication_metadata", Mock(return_value=None))
     proposed = tmp_path / "proposed.json"
     write_publication_manifest(proposed, {**publication_manifest, "mode": "bootstrap"})
@@ -519,6 +1120,7 @@ def test_inspect_published_command_requires_explicit_initial_confirmation(
     with pytest.raises(ValueError, match="explicit operator confirmation"):
         main([
             "inspect-published",
+            *(["--current-job"] if current_job else []),
             "--repository-slug",
             "jbm329/expo-studio",
             "--repository",
@@ -954,6 +1556,48 @@ def test_fetch_manual_publication_metadata_distinguishes_no_history(manual_metad
     assert [item[0] for item in manual_metadata_checks.mock_calls] == ["current"]
 
 
+@pytest.mark.parametrize("empty_history", [False, True])
+def test_manual_metadata_inspection_passes_execution_context_to_both_checks(
+    manual_metadata_checks: Mock, empty_history: bool
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    checks = manual_metadata_checks
+    if empty_history:
+        checks.current.return_value = None
+
+    expected = None if empty_history else checks.manifest.return_value
+    assert fetch_manual_publication_metadata("jbm329/expo-studio", execution_context=context) == expected
+
+    assert checks.current.call_count == 2
+    for call in checks.current.call_args_list:
+        assert call.args == ("jbm329/expo-studio",)
+        assert call.kwargs == {"execution_context": context}
+    if empty_history:
+        checks.manifest.assert_not_called()
+        checks.job.assert_not_called()
+    else:
+        checks.job.assert_called_once()
+
+
+@pytest.mark.parametrize("empty_history", [False, True])
+@pytest.mark.parametrize("change", ["changed", "failed"])
+def test_manual_metadata_inspection_with_context_rejects_recheck_change(
+    manual_metadata_checks: Mock, empty_history: bool, change: str
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    checks = manual_metadata_checks
+    original = None if empty_history else checks.current.return_value
+    changed = checks.current.return_value if empty_history else None
+    if change == "failed":
+        changed = subprocess.CalledProcessError(1, ["gh", "api"])
+    checks.current.side_effect = [original, changed]
+
+    with pytest.raises(subprocess.CalledProcessError if change == "failed" else ValueError):
+        fetch_manual_publication_metadata("jbm329/expo-studio", execution_context=context)
+
+    assert checks.current.call_count == 2
+
+
 @pytest.mark.parametrize("failure_point", ["current", "manifest", "association", "run", "job"])
 def test_fetch_manual_publication_metadata_stops_on_failure(manual_metadata_checks: Mock, failure_point: str) -> None:
     sequence = ["current", "manifest", "association", "run", "job"]
@@ -1061,10 +1705,10 @@ def test_require_publication_job_checks_attempt_and_execution_window(
         ("started_at", None),
         ("completed_at", None),
         ("started_at", "2026-11-04T12:01:01Z"),
-        ("completed_at", "2026-11-04T12:00:59Z"),
         ("started_at", "invalid"),
     ],
 )
+@pytest.mark.parametrize("suffix", ["", "/job/987"])
 def test_require_publication_job_rejects_bad_job(
     monkeypatch: pytest.MonkeyPatch,
     publication_manifest: dict[str, object],
@@ -1072,14 +1716,16 @@ def test_require_publication_job_rejects_bad_job(
     deployment_success: dict[str, object],
     field: str,
     value: object,
+    suffix: str,
 ) -> None:
     pages = [{"jobs": [{**publication_job, field: value}]}]
     monkeypatch.setattr(
         subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
     )
 
+    status = {**deployment_success, "log_url": str(deployment_success["log_url"]) + suffix}
     with pytest.raises(TypeError if value is None else ValueError):
-        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
 
 
 @pytest.mark.parametrize("count", [0, 2])
@@ -1175,11 +1821,14 @@ def manual_publication_run() -> dict[str, object]:
     }
 
 
+@pytest.mark.parametrize("conclusion", ["success", "failure", "cancelled"])
 def test_require_manual_publication_run_checks_api_metadata(
     monkeypatch: pytest.MonkeyPatch,
     publication_manifest: dict[str, object],
     manual_publication_run: dict[str, object],
+    conclusion: str,
 ) -> None:
+    manual_publication_run["conclusion"] = conclusion
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(manual_publication_run)))
     monkeypatch.setattr(subprocess, "run", runner)
 
@@ -1208,8 +1857,6 @@ def test_require_manual_publication_run_checks_api_metadata(
         ("head_branch", "correction-branch"),
         ("head_sha", "b" * 40),
         ("status", "in_progress"),
-        ("conclusion", "failure"),
-        ("conclusion", None),
         ("repository", {"full_name": "another/repo"}),
         ("head_repository", {"full_name": "another/repo"}),
         ("head_repository", None),
@@ -1248,6 +1895,46 @@ def test_require_manual_publication_run_rejects_bad_response(
         require_manual_publication_run(
             "jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, {**publication_manifest, "mode": "bootstrap"}
         )
+
+
+@pytest.mark.parametrize("run_conclusion", ["failure", "cancelled"])
+@pytest.mark.parametrize("job_conclusion", ["success", "failure", "cancelled"])
+def test_manual_metadata_inspection_requires_job_success_not_overall_run_success(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    run_conclusion: str,
+    job_conclusion: str,
+) -> None:
+    manifest = {**publication_manifest, "mode": "bootstrap"}
+    deployment = {"id": 1, "sha": "a" * 40}
+    monkeypatch.setitem(
+        fetch_manual_publication_metadata.__globals__,
+        "fetch_current_pages_deployment",
+        Mock(return_value=(deployment, deployment_success)),
+    )
+    monkeypatch.setitem(
+        fetch_manual_publication_metadata.__globals__, "fetch_published_manifest", Mock(return_value=manifest)
+    )
+    run = {**manual_publication_run, "conclusion": run_conclusion}
+    job = {**publication_job, "conclusion": job_conclusion}
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps(run)),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([{"jobs": [job]}])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    if job_conclusion == "success":
+        assert fetch_manual_publication_metadata("jbm329/expo-studio") == manifest
+    else:
+        with pytest.raises(ValueError, match="Deployment job must be successful"):
+            fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    assert runner.call_count == 2
 
 
 def test_require_manual_publication_run_rejects_release_before_api(
@@ -1378,11 +2065,110 @@ def test_fetch_current_pages_deployment_distinguishes_empty_history(monkeypatch:
 
 
 @pytest.mark.parametrize(
+    ("prior_states", "message"),
+    [
+        ([], None),
+        (["success"], None),
+        (["failure", "inactive"], "no currently successful"),
+        (["success", "success"], "Multiple currently successful"),
+        (["pending"], "exact current workflow job"),
+    ],
+)
+@pytest.mark.parametrize("current_state", ["in_progress", "waiting"])
+def test_current_job_exclusion_preserves_prior_history_rules(
+    monkeypatch: pytest.MonkeyPatch, prior_states: list[str], message: str | None, current_state: str
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    deployments = [{"id": index + 1, "sha": "a" * 40} for index in range(len(prior_states) + 1)]
+    statuses = [
+        {
+            "id": 10,
+            "state": current_state,
+            "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123/job/456",
+            "created_at": "2026-11-04T12:00:00Z",
+        },
+        *[
+            {"id": index + 11, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+            for index, state in enumerate(prior_states)
+        ],
+    ]
+    resolve = Mock(return_value="456")
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_executing_publication_job", resolve)
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=deployments)
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_deployment_statuses",
+        Mock(side_effect=lambda slug, identifier: [statuses[identifier - 1]]),
+    )
+
+    if message is not None:
+        with pytest.raises(ValueError, match=message):
+            fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+    else:
+        expected = (deployments[1], statuses[1]) if prior_states else None
+        assert fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context) == expected
+    resolve.assert_called_once_with("jbm329/expo-studio", **context)
+
+
+@pytest.mark.parametrize("mismatch", ["commit", "run", "job", "run-only", "duplicate"])
+def test_current_job_exclusion_rejects_mismatched_or_duplicate_records(
+    monkeypatch: pytest.MonkeyPatch, mismatch: str
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    deployment = {"id": 1, "sha": "b" * 40 if mismatch == "commit" else "a" * 40}
+    urls = {
+        "run": "https://github.com/jbm329/expo-studio/actions/runs/124/job/456",
+        "job": "https://github.com/jbm329/expo-studio/actions/runs/123/job/457",
+        "run-only": "https://github.com/jbm329/expo-studio/actions/runs/123",
+    }
+    status = {
+        "id": 10,
+        "state": "pending",
+        "created_at": "2026-11-04T12:00:00Z",
+        "log_url": urls.get(mismatch, "https://github.com/jbm329/expo-studio/actions/runs/123/job/456"),
+    }
+    deployments = [deployment]
+    if mismatch == "duplicate":
+        deployments.append({**deployment, "id": 2})
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_executing_publication_job", Mock(return_value="456")
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=deployments)
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", Mock(return_value=[status])
+    )
+
+    with pytest.raises(ValueError, match="Multiple unfinished|does not"):
+        fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+
+
+def test_current_job_exclusion_requires_job_lookup_before_reading_history(monkeypatch: pytest.MonkeyPatch) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    history = Mock()
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", history)
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_executing_publication_job",
+        Mock(side_effect=ValueError("Job identity mismatch")),
+    )
+
+    with pytest.raises(ValueError, match="Job identity mismatch"):
+        fetch_current_pages_deployment("jbm329/expo-studio", execution_context=context)
+
+    history.assert_not_called()
+
+
+@pytest.mark.parametrize(
     ("states", "message"),
     [
         (["success", "success"], "Multiple currently successful"),
         (["failure", "inactive", "error"], "no currently successful"),
         (["pending", "success"], "unfinished"),
+        (["waiting", "success"], "unfinished"),
         (["success", "queued"], "unfinished"),
         (["in_progress"], "unfinished"),
     ],
@@ -1483,7 +2269,9 @@ def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatc
     )
 
 
-@pytest.mark.parametrize("state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "success"])
+@pytest.mark.parametrize(
+    "state", ["error", "failure", "inactive", "in_progress", "queued", "pending", "waiting", "success"]
+)
 def test_fetch_deployment_statuses_preserves_states(monkeypatch: pytest.MonkeyPatch, state: str) -> None:
     status = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps([[status]])))
@@ -1584,7 +2372,7 @@ def test_fetch_deployment_statuses_rejects_bad_repository_before_cli(monkeypatch
 
 
 @pytest.mark.parametrize("reverse", [False, True])
-@pytest.mark.parametrize("state", ["success", "inactive", "failure", "in_progress"])
+@pytest.mark.parametrize("state", ["success", "inactive", "failure", "in_progress", "waiting"])
 def test_latest_deployment_status_uses_timestamp_not_id_or_state(reverse: bool, state: str) -> None:
     older = {"id": 99, "state": "success", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
     newer = {"id": 1, "state": state, "log_url": "", "created_at": "2026-11-04T12:01:00Z"}
@@ -1593,6 +2381,21 @@ def test_latest_deployment_status_uses_timestamp_not_id_or_state(reverse: bool, 
         statuses.reverse()
 
     assert latest_deployment_status(statuses) == newer
+
+
+def test_current_deployment_accepts_success_after_environment_waiting(monkeypatch: pytest.MonkeyPatch) -> None:
+    deployment = {"id": 42, "sha": "a" * 40, "environment": "github-pages"}
+    waiting = {"id": 1, "state": "waiting", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    success = {**waiting, "id": 2, "state": "success", "created_at": "2026-11-04T12:01:00Z"}
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([[deployment]])),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([[success, waiting]])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert fetch_current_pages_deployment("jbm329/expo-studio") == ({"id": 42, "sha": "a" * 40}, success)
 
 
 def test_latest_deployment_status_rejects_empty_history() -> None:
