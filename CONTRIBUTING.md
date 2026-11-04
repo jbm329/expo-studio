@@ -85,8 +85,12 @@ Public URL and provenance verification runs separately, so a failed verification
 does not change the successful deployment job's conclusion. It does not roll
 back the website or automatically retry CDN propagation failures. Inspect the
 served `publication.json` before deciding recovery; never assume a failed
-workflow means nothing was published. Recovery/rerun handling and hosted
-acceptance still require review before the first live run.
+workflow means nothing was published. Follow the
+[manual publication recovery procedure](RELEASING.md#manual-documentation-publication-recovery):
+use new workflow runs, not reruns, and never treat failed-only bootstrap history
+as empty automatically. Cleanup is restricted to individually inspected failed
+bootstrap records where the Pages action never started. Hosted acceptance and
+the complete workflow still require review before the first live run.
 
 The user manual uses Zensical. Markdown sources live in `docs/`, and
 `zensical.toml` configures the website. Feature documentation has not yet
