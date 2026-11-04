@@ -1,6 +1,7 @@
 """Tests for documentation publication policy."""
 
 import subprocess
+import tomllib
 from pathlib import Path
 from runpy import run_path
 
@@ -23,6 +24,7 @@ require_correction_source = HELPER["require_correction_source"]
 require_documentation_setup = HELPER["require_documentation_setup"]
 require_release_source = HELPER["require_release_source"]
 require_bootstrap_content = HELPER["require_bootstrap_content"]
+require_bootstrap_configuration = HELPER["require_bootstrap_configuration"]
 
 
 @pytest.mark.parametrize(
@@ -732,3 +734,63 @@ def test_bootstrap_content_rejects_executable_placeholder(bootstrap_history: tup
 
     with pytest.raises(ValueError, match="must contain only the regular docs/index.md"):
         require_bootstrap_content(repository, source)
+
+
+BOOTSTRAP_CONFIGURATION = (
+    '[project]\nsite_name = "Expo Studio User Manual"\n'
+    'site_url = "https://jbm329.github.io/expo-studio/"\n'
+    'docs_dir = "docs"\nsite_dir = "site"\n'
+)
+
+
+def test_bootstrap_configuration_accepts_committed_settings(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    config = repository / "zensical.toml"
+    config.write_text("# Bootstrap configuration\n" + BOOTSTRAP_CONFIGURATION, encoding="utf-8")
+    source = commit_all(repository)
+    config.write_text("invalid uncommitted TOML", encoding="utf-8")
+
+    assert require_bootstrap_configuration(repository, source) is None
+
+
+@pytest.mark.parametrize(
+    "configuration",
+    [
+        BOOTSTRAP_CONFIGURATION.replace('docs_dir = "docs"', 'docs_dir = "src"'),
+        BOOTSTRAP_CONFIGURATION.replace('site_dir = "site"', 'site_dir = "other"'),
+        BOOTSTRAP_CONFIGURATION.replace("jbm329.github.io/expo-studio/", "example.invalid/"),
+        BOOTSTRAP_CONFIGURATION.replace("Expo Studio User Manual", "Different manual"),
+        BOOTSTRAP_CONFIGURATION.replace('docs_dir = "docs"\n', ""),
+        BOOTSTRAP_CONFIGURATION + 'extra_javascript = ["remote.js"]\n',
+        BOOTSTRAP_CONFIGURATION + '\n[project.theme]\ncustom_dir = "templates"\n',
+        BOOTSTRAP_CONFIGURATION + '\n[unexpected]\nvalue = "extra"\n',
+        "",
+    ],
+)
+def test_bootstrap_configuration_rejects_unapproved_settings(
+    correction_history: tuple[Path, str, str], configuration: str
+) -> None:
+    repository, _, _ = correction_history
+    (repository / "zensical.toml").write_text(configuration, encoding="utf-8")
+    source = commit_all(repository)
+
+    with pytest.raises(ValueError, match="Bootstrap configuration must match"):
+        require_bootstrap_configuration(repository, source)
+
+
+def test_bootstrap_configuration_surfaces_invalid_toml(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    (repository / "zensical.toml").write_text("[project", encoding="utf-8")
+    source = commit_all(repository)
+
+    with pytest.raises(tomllib.TOMLDecodeError):
+        require_bootstrap_configuration(repository, source)
+
+
+def test_bootstrap_configuration_requires_regular_config_file(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, _ = correction_history
+    run_git(repository, "update-index", "--chmod=+x", "zensical.toml")
+    source = create_test_commit(repository)
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files"):
+        require_bootstrap_configuration(repository, source)

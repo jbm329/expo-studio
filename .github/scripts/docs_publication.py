@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import tomllib
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, TypedDict
 
@@ -518,4 +519,44 @@ def require_bootstrap_content(repository: Path, source_sha: str) -> None:
     expected = "# Expo Studio User Manual\n\nThe user manual is under construction."
     if content != expected:
         message = "Bootstrap landing page must contain only the approved under-construction heading and message."
+        raise ValueError(message)
+
+
+def require_bootstrap_configuration(repository: Path, source_sha: str) -> None:
+    """Require the committed bootstrap configuration to match the approved setup.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        source_sha: Full commit ID containing the proposed configuration.
+
+    Raises:
+        ValueError: If required files are missing, TOML is invalid, or the
+            configuration differs from the approved bootstrap settings.
+        subprocess.CalledProcessError: If Git cannot inspect the source.
+        OSError: If Git cannot be started or the working directory is invalid.
+        UnicodeDecodeError: If the configuration is not valid UTF-8.
+
+    Notes:
+        Parsed values are compared, so comments and formatting may differ.
+        Normal released manuals are not restricted to this bootstrap setup.
+    """
+    source = validate_commit_sha(source_sha)
+    require_documentation_setup(repository, source)
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "show", f"{source}:zensical.toml"],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    configuration = tomllib.loads(result.stdout.decode("utf-8"))
+    expected = {
+        "project": {
+            "site_name": "Expo Studio User Manual",
+            "site_url": "https://jbm329.github.io/expo-studio/",
+            "docs_dir": "docs",
+            "site_dir": "site",
+        }
+    }
+    if configuration != expected:
+        message = "Bootstrap configuration must match the approved site identity, URL, and source/output directories."
         raise ValueError(message)
