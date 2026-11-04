@@ -26,6 +26,7 @@ require_release_source = HELPER["require_release_source"]
 require_bootstrap_content = HELPER["require_bootstrap_content"]
 require_bootstrap_configuration = HELPER["require_bootstrap_configuration"]
 require_bootstrap_source = HELPER["require_bootstrap_source"]
+require_publication_progress = HELPER["require_publication_progress"]
 
 
 @pytest.mark.parametrize(
@@ -861,3 +862,53 @@ def test_bootstrap_source_rejects_superseded_baseline(bootstrap_source_history: 
 
     with pytest.raises(ValueError, match="is not the latest published stable release"):
         require_bootstrap_source(repository, "v1.3.0", source, releases)
+
+
+def test_publication_progress_accepts_identical_retry(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, source = correction_history
+
+    assert require_publication_progress(repository, "v1.4.0", source, "v1.4.0", source) is None
+
+
+def test_publication_progress_accepts_newer_correction(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, source = correction_history
+
+    assert require_publication_progress(repository, "v1.4.0", baseline, "v1.4.0", source) is None
+
+
+def test_publication_progress_rejects_release_rerun_after_correction(
+    correction_history: tuple[Path, str, str],
+) -> None:
+    repository, baseline, correction = correction_history
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_publication_progress(repository, "v1.4.0", correction, "v1.4.0", baseline)
+
+
+def test_publication_progress_rejects_divergent_correction(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, correction = correction_history
+    run_git(repository, "checkout", "--quiet", "--detach", baseline)
+    divergent = create_test_commit(repository, "Alternative correction history")
+
+    with pytest.raises(ValueError, match="is not an ancestor of"):
+        require_publication_progress(repository, "v1.4.0", correction, "v1.4.0", divergent)
+
+
+def test_publication_progress_accepts_new_application_version(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, correction = correction_history
+
+    assert require_publication_progress(repository, "v1.9.0", correction, "v1.10.0", baseline) is None
+
+
+def test_publication_progress_rejects_older_application_version(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, correction = correction_history
+
+    with pytest.raises(ValueError, match="would replace the newer published manual"):
+        require_publication_progress(repository, "v1.10.0", baseline, "v1.9.0", correction)
+
+
+def test_publication_progress_surfaces_missing_published_commit(correction_history: tuple[Path, str, str]) -> None:
+    repository, _, source = correction_history
+
+    with pytest.raises(subprocess.CalledProcessError):
+        require_publication_progress(repository, "v1.4.0", "0" * 40, "v1.4.0", source)

@@ -562,6 +562,43 @@ def require_bootstrap_configuration(repository: Path, source_sha: str) -> None:
         raise ValueError(message)
 
 
+def require_publication_progress(
+    repository: Path,
+    published_tag: str,
+    published_sha: str,
+    expected_tag: str,
+    source_sha: str,
+) -> None:
+    """Prevent publication from reverting an existing released manual.
+
+    Args:
+        repository: Repository containing the published and proposed commits.
+        published_tag: Application baseline recorded by the published manual.
+        published_sha: Source commit recorded by the published manual.
+        expected_tag: Application baseline of the proposed publication.
+        source_sha: Source commit of the proposed publication.
+
+    Raises:
+        ValueError: If IDs are invalid, the proposed version is older, or its
+            same-version source does not descend from the published source.
+        subprocess.CalledProcessError: If Git cannot inspect required commits.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        Call only for released manuals, after validating publication eligibility.
+        Bootstrap transitions and missing deployment state are handled separately.
+    """
+    published_version = parse_stable_tag(published_tag)
+    proposed_version = parse_stable_tag(expected_tag)
+    published_source = require_commit(repository, published_sha)
+    source = require_commit(repository, source_sha)
+    if proposed_version < published_version:
+        message = f"Publication for {expected_tag!r} would replace the newer published manual for {published_tag!r}."
+        raise ValueError(message)
+    if proposed_version == published_version:
+        require_ancestor(repository, published_source, source)
+
+
 def require_bootstrap_source(
     repository: Path,
     expected_tag: str,
