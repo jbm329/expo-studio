@@ -21,6 +21,7 @@ require_correction_changes = HELPER["require_correction_changes"]
 resolve_stable_tag_commit = HELPER["resolve_stable_tag_commit"]
 require_correction_source = HELPER["require_correction_source"]
 require_documentation_setup = HELPER["require_documentation_setup"]
+require_release_source = HELPER["require_release_source"]
 
 
 @pytest.mark.parametrize(
@@ -625,3 +626,45 @@ def test_correction_source_rejects_deleted_landing_page(correction_history: tupl
 
     with pytest.raises(ValueError, match="lacks required regular documentation files"):
         require_correction_source(repository, "v1.4.0", source, releases)
+
+
+def test_release_source_accepts_exact_tagged_commit(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, _ = correction_history
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    assert require_release_source(repository, "v1.4.0", baseline.upper(), releases) == baseline
+
+
+@pytest.mark.parametrize("use_older_commit", [False, True])
+def test_release_source_rejects_other_commits(
+    correction_history: tuple[Path, str, str], use_older_commit: bool
+) -> None:
+    repository, baseline, correction = correction_history
+    source = run_git(repository, "rev-parse", f"{baseline}^") if use_older_commit else correction
+    releases = [{"tag_name": "v1.4.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="does not match release") as error:
+        require_release_source(repository, "v1.4.0", source, releases)
+
+    assert source in str(error.value)
+    assert baseline in str(error.value)
+
+
+def test_release_source_rejects_superseded_release(correction_history: tuple[Path, str, str]) -> None:
+    repository, baseline, _ = correction_history
+    releases = [
+        {"tag_name": "v1.4.0", "draft": False, "prerelease": False},
+        {"tag_name": "v1.5.0", "draft": False, "prerelease": False},
+    ]
+
+    with pytest.raises(ValueError, match="is not the latest published stable release"):
+        require_release_source(repository, "v1.4.0", baseline, releases)
+
+
+def test_release_source_rejects_baseline_without_documentation(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "v1.3.0", baseline)
+    releases = [{"tag_name": "v1.3.0", "draft": False, "prerelease": False}]
+
+    with pytest.raises(ValueError, match="lacks required regular documentation files"):
+        require_release_source(git_repository, "v1.3.0", baseline, releases)

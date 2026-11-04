@@ -436,3 +436,41 @@ def require_correction_source(
     require_correction_changes(repository, baseline, source)
     require_documentation_setup(repository, source)
     return baseline
+
+
+def require_release_source(
+    repository: Path,
+    expected_tag: str,
+    source_sha: str,
+    releases: Sequence[GitHubRelease],
+) -> str:
+    """Require automatic publication to use the newest stable release's commit.
+
+    Args:
+        repository: Repository with freshly fetched release tags.
+        expected_tag: Published stable release to document.
+        source_sha: Full commit ID supplied by the release workflow.
+        releases: Current release metadata collected from GitHub.
+
+    Returns:
+        The validated release commit ID.
+
+    Raises:
+        ValueError: If the release is ineligible, the source does not match the
+            tag, or required documentation files are missing.
+        subprocess.CalledProcessError: If required Git objects or tags are
+            missing, or Git cannot inspect them.
+        OSError: If Git cannot be started or the working directory is invalid.
+
+    Notes:
+        The caller must enforce successful application release publication.
+        This does not yet check website buildability or deployed provenance.
+    """
+    source = validate_commit_sha(source_sha)
+    require_latest_stable_tag(expected_tag, releases)
+    release_commit = resolve_stable_tag_commit(repository, expected_tag)
+    if source != release_commit:
+        message = f"Publication source {source!r} does not match release {expected_tag!r} commit {release_commit!r}."
+        raise ValueError(message)
+    require_documentation_setup(repository, release_commit)
+    return release_commit
