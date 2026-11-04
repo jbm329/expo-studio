@@ -90,7 +90,7 @@ def test_prepare_command_does_not_write_output_after_failure(
     assert not output_path.exists()
 
 
-@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"]])
+@pytest.mark.parametrize("arguments", [[], ["deploy"], ["prepare"], ["check-progress"]])
 def test_prepare_command_requires_explicit_arguments(arguments: list[str]) -> None:
     with pytest.raises(SystemExit) as error:
         main(arguments)
@@ -106,8 +106,72 @@ def test_publication_script_help_runs_without_side_effects() -> None:
         text=True,
     )
 
-    assert "{prepare}" in result.stdout
+    assert "{prepare,check-progress}" in result.stdout
     assert "without building or deploying" in result.stdout
+
+
+@pytest.mark.parametrize("direction", ["advance", "repeat", "regress"])
+def test_check_progress_command_checks_real_history(
+    tmp_path: Path,
+    correction_history: tuple[Path, str, str],
+    publication_manifest: dict[str, object],
+    direction: str,
+) -> None:
+    repository, baseline, correction = correction_history
+    published_source = correction if direction in ("repeat", "regress") else baseline
+    proposed_source = baseline if direction == "regress" else correction
+    published_path = tmp_path / "published.json"
+    proposed_path = tmp_path / "proposed.json"
+    write_publication_manifest(published_path, {**publication_manifest, "source_sha": published_source})
+    write_publication_manifest(proposed_path, {**publication_manifest, "source_sha": proposed_source})
+    arguments = [
+        "check-progress",
+        "--repository",
+        str(repository),
+        "--published",
+        str(published_path),
+        "--proposed",
+        str(proposed_path),
+    ]
+
+    if direction == "regress":
+        with pytest.raises(ValueError, match="ancestor"):
+            main(arguments)
+    else:
+        main(arguments)
+
+
+@pytest.mark.parametrize("invalid_input", ["published", "proposed"])
+@pytest.mark.parametrize("failure", ["missing", "malformed"])
+def test_check_progress_command_requires_valid_manifests(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    publication_manifest: dict[str, object],
+    invalid_input: str,
+    failure: str,
+) -> None:
+    paths = {"published": tmp_path / "published.json", "proposed": tmp_path / "proposed.json"}
+    for path in paths.values():
+        write_publication_manifest(path, publication_manifest)
+    if failure == "missing":
+        paths[invalid_input].unlink()
+    else:
+        paths[invalid_input].write_text("{}", encoding="utf-8")
+    check = Mock()
+    monkeypatch.setitem(main.__globals__, "require_manifest_progress", check)
+
+    with pytest.raises(FileNotFoundError if failure == "missing" else ValueError):
+        main([
+            "check-progress",
+            "--repository",
+            str(tmp_path),
+            "--published",
+            str(paths["published"]),
+            "--proposed",
+            str(paths["proposed"]),
+        ])
+
+    check.assert_not_called()
 
 
 @pytest.mark.parametrize("mode", ["bootstrap", "release", "correction"])

@@ -939,14 +939,14 @@ def require_bootstrap_source(
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Run publication preparation from an explicit JSON request.
+    """Prepare a publication or check progress against existing provenance.
 
     Args:
         argv: Command-line arguments, or None to use the process arguments.
 
     Raises:
         SystemExit: If command-line arguments are invalid or help is requested.
-        ValueError: If request metadata or publication eligibility is invalid.
+        ValueError: If metadata, source eligibility, or publication progress is invalid.
         TypeError: If GitHub release metadata is malformed.
         subprocess.CalledProcessError: If Git or GitHub CLI operations fail.
         OSError: If a command or required file is unavailable.
@@ -959,7 +959,16 @@ def main(argv: Sequence[str] | None = None) -> None:
     prepare.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     prepare.add_argument("--request", type=Path, required=True, help="Publication request JSON file.")
     prepare.add_argument("--output", type=Path, required=True, help="Validated manifest JSON output file.")
+    progress = commands.add_parser("check-progress", help="Reject regression against verified deployed provenance.")
+    progress.add_argument("--repository", type=Path, required=True, help="Checkout containing both source commits.")
+    progress.add_argument("--published", type=Path, required=True, help="Verified deployed manifest JSON file.")
+    progress.add_argument("--proposed", type=Path, required=True, help="Validated proposed manifest JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "check-progress":
+        published = read_publication_manifest(arguments.published)
+        proposed = read_publication_manifest(arguments.proposed)
+        require_manifest_progress(arguments.repository, published, proposed)
+        return
     request = read_publication_manifest(arguments.request)
     manifest = prepare_publication(arguments.repository, arguments.repository_slug, request)
     write_publication_manifest(arguments.output, manifest)

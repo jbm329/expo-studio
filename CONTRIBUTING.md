@@ -65,6 +65,14 @@ For bootstrap, the baseline identifies the existing application release, not
 a claim that the placeholder documents that version. The workflow does not
 deploy the website yet.
 
+The publication helper also provides `check-progress` for comparing validated
+proposed provenance with verified deployed provenance. It rejects older
+application baselines and older or divergent source commits for the same
+baseline, while allowing identical-source retries. Both manifest files are
+required; a missing file is not treated as an empty deployment.
+This command does not retrieve or authenticate deployed state, establish source
+eligibility, or deploy anything. It is not connected to the workflow yet.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛
