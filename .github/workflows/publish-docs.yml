@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Validation mode only; this workflow does not deploy yet"
+        description: "Validate and build a preview only; this workflow does not deploy yet"
         required: true
         type: choice
         options:
@@ -25,6 +25,8 @@ permissions:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.validated-source.outputs.source_sha }}
 
     steps:
       - name: Require trusted main workflow
@@ -80,10 +82,58 @@ jobs:
             --request "$RUNNER_TEMP/publication-request.json" \
             --output "$RUNNER_TEMP/validated-publication.json"
 
+      - name: Expose validated source commit
+        id: validated-source
+        run: |
+          uv run --no-project --python 3.13.12 python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["RUNNER_TEMP"]) / "validated-publication.json"
+          manifest = json.loads(path.read_text(encoding="utf-8"))
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"source_sha={manifest['source_sha']}\n")
+          PY
+
       - name: Upload validated publication manifest
         uses: actions/upload-artifact@v7
         with:
           name: validated-documentation-publication
           path: ${{ runner.temp }}/validated-publication.json
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact validated documentation source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.source_sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Check dependency lockfile
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra docs
+
+      - name: Build documentation
+        run: uv run --frozen --extra docs zensical build --clean --strict
+
+      - name: Upload documentation publication preview
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-preview
+          path: site
           if-no-files-found: error
           retention-days: 7

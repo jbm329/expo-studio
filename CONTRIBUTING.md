@@ -54,7 +54,10 @@ not publish the website.
 
 The separate Documentation publication workflow currently validates manual
 bootstrap or correction requests from `main` and uploads a validated manifest.
-It does not build or deploy the website yet.
+A separate read-only job checks out that exact validated source commit, checks
+its dependency lockfile, and builds the website. The resulting
+`documentation-publication-preview` artifact is available for seven days.
+The workflow does not deploy the website yet.
 
 ## Notes
 This is a spare-time project, so response times may vary.  
