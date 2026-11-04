@@ -271,6 +271,58 @@ def fetch_deployment_statuses(repository_slug: str, deployment_id: int) -> list[
     return statuses
 
 
+def fetch_current_pages_deployment(
+    repository_slug: str,
+) -> tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None:
+    """Find the unique currently successful Pages deployment and its status.
+
+    Args:
+        repository_slug: GitHub repository identifier in owner/repository form.
+
+    Returns:
+        The deployment and latest success status, or None only when the
+        deployment-history query returned no records.
+
+    Raises:
+        ValueError: If status history is missing or ambiguous, an attempt is
+            unfinished, deployment IDs repeat, or existing history does not
+            identify exactly one currently successful deployment.
+        TypeError: If API metadata is malformed.
+        subprocess.CalledProcessError: If a GitHub API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Failed and inactive attempts do not replace a current success. No
+        records is not authorization for bootstrap. These separate API reads
+        are not atomic; deployment serialization and final rechecks are still
+        required. Call before creating the proposed deployment record.
+    """
+    deployments = fetch_pages_deployments(repository_slug)
+    if not deployments:
+        return None
+    seen: set[int] = set()
+    current: tuple[GitHubPagesDeployment, GitHubDeploymentStatus] | None = None
+    for deployment in deployments:
+        deployment_id = deployment["id"]
+        if deployment_id in seen:
+            message = "Repeated Pages deployment ID prevents an unambiguous history check."
+            raise ValueError(message)
+        seen.add(deployment_id)
+        status = latest_deployment_status(fetch_deployment_statuses(repository_slug, deployment_id))
+        if status["state"] in ("queued", "pending", "in_progress"):
+            message = f"Pages deployment {deployment_id} is unfinished; retry after it completes."
+            raise ValueError(message)
+        if status["state"] == "success":
+            if current is not None:
+                message = "Multiple currently successful Pages deployments prevent authoritative selection."
+                raise ValueError(message)
+            current = deployment, status
+    if current is None:
+        message = "Existing Pages deployment history has no currently successful deployment."
+        raise ValueError(message)
+    return current
+
+
 def refresh_publication_refs(repository: Path) -> None:
     """Fetch current origin branches and tags in a full-history workflow checkout.
 

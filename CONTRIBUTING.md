@@ -93,8 +93,14 @@ failed, successful, and inactive records. It does not assume API ordering or
 treat an empty status list as success. The latest status is selected by its
 validated UTC creation timestamp, not its ID, state, or response position.
 Distinct records tied for the latest timestamp are rejected as ambiguous.
-Selecting the authoritative deployment and verifying its workflow against the
-public manifest are still separate, unfinished integration steps.
+The helper combines these queries to identify exactly one currently successful
+deployment. Failed and inactive attempts do not replace that success; unfinished
+attempts, missing status histories, or conflicting successes stop the check.
+No deployment records is distinguished from existing history with no current
+success, but neither result authorizes bootstrap on its own. These API reads
+are not atomic and must run before creating a proposed deployment record.
+Verifying the selected deployment's workflow against the public manifest and
+wiring the final deployment checks remain unfinished integration steps.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

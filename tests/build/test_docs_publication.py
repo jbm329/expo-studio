@@ -41,6 +41,7 @@ fetch_github_releases = HELPER["fetch_github_releases"]
 fetch_pages_deployments = HELPER["fetch_pages_deployments"]
 fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
 latest_deployment_status = HELPER["latest_deployment_status"]
+fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -403,6 +404,121 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "states",
+    [
+        ["success"],
+        ["failure", "success", "inactive", "error"],
+        ["inactive", "success", "failure"],
+    ],
+)
+def test_fetch_current_pages_deployment_selects_unique_success(
+    monkeypatch: pytest.MonkeyPatch, states: list[str]
+) -> None:
+    deployments = [{"id": index + 1, "sha": "a" * 40} for index in range(len(states))]
+    statuses = [
+        {"id": index + 10, "state": state, "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+        for index, state in enumerate(states)
+    ]
+    history = Mock(return_value=deployments)
+    fetch_status = Mock(side_effect=lambda slug, deployment_id: [statuses[deployment_id - 1]])
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", history)
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", fetch_status)
+
+    current = fetch_current_pages_deployment("jbm329/expo-studio")
+
+    index = states.index("success")
+    assert current == (deployments[index], statuses[index])
+    history.assert_called_once_with("jbm329/expo-studio")
+    assert fetch_status.call_count == len(states)
+
+
+def test_fetch_current_pages_deployment_distinguishes_empty_history(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=[]))
+    fetch_status = Mock()
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", fetch_status)
+
+    assert fetch_current_pages_deployment("jbm329/expo-studio") is None
+    fetch_status.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("states", "message"),
+    [
+        (["success", "success"], "Multiple currently successful"),
+        (["failure", "inactive", "error"], "no currently successful"),
+        (["pending", "success"], "unfinished"),
+        (["success", "queued"], "unfinished"),
+        (["in_progress"], "unfinished"),
+    ],
+)
+def test_fetch_current_pages_deployment_rejects_uncertain_history(
+    monkeypatch: pytest.MonkeyPatch, states: list[str], message: str
+) -> None:
+    deployments = [{"id": index + 1, "sha": "a" * 40} for index in range(len(states))]
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", Mock(return_value=deployments)
+    )
+    fetch_status = Mock(
+        side_effect=lambda slug, deployment_id: [
+            {
+                "id": deployment_id,
+                "state": states[deployment_id - 1],
+                "log_url": "",
+                "created_at": "2026-11-04T12:00:00Z",
+            }
+        ]
+    )
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", fetch_status)
+
+    with pytest.raises(ValueError, match=message):
+        fetch_current_pages_deployment("jbm329/expo-studio")
+
+
+@pytest.mark.parametrize("failure_point", ["history", "statuses"])
+def test_fetch_current_pages_deployment_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch, failure_point: str
+) -> None:
+    error = subprocess.CalledProcessError(1, ["gh", "api"])
+    history = Mock(return_value=[{"id": 1, "sha": "a" * 40}])
+    statuses = Mock(side_effect=error)
+    if failure_point == "history":
+        history.side_effect = error
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_pages_deployments", history)
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", statuses)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        fetch_current_pages_deployment("jbm329/expo-studio")
+
+
+def test_fetch_current_pages_deployment_rejects_missing_statuses(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_pages_deployments",
+        Mock(return_value=[{"id": 1, "sha": "a" * 40}]),
+    )
+    monkeypatch.setitem(fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", Mock(return_value=[]))
+
+    with pytest.raises(ValueError, match="without status records"):
+        fetch_current_pages_deployment("jbm329/expo-studio")
+
+
+def test_fetch_current_pages_deployment_rejects_duplicate_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    deployment = {"id": 1, "sha": "a" * 40}
+    status = {"id": 1, "state": "success", "log_url": "", "created_at": "2026-11-04T12:00:00Z"}
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__,
+        "fetch_pages_deployments",
+        Mock(return_value=[deployment, deployment]),
+    )
+    monkeypatch.setitem(
+        fetch_current_pages_deployment.__globals__, "fetch_deployment_statuses", Mock(return_value=[status])
+    )
+
+    with pytest.raises(ValueError, match="Repeated"):
+        fetch_current_pages_deployment("jbm329/expo-studio")
 
 
 def test_fetch_deployment_statuses_combines_pages(monkeypatch: pytest.MonkeyPatch) -> None:
