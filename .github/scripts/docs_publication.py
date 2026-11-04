@@ -855,6 +855,7 @@ def require_publication_job(
     Notes:
         Requires actions: read and GH_TOKEN. The deployment job must be named
         "Deploy documentation". A job-specific log URL must match that job;
+        its success may be recorded after job completion by GitHub.
         run-only URLs rely on the success timestamp falling within its execution.
         This is a metadata cross-check, not proof of artifact contents.
     """
@@ -894,7 +895,12 @@ def require_publication_job(
         message = "Deployment job requires start and completion timestamps."
         raise TypeError(message)
     timestamp = _parse_status_timestamp(status["created_at"])
-    if not _parse_status_timestamp(started) <= timestamp <= _parse_status_timestamp(completed):
+    started_at = _parse_status_timestamp(started)
+    completed_at = _parse_status_timestamp(completed)
+    if completed_at < started_at:
+        message = "Deployment job completion timestamp precedes its start."
+        raise ValueError(message)
+    if timestamp < started_at or (status["log_url"] == run_url and timestamp > completed_at):
         message = "Deployment success timestamp is outside the verified job execution window."
         raise ValueError(message)
 

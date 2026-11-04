@@ -102,6 +102,60 @@ def test_fetch_executing_publication_job_reads_all_pages(
 
 
 @pytest.mark.parametrize(
+    ("suffix", "timestamp", "accepted"),
+    [
+        ("/job/987", "12:02:01", True),
+        ("/job/987", "13:00:00", True),
+        ("", "12:02:01", False),
+        ("/job/987", "11:59:59", False),
+        ("", "11:59:59", False),
+    ],
+)
+def test_require_publication_job_distinguishes_direct_identity_from_timing(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    suffix: str,
+    timestamp: str,
+    accepted: bool,
+) -> None:
+    pages = [{"jobs": [publication_job]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    status = {
+        **deployment_success,
+        "log_url": str(deployment_success["log_url"]) + suffix,
+        "created_at": f"2026-11-04T{timestamp}Z",
+    }
+
+    if accepted:
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+    else:
+        with pytest.raises(ValueError, match="execution window"):
+            require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+
+@pytest.mark.parametrize("suffix", ["", "/job/987"])
+def test_require_publication_job_rejects_reversed_job_timestamps(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    suffix: str,
+) -> None:
+    pages = [{"jobs": [{**publication_job, "completed_at": "2026-11-04T11:59:59Z"}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    status = {**deployment_success, "log_url": str(deployment_success["log_url"]) + suffix}
+
+    with pytest.raises(ValueError, match="precedes its start"):
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+
+@pytest.mark.parametrize(
     ("field", "value"),
     [
         ("id", True),
@@ -1446,10 +1500,10 @@ def test_require_publication_job_checks_attempt_and_execution_window(
         ("started_at", None),
         ("completed_at", None),
         ("started_at", "2026-11-04T12:01:01Z"),
-        ("completed_at", "2026-11-04T12:00:59Z"),
         ("started_at", "invalid"),
     ],
 )
+@pytest.mark.parametrize("suffix", ["", "/job/987"])
 def test_require_publication_job_rejects_bad_job(
     monkeypatch: pytest.MonkeyPatch,
     publication_manifest: dict[str, object],
@@ -1457,14 +1511,16 @@ def test_require_publication_job_rejects_bad_job(
     deployment_success: dict[str, object],
     field: str,
     value: object,
+    suffix: str,
 ) -> None:
     pages = [{"jobs": [{**publication_job, field: value}]}]
     monkeypatch.setattr(
         subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
     )
 
+    status = {**deployment_success, "log_url": str(deployment_success["log_url"]) + suffix}
     with pytest.raises(TypeError if value is None else ValueError):
-        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
 
 
 @pytest.mark.parametrize("count", [0, 2])

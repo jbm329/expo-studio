@@ -158,10 +158,13 @@ a successful job. This permits inspection of a published site after a subsequent
 workflow failure without accepting a failed or cancelled deployment job.
 
 A separate job check requires exactly one successful job named
-`Deploy documentation` in that run attempt. The deployment success timestamp
-must fall within the job's execution window; a job-specific status link must
-identify that same job. This cross-check rejects a different attempt's execution
-window but does not establish artifact contents. The deploy job has not been
+`Deploy documentation` in that run attempt. A job-specific status link must
+identify that same job, and its success timestamp cannot precede the job's start.
+GitHub may record deployment success after job completion, so an exact job link
+does not impose a completion-time cutoff. Run-only links still require success
+within the job's execution window because they do not directly identify the job.
+Job timestamps must be valid and completion cannot precede start. These checks
+do not establish artifact contents. The deploy job has not been
 added yet; artifact verification and final deployment wiring remain unfinished.
 
 `fetch_manual_publication_metadata` connects the current-deployment, public
