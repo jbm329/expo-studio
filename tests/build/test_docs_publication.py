@@ -44,6 +44,7 @@ latest_deployment_status = HELPER["latest_deployment_status"]
 fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 require_deployment_run = HELPER["require_deployment_run"]
 require_manual_publication_run = HELPER["require_manual_publication_run"]
+require_publication_job = HELPER["require_publication_job"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
@@ -406,6 +407,180 @@ def test_refresh_publication_refs_surfaces_repository_failure(monkeypatch: pytes
         refresh_publication_refs(tmp_path)
 
     assert runner.call_count == 1
+
+
+@pytest.fixture
+def publication_job() -> dict[str, object]:
+    return {
+        "id": 987,
+        "name": "Deploy documentation",
+        "run_id": 123456789,
+        "run_attempt": 2,
+        "status": "completed",
+        "conclusion": "success",
+        "started_at": "2026-11-04T12:00:00Z",
+        "completed_at": "2026-11-04T12:02:00Z",
+    }
+
+
+@pytest.fixture
+def deployment_success() -> dict[str, object]:
+    return {
+        "id": 1,
+        "state": "success",
+        "log_url": "https://github.com/jbm329/expo-studio/actions/runs/123456789",
+        "created_at": "2026-11-04T12:01:00Z",
+    }
+
+
+@pytest.mark.parametrize("suffix", ["", "/job/987"])
+@pytest.mark.parametrize("timestamp", ["12:00:00", "12:01:00", "12:02:00"])
+def test_require_publication_job_checks_attempt_and_execution_window(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    suffix: str,
+    timestamp: str,
+) -> None:
+    pages = [{"jobs": [{"name": "prepare"}]}, {"jobs": [publication_job]}]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+    status = {
+        **deployment_success,
+        "log_url": str(deployment_success["log_url"]) + suffix,
+        "created_at": f"2026-11-04T{timestamp}Z",
+    }
+
+    require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/actions/runs/123456789/attempts/2/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 0),
+        ("run_id", 123456788),
+        ("run_id", "123456789"),
+        ("run_attempt", 1),
+        ("run_attempt", "2"),
+        ("status", "in_progress"),
+        ("conclusion", "failure"),
+        ("started_at", None),
+        ("completed_at", None),
+        ("started_at", "2026-11-04T12:01:01Z"),
+        ("completed_at", "2026-11-04T12:00:59Z"),
+        ("started_at", "invalid"),
+    ],
+)
+def test_require_publication_job_rejects_bad_job(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    field: str,
+    value: object,
+) -> None:
+    pages = [{"jobs": [{**publication_job, field: value}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(TypeError if value is None else ValueError):
+        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+
+
+@pytest.mark.parametrize("count", [0, 2])
+def test_require_publication_job_requires_unique_named_job(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    count: int,
+) -> None:
+    pages = [{"jobs": [publication_job] * count}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+
+
+@pytest.mark.parametrize("response", ["null", "{}", "[null]", "[{}]", '[{"jobs": [null]}]'])
+def test_require_publication_job_rejects_malformed_pages(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    deployment_success: dict[str, object],
+    response: str,
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+
+
+def test_require_publication_job_rejects_link_to_other_job(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+) -> None:
+    pages = [{"jobs": [publication_job]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    status = {**deployment_success, "log_url": str(deployment_success["log_url"]) + "/job/988"}
+
+    with pytest.raises(ValueError, match="different job"):
+        require_publication_job("jbm329/expo-studio", status, publication_manifest, 2)
+
+
+@pytest.mark.parametrize("attempt", [True, 0, -1, "2", None])
+def test_require_publication_job_rejects_invalid_attempt_before_api(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    deployment_success: dict[str, object],
+    attempt: object,
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="positive integer"):
+        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, attempt)
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_require_publication_job_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    deployment_success: dict[str, object],
+    error: Exception,
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
 
 
 @pytest.fixture

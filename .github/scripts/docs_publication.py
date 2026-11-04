@@ -533,6 +533,102 @@ def require_manual_publication_run(
     return attempt
 
 
+def require_publication_job(
+    repository_slug: str,
+    status: GitHubDeploymentStatus,
+    manifest: PublicationManifest,
+    run_attempt: int,
+) -> None:
+    """Associate a deployment success with the publishing job in a run attempt.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        status: Validated success status from the selected Pages deployment.
+        manifest: Publication metadata identifying the previously checked run.
+        run_attempt: Positive attempt number returned by run verification.
+
+    Raises:
+        ValueError: If identifiers, job metadata, or timing do not match.
+        TypeError: If the API response is not a paginated jobs response or job
+            timestamps are not strings.
+        subprocess.CalledProcessError: If the API request or authentication fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. The deployment job must be named
+        "Deploy documentation". A job-specific log URL must match that job;
+        run-only URLs rely on the success timestamp falling within its execution.
+        This is a metadata cross-check, not proof of artifact contents.
+    """
+    require_deployment_run(repository_slug, status, manifest)
+    if type(run_attempt) is not int or run_attempt <= 0:
+        message = "Publication job verification requires a positive integer run attempt."
+        raise ValueError(message)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/actions/runs/{manifest['run_id']}/attempts/{run_attempt}/jobs?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "GitHub jobs response must be a list of pages."
+        raise TypeError(message)
+    matching: list[dict[str, object]] = []
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("jobs"), list):
+            message = "GitHub jobs response page requires a jobs list."
+            raise TypeError(message)
+        for job in page["jobs"]:
+            if not isinstance(job, dict) or not isinstance(job.get("name"), str):
+                message = "GitHub job requires an object with a string name."
+                raise TypeError(message)
+            if job["name"] == "Deploy documentation":
+                matching.append(job)
+    if len(matching) != 1:
+        message = "Run attempt must contain exactly one Deploy documentation job."
+        raise ValueError(message)
+    job = matching[0]
+    job_id = job.get("id")
+    expected = {
+        "run_id": int(manifest["run_id"]),
+        "run_attempt": run_attempt,
+        "status": "completed",
+        "conclusion": "success",
+    }
+    if (
+        type(job_id) is not int
+        or job_id <= 0
+        or type(job.get("run_id")) is not int
+        or type(job.get("run_attempt")) is not int
+        or any(job.get(key) != value for key, value in expected.items())
+    ):
+        message = "Deployment job must be successful and belong to the verified run attempt."
+        raise ValueError(message)
+    run_url = f"https://github.com/{repository_slug}/actions/runs/{manifest['run_id']}"
+    if status["log_url"] not in (run_url, f"{run_url}/job/{job_id}"):
+        message = "Deployment status links to a different job."
+        raise ValueError(message)
+    started = job.get("started_at")
+    completed = job.get("completed_at")
+    if not isinstance(started, str) or not isinstance(completed, str):
+        message = "Deployment job requires start and completion timestamps."
+        raise TypeError(message)
+    timestamp = _parse_status_timestamp(status["created_at"])
+    if not _parse_status_timestamp(started) <= timestamp <= _parse_status_timestamp(completed):
+        message = "Deployment success timestamp is outside the verified job execution window."
+        raise ValueError(message)
+
+
 def prepare_publication(
     repository: Path,
     repository_slug: str,

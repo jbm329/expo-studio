@@ -109,8 +109,15 @@ the expected repository (including the source repository), and the deployment's
 workflow commit SHA. It returns the current run-attempt number for subsequent
 verification. This does not verify workflow file contents, the deployment's
 exact attempt, or artifact contents. Automatic release runs are not accepted by
-this manual check. Attempt/artifact verification and final deployment wiring
-remain unfinished; no workflow permissions have been expanded yet.
+this manual check.
+
+A separate job check requires exactly one successful job named
+`Deploy documentation` in that run attempt. The deployment success timestamp
+must fall within the job's execution window; a job-specific status link must
+identify that same job. This cross-check rejects a different attempt's execution
+window but does not establish artifact contents. The deploy job has not been
+added yet; artifact verification and final deployment wiring remain unfinished,
+and no workflow permissions have been expanded.
 
 ## Notes
 This is a spare-time project, so response times may vary.  
