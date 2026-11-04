@@ -1,5 +1,6 @@
 """Tests for documentation publication policy."""
 
+import subprocess
 from pathlib import Path
 from runpy import run_path
 
@@ -12,6 +13,7 @@ is_stable_release = HELPER["is_stable_release"]
 latest_stable_tag = HELPER["latest_stable_tag"]
 require_latest_stable_tag = HELPER["require_latest_stable_tag"]
 validate_commit_sha = HELPER["validate_commit_sha"]
+require_commit = HELPER["require_commit"]
 
 
 @pytest.mark.parametrize(
@@ -206,3 +208,55 @@ def test_validate_commit_sha_normalizes_full_ids(source_sha: str) -> None:
 def test_validate_commit_sha_rejects_non_full_ids(source_sha: str) -> None:
     with pytest.raises(ValueError, match="Expected a full 40-character hexadecimal commit SHA"):
         validate_commit_sha(source_sha)
+
+
+def run_git(repository: Path, *arguments: str) -> str:
+    return subprocess.run(
+        ["git", *arguments],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+@pytest.fixture
+def git_repository(tmp_path: Path) -> Path:
+    run_git(tmp_path, "init", "--quiet")
+    run_git(tmp_path, "config", "user.name", "Documentation Tests")
+    run_git(tmp_path, "config", "user.email", "docs-tests@example.invalid")
+    (tmp_path / "example.txt").write_text("Synthetic test content.\n", encoding="utf-8")
+    run_git(tmp_path, "add", "example.txt")
+    run_git(tmp_path, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "Initial test commit")
+    return tmp_path
+
+
+@pytest.mark.parametrize("uppercase", [False, True])
+def test_require_commit_accepts_existing_commit(git_repository: Path, uppercase: bool) -> None:
+    commit_sha = run_git(git_repository, "rev-parse", "HEAD")
+
+    assert require_commit(git_repository, commit_sha.upper() if uppercase else commit_sha) == commit_sha
+
+
+@pytest.mark.parametrize("revision", ["HEAD:example.txt", "HEAD^{tree}", "refs/tags/example"])
+def test_require_commit_rejects_other_object_types(git_repository: Path, revision: str) -> None:
+    run_git(git_repository, "-c", "tag.gpgsign=false", "tag", "-a", "example", "-m", "Annotated test tag")
+    object_sha = run_git(git_repository, "rev-parse", revision)
+
+    with pytest.raises(ValueError, match="is not a Git commit"):
+        require_commit(git_repository, object_sha)
+
+
+def test_require_commit_rejects_missing_object(git_repository: Path) -> None:
+    with pytest.raises(subprocess.CalledProcessError):
+        require_commit(git_repository, "0" * 40)
+
+
+def test_require_commit_rejects_invalid_sha_before_running_git(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="Expected a full 40-character hexadecimal commit SHA"):
+        require_commit(tmp_path / "nonexistent", "main")
+
+
+def test_require_commit_surfaces_invalid_repository(tmp_path: Path) -> None:
+    with pytest.raises(subprocess.CalledProcessError):
+        require_commit(tmp_path, "a" * 40)

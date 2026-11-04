@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+    from pathlib import Path
 
 
 class GitHubRelease(TypedDict):
@@ -135,3 +137,34 @@ def validate_commit_sha(source_sha: str) -> str:
         raise ValueError(message)
 
     return source_sha.lower()
+
+
+def require_commit(repository: Path, source_sha: str) -> str:
+    """Require a full object ID to identify a local Git commit.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        source_sha: Explicit source commit ID supplied for publication.
+
+    Returns:
+        The validated lowercase commit ID.
+
+    Raises:
+        ValueError: If the SHA format is invalid or the object is not a commit.
+        subprocess.CalledProcessError: If Git cannot inspect the object.
+        OSError: If Git cannot be started or the working directory is invalid.
+    """
+    commit_sha = validate_commit_sha(source_sha)
+    # The command is fixed and its only input argument is a validated object ID.
+    result = subprocess.run(  # noqa: S603
+        ["git", "--no-replace-objects", "cat-file", "-t", commit_sha],  # noqa: S607
+        cwd=repository,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if result.stdout.strip() != "commit":
+        message = f"Publication source {commit_sha!r} is not a Git commit."
+        raise ValueError(message)
+
+    return commit_sha
