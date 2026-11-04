@@ -6,7 +6,7 @@ import re
 import subprocess
 import tomllib
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -19,6 +19,64 @@ class GitHubRelease(TypedDict):
     tag_name: str
     draft: bool
     prerelease: bool
+
+
+class PublicationManifest(TypedDict):
+    """Versioned provenance stored alongside the published website."""
+
+    schema_version: int
+    mode: Literal["bootstrap", "release", "correction"]
+    baseline_tag: str
+    source_sha: str
+    run_id: str
+
+
+def parse_publication_manifest(value: object) -> PublicationManifest:
+    """Validate publication provenance decoded from JSON.
+
+    Args:
+        value: Decoded JSON content of the publication manifest.
+
+    Returns:
+        Validated metadata with a normalized source commit ID.
+
+    Raises:
+        ValueError: If the manifest schema or any metadata field is invalid.
+
+    Notes:
+        A bootstrap baseline identifies the existing app release, not a claim
+        that the placeholder documents that release. Metadata alone does not
+        establish a successful deployment or commit eligibility.
+    """
+    required = {"schema_version", "mode", "baseline_tag", "source_sha", "run_id"}
+    if not isinstance(value, dict) or set(value) != required:
+        message = "Publication manifest must contain exactly the supported provenance fields."
+        raise ValueError(message)
+    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+        message = "Unsupported publication manifest schema version."
+        raise ValueError(message)
+    mode = value["mode"]
+    if mode not in ("bootstrap", "release", "correction"):
+        message = "Unsupported publication manifest mode."
+        raise ValueError(message)
+    baseline = value["baseline_tag"]
+    source = value["source_sha"]
+    run_id = value["run_id"]
+    if not isinstance(baseline, str) or not isinstance(source, str):
+        message = "Publication manifest baseline and source must be strings."
+        raise ValueError(message)  # noqa: TRY004 - Invalid decoded manifest data uses one validation error type.
+    parse_stable_tag(baseline)
+    source = validate_commit_sha(source)
+    if not isinstance(run_id, str) or re.fullmatch(r"[1-9][0-9]*", run_id) is None:
+        message = "Publication manifest run ID must be a positive decimal string."
+        raise ValueError(message)
+    return {
+        "schema_version": 1,
+        "mode": mode,
+        "baseline_tag": baseline,
+        "source_sha": source,
+        "run_id": run_id,
+    }
 
 
 def parse_stable_tag(tag: str) -> tuple[int, int, int]:

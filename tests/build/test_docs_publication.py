@@ -27,6 +27,87 @@ require_bootstrap_content = HELPER["require_bootstrap_content"]
 require_bootstrap_configuration = HELPER["require_bootstrap_configuration"]
 require_bootstrap_source = HELPER["require_bootstrap_source"]
 require_publication_progress = HELPER["require_publication_progress"]
+parse_publication_manifest = HELPER["parse_publication_manifest"]
+
+
+@pytest.fixture
+def publication_manifest() -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "mode": "release",
+        "baseline_tag": "v1.4.0",
+        "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        "run_id": "123456789",
+    }
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "release", "correction"])
+def test_publication_manifest_accepts_supported_modes(publication_manifest: dict[str, object], mode: str) -> None:
+    publication_manifest["mode"] = mode
+
+    assert parse_publication_manifest(publication_manifest) == publication_manifest
+
+
+def test_publication_manifest_normalizes_sha_without_mutating_input(publication_manifest: dict[str, object]) -> None:
+    source = str(publication_manifest["source_sha"]).upper()
+    publication_manifest["source_sha"] = source
+
+    parsed = parse_publication_manifest(publication_manifest)
+
+    assert parsed["source_sha"] == source.lower()
+    assert publication_manifest["source_sha"] == source
+
+
+@pytest.mark.parametrize("field", ["schema_version", "mode", "baseline_tag", "source_sha", "run_id"])
+def test_publication_manifest_rejects_missing_fields(publication_manifest: dict[str, object], field: str) -> None:
+    del publication_manifest[field]
+
+    with pytest.raises(ValueError, match="exactly the supported provenance fields"):
+        parse_publication_manifest(publication_manifest)
+
+
+def test_publication_manifest_rejects_unknown_fields(publication_manifest: dict[str, object]) -> None:
+    publication_manifest["unexpected"] = "value"
+
+    with pytest.raises(ValueError, match="exactly the supported provenance fields"):
+        parse_publication_manifest(publication_manifest)
+
+
+@pytest.mark.parametrize("value", [None, [], "manifest", 1])
+def test_publication_manifest_requires_an_object(value: object) -> None:
+    with pytest.raises(ValueError, match="exactly the supported provenance fields"):
+        parse_publication_manifest(value)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("schema_version", True),
+        ("schema_version", "1"),
+        ("schema_version", 1.0),
+        ("schema_version", 2),
+        ("mode", "preview"),
+        ("mode", None),
+        ("mode", []),
+        ("baseline_tag", None),
+        ("baseline_tag", "v1.4.0-rc1"),
+        ("source_sha", None),
+        ("source_sha", "main"),
+        ("run_id", 123),
+        ("run_id", "0"),
+        ("run_id", "-1"),
+        ("run_id", "0123"),
+        ("run_id", "123\n"),
+        ("run_id", "https://example.invalid/run"),
+    ],
+)
+def test_publication_manifest_rejects_invalid_values(
+    publication_manifest: dict[str, object], field: str, value: object
+) -> None:
+    publication_manifest[field] = value
+
+    with pytest.raises(ValueError):
+        parse_publication_manifest(publication_manifest)
 
 
 @pytest.mark.parametrize(
