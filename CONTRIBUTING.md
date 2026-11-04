@@ -21,6 +21,13 @@ Thanks for your interest in contributing 🎉
 
 ## Documentation infrastructure
 
+The manual publication form includes a default-off `deploy_website` checkbox.
+It is currently a recorded request only: even when checked, the workflow does
+not deploy. The validated-request summary shows the selection. Initial-bootstrap
+confirmation remains a separate input; requesting deployment does not replace
+that confirmation or bypass any validation. The guarded deployment job will be
+added in a subsequent implementation step.
+
 The user manual uses Zensical. Markdown sources live in `docs/`, and
 `zensical.toml` configures the website. Feature documentation has not yet
 been added.

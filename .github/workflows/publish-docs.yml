@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Validate and build a preview only; this workflow does not deploy yet"
+        description: "Publication mode (deployment wiring is not enabled yet)"
         required: true
         type: choice
         options:
@@ -20,6 +20,11 @@ on:
         type: string
       confirm_initial_bootstrap:
         description: "I confirm this is the initial placeholder publication (only for empty deployment history)"
+        required: false
+        type: boolean
+        default: false
+      deploy_website:
+        description: "Request website deployment (not enabled yet; currently builds a preview only)"
         required: false
         type: boolean
         default: false
@@ -94,6 +99,8 @@ jobs:
 
       - name: Expose validated source commit
         id: validated-source
+        env:
+          DEPLOY_WEBSITE: ${{ inputs.deploy_website }}
         run: |
           uv run --no-project --python 3.13.12 python - <<'PY'
           import json
@@ -111,6 +118,8 @@ jobs:
                   f"- Application baseline: `{manifest['baseline_tag']}`\n"
                   f"- Source commit: `{manifest['source_sha']}`\n"
                   f"- Workflow run: `{manifest['run_id']}`\n\n"
+                  f"- Deployment requested: `{os.environ['DEPLOY_WEBSITE']}`\n\n"
+                  "Deployment wiring is not enabled; this run produces review artifacts only.\n"
                   "This validates the source only; it does not confirm a build or deployment.\n"
                   "For bootstrap, the baseline identifies the existing application release, "
                   "not manual coverage.\n"
