@@ -490,9 +490,44 @@ def test_publication_script_help_runs_without_side_effects() -> None:
     assert "without building or deploying" in result.stdout
 
 
+@pytest.mark.parametrize("duplicate", [False, True])
+def test_verify_pages_artifact_command_checks_identity_and_selection(
+    monkeypatch: pytest.MonkeyPatch, pages_artifact_metadata: dict[str, object], duplicate: bool
+) -> None:
+    artifacts = [{"id": 456, "name": "github-pages"}]
+    if duplicate:
+        artifacts.append({"id": 789, "name": "github-pages"})
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps(pages_artifact_metadata)),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([{"artifacts": artifacts}])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+    arguments = [
+        "verify-pages-artifact",
+        "--repository-slug",
+        "jbm329/expo-studio",
+        "--artifact-id",
+        "456",
+        "--run-id",
+        "123",
+    ]
+
+    if duplicate:
+        with pytest.raises(ValueError, match="exactly one"):
+            main(arguments)
+    else:
+        main(arguments)
+
+    assert runner.call_count == 2
+    assert runner.call_args_list[0].args[0][-1] == "repos/jbm329/expo-studio/actions/artifacts/456"
+    assert runner.call_args_list[1].args[0][-1] == "repos/jbm329/expo-studio/actions/runs/123/artifacts?per_page=100"
+
+
 def test_verify_pages_artifact_command_passes_explicit_identity(monkeypatch: pytest.MonkeyPatch) -> None:
     verify = Mock()
-    monkeypatch.setitem(main.__globals__, "require_pages_artifact", verify)
+    monkeypatch.setitem(main.__globals__, "require_unique_pages_artifact", verify)
 
     main([
         "verify-pages-artifact",
@@ -508,7 +543,9 @@ def test_verify_pages_artifact_command_passes_explicit_identity(monkeypatch: pyt
 
 
 def test_verify_pages_artifact_command_propagates_rejection(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setitem(main.__globals__, "require_pages_artifact", Mock(side_effect=ValueError("Artifact rejected")))
+    monkeypatch.setitem(
+        main.__globals__, "require_unique_pages_artifact", Mock(side_effect=ValueError("Artifact rejected"))
+    )
 
     with pytest.raises(ValueError, match="Artifact rejected"):
         main([

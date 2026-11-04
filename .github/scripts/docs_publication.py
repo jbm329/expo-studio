@@ -1645,13 +1645,15 @@ def main(argv: Sequence[str] | None = None) -> None:
     verify_site = commands.add_parser("verify-site", help="Check built website metadata against a validated proposal.")
     verify_site.add_argument("--site", type=Path, required=True, help="Extracted website artifact directory.")
     verify_site.add_argument("--proposed", type=Path, required=True, help="Independently validated manifest JSON file.")
-    verify_artifact = commands.add_parser("verify-pages-artifact", help="Check packaged Pages artifact API identity.")
+    verify_artifact = commands.add_parser(
+        "verify-pages-artifact", help="Check packaged Pages artifact identity and unique name selection."
+    )
     verify_artifact.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     verify_artifact.add_argument("--artifact-id", required=True, help="Immutable Pages artifact ID.")
     verify_artifact.add_argument("--run-id", required=True, help="Expected workflow run ID.")
     arguments = parser.parse_args(argv)
     if arguments.command == "verify-pages-artifact":
-        require_pages_artifact(arguments.repository_slug, arguments.artifact_id, arguments.run_id)
+        require_unique_pages_artifact(arguments.repository_slug, arguments.artifact_id, arguments.run_id)
         return
     if arguments.command == "verify-site":
         require_site_manifest(arguments.site, read_publication_manifest(arguments.proposed))
