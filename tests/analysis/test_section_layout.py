@@ -107,6 +107,23 @@ def test_result_section_wraps_and_scrolls_all_text_below_fixed_title(container: 
         panel.deleteLater()
 
 
+def test_scroll_assertion_temporarily_hosts_and_detaches_result_section() -> None:
+    content = QLabel("\n".join(f"Result line {line}" for line in range(12)))
+    panel = AnalysisResultSection("Test results", content)
+    try:
+        assert assert_section_scrolls_below_frozen_title(panel, 100) is content
+
+        scroll = panel.findChild(QScrollArea)
+        assert scroll is not None
+        assert panel.parentWidget() is None
+        assert not panel.isVisible()
+        assert content.parentWidget() is scroll.viewport()
+        assert content.text().startswith("Result line 0")
+    finally:
+        panel.close()
+        panel.deleteLater()
+
+
 def test_result_section_scrolls_horizontally_for_non_wrapping_identifiers() -> None:
     content = QLabel("measurement_identifier_" * 60)
     panel = AnalysisResultSection("Test results", content)

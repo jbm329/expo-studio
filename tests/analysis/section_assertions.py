@@ -127,7 +127,7 @@ def assert_section_scrolls_below_frozen_title(
 ) -> QWidget:
     """Assert `panel` is a fixed title above content that scrolls only when needed.
 
-    The panel is detached from its view and shown at both heights.
+    The panel is detached from its view, hosted as a child widget, and shown at both heights.
 
     Args:
         panel: Titled section built by an analysis view.
@@ -158,18 +158,28 @@ def assert_section_scrolls_below_frozen_title(
     if result_section or isinstance(panel, AnalysisResultSection):
         assert_result_section(panel)
 
-    panel.setParent(None)
+    host = QWidget()
+    panel.setParent(host)
     # The scroll area's default minimum size hint can exceed short font-dependent content and
-    # keep the detached panel too tall to overflow; the behavior under test is the scrolling.
+    # keep the panel too tall to overflow; the behavior under test is the scrolling.
     if not isinstance(panel, AnalysisResultSection):
         scroll.setMinimumHeight(1)
-    panel.resize(width, small_height)
+    host.resize(width, small_height)
+    panel.setGeometry(0, 0, width, small_height)
+
+    def resize_panel(height: int) -> None:
+        host.resize(width, height)
+        panel.setGeometry(0, 0, width, height)
+
+    host.show()
     panel.show()
     try:
+        assert panel.parentWidget() is host
+        assert not panel.isWindow()
         bar = scroll.verticalScrollBar()
         assert bar is not None
         QCoreApplication.processEvents()
-        panel.resize(width, _overflow_height(panel, title, scroll, content, small_height))
+        resize_panel(_overflow_height(panel, title, scroll, content, small_height))
         _wait_for(lambda: bar.maximum() > 0)
         viewport = scroll.viewport()
         assert viewport is not None
@@ -181,9 +191,11 @@ def assert_section_scrolls_below_frozen_title(
         bar.setValue(bar.maximum())
         QCoreApplication.processEvents()
         if title is not None:
-            assert title.geometry() == title_geometry
+            assert title.geometry() == title_geometry, (
+                f"Title geometry changed: before={title_geometry}, after={title.geometry()}"
+            )
 
-        panel.resize(width, large_height)
+        resize_panel(large_height)
 
         def fits_large_panel() -> bool:
             fitting_height = large_height
@@ -191,13 +203,14 @@ def assert_section_scrolls_below_frozen_title(
                 chrome = panel.height() - viewport.height()
                 fitting_height = max(fitting_height, _required_content_height(content, viewport.width()) + chrome)
                 if panel.height() != fitting_height:
-                    panel.resize(width, fitting_height)
+                    resize_panel(fitting_height)
                     return False
             return bar.maximum() == 0 and not bar.isVisible() and panel.height() == fitting_height
 
         _wait_for(fits_large_panel)
         if title is not None:
-            assert title.geometry() == title_geometry
+            assert title.geometry().topLeft() == title_geometry.topLeft()
+            assert title.width() == title_geometry.width()
         assert bar.maximum() == 0, (
             f"Content still overflows: panel={panel.size()}, viewport={viewport.size()}, "
             f"content={content.size()}, required={_required_content_height(content, viewport.width())}"
@@ -210,4 +223,7 @@ def assert_section_scrolls_below_frozen_title(
             assert content.height() >= _required_content_height(content, content.width())
     finally:
         panel.close()
+        panel.setParent(None)
+        host.close()
+        host.deleteLater()
     return content

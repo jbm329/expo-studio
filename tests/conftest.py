@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,6 +15,15 @@ from expo_jbm329.utils import path_manager
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+
+def _configure_qt_platform() -> None:
+    """Default to offscreen on Wayland, where synthetic events cannot grab popups."""
+    if sys.platform == "linux" and os.environ.get("WAYLAND_DISPLAY"):
+        os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+
+_configure_qt_platform()
 
 
 @pytest.fixture(scope="session", autouse=True)

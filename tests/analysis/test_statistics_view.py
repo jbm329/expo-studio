@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 from PyQt6 import sip
 from PyQt6.QtCore import QCoreApplication, QSize, Qt, QTranslator
 from PyQt6.QtGui import QPaintEvent, QResizeEvent
-from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget
+from PyQt6.QtWidgets import QLabel, QSplitter, QTableWidget, QTabWidget, QWidget
 
 from expo_jbm329.gui.dialogs.analysis.section_layout import AnalysisResultSection
 from expo_jbm329.gui.dialogs.analysis.statistics_view import StatisticsView
@@ -217,9 +217,16 @@ def test_normality_section_scrolls_wrapped_content_and_leaves_growth_to_charts()
             _make_column_stats(column="long", count=SHAPIRO_LARGE_SAMPLE_THRESHOLD + 1),
         )
     )
-    view = StatisticsView(result)
-    view.resize(1100, 800)
+    host = QWidget()
+    host.resize(1100, 1100)
+    view = StatisticsView(result, host)
+    view.setGeometry(0, 0, 1100, 800)
+    host.show()
     view.show()
+
+    def resize_view(width: int, height: int) -> None:
+        view.setGeometry(0, 0, width, height)
+
     try:
         QCoreApplication.processEvents()
         panel = view.layout().itemAt(1).widget()
@@ -228,13 +235,13 @@ def test_normality_section_scrolls_wrapped_content_and_leaves_growth_to_charts()
         assert panel.height() == panel.heightForWidth(panel.width())
         text_height = panel.height()
         chart_height = charts.height()
-        view.resize(1100, 1100)
+        resize_view(1100, 1100)
         QCoreApplication.processEvents()
         assert panel.height() == text_height
         assert charts.height() > chart_height
 
         view.show_distribution_for("long")
-        view.resize(400, 1100)
+        resize_view(400, 1100)
         QCoreApplication.processEvents()
         label = view._normality_label  # noqa: SLF001
         assert scroll.widget() is label
@@ -244,7 +251,7 @@ def test_normality_section_scrolls_wrapped_content_and_leaves_growth_to_charts()
         assert "Sample size exceeds" in label.text()
 
         view.show_distribution_for("short")
-        view.resize(1100, 1100)
+        resize_view(1100, 1100)
         QCoreApplication.processEvents()
         assert scroll.widget() is label
         assert panel.height() == text_height
@@ -252,6 +259,8 @@ def test_normality_section_scrolls_wrapped_content_and_leaves_growth_to_charts()
         assert_section_scrolls_below_frozen_title(panel, 70, width=400)
     finally:
         view.close()
+        host.close()
+        host.deleteLater()
 
 
 @pytest.mark.parametrize("language", ["en", "sv"])
