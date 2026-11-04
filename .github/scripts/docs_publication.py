@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, TypedDict
 
 if TYPE_CHECKING:
@@ -243,3 +244,39 @@ def require_remote_branch_contains_commit(repository: Path, branch: str, source_
     branch_tip = require_commit(repository, result.stdout.strip())
     require_ancestor(repository, source, branch_tip)
     return branch_tip
+
+
+def require_correction_file(path: str, mode: str) -> None:
+    """Require a correction file to be non-executable manual content.
+
+    Args:
+        path: Repository-relative Git path, using forward slashes.
+        mode: Git file mode, which must be 100644 for a regular content file.
+
+    Raises:
+        ValueError: If the path or file mode is outside the correction scope.
+
+    Notes:
+        SVG and HTML are excluded because they can contain active content.
+        This validates metadata, not file contents or image decoding.
+    """
+    file_path = PurePosixPath(path)
+    canonical = (
+        file_path.as_posix() == path
+        and not file_path.is_absolute()
+        and ".." not in file_path.parts
+        and "\\" not in path
+        and PurePosixPath("docs") in file_path.parents
+    )
+    markdown = file_path.suffix == ".md"
+    image = PurePosixPath("docs/assets") in file_path.parents and file_path.suffix in {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".avif",
+    }
+    if mode != "100644" or not canonical or not (markdown or image):
+        message = f"Correction file is outside the permitted manual content scope: {path!r} (mode {mode!r})."
+        raise ValueError(message)

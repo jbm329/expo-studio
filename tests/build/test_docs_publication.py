@@ -16,6 +16,7 @@ validate_commit_sha = HELPER["validate_commit_sha"]
 require_commit = HELPER["require_commit"]
 require_ancestor = HELPER["require_ancestor"]
 require_remote_branch_contains_commit = HELPER["require_remote_branch_contains_commit"]
+require_correction_file = HELPER["require_correction_file"]
 
 
 @pytest.mark.parametrize(
@@ -347,3 +348,55 @@ def test_remote_branch_rejects_invalid_ref_names(git_repository: Path, branch: s
 
     with pytest.raises(subprocess.CalledProcessError):
         require_remote_branch_contains_commit(git_repository, branch, source)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "docs/index.md",
+        "docs/data-preparation/derived-columns.md",
+        "docs/assets/images/editor.png",
+        "docs/assets/example.jpg",
+        "docs/assets/example.jpeg",
+        "docs/assets/example.gif",
+        "docs/assets/example.webp",
+        "docs/assets/example.avif",
+    ],
+)
+def test_require_correction_file_accepts_manual_content(path: str) -> None:
+    assert require_correction_file(path, "100644") is None
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "",
+        "README.md",
+        "zensical.toml",
+        "pyproject.toml",
+        "uv.lock",
+        ".github/workflows/docs.yml",
+        "src/example.py",
+        "docs/example.py",
+        "docs/example.html",
+        "docs/assets/example.svg",
+        "docs/assets/example.js",
+        "docs/images/example.png",
+        "/docs/index.md",
+        "docs/../README.md",
+        "./docs/index.md",
+        "docs//index.md",
+        "docs/index.md/",
+        "docs\\index.md",
+        "documentation/index.md",
+    ],
+)
+def test_require_correction_file_rejects_out_of_scope_paths(path: str) -> None:
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_file(path, "100644")
+
+
+@pytest.mark.parametrize("mode", ["100755", "120000", "160000", "040000", "000000", ""])
+def test_require_correction_file_rejects_non_content_modes(mode: str) -> None:
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_file("docs/index.md", mode)
