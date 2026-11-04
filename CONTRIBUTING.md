@@ -167,6 +167,15 @@ The read-only PR preview workflow is not serialized by this group. Concurrency
 does not freeze release metadata or public deployment state, so final eligibility
 and progress rechecks are still required before deployment.
 
+After both inspection and artifact verification succeed, a read-only `recheck`
+job runs source preparation again using the trusted policy and freshly fetched
+refs and releases. It compares the resulting manifest byte-for-byte with the
+original validated proposal. A superseded release or no-longer-eligible source
+fails the run instead of accepting an outdated preview request. This job retains
+read-only checkout credentials for fetching, but does not install or execute the
+selected source. It does not refresh deployed provenance or authorize deployment;
+those final checks still need to be connected to the future deployment step.
+
 ## Notes
 This is a spare-time project, so response times may vary.  
 Thanks for your patience and for helping improve the project 💛

@@ -281,3 +281,48 @@ jobs:
             echo "The downloaded website has a nonempty landing page and provenance matching the validated proposal."
             echo "This checks structure and metadata, not every website file's origin, and does not authorize deployment."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  recheck:
+    needs: [inspect, verify]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout trusted eligibility policy and full source history
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: validated-documentation-publication
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Recheck source against current releases and refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py prepare \
+            --repository "$GITHUB_WORKSPACE" \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --request "$RUNNER_TEMP/validated-proposal/validated-publication.json" \
+            --output "$RUNNER_TEMP/rechecked-publication.json"
+          cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json" "$RUNNER_TEMP/rechecked-publication.json"
+
+      - name: Summarize source eligibility recheck
+        run: |
+          {
+            echo "## Documentation source eligibility rechecked"
+            echo
+            echo "The same validated proposal remains eligible against freshly fetched releases and refs."
+            echo "This is a post-build source check, not deployment authorization or a fresh deployed-provenance check."
+          } >> "$GITHUB_STEP_SUMMARY"
