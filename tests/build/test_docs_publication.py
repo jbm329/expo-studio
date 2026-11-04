@@ -52,6 +52,100 @@ refresh_publication_refs = HELPER["refresh_publication_refs"]
 prepare_publication = HELPER["prepare_publication"]
 main = HELPER["main"]
 require_pages_artifact = HELPER["require_pages_artifact"]
+require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
+
+
+def test_require_unique_pages_artifact_checks_every_page(monkeypatch: pytest.MonkeyPatch) -> None:
+    identity = Mock()
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", identity)
+    pages = [
+        {"artifacts": [{"id": 789, "name": "preview"}]},
+        {"artifacts": []},
+        {"artifacts": [{"id": 456, "name": "github-pages"}]},
+    ]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+    identity.assert_called_once_with("jbm329/expo-studio", "456", "123")
+    runner.assert_called_once_with(
+        [
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            "repos/jbm329/expo-studio/actions/runs/123/artifacts?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+@pytest.mark.parametrize("ids", [[], [457], [456, 457], [456, 456]])
+def test_require_unique_pages_artifact_rejects_missing_replaced_or_duplicate_package(
+    monkeypatch: pytest.MonkeyPatch, ids: list[int]
+) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    pages = [{"artifacts": [{"id": identifier, "name": "github-pages"}]} for identifier in ids]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        "null",
+        "{}",
+        "[null]",
+        "[{}]",
+        '[{"artifacts": [null]}]',
+        '[{"artifacts": [{"name": "github-pages", "id": true}]}]',
+        '[{"artifacts": [{"name": "github-pages", "id": 0}]}]',
+    ],
+)
+def test_require_unique_pages_artifact_rejects_malformed_list(monkeypatch: pytest.MonkeyPatch, response: str) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+
+def test_require_unique_pages_artifact_stops_after_identity_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setitem(
+        require_unique_pages_artifact.__globals__,
+        "require_pages_artifact",
+        Mock(side_effect=ValueError("Invalid identity")),
+    )
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError, match="Invalid identity"):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "error", [subprocess.CalledProcessError(1, ["gh", "api"]), FileNotFoundError("gh unavailable")]
+)
+def test_require_unique_pages_artifact_propagates_list_failure(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    monkeypatch.setitem(require_unique_pages_artifact.__globals__, "require_pages_artifact", Mock())
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=error))
+
+    with pytest.raises(type(error)):
+        require_unique_pages_artifact("jbm329/expo-studio", "456", "123")
 
 
 @pytest.fixture

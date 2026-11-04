@@ -593,6 +593,64 @@ def require_pages_artifact(repository_slug: str, artifact_id: str, run_id: str) 
         raise ValueError(message)
 
 
+def require_unique_pages_artifact(repository_slug: str, artifact_id: str, run_id: str) -> None:
+    """Require Pages name-based selection to identify the verified artifact.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        artifact_id: Verified immutable package ID.
+        run_id: Workflow run whose artifacts will be selected by deployment.
+
+    Raises:
+        ValueError: If artifact identity fails or the name is missing or ambiguous.
+        TypeError: If the paginated artifact list is malformed.
+        subprocess.CalledProcessError: If a GitHub API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Checks all run artifact pages, including expired entries. This is not
+        atomic with deployment; rerun immediately before name-based selection.
+    """
+    require_pages_artifact(repository_slug, artifact_id, run_id)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "gh",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            "--slurp",
+            f"repos/{repository_slug}/actions/runs/{run_id}/artifacts?per_page=100",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    pages = json.loads(result.stdout)
+    if not isinstance(pages, list):
+        message = "GitHub run artifacts response must be a list of pages."
+        raise TypeError(message)
+    matching_ids: list[int] = []
+    for page in pages:
+        if not isinstance(page, dict) or not isinstance(page.get("artifacts"), list):
+            message = "GitHub run artifacts page requires an artifacts list."
+            raise TypeError(message)
+        for artifact in page["artifacts"]:
+            if not isinstance(artifact, dict) or not isinstance(artifact.get("name"), str):
+                message = "GitHub run artifact requires an object with a string name."
+                raise TypeError(message)
+            if artifact["name"] == "github-pages":
+                identifier = artifact.get("id")
+                if type(identifier) is not int or identifier <= 0:
+                    message = "Named Pages artifact requires a positive integer ID."
+                    raise TypeError(message)
+                matching_ids.append(identifier)
+    if matching_ids != [int(artifact_id)]:
+        message = "Run must contain exactly one github-pages artifact matching the verified package ID."
+        raise ValueError(message)
+
+
 def require_publication_job(
     repository_slug: str,
     status: GitHubDeploymentStatus,

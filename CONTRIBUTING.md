@@ -21,6 +21,12 @@ Thanks for your interest in contributing 🎉
 
 ## Documentation infrastructure
 
+The deployment helper also checks name-based Pages artifact selection: after
+checking package identity, it lists every artifact page for the run and requires
+exactly one `github-pages` entry with the verified immutable ID. Missing,
+replaced, duplicate, or malformed entries fail explicitly. This safeguard is not
+wired into deployment yet; the API check and eventual deployment are not atomic.
+
 The manual publication form includes a default-off `deploy_website` checkbox.
 It is currently a recorded request only: even when checked, the workflow does
 not deploy. The validated-request summary shows the selection. Initial-bootstrap
