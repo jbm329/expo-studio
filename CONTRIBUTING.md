@@ -45,7 +45,7 @@ environment. Missing context, invalid attempts, and a run ID different from the
 proposal fail before inspection. The commit identifies the workflow checkout,
 not the potentially different documentation source commit. Do not populate
 these variables from manual inputs. Without the flag, preview behavior is
-unchanged. This option is not wired into the workflow yet.
+unchanged. The deployment job uses this option for its final history check.
 Public environment-deployment metadata confirms job-specific log URLs are used;
 the first hosted run must still verify this repository's actual metadata.
 
@@ -53,7 +53,7 @@ The helper's `verify-published --repository-slug <owner/repo> --proposed <manife
 command checks the latest stable release and requires the public website's
 provenance to match the deployed proposal. It can run while the current workflow
 is active, without requiring that workflow or its deployment job to have finished.
-It is not wired into deployment yet. A mismatch, superseding release, or request
+The separate post-deployment verification job runs it. A mismatch, superseding release, or request
 failure is an error, not a rollback: the website may already have been published.
 CDN propagation may delay matching metadata; do not treat a failed check as proof
 that deployment did not happen.
@@ -63,15 +63,30 @@ checking package identity, it lists every artifact page for the run and requires
 exactly one `github-pages` entry with the verified immutable ID. Missing,
 replaced, duplicate, or malformed entries fail explicitly. The existing
 `verify-pages-artifact` command now includes this safeguard, so the post-build
-recheck enforces both package identity and unique name selection. Deployment
-is not wired yet; the API check and eventual deployment are not atomic.
+recheck enforces both package identity and unique name selection. The deployment
+job repeats this check immediately before the Pages action; these operations are not atomic.
 
 The manual publication form includes a default-off `deploy_website` checkbox.
-It is currently a recorded request only: even when checked, the workflow does
-not deploy. The validated-request summary shows the selection. Initial-bootstrap
+Unchecked, the workflow builds review artifacts only. Checked, it enables the
+guarded `Deploy documentation` job after every prerequisite succeeds.
+The validated-request summary shows the selection. Initial-bootstrap
 confirmation remains a separate input; requesting deployment does not replace
-that confirmation or bypass any validation. The guarded deployment job will be
-added in a subsequent implementation step.
+that confirmation or bypass any validation.
+
+The deployment job uses the `github-pages` environment and is the only job with
+`pages: write` and `id-token: write`. It checks out the trusted workflow commit,
+not the selected documentation source, and installs no application dependencies.
+Source eligibility, deployed provenance/progress, and unique package identity
+are checked again before `actions/deploy-pages` publishes `github-pages`.
+Git fetch authentication is supplied through process-local configuration,
+not persisted checkout credentials. No automatic release trigger is added.
+
+Public URL and provenance verification runs separately, so a failed verification
+does not change the successful deployment job's conclusion. It does not roll
+back the website or automatically retry CDN propagation failures. Inspect the
+served `publication.json` before deciding recovery; never assume a failed
+workflow means nothing was published. Recovery/rerun handling and hosted
+acceptance still require review before the first live run.
 
 The user manual uses Zensical. Markdown sources live in `docs/`, and
 `zensical.toml` configures the website. Feature documentation has not yet
@@ -114,8 +129,8 @@ baseline, source commit, and workflow run. This filename is reserved for
 generated provenance; do not add a documentation asset with that output path.
 The Actions run summary also identifies the validated source and preview.
 For bootstrap, the baseline identifies the existing application release, not
-a claim that the placeholder documents that version. The workflow does not
-deploy the website yet.
+a claim that the placeholder documents that version. Publication requires the
+separate default-off deployment input.
 
 The publication helper also provides `check-progress` for comparing validated
 proposed provenance with verified deployed provenance. It rejects older
@@ -175,13 +190,13 @@ GitHub may record deployment success after job completion, so an exact job link
 does not impose a completion-time cutoff. Run-only links still require success
 within the job's execution window because they do not directly identify the job.
 Job timestamps must be valid and completion cannot precede start. These checks
-do not establish artifact contents. The deploy job has not been
-added yet; artifact verification and final deployment wiring remain unfinished.
+do not establish artifact contents.
 
 `fetch_manual_publication_metadata` connects the current-deployment, public
 manifest, run-association, manual-run, and job checks. It rechecks the selected
 deployment after inspection and rejects a changed deployment or status.
-Only an initially empty deployment history returns no metadata; every failed
+Only empty prior history (optionally excluding the verified current pending
+record) returns no metadata; every failed
 check propagates as an error. This is still metadata inspection, not artifact
 verification or permission to publish.
 
@@ -194,8 +209,8 @@ The `inspect-published --repository-slug <owner/repo> --repository <checkout>
 writes either `no-deployment-records` or `metadata-cross-checked`, explicitly
 recording `deployment_authorized: false`. Inspection errors fail the job without
 writing a report; they are not reported as empty history. The preview build
-remains independent of inspection after source validation. There are still no
-Pages write permissions or deployment steps.
+remains independent of inspection after source validation. These inspection
+jobs have no Pages write permissions.
 
 Inspection also compares the downloaded proposed manifest with the cross-checked
 published source using the full-history trusted checkout. Regressions fail the
@@ -236,14 +251,14 @@ The build exposes the website upload's immutable artifact ID; verification
 requires a positive numeric ID and downloads that exact artifact, not a
 name-based replacement. The verified ID appears in the Actions summary.
 Missing or deleted artifacts fail verification rather than falling back to
-another preview. The ID is available for the future deployment step to reuse.
+another preview. The deployment step verifies the packaged Pages artifact ID.
 Validation likewise exposes and checks the manifest upload's immutable artifact
 ID. The build, inspection, verification, and post-build recheck all download
 that exact proposal by ID, without falling back to an artifact name.
 Only the trusted helper is executed, without installing application dependencies
 or retaining checkout credentials. Its Actions summary confirms successful
-structure and metadata checks, not authorization to deploy. Deployment wiring
-and verification of the previously published artifact remain unfinished.
+structure and metadata checks, not authorization to deploy. Previously published
+artifact contents are not independently verified.
 
 After metadata verification, that same job uses `actions/upload-pages-artifact`
 to package the downloaded website in GitHub Pages' required archive format.
@@ -289,8 +304,7 @@ The `documentation-publication-recheck` artifact retains that fresh report for
 seven days. Failed inspection or a regressing source fails the job. No deployment
 records still means nothing to compare, not bootstrap authorization.
 These reads are not atomic and do not verify published artifact contents or
-authorize deployment; final checks must still be connected to the future
-deployment step.
+authorize deployment; the opt-in deployment job repeats the final checks.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

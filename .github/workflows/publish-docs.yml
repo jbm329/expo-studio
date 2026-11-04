@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "Publication mode (deployment wiring is not enabled yet)"
+        description: "Publication mode (preview unless Deploy website is selected)"
         required: true
         type: choice
         options:
@@ -24,7 +24,7 @@ on:
         type: boolean
         default: false
       deploy_website:
-        description: "Request website deployment (not enabled yet; currently builds a preview only)"
+        description: "Deploy website after all checks pass (unchecked builds a preview only)"
         required: false
         type: boolean
         default: false
@@ -119,7 +119,7 @@ jobs:
                   f"- Source commit: `{manifest['source_sha']}`\n"
                   f"- Workflow run: `{manifest['run_id']}`\n\n"
                   f"- Deployment requested: `{os.environ['DEPLOY_WEBSITE']}`\n\n"
-                  "Deployment wiring is not enabled; this run produces review artifacts only.\n"
+                  "Deployment runs only when explicitly requested and all prerequisite checks pass.\n"
                   "This validates the source only; it does not confirm a build or deployment.\n"
                   "For bootstrap, the baseline identifies the existing application release, "
                   "not manual coverage.\n"
@@ -438,4 +438,150 @@ jobs:
             echo "Packaged Pages artifact identity and availability checked for this run: $PAGES_ARTIFACT_ID"
             echo "See documentation-publication-recheck for the result. No deployment records is not bootstrap authorization."
             echo "These read-only checks do not authorize deployment or prove published artifact contents."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy documentation
+    if: ${{ inputs.deploy_website }}
+    needs: [prepare, inspect, build, verify, recheck]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Require trusted main workflow
+        env:
+          WORKFLOW_REF: ${{ github.ref }}
+        run: |
+          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
+            echo "::error::Deployment requires the trusted main workflow."
+            exit 1
+          fi
+
+      - name: Checkout trusted deployment policy and full source history
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Final source eligibility check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py prepare \
+            --repository "$GITHUB_WORKSPACE" \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --request "$RUNNER_TEMP/validated-proposal/validated-publication.json" \
+            --output "$RUNNER_TEMP/final-publication.json"
+          cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json" "$RUNNER_TEMP/final-publication.json"
+
+      - name: Final deployed provenance and progress check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CONFIRM_INITIAL_BOOTSTRAP: ${{ inputs.confirm_initial_bootstrap }}
+        run: |
+          confirmation=()
+          if [ "$CONFIRM_INITIAL_BOOTSTRAP" = "true" ]; then
+            confirmation+=(--confirm-initial-bootstrap)
+          fi
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
+            --current-job \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --repository "$GITHUB_WORKSPACE" \
+            --proposed "$RUNNER_TEMP/final-publication.json" \
+            --output "$RUNNER_TEMP/final-inspection.json" \
+            "${confirmation[@]}"
+
+      - name: Final unique Pages artifact check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ARTIFACT_ID: ${{ needs.verify.outputs.pages_artifact_id }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-pages-artifact \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --artifact-id "$PAGES_ARTIFACT_ID" \
+            --run-id "$GITHUB_RUN_ID"
+
+      - name: Deploy verified Pages package
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
+
+  verify-publication:
+    name: Verify published documentation
+    needs: [prepare, deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout trusted verification policy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Require expected public site URL
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          if [ "$PAGE_URL" != "https://jbm329.github.io/expo-studio/" ]; then
+            echo "::error::Deployment returned an unexpected website URL."
+            exit 1
+          fi
+
+      - name: Verify served provenance and application baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-published \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
+
+      - name: Summarize verified publication
+        run: |
+          {
+            echo "## Documentation publication verified"
+            echo
+            echo "Website: https://jbm329.github.io/expo-studio/"
+            echo "Served provenance matches the validated proposal and its baseline remains the latest stable release."
           } >> "$GITHUB_STEP_SUMMARY"
