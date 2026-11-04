@@ -173,8 +173,15 @@ refs and releases. It compares the resulting manifest byte-for-byte with the
 original validated proposal. A superseded release or no-longer-eligible source
 fails the run instead of accepting an outdated preview request. This job retains
 read-only checkout credentials for fetching, but does not install or execute the
-selected source. It does not refresh deployed provenance or authorize deployment;
-those final checks still need to be connected to the future deployment step.
+selected source. With job-scoped `actions: read` and `deployments: read`, it
+also reruns deployment metadata inspection and source-progress comparison using
+the rechecked proposal, rather than reusing the earlier inspection report.
+The `documentation-publication-recheck` artifact retains that fresh report for
+seven days. Failed inspection or a regressing source fails the job. No deployment
+records still means nothing to compare, not bootstrap authorization.
+These reads are not atomic and do not verify published artifact contents or
+authorize deployment; final checks must still be connected to the future
+deployment step.
 
 ## Notes
 This is a spare-time project, so response times may vary.  

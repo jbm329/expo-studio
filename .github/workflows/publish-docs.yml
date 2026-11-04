@@ -287,6 +287,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: read
+      deployments: read
 
     steps:
       - name: Checkout trusted eligibility policy and full source history
@@ -318,11 +320,31 @@ jobs:
             --output "$RUNNER_TEMP/rechecked-publication.json"
           cmp "$RUNNER_TEMP/validated-proposal/validated-publication.json" "$RUNNER_TEMP/rechecked-publication.json"
 
-      - name: Summarize source eligibility recheck
+      - name: Recheck deployed provenance and publication progress
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py inspect-published \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --repository "$GITHUB_WORKSPACE" \
+            --proposed "$RUNNER_TEMP/rechecked-publication.json" \
+            --output "$RUNNER_TEMP/rechecked-inspection.json"
+
+      - name: Upload post-build publication inspection
+        uses: actions/upload-artifact@v7
+        with:
+          name: documentation-publication-recheck
+          path: ${{ runner.temp }}/rechecked-inspection.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Summarize publication recheck
         run: |
           {
-            echo "## Documentation source eligibility rechecked"
+            echo "## Documentation source and publication progress rechecked"
             echo
             echo "The same validated proposal remains eligible against freshly fetched releases and refs."
-            echo "This is a post-build source check, not deployment authorization or a fresh deployed-provenance check."
+            echo "Deployed metadata was inspected again and source progress checked where a published source exists."
+            echo "See documentation-publication-recheck for the result. No deployment records is not bootstrap authorization."
+            echo "These read-only checks do not authorize deployment or prove published artifact contents."
           } >> "$GITHUB_STEP_SUMMARY"
