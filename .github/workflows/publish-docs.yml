@@ -231,3 +231,49 @@ jobs:
           path: site
           if-no-files-found: error
           retention-days: 7
+
+  verify:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout trusted artifact verification policy
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.2.0
+
+      - name: Set up Python
+        run: uv python install 3.13.12
+
+      - name: Download validated publication manifest
+        uses: actions/download-artifact@v8
+        with:
+          name: validated-documentation-publication
+          path: ${{ runner.temp }}/validated-proposal
+
+      - name: Download built website
+        uses: actions/download-artifact@v8
+        with:
+          name: documentation-publication-preview
+          path: ${{ runner.temp }}/publication-site
+
+      - name: Verify website publication metadata
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-site \
+            --site "$RUNNER_TEMP/publication-site" \
+            --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
+
+      - name: Summarize artifact verification
+        run: |
+          {
+            echo "## Documentation preview metadata verified"
+            echo
+            echo "The downloaded website has a nonempty landing page and provenance matching the validated proposal."
+            echo "This checks structure and metadata, not every website file's origin, and does not authorize deployment."
+          } >> "$GITHUB_STEP_SUMMARY"

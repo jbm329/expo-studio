@@ -147,8 +147,15 @@ The helper's `verify-site --site <directory> --proposed <manifest>` command
 checks an extracted website against a separately validated proposal. It requires
 a regular website directory, a nonempty regular `index.html`, and a regular
 `publication.json` matching every validated provenance field. It does not execute
-website content or prove the origin of all website bytes. Artifact identity and
-deployment wiring remain separate; this command is not wired into Actions yet.
+website content or prove the origin of all website bytes.
+
+The manual workflow runs this command in a separate read-only `verify` job
+after the preview build. It downloads the website and validated proposal from
+the same Actions run into separate directories outside the trusted checkout.
+Only the trusted helper is executed, without installing application dependencies
+or retaining checkout credentials. Its Actions summary confirms successful
+structure and metadata checks, not authorization to deploy. Deployment wiring
+and verification of the previously published artifact remain unfinished.
 
 ## Notes
 This is a spare-time project, so response times may vary.  
