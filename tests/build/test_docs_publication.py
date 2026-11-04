@@ -1393,6 +1393,48 @@ def test_fetch_manual_publication_metadata_distinguishes_no_history(manual_metad
     assert [item[0] for item in manual_metadata_checks.mock_calls] == ["current"]
 
 
+@pytest.mark.parametrize("empty_history", [False, True])
+def test_manual_metadata_inspection_passes_execution_context_to_both_checks(
+    manual_metadata_checks: Mock, empty_history: bool
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    checks = manual_metadata_checks
+    if empty_history:
+        checks.current.return_value = None
+
+    expected = None if empty_history else checks.manifest.return_value
+    assert fetch_manual_publication_metadata("jbm329/expo-studio", execution_context=context) == expected
+
+    assert checks.current.call_count == 2
+    for call in checks.current.call_args_list:
+        assert call.args == ("jbm329/expo-studio",)
+        assert call.kwargs == {"execution_context": context}
+    if empty_history:
+        checks.manifest.assert_not_called()
+        checks.job.assert_not_called()
+    else:
+        checks.job.assert_called_once()
+
+
+@pytest.mark.parametrize("empty_history", [False, True])
+@pytest.mark.parametrize("change", ["changed", "failed"])
+def test_manual_metadata_inspection_with_context_rejects_recheck_change(
+    manual_metadata_checks: Mock, empty_history: bool, change: str
+) -> None:
+    context = {"run_id": "123", "run_attempt": 2, "workflow_sha": "a" * 40, "runner_name": "Hosted runner"}
+    checks = manual_metadata_checks
+    original = None if empty_history else checks.current.return_value
+    changed = checks.current.return_value if empty_history else None
+    if change == "failed":
+        changed = subprocess.CalledProcessError(1, ["gh", "api"])
+    checks.current.side_effect = [original, changed]
+
+    with pytest.raises(subprocess.CalledProcessError if change == "failed" else ValueError):
+        fetch_manual_publication_metadata("jbm329/expo-studio", execution_context=context)
+
+    assert checks.current.call_count == 2
+
+
 @pytest.mark.parametrize("failure_point", ["current", "manifest", "association", "run", "job"])
 def test_fetch_manual_publication_metadata_stops_on_failure(manual_metadata_checks: Mock, failure_point: str) -> None:
     sequence = ["current", "manifest", "association", "run", "job"]

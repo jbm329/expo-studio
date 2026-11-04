@@ -905,15 +905,20 @@ def require_publication_job(
         raise ValueError(message)
 
 
-def fetch_manual_publication_metadata(repository_slug: str) -> PublicationManifest | None:
+def fetch_manual_publication_metadata(
+    repository_slug: str, *, execution_context: PublicationExecutionContext | None = None
+) -> PublicationManifest | None:
     """Retrieve public manual provenance and cross-check its deployment metadata.
 
     Args:
         repository_slug: Expected GitHub owner/repository identifier.
+        execution_context: Optional trusted current runner context used to
+            identify and exclude only its own unfinished deployment record.
 
     Returns:
         Public provenance associated with the selected manual publishing run,
-        or None only when the initial deployment query returns no records.
+        or None when no prior history remains after optional current-job
+        exclusion and a second history check confirms that state.
 
     Raises:
         ValueError: If metadata checks fail or the selected deployment changes.
@@ -929,15 +934,28 @@ def fetch_manual_publication_metadata(repository_slug: str) -> PublicationManife
         but deployment serialization and final eligibility checks remain needed.
         Automatic release provenance is not accepted by this manual-only path.
     """
-    current = fetch_current_pages_deployment(repository_slug)
+    if execution_context is None:
+        current = fetch_current_pages_deployment(repository_slug)
+    else:
+        current = fetch_current_pages_deployment(repository_slug, execution_context=execution_context)
     if current is None:
+        if (
+            execution_context is not None
+            and fetch_current_pages_deployment(repository_slug, execution_context=execution_context) is not None
+        ):
+            message = "Pages deployment appeared during initial provenance inspection; retry against current state."
+            raise ValueError(message)
         return None
     deployment, status = current
     manifest = fetch_published_manifest()
     require_deployment_run(repository_slug, status, manifest)
     attempt = require_manual_publication_run(repository_slug, deployment, manifest)
     require_publication_job(repository_slug, status, manifest, attempt)
-    if fetch_current_pages_deployment(repository_slug) != current:
+    if execution_context is None:
+        rechecked = fetch_current_pages_deployment(repository_slug)
+    else:
+        rechecked = fetch_current_pages_deployment(repository_slug, execution_context=execution_context)
+    if rechecked != current:
         message = "Pages deployment changed during provenance inspection; retry against current state."
         raise ValueError(message)
     return manifest

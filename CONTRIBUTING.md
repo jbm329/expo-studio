@@ -35,8 +35,13 @@ excludes at most one unfinished record matching the verified job and commit.
 Other unfinished records, duplicate current-job records, and failed-only prior
 history remain errors. Only the current job's record is equivalent to no prior
 history; initial-bootstrap confirmation is still required by publication policy.
-This optional path is not wired into publication commands or the workflow yet;
-GitHub's actual environment-deployment log URL shape still needs verification.
+The provenance inspector passes this optional context to both history reads,
+resolving the executing job independently on each read. When no prior history
+remains, it also rechecks before returning that state; this does not authorize
+bootstrap or bypass its explicit confirmation.
+This optional path is not wired into publication commands or the workflow yet.
+Public environment-deployment metadata confirms job-specific log URLs are used;
+the first hosted run must still verify this repository's actual metadata.
 
 The helper's `verify-published --repository-slug <owner/repo> --proposed <manifest>`
 command checks the latest stable release and requires the public website's
