@@ -9,6 +9,7 @@ HELPER_PATH = Path(__file__).resolve().parents[2] / ".github" / "scripts" / "doc
 HELPER = run_path(str(HELPER_PATH))
 parse_stable_tag = HELPER["parse_stable_tag"]
 is_stable_release = HELPER["is_stable_release"]
+latest_stable_tag = HELPER["latest_stable_tag"]
 
 
 @pytest.mark.parametrize(
@@ -75,3 +76,47 @@ def test_is_stable_release(
 def test_stable_versions_compare_numerically() -> None:
     assert parse_stable_tag("v1.10.0") > parse_stable_tag("v1.9.0")
     assert parse_stable_tag("v2.0.0") > parse_stable_tag("v1.99.99")
+
+
+@pytest.mark.parametrize(
+    ("tags", "expected"),
+    [
+        (["v1.3.0"], "v1.3.0"),
+        (["v1.9.0", "v1.10.0", "v1.2.0"], "v1.10.0"),
+        (["v1.2.0", "v1.10.0", "v1.9.0"], "v1.10.0"),
+        (["v1.99.99", "v2.0.0"], "v2.0.0"),
+        (["v1.3.0", "v1.3.0"], "v1.3.0"),
+    ],
+)
+def test_latest_stable_tag_uses_numeric_order(tags: list[str], expected: str) -> None:
+    releases = [{"tag_name": tag, "draft": False, "prerelease": False} for tag in tags]
+
+    assert latest_stable_tag(releases) == expected
+
+
+def test_latest_stable_tag_excludes_ineligible_releases() -> None:
+    releases = [
+        {"tag_name": "v1.3.0", "draft": False, "prerelease": False},
+        {"tag_name": "v9.0.0", "draft": True, "prerelease": False},
+        {"tag_name": "v8.0.0", "draft": False, "prerelease": True},
+        {"tag_name": "v7.0.0-rc1", "draft": False, "prerelease": False},
+        {"tag_name": "v06.0.0", "draft": False, "prerelease": False},
+        {"tag_name": "unrelated-tag", "draft": False, "prerelease": False},
+    ]
+
+    assert latest_stable_tag(releases) == "v1.3.0"
+
+
+@pytest.mark.parametrize(
+    "releases",
+    [
+        [],
+        [{"tag_name": "v1.3.0", "draft": True, "prerelease": False}],
+        [{"tag_name": "v1.3.0", "draft": False, "prerelease": True}],
+        [{"tag_name": "v1.4.0-rc1", "draft": False, "prerelease": False}],
+        [{"tag_name": "unrelated-tag", "draft": False, "prerelease": False}],
+    ],
+)
+def test_latest_stable_tag_requires_an_eligible_release(releases: list[dict[str, object]]) -> None:
+    with pytest.raises(ValueError, match="No supported published stable release"):
+        latest_stable_tag(releases)
