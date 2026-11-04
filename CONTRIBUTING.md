@@ -118,12 +118,18 @@ and Actions run recorded in the public manifest. This association check accepts
 canonical HTTPS run links with an optional job suffix; it does not fetch the link
 or prove a trusted workflow, matching run attempt, or artifact contents.
 For manual bootstrap/correction provenance, a further read-only Actions API
-check requires a completed successful `publish-docs.yml` dispatch from `main`,
+check requires a completed `publish-docs.yml` dispatch from `main`,
 the expected repository (including the source repository), and the deployment's
 workflow commit SHA. It returns the current run-attempt number for subsequent
 verification. This does not verify workflow file contents, the deployment's
 exact attempt, or artifact contents. Automatic release runs are not accepted by
 this manual check.
+
+The overall workflow conclusion is not used as evidence of deployment success:
+the website may already have been published before a later verification fails
+or the run is cancelled. The separate deployment-job check below still requires
+a successful job. This permits inspection of a published site after a subsequent
+workflow failure without accepting a failed or cancelled deployment job.
 
 A separate job check requires exactly one successful job named
 `Deploy documentation` in that run attempt. The deployment success timestamp

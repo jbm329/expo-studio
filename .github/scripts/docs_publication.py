@@ -475,7 +475,7 @@ def require_manual_publication_run(
         The API's current positive run-attempt number, for further verification.
 
     Raises:
-        ValueError: If metadata does not identify a completed successful manual
+        ValueError: If metadata does not identify a completed manual
             publishing run from main at the deployment's workflow commit.
         TypeError: If the API response is not a workflow run object.
         subprocess.CalledProcessError: If the API request or authentication fails.
@@ -486,6 +486,9 @@ def require_manual_publication_run(
         workflow file contents, the deployment's exact run attempt, or artifact
         contents. A rerun may change the API's current attempt. Automatic
         release publishing is deliberately not accepted by this manual check.
+        Overall run failure does not invalidate a successful deployment job:
+        later verification may fail after the site has already been published.
+        Call require_publication_job separately to require deployment success.
     """
     _require_repository_slug(repository_slug)
     validated = parse_publication_manifest(manifest)
@@ -517,10 +520,9 @@ def require_manual_publication_run(
         "head_branch": "main",
         "head_sha": workflow_sha,
         "status": "completed",
-        "conclusion": "success",
     }
     if type(run.get("id")) is not int or any(run.get(key) != value for key, value in expected.items()):
-        message = "GitHub run does not match the successful manual publishing workflow and deployment commit."
+        message = "GitHub run does not match the completed manual publishing workflow and deployment commit."
         raise ValueError(message)
     for field in ("repository", "head_repository"):
         repository = run.get(field)

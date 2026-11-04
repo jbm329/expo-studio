@@ -1306,11 +1306,14 @@ def manual_publication_run() -> dict[str, object]:
     }
 
 
+@pytest.mark.parametrize("conclusion", ["success", "failure", "cancelled"])
 def test_require_manual_publication_run_checks_api_metadata(
     monkeypatch: pytest.MonkeyPatch,
     publication_manifest: dict[str, object],
     manual_publication_run: dict[str, object],
+    conclusion: str,
 ) -> None:
+    manual_publication_run["conclusion"] = conclusion
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(manual_publication_run)))
     monkeypatch.setattr(subprocess, "run", runner)
 
@@ -1339,8 +1342,6 @@ def test_require_manual_publication_run_checks_api_metadata(
         ("head_branch", "correction-branch"),
         ("head_sha", "b" * 40),
         ("status", "in_progress"),
-        ("conclusion", "failure"),
-        ("conclusion", None),
         ("repository", {"full_name": "another/repo"}),
         ("head_repository", {"full_name": "another/repo"}),
         ("head_repository", None),
@@ -1379,6 +1380,46 @@ def test_require_manual_publication_run_rejects_bad_response(
         require_manual_publication_run(
             "jbm329/expo-studio", {"id": 1, "sha": "a" * 40}, {**publication_manifest, "mode": "bootstrap"}
         )
+
+
+@pytest.mark.parametrize("run_conclusion", ["failure", "cancelled"])
+@pytest.mark.parametrize("job_conclusion", ["success", "failure", "cancelled"])
+def test_manual_metadata_inspection_requires_job_success_not_overall_run_success(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    run_conclusion: str,
+    job_conclusion: str,
+) -> None:
+    manifest = {**publication_manifest, "mode": "bootstrap"}
+    deployment = {"id": 1, "sha": "a" * 40}
+    monkeypatch.setitem(
+        fetch_manual_publication_metadata.__globals__,
+        "fetch_current_pages_deployment",
+        Mock(return_value=(deployment, deployment_success)),
+    )
+    monkeypatch.setitem(
+        fetch_manual_publication_metadata.__globals__, "fetch_published_manifest", Mock(return_value=manifest)
+    )
+    run = {**manual_publication_run, "conclusion": run_conclusion}
+    job = {**publication_job, "conclusion": job_conclusion}
+    runner = Mock(
+        side_effect=[
+            subprocess.CompletedProcess([], 0, stdout=json.dumps(run)),
+            subprocess.CompletedProcess([], 0, stdout=json.dumps([{"jobs": [job]}])),
+        ]
+    )
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    if job_conclusion == "success":
+        assert fetch_manual_publication_metadata("jbm329/expo-studio") == manifest
+    else:
+        with pytest.raises(ValueError, match="Deployment job must be successful"):
+            fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    assert runner.call_count == 2
 
 
 def test_require_manual_publication_run_rejects_release_before_api(
