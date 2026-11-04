@@ -17,6 +17,7 @@ require_commit = HELPER["require_commit"]
 require_ancestor = HELPER["require_ancestor"]
 require_remote_branch_contains_commit = HELPER["require_remote_branch_contains_commit"]
 require_correction_file = HELPER["require_correction_file"]
+require_correction_changes = HELPER["require_correction_changes"]
 
 
 @pytest.mark.parametrize(
@@ -400,3 +401,75 @@ def test_require_correction_file_rejects_out_of_scope_paths(path: str) -> None:
 def test_require_correction_file_rejects_non_content_modes(mode: str) -> None:
     with pytest.raises(ValueError, match="outside the permitted manual content scope"):
         require_correction_file("docs/index.md", mode)
+
+
+def commit_all(repository: Path) -> str:
+    run_git(repository, "add", "--all")
+    return create_test_commit(repository)
+
+
+def test_correction_changes_accepts_unchanged_baseline(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+
+    assert require_correction_changes(git_repository, baseline, baseline) is None
+
+
+def test_correction_changes_accepts_manual_edits_additions_and_deletions(git_repository: Path) -> None:
+    docs = git_repository / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("Original.\n", encoding="utf-8")
+    (docs / "old.md").write_text("Old page.\n", encoding="utf-8")
+    baseline = commit_all(git_repository)
+    (docs / "index.md").write_text("Corrected.\n", encoding="utf-8")
+    (docs / "old.md").unlink()
+    (docs / "new page.md").write_text("New page.\n", encoding="utf-8")
+    assets = docs / "assets"
+    assets.mkdir()
+    (assets / "example.png").write_bytes(b"Synthetic image fixture")
+    source = commit_all(git_repository)
+
+    assert require_correction_changes(git_repository, baseline, source) is None
+
+
+@pytest.mark.parametrize("operation", ["modify", "delete", "rename"])
+def test_correction_changes_rejects_out_of_scope_changes(git_repository: Path, operation: str) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    original = git_repository / "example.txt"
+    if operation == "modify":
+        original.write_text("Changed application content.\n", encoding="utf-8")
+    elif operation == "delete":
+        original.unlink()
+    else:
+        docs = git_repository / "docs"
+        docs.mkdir()
+        original.rename(docs / "renamed.md")
+    source = commit_all(git_repository)
+
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_changes(git_repository, baseline, source)
+
+
+def test_correction_changes_checks_all_commits_since_baseline(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    (git_repository / "example.txt").write_text("Out-of-scope change.\n", encoding="utf-8")
+    commit_all(git_repository)
+    docs = git_repository / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("A later documentation change.\n", encoding="utf-8")
+    source = commit_all(git_repository)
+
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_changes(git_repository, baseline, source)
+
+
+def test_correction_changes_rejects_executable_markdown(git_repository: Path) -> None:
+    baseline = run_git(git_repository, "rev-parse", "HEAD")
+    docs = git_repository / "docs"
+    docs.mkdir()
+    (docs / "index.md").write_text("Executable fixture.\n", encoding="utf-8")
+    run_git(git_repository, "add", "docs/index.md")
+    run_git(git_repository, "update-index", "--chmod=+x", "docs/index.md")
+    source = create_test_commit(git_repository)
+
+    with pytest.raises(ValueError, match="outside the permitted manual content scope"):
+        require_correction_changes(git_repository, baseline, source)

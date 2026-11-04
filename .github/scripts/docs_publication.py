@@ -44,6 +44,55 @@ def parse_stable_tag(tag: str) -> tuple[int, int, int]:
     return int(major), int(minor), int(patch)
 
 
+def require_correction_changes(repository: Path, baseline_sha: str, source_sha: str) -> None:
+    """Require the net changes from a release baseline to contain only manual files.
+
+    Args:
+        repository: Working directory of the checked-out repository.
+        baseline_sha: Full commit ID of the stable release baseline.
+        source_sha: Full commit ID of the proposed corrected documentation.
+
+    Raises:
+        ValueError: If ancestry fails or a changed file is outside correction scope.
+        subprocess.CalledProcessError: If Git cannot inspect the commits or diff.
+        OSError: If Git cannot be started or the working directory is invalid.
+        UnicodeDecodeError: If a changed path is not valid UTF-8.
+
+    Notes:
+        Checks the complete tree difference, not only the most recent commit.
+        Renames are inspected as a deletion and an addition.
+    """
+    baseline = validate_commit_sha(baseline_sha)
+    source = validate_commit_sha(source_sha)
+    require_ancestor(repository, baseline, source)
+    result = subprocess.run(  # noqa: S603
+        [  # noqa: S607
+            "git",
+            "--no-replace-objects",
+            "diff",
+            "--raw",
+            "--no-abbrev",
+            "--no-renames",
+            "--no-ext-diff",
+            "--no-textconv",
+            "-z",
+            baseline,
+            source,
+            "--",
+        ],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    fields = result.stdout.split(b"\0")
+    for index in range(0, len(fields) - 1, 2):
+        metadata = fields[index].decode("ascii").split()
+        path = fields[index + 1].decode("utf-8")
+        for mode in (metadata[0].removeprefix(":"), metadata[1]):
+            if mode != "000000":
+                require_correction_file(path, mode)
+
+
 def is_stable_release(
     tag: str,
     *,
