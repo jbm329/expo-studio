@@ -16,6 +16,7 @@ guide to the application.
 - [Derived columns](transform-data/derived-columns.md) — create your first
   calculated column, write conditional formulas, work with dates and missing
   values, and troubleshoot formula errors.
+- [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
+  conditions, and preview a new summary dataset.
 
-A guide to defining conditions for Reshape metrics is planned, not available
-yet. Navigation will grow as each section is added.
+Navigation will grow as each section is added.

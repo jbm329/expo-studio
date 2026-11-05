@@ -7,6 +7,7 @@ nav = [
     { "Home" = "index.md" },
     { "Transform data" = [
         { "Derived columns" = "transform-data/derived-columns.md" },
+        { "Reshape" = "transform-data/reshape.md" },
     ] },
 ]
 
