@@ -63,20 +63,14 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       source_sha: ${{ steps.validated-source.outputs.source_sha }}
       manifest_artifact_id: ${{ steps.manifest-artifact.outputs.artifact-id }}
 
     steps:
-      - name: Require trusted main workflow
-        env:
-          WORKFLOW_REF: ${{ github.ref }}
-        run: |
-          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
-            echo "::error::Run this workflow from main, not from the source branch."
-            exit 1
-          fi
-
       - name: Checkout trusted policy and full source history
         uses: actions/checkout@v7
         with:
@@ -490,15 +484,6 @@ jobs:
       page_url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Require trusted main workflow
-        env:
-          WORKFLOW_REF: ${{ github.ref }}
-        run: |
-          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
-            echo "::error::Deployment requires the trusted main workflow."
-            exit 1
-          fi
-
       - name: Checkout trusted deployment policy and full source history
         uses: actions/checkout@v7
         with:

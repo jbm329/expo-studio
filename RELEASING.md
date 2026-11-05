@@ -31,16 +31,15 @@ publication concurrency group.
 The existing publication pipeline exposes a `workflow_call` interface with the
 same explicit inputs as manual dispatch. Deployment and initial-bootstrap
 confirmation both default to false; no custom secrets are requested.
-No release caller is connected yet, and main-only execution guards remain in
-place. Caller-aware eligibility and provenance validation must be added before
-release-tag execution is enabled. Manual and automatic entry points will share
+No release caller is connected yet. Caller-aware eligibility and provenance
+validation are in place in the shared pipeline. Manual and automatic entry points will share
 this pipeline rather than duplicate its build and deployment safeguards.
 
 The helper's caller rule distinguishes manual dispatch from automatic tag
 publication using trusted GitHub event, workflow identity, ref, and commit.
 Manual bootstrap/correction belongs to `publish-docs.yml` on `main`; release
 mode belongs to `release.yml` on the exact stable baseline tag with the exact
-source commit. This pure rule is not wired into execution yet and does not
+source commit. This rule does not
 replace independent verification of a successful application publication job.
 
 Application-publication verification now checks every jobs page for the exact
@@ -48,7 +47,7 @@ current run attempt and requires one completed, successful `publish-release`
 job at the proposal's source commit. Missing, duplicate, failed, cancelled,
 skipped, or mismatched jobs fail explicitly. The overall release workflow may
 still be running because documentation follows application publication.
-This helper is not wired into execution yet; it supplements caller validation
+This helper supplements caller validation
 and does not replace checking the current published stable release.
 
 `verify-caller --repository-slug <owner/repo> --proposed <manifest>` composes
@@ -59,10 +58,10 @@ application publication; manual proposals do not query that job. Supply context
 only from the trusted runner, never from publication inputs. This command does
 not deploy, validate source eligibility, or inspect previous publication history.
 The publication pipeline now invokes it before initial source validation and
-again before final deployment eligibility checks. Main-only guards remain in
-both jobs, so release-tag execution and the automatic release caller are still
-disabled. Manual publication now validates its exact workflow identity as well
-as its branch, without changing deployment inputs or permissions.
+again before final deployment eligibility checks. Manual publication validates
+its exact workflow identity as well as its branch. The preparation job has
+read-only Actions permission for release-job verification; deployment inputs
+and write permissions are unchanged.
 
 Historical automatic provenance now has a separate release-run validator:
 the completed run must belong to this repository's `release.yml`, originate
@@ -86,6 +85,16 @@ require that full name; manual runs retain `Deploy documentation`. Executing-job
 lookup accepts these two exact names only and still requires a unique match,
 current attempt, commit, and runner. Arbitrary caller prefixes are not accepted.
 The release caller is not connected yet.
+
+The shared pipeline now uses `verify-caller` instead of its former main-only
+shell guards. Manual calls still require the exact publication workflow
+dispatched on `main`; release calls require the matching release-workflow tag
+and commit plus successful application publication. Initial verification runs
+before source validation or artifact upload, and final verification runs before
+deployment eligibility checks. The preparation job now has `actions: read` for
+the application-job query, with no write permissions added.
+There is still no automatic caller in `release.yml`, so no application release
+starts documentation publication yet.
 
 ## Manual documentation publication recovery
 

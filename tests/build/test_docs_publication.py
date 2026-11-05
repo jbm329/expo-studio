@@ -119,9 +119,15 @@ def test_publication_workflow_checks_caller_before_source(
     assert '--repository-slug "$GITHUB_REPOSITORY"' in check["run"]
     assert check["env"] == {"GH_TOKEN": "${{ github.token }}"}
     assert next_check in steps[index + 1]["run"]
-    guard = steps[0]
-    assert guard["env"] == {"WORKFLOW_REF": "${{ github.ref }}"}
-    assert '"$WORKFLOW_REF" != "refs/heads/main"' in guard["run"]
+    checkout = steps[0]
+    assert checkout["uses"].startswith("actions/checkout@")
+    assert checkout["with"]["ref"] == "${{ github.sha }}"
+    assert publication_workflow["jobs"][job_name]["permissions"]["actions"] == "read"
+    assert not any("WORKFLOW_REF" in step.get("env", {}) for step in steps)
+    if job_name == "prepare":
+        assert not any(step.get("uses", "").startswith("actions/upload-artifact@") for step in steps[:index])
+    else:
+        assert not any(step.get("uses", "").startswith("actions/deploy-pages@") for step in steps[:index])
 
 
 def test_publication_workflow_limits_write_permissions(publication_workflow: dict[str, object]) -> None:
