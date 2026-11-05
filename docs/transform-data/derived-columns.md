@@ -183,6 +183,113 @@ Do not mix text and numbers, such as `IF([Quantity] >= 3; 'Bulk'; 0)`.
 Both branches are checked for compatible types even if your current data would
 only use one of them.
 
+## Condition reference {#condition-reference}
+
+Conditions decide which result an `IF` returns. A condition alone, such as
+`[Quantity] >= 3`, cannot be the final formula result. Wrap it in `IF` to
+produce a label or number:
+
+```text
+IF([Quantity] >= 3; 1; 0)
+```
+
+### Comparisons
+
+| Operator | Meaning | Example condition |
+|---|---|---|
+| `=` | Equal to | `[Quantity] = 3` |
+| `!=` | Not equal to | `[Quantity] != 3` |
+| `<` | Less than | `[Quantity] < 3` |
+| `<=` | Less than or equal to | `[Quantity] <= 3` |
+| `>` | Greater than | `[Quantity] > 3` |
+| `>=` | Greater than or equal to | `[Quantity] >= 3` |
+
+You can compare compatible columns or calculated values, not just a column
+and a constant. For example, `[Price] * [Quantity] > [Budget]` compares a line
+total with a budget from the same row.
+
+Compare numbers with numbers and text with text. Use `[Quantity] = 3`, not
+`[Quantity] = '3'`. For a text comparison, use a quoted value such as
+`[Vehicle] = 'BMW'`.
+
+### Ranges with BETWEEN
+
+`BETWEEN` includes both endpoints:
+
+```text
+IF([Quantity] BETWEEN 3 AND 10; 'In range'; 'Outside range')
+```
+
+Quantities of 3 and 10 both return **In range**. Use
+`[Quantity] NOT BETWEEN 3 AND 10` to test for values outside that range.
+The `AND` between the bounds is part of the range syntax.
+
+### Lists with IN
+
+Use `IN` to match any value in a list:
+
+```text
+IF([Vehicle] IN('BMW', 'Volvo'); 'Selected'; 'Other')
+```
+
+Use **commas** between list values, while keeping **semicolons** between the
+three `IF` arguments. `NOT IN` tests for values that do not match the list:
+
+```text
+IF([Vehicle] NOT IN('BMW', 'Volvo'); 'Other'; 'Selected')
+```
+
+List items must be literal values, not column references or calculations.
+Keep their types compatible with the value being tested: for a numeric column,
+use a list such as `[Quantity] IN(1, 3, 5)`.
+
+### Combine conditions
+
+| Keyword | Meaning | Example condition |
+|---|---|---|
+| `AND` | Both conditions must be true | `[Quantity] >= 3 AND [Price] < 20` |
+| `OR` | At least one condition must be true | `[Quantity] >= 3 OR [Price] < 20` |
+| `NOT` | Reverse a condition; unknown remains unknown | `NOT ([Quantity] >= 3)` |
+
+For example, label a row only when both requirements are met:
+
+```text
+IF([Quantity] >= 3 AND [Price] < 20; 'Qualifies'; 'Other')
+```
+
+Comparisons and range/list tests are evaluated before `NOT`, then `AND`,
+then `OR`. Use parentheses to make combined conditions clear:
+
+```text
+IF(([Vehicle] = 'BMW' OR [Vehicle] = 'Volvo') AND [Quantity] >= 3; 'Qualifies'; 'Other')
+```
+
+### Check for missing values
+
+Use `IS NULL` or `IS NOT NULL`, not `= NULL` or `!= NULL`:
+
+```text
+IF([Vehicle] IS NULL; 'Missing'; [Vehicle])
+```
+
+An empty text value (`''`) is not a missing value. The formula above replaces
+missing values but leaves empty text unchanged.
+
+Ordinary comparisons with missing values produce an unknown condition.
+Negating it with `NOT`, `NOT IN` or `NOT BETWEEN` does not make it true.
+`IF` uses the else branch when its condition is unknown.
+
+To explicitly include missing values alongside a comparison, combine a null
+check with `OR`:
+
+```text
+IF([Vehicle] IS NULL OR [Vehicle] != 'BMW'; 'Other or missing'; 'BMW')
+```
+
+Do not put `NULL` in an `IN` list to match missing values; use `IS NULL`.
+A list containing `NULL` can also make a nonmatching value's condition
+unknown, which is particularly easy to overlook with `NOT IN`.
+
 ## Editor assistance {#editor-assistance}
 
 ### Column autocomplete
