@@ -199,6 +199,112 @@ require_application_publication_job = HELPER["require_application_publication_jo
 
 
 @pytest.fixture
+def caller_command_context(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, publication_manifest: dict[str, object]
+) -> tuple[Path, dict[str, object], Mock]:
+    proposed = {**publication_manifest, "mode": "release"}
+    path = tmp_path / "proposed.json"
+    write_publication_manifest(path, proposed)
+    for key, value in {
+        "GITHUB_REPOSITORY": "jbm329/expo-studio",
+        "GITHUB_RUN_ID": str(proposed["run_id"]),
+        "GITHUB_RUN_ATTEMPT": "2",
+        "GITHUB_EVENT_NAME": "push",
+        "GITHUB_WORKFLOW_REF": f"jbm329/expo-studio/.github/workflows/release.yml@refs/tags/{proposed['baseline_tag']}",
+        "GITHUB_REF": f"refs/tags/{proposed['baseline_tag']}",
+        "GITHUB_SHA": str(proposed["source_sha"]),
+    }.items():
+        monkeypatch.setenv(key, value)
+    publication = Mock()
+    monkeypatch.setitem(main.__globals__, "require_application_publication_job", publication)
+    return path, proposed, publication
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_verify_caller_command_checks_application_only_for_release(
+    monkeypatch: pytest.MonkeyPatch, caller_command_context: tuple[Path, dict[str, object], Mock], mode: str
+) -> None:
+    path, proposed, publication = caller_command_context
+    proposed = {**proposed, "mode": mode}
+    write_publication_manifest(path, proposed)
+    if mode != "release":
+        monkeypatch.setenv("GITHUB_EVENT_NAME", "workflow_dispatch")
+        monkeypatch.setenv("GITHUB_REF", "refs/heads/main")
+        monkeypatch.setenv(
+            "GITHUB_WORKFLOW_REF", "jbm329/expo-studio/.github/workflows/publish-docs.yml@refs/heads/main"
+        )
+        monkeypatch.setenv("GITHUB_SHA", "b" * 40)
+
+    main(["verify-caller", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    if mode == "release":
+        publication.assert_called_once_with("jbm329/expo-studio", proposed, run_id=proposed["run_id"], run_attempt=2)
+    else:
+        publication.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("GITHUB_REPOSITORY", None),
+        ("GITHUB_RUN_ID", None),
+        ("GITHUB_RUN_ATTEMPT", None),
+        ("GITHUB_EVENT_NAME", None),
+        ("GITHUB_WORKFLOW_REF", None),
+        ("GITHUB_REF", None),
+        ("GITHUB_SHA", None),
+        ("GITHUB_REPOSITORY", "other/repo"),
+        ("GITHUB_RUN_ID", "999"),
+        ("GITHUB_RUN_ATTEMPT", "0"),
+        ("GITHUB_RUN_ATTEMPT", "02"),
+        ("GITHUB_RUN_ATTEMPT", "2\n"),
+        ("GITHUB_EVENT_NAME", "workflow_dispatch"),
+        ("GITHUB_REF", "refs/heads/main"),
+        ("GITHUB_SHA", "b" * 40),
+        ("GITHUB_WORKFLOW_REF", "other/repo/.github/workflows/release.yml@refs/tags/v1.4.0"),
+    ],
+)
+def test_verify_caller_command_rejects_context_before_application_check(
+    monkeypatch: pytest.MonkeyPatch,
+    caller_command_context: tuple[Path, dict[str, object], Mock],
+    name: str,
+    value: str | None,
+) -> None:
+    path, _, publication = caller_command_context
+    if value is None:
+        monkeypatch.delenv(name)
+    else:
+        monkeypatch.setenv(name, value)
+
+    with pytest.raises(ValueError):
+        main(["verify-caller", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    publication.assert_not_called()
+
+
+def test_verify_caller_command_propagates_application_failure(
+    caller_command_context: tuple[Path, dict[str, object], Mock],
+) -> None:
+    path, _, publication = caller_command_context
+    publication.side_effect = ValueError("Application publication failed")
+
+    with pytest.raises(ValueError, match="Application publication failed"):
+        main(["verify-caller", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+
+def test_verify_caller_command_requires_manifest_before_api(
+    caller_command_context: tuple[Path, dict[str, object], Mock],
+) -> None:
+    path, _, publication = caller_command_context
+    path.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        main(["verify-caller", "--repository-slug", "jbm329/expo-studio", "--proposed", str(path)])
+
+    publication.assert_not_called()
+
+
+@pytest.fixture
 def application_publication_job(publication_manifest: dict[str, object]) -> dict[str, object]:
     return {
         "id": 789,

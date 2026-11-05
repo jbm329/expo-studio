@@ -51,6 +51,15 @@ still be running because documentation follows application publication.
 This helper is not wired into execution yet; it supplements caller validation
 and does not replace checking the current published stable release.
 
+`verify-caller --repository-slug <owner/repo> --proposed <manifest>` composes
+these checks using GitHub's repository, run, attempt, event, workflow ref, ref,
+and commit environment variables. Missing or inconsistent context fails before
+application-job inspection. Release proposals additionally require successful
+application publication; manual proposals do not query that job. Supply context
+only from the trusted runner, never from publication inputs. This command does
+not deploy, validate source eligibility, or inspect previous publication history.
+It is not connected to the workflow yet.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default

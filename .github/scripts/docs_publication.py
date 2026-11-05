@@ -1899,6 +1899,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    caller = commands.add_parser(
+        "verify-caller", help="Check trusted caller context and release publication success without deploying."
+    )
+    caller.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    caller.add_argument("--proposed", type=Path, required=True, help="Publication proposal JSON file.")
     prepare = commands.add_parser("prepare", help="Validate a source without building or deploying.")
     prepare.add_argument("--repository", type=Path, required=True, help="Dedicated full-history checkout.")
     prepare.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
@@ -1944,6 +1949,42 @@ def main(argv: Sequence[str] | None = None) -> None:
     verify_published.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     verify_published.add_argument("--proposed", type=Path, required=True, help="Validated deployed proposal JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "verify-caller":
+        proposed = read_publication_manifest(arguments.proposed)
+        caller_required = (
+            "GITHUB_REPOSITORY",
+            "GITHUB_RUN_ID",
+            "GITHUB_RUN_ATTEMPT",
+            "GITHUB_EVENT_NAME",
+            "GITHUB_WORKFLOW_REF",
+            "GITHUB_REF",
+            "GITHUB_SHA",
+        )
+        if any(not os.environ.get(name, "").strip() for name in caller_required):
+            message = "Caller verification requires complete trusted GitHub execution context."
+            raise ValueError(message)
+        run_id = os.environ["GITHUB_RUN_ID"]
+        attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+        if (
+            os.environ["GITHUB_REPOSITORY"] != arguments.repository_slug
+            or run_id != proposed["run_id"]
+            or re.fullmatch(r"[1-9][0-9]*", attempt) is None
+        ):
+            message = "Caller context must match the proposal's repository and run with a positive decimal attempt."
+            raise ValueError(message)
+        require_publication_caller(
+            arguments.repository_slug,
+            proposed,
+            event_name=os.environ["GITHUB_EVENT_NAME"],
+            workflow_ref=os.environ["GITHUB_WORKFLOW_REF"],
+            ref=os.environ["GITHUB_REF"],
+            workflow_sha=os.environ["GITHUB_SHA"],
+        )
+        if proposed["mode"] == "release":
+            require_application_publication_job(
+                arguments.repository_slug, proposed, run_id=run_id, run_attempt=int(attempt)
+            )
+        return
     if arguments.command == "verify-published":
         proposed = read_publication_manifest(arguments.proposed)
         releases = fetch_github_releases(arguments.repository_slug)
