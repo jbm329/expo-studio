@@ -25,6 +25,9 @@ in detail. It is not yet a complete guide to the application.
   Excel processing, undo limits and schema caching.
 - [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
   output destinations and file rotation.
+- [Database connections](workbench/database-connections.md) — configure and test
+  named database connections, choose drivers and authentication, and connect
+  to local SQLite or read-only DuckDB files.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,
@@ -51,5 +54,6 @@ in detail. It is not yet a complete guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-Detailed source-setup, general cleaning, dataset-combination and dataset-export
-guides are not yet available. Navigation will grow as more guides are added.
+Detailed file and REST source-setup, general cleaning, dataset-combination and
+dataset-export guides are not yet available. Navigation will grow as more guides
+are added.

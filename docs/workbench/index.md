@@ -86,7 +86,8 @@ A button being available does not mean every input or operation is valid.
 ### Database connections
 
 This panel lists configured database connections. Manage them through
-**Tools → Database connections…**.
+**Tools → Database connections…**. See [Database connections](database-connections.md)
+for the dialog's fields, driver and authentication choices, and save/test behavior.
 
 Right-click a connection to find **Connect** or **Disconnect**. Once connected,
 expand its database, tables and views to inspect the available objects and
