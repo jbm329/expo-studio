@@ -290,6 +290,81 @@ Do not put `NULL` in an `IN` list to match missing values; use `IS NULL`.
 A list containing `NULL` can also make a nonmatching value's condition
 unknown, which is particularly easy to overlook with `NOT IN`.
 
+## Missing values and result types {#missing-values-and-result-types}
+
+### Missing values in calculations
+
+A missing input normally produces a missing arithmetic result. For example:
+
+```text
+[Price] * [Quantity]
+```
+
+| Price | Quantity | Result |
+|---|---|---|
+| 10 | 2 | 20 |
+| Missing | 2 | Missing |
+| 10 | Missing | Missing |
+
+The word **Missing** in these tables describes an absent value; it is not text
+to enter in the formula. Use the unquoted keyword `NULL` when you want a formula
+to return a missing value.
+
+### Replace missing values deliberately
+
+Use `IF` with `IS NULL` to supply a replacement:
+
+```text
+IF([Quantity] IS NULL; 0; [Quantity])
+```
+
+This keeps existing quantities and substitutes zero only where the quantity is
+missing. Only use zero if that interpretation makes sense for your data:
+an unknown quantity is not necessarily a quantity of zero.
+
+For a text column, use a text replacement instead:
+
+```text
+IF([Vehicle] IS NULL; 'Unknown'; [Vehicle])
+```
+
+This does not replace empty text (`''`). See
+[Check for missing values](#check-for-missing-values) for null checks and
+conditions involving missing values.
+
+### Division by zero
+
+Division by zero produces a missing result, not an infinite value:
+
+```text
+[Amount] / [Count]
+```
+
+| Amount | Count | Result |
+|---|---|---|
+| 10 | 2 | 5 |
+| 10 | 0 | Missing |
+| 10 | Missing | Missing |
+
+Review missing results rather than assuming that a valid formula produces
+a usable number in every row.
+
+### The new column's type
+
+The formula determines whether the new column contains numbers or text.
+Numeric results use a nullable floating-point type, even when every result is
+a whole number. Text results use a nullable text type. Both can hold missing
+values.
+
+Types are checked from the source columns, not guessed from a few sample
+values. A text column containing values such as `'10'` is still text and cannot
+be used directly in arithmetic. Convert the source column to a numeric type
+before using it in a calculation.
+
+For `IF`, keep both result branches compatible as described in
+[Keep result types compatible](#keep-result-types-compatible).
+There is no output-type selector in the Derived column dialog.
+
 ## Editor assistance {#editor-assistance}
 
 ### Column autocomplete
