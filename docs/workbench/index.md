@@ -44,6 +44,10 @@ Select **Tools → Settings…** to configure language, highlighting, the docume
 directory, undo limits and data-processing options. See the
 [Settings guide](settings.md) for the dialog screenshot and field descriptions.
 
+Select **Tools → Log settings…** to configure diagnostic log levels, file
+rotation and output destinations. See the [Log settings guide](log-settings.md)
+for the screenshot and troubleshooting steps.
+
 ## Use the toolbar {#toolbar}
 
 The toolbar is arranged in groups from left to right. Hover over a button to

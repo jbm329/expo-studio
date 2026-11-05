@@ -23,6 +23,8 @@ in detail. It is not yet a complete guide to the application.
   editor and result tabs, and adjust the layout.
 - [Settings](workbench/settings.md) — configure application preferences, CSV and
   Excel processing, undo limits and schema caching.
+- [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
+  output destinations and file rotation.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,

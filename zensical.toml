@@ -8,6 +8,7 @@ nav = [
     { "What you can do with Expo Studio" = "application-overview.md" },
     { "Workbench window" = "workbench/index.md" },
     { "Settings" = "workbench/settings.md" },
+    { "Log settings" = "workbench/log-settings.md" },
     { "Analyze data" = [
         { "Advanced analysis" = "analyze-data/index.md" },
         { "Dataset Overview" = "analyze-data/overview.md" },
