@@ -3,3 +3,9 @@ site_name = "Expo Studio User Manual"
 site_url = "https://jbm329.github.io/expo-studio/"
 docs_dir = "docs"
 site_dir = "site"
+nav = [
+    { "Home" = "index.md" },
+]
+
+[project.theme]
+logo = "assets/logo.png"
