@@ -8,7 +8,8 @@ Practical guidance for working with your data in Expo Studio.
 
 Start with [What you can do with Expo Studio](application-overview.md) for an
 overview of data sources, reviewing and preparing datasets, analysis, reports
-and exports.
+and exports. Read [Workbench window](workbench/index.md) to find your way around
+the menus, toolbar, source panels and editor/result areas.
 
 ## About this manual
 
@@ -18,6 +19,8 @@ in detail. It is not yet a complete guide to the application.
 
 ## Available guides
 
+- [Workbench window](workbench/index.md) — locate the main controls, understand
+  editor and result tabs, and adjust the layout.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,

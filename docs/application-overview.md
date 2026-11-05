@@ -5,6 +5,9 @@ workbench, review its quality, prepare it for analysis and share the results.
 You can work with database query results, local data files and REST API
 responses as result datasets.
 
+For a tour of the menus, toolbar and panels, see
+[Workbench window](workbench/index.md).
+
 A typical workflow is **get data → review → clean and transform → analyze →
 export and share**. Use only the steps you need: you can export a query result
 directly, prepare a file without fitting a model, or analyze an already prepared
