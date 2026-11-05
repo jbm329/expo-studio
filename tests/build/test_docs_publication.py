@@ -24,6 +24,52 @@ def publication_workflow() -> dict[str, object]:
     return yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
 
 
+@pytest.mark.parametrize(
+    ("tag", "version", "stable"),
+    [
+        ("v1.4.0", "1.4.0", True),
+        ("v0.0.0", "0.0.0", True),
+        ("v1.4.0-rc1", "1.4.0rc1", False),
+        ("v1.4.0-a1", "1.4.0a1", False),
+        ("v1.4.0-b2", "1.4.0b2", False),
+        ("v1.4.0", "1.4.1", None),
+        ("v1.4.0-preview1", "1.4.0", None),
+    ],
+)
+def test_release_workflow_exposes_validated_documentation_gate(
+    monkeypatch: pytest.MonkeyPatch, git_repository: Path, tag: str, version: str, stable: bool | None
+) -> None:
+    workflow = yaml.load(
+        (HELPER_PATH.parents[1] / "workflows" / "release.yml").read_text(encoding="utf-8"),
+        Loader=yaml.BaseLoader,
+    )
+    validation = workflow["jobs"]["validate-release"]
+    assert validation["outputs"] == {
+        "stable_release": "${{ steps.release-metadata.outputs.stable_release }}",
+        "source_sha": "${{ steps.release-metadata.outputs.source_sha }}",
+    }
+    step = next(step for step in validation["steps"] if step.get("id") == "release-metadata")
+    script = step["run"].split("python3 - <<'PY'\n", 1)[1].rsplit("\nPY", 1)[0]
+    (git_repository / "pyproject.toml").write_text(f'[project]\nversion = "{version}"\n', encoding="utf-8")
+    output = git_repository / "outputs.txt"
+    monkeypatch.setenv("GITHUB_REF_NAME", tag)
+    monkeypatch.setenv("GITHUB_OUTPUT", str(output))
+
+    if stable is None:
+        with pytest.raises(subprocess.CalledProcessError):
+            subprocess.run(
+                [sys.executable, "-c", script], cwd=git_repository, check=True, capture_output=True, text=True
+            )
+        assert not output.exists()
+        return
+    subprocess.run([sys.executable, "-c", script], cwd=git_repository, check=True, capture_output=True, text=True)
+
+    assert output.read_text(encoding="utf-8").splitlines() == [
+        f"stable_release={str(stable).lower()}",
+        f"source_sha={run_git(git_repository, 'rev-parse', 'HEAD')}",
+    ]
+
+
 def test_publication_workflow_requires_explicit_deployment(publication_workflow: dict[str, object]) -> None:
     workflow = publication_workflow
     assert set(workflow["on"]) == {"workflow_dispatch"}

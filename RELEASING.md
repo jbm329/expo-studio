@@ -19,6 +19,15 @@ A release tag points to a **commit**, not to a branch. Tag a commit **after it h
 Your branch can be deleted after the merge; the release tag remains attached to the merged commit. **Do not tag the feature branch before merging**: that could release a commit different from the one on `main`. If GitHub rejects the tag push, that is a separate tag-permission or repository-rules setting, not a need for direct-push access to `main`.
 
 
+## Automatic documentation publication preparation
+
+Release validation exposes whether the validated tag is a canonical stable
+version and the exact checked-out release commit. Prerelease tags are explicitly
+classified as non-stable. These outputs do not publish documentation yet:
+automatic integration must run only after successful `publish-release`, verify
+that the release remains the newest stable release, and share the manual
+publication concurrency group.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default
