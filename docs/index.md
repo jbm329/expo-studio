@@ -14,7 +14,8 @@ guide to the application.
 ## Available guides
 
 - [Derived columns](transform-data/derived-columns.md) — create your first
-  calculated column with a worked example.
+  calculated column, write conditional formulas, work with dates and missing
+  values, and troubleshoot formula errors.
 
-Further formula guidance and a guide to defining conditions for Reshape metrics
-are planned, not available yet. Navigation will grow as each section is added.
+A guide to defining conditions for Reshape metrics is planned, not available
+yet. Navigation will grow as each section is added.

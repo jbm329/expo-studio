@@ -482,3 +482,26 @@ field to see the error message as a tooltip.
 A valid formula has passed syntax and column-type checks; this does not
 guarantee that every calculated value is meaningful. Review the resulting
 column after creating it.
+
+## Troubleshooting {#troubleshooting}
+
+Start with the validation message below **f(x)**. An error may simply mean
+that you have not finished typing the expression.
+
+| Problem | What to check |
+|---|---|
+| The new column name is rejected | Enter a unique, nonempty name without `[` or `]`. This dialog creates a new column; it does not overwrite an existing one. |
+| A referenced column is not found | Match its name and capitalization exactly. Use autocomplete to insert the reference. |
+| A column name is not unique | Rename duplicate source columns so each reference identifies one column. |
+| A bracket, quote or parenthesis is unclosed | Check matching delimiters. Use single quotes for text and double an apostrophe inside a text value. |
+| `IF` reports a separator or argument error | Use three arguments separated by semicolons. Use commas only between values in an `IN` list. |
+| Operands or IF results have incompatible types | Do not mix text and numbers. Check the source column types, not just how their values look. |
+| The formula returns a condition | Wrap the condition in `IF` to return text, a number or `NULL`. |
+| A date/time function requires a datetime column | Convert text dates to a datetime type first. |
+| Formula nesting is too deep | Simplify the expression or split the calculation across separate derived columns. |
+| Creation fails despite successful validation | Check the actual source values as well as their column types. A column containing mixed kinds of values may pass initial checks but fail during calculation. |
+
+For unexpected missing results, review
+[Missing values and result types](#missing-values-and-result-types).
+For unexpected labels, check the order of nested `IF` conditions and whether a
+missing value is sending a row to the else branch.
