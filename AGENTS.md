@@ -68,11 +68,15 @@ authoring is explicitly requested. Do not generate or commit `site/` output
 or generated `publication.json` provenance.
 
 Follow `CONTRIBUTING.md` for documentation builds and publication policy, and
-`RELEASING.md` for manual publication recovery. Preview is the default;
-deployment requires explicit operator selection and a trusted `main` workflow.
+`RELEASING.md` for manual and automatic publication recovery. Manual publication
+defaults to preview; deployment requires explicit operator selection from `main`.
+Stable application releases invoke the shared pipeline after successful
+application publication; prereleases do not. Preserve caller verification,
+release eligibility, source-progress checks, and shared publication concurrency.
 Do not publish, rerun publication jobs, delete deployment records, or change
-Pages settings without explicit approval. Automatic application-release
-publication and in-app help links are not implemented yet.
+Pages settings without explicit approval. Do not create a release to test
+documentation automation or rerun a release solely to retry documentation.
+In-app help links are not implemented yet.
 
 Use `uv` from the repository root.
 

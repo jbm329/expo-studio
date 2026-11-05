@@ -89,7 +89,10 @@ not the selected documentation source, and installs no application dependencies.
 Source eligibility, deployed provenance/progress, and unique package identity
 are checked again before `actions/deploy-pages` publishes `github-pages`.
 Git fetch authentication is supplied through process-local configuration,
-not persisted checkout credentials. No automatic release trigger is added.
+not persisted checkout credentials. Stable application releases call this same
+pipeline after successful application publication; prereleases skip it. The
+automatic caller supplies release mode and the exact validated tag commit.
+See [automatic publication and recovery](RELEASING.md#automatic-documentation-publication).
 
 Public URL and provenance verification runs separately, so a failed verification
 does not change the successful deployment job's conclusion. It does not roll
@@ -99,8 +102,9 @@ workflow means nothing was published. Follow the
 [manual publication recovery procedure](RELEASING.md#manual-documentation-publication-recovery):
 use new workflow runs, not reruns, and never treat failed-only bootstrap history
 as empty automatically. Cleanup is restricted to individually inspected failed
-bootstrap records where the Pages action never started. Hosted acceptance and
-the complete workflow still require review before the first live run.
+bootstrap records where the Pages action never started. Automatic release
+failures have a separate recovery procedure in `RELEASING.md`; do not rerun
+the release solely to retry documentation.
 
 The user manual uses Zensical. Markdown sources live in `docs/`, and
 `zensical.toml` configures the website. Feature documentation has not yet
@@ -192,7 +196,7 @@ exact attempt, or artifact contents. Automatic release runs are not accepted by
 this manual check.
 Release provenance uses a separate completed `release.yml` push-run check for
 the recorded stable tag and source commit, plus a successful `publish-release`
-job in that attempt. See `RELEASING.md` for automatic-publication preparation.
+job in that attempt. See `RELEASING.md` for automatic-publication policy.
 
 The overall workflow conclusion is not used as evidence of deployment success:
 the website may already have been published before a later verification fails
@@ -302,8 +306,8 @@ Publication runs share the fixed `documentation-publication` concurrency group,
 independent of source branch, commit, or mode. An active run is not automatically
 cancelled when another request arrives. GitHub does not guarantee queue order
 and may replace an older pending run with a newer request; inspect run status
-and retry a still-relevant request if needed. The future automatic release path
-must use this same group without adding a conflicting group to its caller.
+and start a new still-relevant manual request if needed. The automatic release path
+uses this same group without adding a conflicting group to its caller.
 The read-only PR preview workflow is not serialized by this group. Concurrency
 does not freeze release metadata or public deployment state, so final eligibility
 and progress rechecks are still required before deployment.

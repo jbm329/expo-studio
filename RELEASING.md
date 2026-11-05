@@ -106,6 +106,42 @@ before source validation or artifact upload, and final verification runs before
 deployment eligibility checks. The preparation job now has `actions: read` for
 the application-job query, with no write permissions added.
 
+## Automatic publication failure recovery
+
+Application publication precedes documentation. If documentation fails, keep the
+published application release and its tag intact. Do not delete/recreate the
+release, move its tag, create an artificial patch release, or rerun the release
+workflow solely to retry documentation. In addition to publication artifact and
+attempt ambiguity, rerunning application publication may encounter an existing
+GitHub Release.
+
+Wait for the run to finish, then inspect the application release, failed
+documentation step, `publication.json`, and deployment history. Distinguish:
+
+- Failure before the Pages action: the previous website may remain current.
+  Correct the failed policy/build condition before requesting another publication.
+- Successful deployment followed by verification failure: the new website may
+  already be live. Follow the public-verification procedure below, allowing for
+  CDN propagation without treating a failed workflow as a rollback.
+- A newer stable release superseded this request: do not retry the older
+  baseline. Inspect the newer release's documentation result instead.
+
+There is no standalone automatic-release retry command. Once the served state
+and failure cause are established, an operator may use the existing manual
+**correction** route for the latest stable baseline: prepare its `docs/<version>`
+maintenance branch from the stable tag, satisfy the documentation-only diff and
+source-progress rules, and select the explicit reviewed full source SHA. The
+tagged commit itself is eligible if the branch contains it and no source change
+is needed. First run a new manual preview from `main`, review the result, then
+start a new explicitly approved deployment run. Do not select bootstrap or
+pretend this manual recovery is automatic release provenance.
+
+If existing history has no unambiguous current success, no eligible correction
+source exists, or a previous rerun changed the verified attempt, stop for
+investigation rather than deleting records or bypassing the policy. The narrow
+failed-first-bootstrap cleanup procedure below does not apply to automatic
+release failures.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default
@@ -117,7 +153,8 @@ a site after a failed public verification.
 
 Use **Run workflow** from `main` for a new publication attempt, with a freshly
 reviewed source and the current stable baseline. Do not use **Re-run all jobs**
-or **Re-run failed jobs** on a publication run for now:
+or **Re-run failed jobs** on a publication run for now. This restriction also
+applies to a release run that invoked the documentation pipeline:
 
 - Artifact names are scoped to a run, not an attempt. Rebuilding can create
   duplicate packages and is deliberately rejected by the unique-artifact check.
