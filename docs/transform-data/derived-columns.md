@@ -106,6 +106,83 @@ to control the order:
 | `[Price] + 2 * 3` | 16 |
 | `([Price] + 2) * 3` | 36 |
 
+## Conditional results with IF {#conditional-results-with-if}
+
+Use `IF` to choose between two results for each row:
+
+```text
+IF(condition; then_result; else_result)
+```
+
+Separate the three arguments with **semicolons**, not commas. If the condition
+is true, the formula returns `then_result`; otherwise it returns `else_result`.
+A condition that is unknown because of a missing value also takes the else
+branch.
+
+### Assign a label
+
+For a numeric **Quantity** column, this formula labels orders of three or more
+items:
+
+```text
+IF([Quantity] >= 3; 'Bulk'; 'Standard')
+```
+
+| Quantity | Result |
+|---|---|
+| 1 | Standard |
+| 3 | Bulk |
+| 5 | Bulk |
+| Missing | Standard |
+
+`>=` means "greater than or equal to". The labels are quoted because they are
+literal text, not column names.
+
+### Choose between calculations
+
+The results can also be calculations. For example, apply a 10% discount to the
+line total when the quantity is at least three:
+
+```text
+IF([Quantity] >= 3; [Price] * [Quantity] * 0.9; [Price] * [Quantity])
+```
+
+| Price | Quantity | Result |
+|---|---|---|
+| 10 | 2 | 20 |
+| 10 | 3 | 27 |
+
+### Handle more than two outcomes
+
+Put another `IF` inside a result branch to test a further condition. This
+example checks the highest quantity first:
+
+```text
+IF([Quantity] >= 10; 'Large'; IF([Quantity] >= 3; 'Medium'; 'Small'))
+```
+
+| Quantity | Result |
+|---|---|
+| 2 | Small |
+| 3 | Medium |
+| 10 | Large |
+
+The second condition is used only when the first condition is not true.
+
+### Keep result types compatible
+
+Both result branches must return numbers or both must return text. You can use
+`NULL` (without quotes) in either kind of formula to produce a missing value.
+For example:
+
+```text
+IF([Quantity] >= 3; 'Bulk'; NULL)
+```
+
+Do not mix text and numbers, such as `IF([Quantity] >= 3; 'Bulk'; 0)`.
+Both branches are checked for compatible types even if your current data would
+only use one of them.
+
 ## Editor assistance {#editor-assistance}
 
 ### Column autocomplete
