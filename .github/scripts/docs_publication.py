@@ -510,6 +510,56 @@ def parse_publication_manifest(value: object) -> PublicationManifest:
     }
 
 
+def require_publication_caller(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    *,
+    event_name: str,
+    workflow_ref: str,
+    ref: str,
+    workflow_sha: str,
+) -> None:
+    """Validate publication mode against explicit trusted GitHub caller context.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        manifest: Publication proposal to validate.
+        event_name: Caller's GITHUB_EVENT_NAME.
+        workflow_ref: Caller's GITHUB_WORKFLOW_REF, including its ref suffix.
+        ref: Caller's GITHUB_REF.
+        workflow_sha: Caller's GITHUB_SHA, not the documentation source input.
+
+    Raises:
+        ValueError: If caller identity, event, ref, commit, or mode is invalid.
+
+    Notes:
+        Context must come from GitHub, not manual inputs. Reusable workflows
+        inherit the caller's context. This rule does not establish successful
+        application publication; release-job API verification is also required.
+    """
+    _require_repository_slug(repository_slug)
+    proposed = parse_publication_manifest(manifest)
+    sha = validate_commit_sha(workflow_sha)
+    if proposed["mode"] == "release":
+        expected_ref = f"refs/tags/{proposed['baseline_tag']}"
+        expected_workflow = f"{repository_slug}/.github/workflows/release.yml@{expected_ref}"
+        if (
+            event_name != "push"
+            or ref != expected_ref
+            or workflow_ref != expected_workflow
+            or sha != proposed["source_sha"]
+        ):
+            message = "Automatic publication requires the release workflow's matching stable tag and source commit."
+            raise ValueError(message)
+    elif (
+        event_name != "workflow_dispatch"
+        or ref != "refs/heads/main"
+        or workflow_ref != f"{repository_slug}/.github/workflows/publish-docs.yml@refs/heads/main"
+    ):
+        message = "Manual publication requires the publication workflow dispatched from main."
+        raise ValueError(message)
+
+
 def require_deployment_run(repository_slug: str, status: GitHubDeploymentStatus, manifest: PublicationManifest) -> None:
     """Require a successful deployment status to reference the manifest's run.
 
@@ -576,13 +626,76 @@ def require_manual_publication_run(
     if validated["mode"] == "release":
         message = "Manual publishing run verification does not accept automatic release provenance."
         raise ValueError(message)
+    return _require_publication_run_metadata(
+        repository_slug,
+        validated,
+        workflow_sha,
+        workflow_path=".github/workflows/publish-docs.yml",
+        event="workflow_dispatch",
+        head_branch="main",
+    )
+
+
+def require_release_publication_run(
+    repository_slug: str,
+    deployment: GitHubPagesDeployment,
+    manifest: PublicationManifest,
+) -> int:
+    """Verify completed automatic publishing run metadata through GitHub.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        deployment: Selected deployment with its release workflow commit.
+        manifest: Public automatic release provenance identifying the run.
+
+    Returns:
+        Current positive run-attempt number for further job verification.
+
+    Raises:
+        ValueError: If mode, deployment commit, repository, or run metadata differ.
+        TypeError: If the API response is not a workflow run object.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Overall run conclusion is not
+        deployment evidence. Application and documentation job success must
+        be checked separately. Latest-attempt-only rerun restrictions remain.
+        This does not revalidate the historical baseline against today's release.
+    """
+    _require_repository_slug(repository_slug)
+    validated = parse_publication_manifest(manifest)
+    workflow_sha = validate_commit_sha(deployment["sha"])
+    if validated["mode"] != "release" or workflow_sha != validated["source_sha"]:
+        message = "Automatic run verification requires release provenance at the deployment's source commit."
+        raise ValueError(message)
+    return _require_publication_run_metadata(
+        repository_slug,
+        validated,
+        workflow_sha,
+        workflow_path=".github/workflows/release.yml",
+        event="push",
+        head_branch=validated["baseline_tag"],
+    )
+
+
+def _require_publication_run_metadata(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    workflow_sha: str,
+    *,
+    workflow_path: str,
+    event: str,
+    head_branch: str,
+) -> int:
+    """Verify shared completed-run metadata without inferring job success."""
     result = subprocess.run(  # noqa: S603
         [  # noqa: S607
             "gh",
             "api",
             "--method",
             "GET",
-            f"repos/{repository_slug}/actions/runs/{validated['run_id']}",
+            f"repos/{repository_slug}/actions/runs/{manifest['run_id']}",
         ],
         check=True,
         capture_output=True,
@@ -594,15 +707,15 @@ def require_manual_publication_run(
         message = "GitHub workflow run response must be an object."
         raise TypeError(message)
     expected = {
-        "id": int(validated["run_id"]),
-        "path": ".github/workflows/publish-docs.yml",
-        "event": "workflow_dispatch",
-        "head_branch": "main",
+        "id": int(manifest["run_id"]),
+        "path": workflow_path,
+        "event": event,
+        "head_branch": head_branch,
         "head_sha": workflow_sha,
         "status": "completed",
     }
     if type(run.get("id")) is not int or any(run.get(key) != value for key, value in expected.items()):
-        message = "GitHub run does not match the completed manual publishing workflow and deployment commit."
+        message = "GitHub run does not match the completed publishing workflow and deployment commit."
         raise ValueError(message)
     for field in ("repository", "head_repository"):
         repository = run.get(field)
@@ -774,6 +887,61 @@ def _fetch_publication_jobs(repository_slug: str, run_id: str, run_attempt: int)
     return jobs
 
 
+def require_application_publication_job(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    *,
+    run_id: str,
+    run_attempt: int,
+) -> None:
+    """Require successful application publication in the current release attempt.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        manifest: Automatic release publication proposal.
+        run_id: Current trusted GITHUB_RUN_ID.
+        run_attempt: Current trusted GITHUB_RUN_ATTEMPT as an integer.
+
+    Raises:
+        ValueError: If mode, run, attempt, job identity, commit, or success differs.
+        TypeError: If GitHub job metadata is malformed.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Caller identity must be validated
+        separately. This does not require the overall run to have completed,
+        nor replace current release/tag eligibility or deployment checks.
+    """
+    proposed = parse_publication_manifest(manifest)
+    if proposed["mode"] != "release" or run_id != proposed["run_id"]:
+        message = "Application publication verification requires release mode in the proposal's current run."
+        raise ValueError(message)
+    jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
+    matching = [job for job in jobs if job["name"] == "publish-release"]
+    if len(matching) != 1:
+        message = "Current attempt must contain exactly one publish-release job."
+        raise ValueError(message)
+    job = matching[0]
+    identifier = job.get("id")
+    expected = {
+        "run_id": int(run_id),
+        "run_attempt": run_attempt,
+        "head_sha": proposed["source_sha"],
+        "status": "completed",
+        "conclusion": "success",
+    }
+    if (
+        type(identifier) is not int
+        or identifier <= 0
+        or type(job.get("run_id")) is not int
+        or type(job.get("run_attempt")) is not int
+        or any(job.get(key) != value for key, value in expected.items())
+    ):
+        message = "Application publication job must succeed in the current attempt at the proposed release commit."
+        raise ValueError(message)
+
+
 def fetch_executing_publication_job(
     repository_slug: str, *, run_id: str, run_attempt: int, workflow_sha: str, runner_name: str
 ) -> str:
@@ -806,7 +974,9 @@ def fetch_executing_publication_job(
         message = "Executing publication job lookup requires a runner name."
         raise ValueError(message)
     jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
-    matching = [job for job in jobs if job["name"] == "Deploy documentation"]
+    matching = [
+        job for job in jobs if job["name"] in ("Deploy documentation", "Publish documentation / Deploy documentation")
+    ]
     if len(matching) != 1:
         message = "Current attempt must contain exactly one Deploy documentation job."
         raise ValueError(message)
@@ -855,19 +1025,24 @@ def require_publication_job(
 
     Notes:
         Requires actions: read and GH_TOKEN. The deployment job must be named
-        "Deploy documentation". A job-specific log URL must match that job;
+        "Deploy documentation" for manual runs or
+        "Publish documentation / Deploy documentation" for release callers.
+        A job-specific log URL must match that job;
         its success may be recorded after job completion by GitHub.
         run-only URLs rely on the success timestamp falling within its execution.
         This is a metadata cross-check, not proof of artifact contents.
     """
     require_deployment_run(repository_slug, status, manifest)
+    expected_name = (
+        "Publish documentation / Deploy documentation" if manifest["mode"] == "release" else "Deploy documentation"
+    )
     matching = [
         job
         for job in _fetch_publication_jobs(repository_slug, manifest["run_id"], run_attempt)
-        if job["name"] == "Deploy documentation"
+        if job["name"] == expected_name
     ]
     if len(matching) != 1:
-        message = "Run attempt must contain exactly one Deploy documentation job."
+        message = f"Run attempt must contain exactly one {expected_name} job."
         raise ValueError(message)
     job = matching[0]
     job_id = job.get("id")
@@ -909,7 +1084,7 @@ def require_publication_job(
 def fetch_manual_publication_metadata(
     repository_slug: str, *, execution_context: PublicationExecutionContext | None = None
 ) -> PublicationManifest | None:
-    """Retrieve public manual provenance and cross-check its deployment metadata.
+    """Retrieve public provenance and cross-check manual or release deployment metadata.
 
     Args:
         repository_slug: Expected GitHub owner/repository identifier.
@@ -917,7 +1092,7 @@ def fetch_manual_publication_metadata(
             identify and exclude only its own unfinished deployment record.
 
     Returns:
-        Public provenance associated with the selected manual publishing run,
+        Public provenance associated with the selected publishing run,
         or None when no prior history remains after optional current-job
         exclusion and a second history check confirms that state.
 
@@ -933,7 +1108,9 @@ def fetch_manual_publication_metadata(
         not artifact or workflow-content verification. Reads are not atomic;
         rechecking the selected deployment detects changes during inspection,
         but deployment serialization and final eligibility checks remain needed.
-        Automatic release provenance is not accepted by this manual-only path.
+        Release provenance requires separate successful application-publication
+        and documentation-deployment jobs. The function retains its original
+        name for existing inspection callers.
     """
     if execution_context is None:
         current = fetch_current_pages_deployment(repository_slug)
@@ -950,7 +1127,11 @@ def fetch_manual_publication_metadata(
     deployment, status = current
     manifest = fetch_published_manifest()
     require_deployment_run(repository_slug, status, manifest)
-    attempt = require_manual_publication_run(repository_slug, deployment, manifest)
+    if manifest["mode"] == "release":
+        attempt = require_release_publication_run(repository_slug, deployment, manifest)
+        require_application_publication_job(repository_slug, manifest, run_id=manifest["run_id"], run_attempt=attempt)
+    else:
+        attempt = require_manual_publication_run(repository_slug, deployment, manifest)
     require_publication_job(repository_slug, status, manifest, attempt)
     if execution_context is None:
         rechecked = fetch_current_pages_deployment(repository_slug)
@@ -1794,6 +1975,11 @@ def main(argv: Sequence[str] | None = None) -> None:
     """
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
+    caller = commands.add_parser(
+        "verify-caller", help="Check trusted caller context and release publication success without deploying."
+    )
+    caller.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
+    caller.add_argument("--proposed", type=Path, required=True, help="Publication proposal JSON file.")
     prepare = commands.add_parser("prepare", help="Validate a source without building or deploying.")
     prepare.add_argument("--repository", type=Path, required=True, help="Dedicated full-history checkout.")
     prepare.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
@@ -1808,7 +1994,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     fetch.add_argument("--output", type=Path, required=True, help="Public manifest JSON output file.")
     inspect = commands.add_parser(
-        "inspect-published", help="Report manual deployment metadata without authorizing publication."
+        "inspect-published", help="Report deployment metadata without authorizing publication."
     )
     inspect.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     inspect.add_argument("--repository", type=Path, required=True, help="Full-history checkout for source comparison.")
@@ -1839,6 +2025,42 @@ def main(argv: Sequence[str] | None = None) -> None:
     verify_published.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     verify_published.add_argument("--proposed", type=Path, required=True, help="Validated deployed proposal JSON file.")
     arguments = parser.parse_args(argv)
+    if arguments.command == "verify-caller":
+        proposed = read_publication_manifest(arguments.proposed)
+        caller_required = (
+            "GITHUB_REPOSITORY",
+            "GITHUB_RUN_ID",
+            "GITHUB_RUN_ATTEMPT",
+            "GITHUB_EVENT_NAME",
+            "GITHUB_WORKFLOW_REF",
+            "GITHUB_REF",
+            "GITHUB_SHA",
+        )
+        if any(not os.environ.get(name, "").strip() for name in caller_required):
+            message = "Caller verification requires complete trusted GitHub execution context."
+            raise ValueError(message)
+        run_id = os.environ["GITHUB_RUN_ID"]
+        attempt = os.environ["GITHUB_RUN_ATTEMPT"]
+        if (
+            os.environ["GITHUB_REPOSITORY"] != arguments.repository_slug
+            or run_id != proposed["run_id"]
+            or re.fullmatch(r"[1-9][0-9]*", attempt) is None
+        ):
+            message = "Caller context must match the proposal's repository and run with a positive decimal attempt."
+            raise ValueError(message)
+        require_publication_caller(
+            arguments.repository_slug,
+            proposed,
+            event_name=os.environ["GITHUB_EVENT_NAME"],
+            workflow_ref=os.environ["GITHUB_WORKFLOW_REF"],
+            ref=os.environ["GITHUB_REF"],
+            workflow_sha=os.environ["GITHUB_SHA"],
+        )
+        if proposed["mode"] == "release":
+            require_application_publication_job(
+                arguments.repository_slug, proposed, run_id=run_id, run_attempt=int(attempt)
+            )
+        return
     if arguments.command == "verify-published":
         proposed = read_publication_manifest(arguments.proposed)
         releases = fetch_github_releases(arguments.repository_slug)

@@ -19,6 +19,129 @@ A release tag points to a **commit**, not to a branch. Tag a commit **after it h
 Your branch can be deleted after the merge; the release tag remains attached to the merged commit. **Do not tag the feature branch before merging**: that could release a commit different from the one on `main`. If GitHub rejects the tag push, that is a separate tag-permission or repository-rules setting, not a need for direct-push access to `main`.
 
 
+## Automatic documentation publication
+
+Stable application releases now call the shared documentation pipeline only
+after `publish-release` succeeds. The `Publish documentation` caller supplies
+release mode, the validated exact release commit, and the tag, with deployment
+enabled and bootstrap confirmation disabled. Prereleases skip this caller.
+The workflow call uses the pipeline from the same commit, with only the
+permissions its jobs require and no inherited custom secrets.
+
+The shared pipeline still checks that this is the latest published stable
+release and that the source matches its tag, then verifies existing provenance
+and source progress before deploying. It shares the manual publication lock;
+the release caller adds no competing documentation concurrency group.
+Documentation failure fails the overall workflow but does not remove or roll
+back the application release that has already been published.
+Do not create a release solely to test this integration; hosted acceptance
+will occur with the next intentional stable application release.
+
+Release validation exposes whether the validated tag is a canonical stable
+version and the exact checked-out release commit. Prerelease tags are explicitly
+classified as non-stable. These outputs gate the downstream publication call.
+
+The existing publication pipeline exposes a `workflow_call` interface with the
+same explicit inputs as manual dispatch. Deployment and initial-bootstrap
+confirmation both default to false; no custom secrets are requested.
+Caller-aware eligibility and provenance
+validation are in place in the shared pipeline. Manual and automatic entry points share
+this pipeline rather than duplicate its build and deployment safeguards.
+
+The helper's caller rule distinguishes manual dispatch from automatic tag
+publication using trusted GitHub event, workflow identity, ref, and commit.
+Manual bootstrap/correction belongs to `publish-docs.yml` on `main`; release
+mode belongs to `release.yml` on the exact stable baseline tag with the exact
+source commit. This rule does not
+replace independent verification of a successful application publication job.
+
+Application-publication verification now checks every jobs page for the exact
+current run attempt and requires one completed, successful `publish-release`
+job at the proposal's source commit. Missing, duplicate, failed, cancelled,
+skipped, or mismatched jobs fail explicitly. The overall release workflow may
+still be running because documentation follows application publication.
+This helper supplements caller validation
+and does not replace checking the current published stable release.
+
+`verify-caller --repository-slug <owner/repo> --proposed <manifest>` composes
+these checks using GitHub's repository, run, attempt, event, workflow ref, ref,
+and commit environment variables. Missing or inconsistent context fails before
+application-job inspection. Release proposals additionally require successful
+application publication; manual proposals do not query that job. Supply context
+only from the trusted runner, never from publication inputs. This command does
+not deploy, validate source eligibility, or inspect previous publication history.
+The publication pipeline now invokes it before initial source validation and
+again before final deployment eligibility checks. Manual publication validates
+its exact workflow identity as well as its branch. The preparation job has
+read-only Actions permission for release-job verification; deployment inputs
+and write permissions are unchanged.
+
+Historical automatic provenance now has a separate release-run validator:
+the completed run must belong to this repository's `release.yml`, originate
+from a push for the recorded stable tag, and match both the deployment and
+documented source commit. It returns the current attempt for separate job
+checks; overall run failure does not invalidate a successfully deployed site.
+The existing manual validator shares the same API metadata checks but still
+rejects release provenance. Historical inspection now selects the validator
+from the served manifest's mode. For release provenance it additionally requires
+successful application publication in that verified attempt before checking the
+documentation deployment job, then rechecks the selected deployment as usual.
+Manual bootstrap/correction retains the manual path. This makes later
+corrections capable of inspecting an automatically published site's provenance,
+without relaxing source-progress policy.
+
+GitHub prefixes jobs invoked through a reusable workflow with the caller job's
+display name. The release caller must remain named `Publish documentation`,
+giving its deployment job the exact API name
+`Publish documentation / Deploy documentation`. Historical release checks
+require that full name; manual runs retain `Deploy documentation`. Executing-job
+lookup accepts these two exact names only and still requires a unique match,
+current attempt, commit, and runner. Arbitrary caller prefixes are not accepted.
+
+The shared pipeline now uses `verify-caller` instead of its former main-only
+shell guards. Manual calls still require the exact publication workflow
+dispatched on `main`; release calls require the matching release-workflow tag
+and commit plus successful application publication. Initial verification runs
+before source validation or artifact upload, and final verification runs before
+deployment eligibility checks. The preparation job now has `actions: read` for
+the application-job query, with no write permissions added.
+
+## Automatic publication failure recovery
+
+Application publication precedes documentation. If documentation fails, keep the
+published application release and its tag intact. Do not delete/recreate the
+release, move its tag, create an artificial patch release, or rerun the release
+workflow solely to retry documentation. In addition to publication artifact and
+attempt ambiguity, rerunning application publication may encounter an existing
+GitHub Release.
+
+Wait for the run to finish, then inspect the application release, failed
+documentation step, `publication.json`, and deployment history. Distinguish:
+
+- Failure before the Pages action: the previous website may remain current.
+  Correct the failed policy/build condition before requesting another publication.
+- Successful deployment followed by verification failure: the new website may
+  already be live. Follow the public-verification procedure below, allowing for
+  CDN propagation without treating a failed workflow as a rollback.
+- A newer stable release superseded this request: do not retry the older
+  baseline. Inspect the newer release's documentation result instead.
+
+There is no standalone automatic-release retry command. Once the served state
+and failure cause are established, an operator may use the existing manual
+**correction** route for the latest stable baseline: prepare its `docs/<version>`
+maintenance branch from the stable tag, satisfy the documentation-only diff and
+source-progress rules, and select the explicit reviewed full source SHA. The
+tagged commit itself is eligible if the branch contains it and no source change
+is needed. First run a new manual preview from `main`, review the result, then
+start a new explicitly approved deployment run. Do not select bootstrap or
+pretend this manual recovery is automatic release provenance.
+
+If existing history has no unambiguous current success, no eligible correction
+source exists, or a previous rerun changed the verified attempt, stop for
+investigation rather than deleting records or bypassing the policy. The narrow
+failed-first-bootstrap cleanup procedure below does not apply to automatic
+release failures.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default
@@ -30,7 +153,8 @@ a site after a failed public verification.
 
 Use **Run workflow** from `main` for a new publication attempt, with a freshly
 reviewed source and the current stable baseline. Do not use **Re-run all jobs**
-or **Re-run failed jobs** on a publication run for now:
+or **Re-run failed jobs** on a publication run for now. This restriction also
+applies to a release run that invoked the documentation pipeline:
 
 - Artifact names are scoped to a run, not an attempt. Rebuilding can create
   duplicate packages and is deliberately rejected by the unique-artifact check.

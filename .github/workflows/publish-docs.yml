@@ -1,6 +1,30 @@
 name: Documentation publication
 
 on:
+  workflow_call:
+    inputs:
+      mode:
+        description: "Publication mode; validated by the publication policy"
+        required: true
+        type: string
+      baseline_tag:
+        description: "Latest published stable application tag"
+        required: true
+        type: string
+      source_sha:
+        description: "Full reviewed source commit SHA"
+        required: true
+        type: string
+      confirm_initial_bootstrap:
+        description: "Explicit initial placeholder publication confirmation"
+        required: false
+        type: boolean
+        default: false
+      deploy_website:
+        description: "Explicitly enable deployment after all checks pass"
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       mode:
@@ -39,20 +63,14 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       source_sha: ${{ steps.validated-source.outputs.source_sha }}
       manifest_artifact_id: ${{ steps.manifest-artifact.outputs.artifact-id }}
 
     steps:
-      - name: Require trusted main workflow
-        env:
-          WORKFLOW_REF: ${{ github.ref }}
-        run: |
-          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
-            echo "::error::Run this workflow from main, not from the source branch."
-            exit 1
-          fi
-
       - name: Checkout trusted policy and full source history
         uses: actions/checkout@v7
         with:
@@ -86,6 +104,14 @@ jobs:
           path = Path(os.environ["RUNNER_TEMP"]) / "publication-request.json"
           path.write_text(json.dumps(request), encoding="utf-8")
           PY
+
+      - name: Verify trusted publication caller
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-caller \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --proposed "$RUNNER_TEMP/publication-request.json"
 
       - name: Validate publication source
         env:
@@ -458,15 +484,6 @@ jobs:
       page_url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Require trusted main workflow
-        env:
-          WORKFLOW_REF: ${{ github.ref }}
-        run: |
-          if [ "$WORKFLOW_REF" != "refs/heads/main" ]; then
-            echo "::error::Deployment requires the trusted main workflow."
-            exit 1
-          fi
-
       - name: Checkout trusted deployment policy and full source history
         uses: actions/checkout@v7
         with:
@@ -486,6 +503,14 @@ jobs:
           artifact-ids: ${{ needs.prepare.outputs.manifest_artifact_id }}
           merge-multiple: true
           path: ${{ runner.temp }}/validated-proposal
+
+      - name: Reverify trusted publication caller
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          uv run --no-project --python 3.13.12 python .github/scripts/docs_publication.py verify-caller \
+            --repository-slug "$GITHUB_REPOSITORY" \
+            --proposed "$RUNNER_TEMP/validated-proposal/validated-publication.json"
 
       - name: Final source eligibility check
         env:
