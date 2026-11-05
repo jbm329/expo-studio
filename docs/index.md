@@ -11,10 +11,10 @@ Practical guidance for working with your data in Expo Studio.
 This manual is being written a section at a time. It is not yet a complete
 guide to the application.
 
-The first guides will focus on transforming data:
+## Available guides
 
-- **Derived columns** — writing formulas to create calculated columns.
-- **Reshape** — defining conditions for metrics.
+- [Derived columns](transform-data/derived-columns.md) — create your first
+  calculated column with a worked example.
 
-These guides are planned, not available yet. Navigation will grow as each
-section is added.
+Further formula guidance and a guide to defining conditions for Reshape metrics
+are planned, not available yet. Navigation will grow as each section is added.
