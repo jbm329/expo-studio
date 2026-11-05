@@ -211,6 +211,7 @@ fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 require_deployment_run = HELPER["require_deployment_run"]
 require_publication_caller = HELPER["require_publication_caller"]
 require_manual_publication_run = HELPER["require_manual_publication_run"]
+require_release_publication_run = HELPER["require_release_publication_run"]
 require_publication_job = HELPER["require_publication_job"]
 fetch_manual_publication_metadata = HELPER["fetch_manual_publication_metadata"]
 refresh_publication_refs = HELPER["refresh_publication_refs"]
@@ -2228,6 +2229,98 @@ def manual_publication_run() -> dict[str, object]:
         "head_repository": {"full_name": "jbm329/expo-studio"},
         "run_attempt": 2,
     }
+
+
+@pytest.mark.parametrize("conclusion", ["success", "failure", "cancelled"])
+def test_release_publication_run_accepts_completed_release_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+    conclusion: str,
+) -> None:
+    run = {
+        **manual_publication_run,
+        "path": ".github/workflows/release.yml",
+        "event": "push",
+        "head_branch": publication_manifest["baseline_tag"],
+        "head_sha": publication_manifest["source_sha"],
+        "conclusion": conclusion,
+    }
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(run)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    assert (
+        require_release_publication_run(
+            "jbm329/expo-studio",
+            {"id": 1, "sha": str(publication_manifest["source_sha"]).upper()},
+            {**publication_manifest, "mode": "release"},
+        )
+        == 2
+    )
+    assert runner.call_args.args[0][-1] == f"repos/jbm329/expo-studio/actions/runs/{publication_manifest['run_id']}"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 1),
+        ("path", ".github/workflows/publish-docs.yml"),
+        ("event", "workflow_dispatch"),
+        ("head_branch", "main"),
+        ("head_branch", "v9.0.0"),
+        ("head_sha", "b" * 40),
+        ("status", "in_progress"),
+        ("repository", {"full_name": "other/repo"}),
+        ("head_repository", None),
+        ("run_attempt", True),
+        ("run_attempt", 0),
+    ],
+)
+def test_release_publication_run_rejects_mismatches(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    manual_publication_run: dict[str, object],
+    field: str,
+    value: object,
+) -> None:
+    run = {
+        **manual_publication_run,
+        "path": ".github/workflows/release.yml",
+        "event": "push",
+        "head_branch": publication_manifest["baseline_tag"],
+        "head_sha": publication_manifest["source_sha"],
+        field: value,
+    }
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(run)))
+    )
+
+    with pytest.raises(ValueError):
+        require_release_publication_run(
+            "jbm329/expo-studio",
+            {"id": 1, "sha": publication_manifest["source_sha"]},
+            {**publication_manifest, "mode": "release"},
+        )
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_release_publication_run_rejects_ineligible_provenance_before_api(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    mode: str,
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError):
+        require_release_publication_run(
+            "jbm329/expo-studio",
+            {"id": 1, "sha": "b" * 40},
+            {**publication_manifest, "mode": mode},
+        )
+
+    runner.assert_not_called()
 
 
 @pytest.mark.parametrize("conclusion", ["success", "failure", "cancelled"])

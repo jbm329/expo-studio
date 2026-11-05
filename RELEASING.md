@@ -64,6 +64,14 @@ both jobs, so release-tag execution and the automatic release caller are still
 disabled. Manual publication now validates its exact workflow identity as well
 as its branch, without changing deployment inputs or permissions.
 
+Historical automatic provenance now has a separate release-run validator:
+the completed run must belong to this repository's `release.yml`, originate
+from a push for the recorded stable tag, and match both the deployment and
+documented source commit. It returns the current attempt for separate job
+checks; overall run failure does not invalidate a successfully deployed site.
+The existing manual validator shares the same API metadata checks but still
+rejects release provenance. Historical inspection is not switched over yet.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default

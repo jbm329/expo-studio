@@ -626,13 +626,76 @@ def require_manual_publication_run(
     if validated["mode"] == "release":
         message = "Manual publishing run verification does not accept automatic release provenance."
         raise ValueError(message)
+    return _require_publication_run_metadata(
+        repository_slug,
+        validated,
+        workflow_sha,
+        workflow_path=".github/workflows/publish-docs.yml",
+        event="workflow_dispatch",
+        head_branch="main",
+    )
+
+
+def require_release_publication_run(
+    repository_slug: str,
+    deployment: GitHubPagesDeployment,
+    manifest: PublicationManifest,
+) -> int:
+    """Verify completed automatic publishing run metadata through GitHub.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        deployment: Selected deployment with its release workflow commit.
+        manifest: Public automatic release provenance identifying the run.
+
+    Returns:
+        Current positive run-attempt number for further job verification.
+
+    Raises:
+        ValueError: If mode, deployment commit, repository, or run metadata differ.
+        TypeError: If the API response is not a workflow run object.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Overall run conclusion is not
+        deployment evidence. Application and documentation job success must
+        be checked separately. Latest-attempt-only rerun restrictions remain.
+        This does not revalidate the historical baseline against today's release.
+    """
+    _require_repository_slug(repository_slug)
+    validated = parse_publication_manifest(manifest)
+    workflow_sha = validate_commit_sha(deployment["sha"])
+    if validated["mode"] != "release" or workflow_sha != validated["source_sha"]:
+        message = "Automatic run verification requires release provenance at the deployment's source commit."
+        raise ValueError(message)
+    return _require_publication_run_metadata(
+        repository_slug,
+        validated,
+        workflow_sha,
+        workflow_path=".github/workflows/release.yml",
+        event="push",
+        head_branch=validated["baseline_tag"],
+    )
+
+
+def _require_publication_run_metadata(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    workflow_sha: str,
+    *,
+    workflow_path: str,
+    event: str,
+    head_branch: str,
+) -> int:
+    """Verify shared completed-run metadata without inferring job success."""
     result = subprocess.run(  # noqa: S603
         [  # noqa: S607
             "gh",
             "api",
             "--method",
             "GET",
-            f"repos/{repository_slug}/actions/runs/{validated['run_id']}",
+            f"repos/{repository_slug}/actions/runs/{manifest['run_id']}",
         ],
         check=True,
         capture_output=True,
@@ -644,15 +707,15 @@ def require_manual_publication_run(
         message = "GitHub workflow run response must be an object."
         raise TypeError(message)
     expected = {
-        "id": int(validated["run_id"]),
-        "path": ".github/workflows/publish-docs.yml",
-        "event": "workflow_dispatch",
-        "head_branch": "main",
+        "id": int(manifest["run_id"]),
+        "path": workflow_path,
+        "event": event,
+        "head_branch": head_branch,
         "head_sha": workflow_sha,
         "status": "completed",
     }
     if type(run.get("id")) is not int or any(run.get(key) != value for key, value in expected.items()):
-        message = "GitHub run does not match the completed manual publishing workflow and deployment commit."
+        message = "GitHub run does not match the completed publishing workflow and deployment commit."
         raise ValueError(message)
     for field in ("repository", "head_repository"):
         repository = run.get(field)
