@@ -365,6 +365,96 @@ For `IF`, keep both result branches compatible as described in
 [Keep result types compatible](#keep-result-types-compatible).
 There is no output-type selector in the Derived column dialog.
 
+## Date and time functions {#date-and-time-functions}
+
+Use these functions to extract a time of day or a calendar grouping from a
+datetime column:
+
+```text
+YEARMONTH([When])
+```
+
+Replace **When** with your column name. The source must already have a datetime
+type; text that looks like a date is not parsed automatically. Convert text
+dates to a datetime type before using these functions.
+
+### Function reference
+
+The examples below use **2026-09-01 14:33:59** as the value in **When**.
+Text outputs are shown without formula quotes.
+
+| Formula | Result type | Example result |
+|---|---|---|
+| `TIME([When])` | Text | 14:33 |
+| `WEEK([When])` | Text | W36 |
+| `WEEK#([When])` | Number | 36 |
+| `MONTH([When])` | Text | September |
+| `MONTHSHORT([When])` | Text | Sep |
+| `MONTH#([When])` | Number | 9 |
+| `TERTIAL([When])` | Text | T3 |
+| `TERTIAL#([When])` | Number | 3 |
+| `QUARTER([When])` | Text | Q3 |
+| `QUARTER#([When])` | Number | 3 |
+| `YEAR([When])` | Number | 2026 |
+| `ISOYEAR([When])` | Number | 2026 |
+| `YEARWEEK([When])` | Text | 2026-W36 |
+| `YEARMONTH([When])` | Text | 2026-09 |
+| `YEARQUARTER([When])` | Text | 2026-Q3 |
+| `YEARTERTIAL([When])` | Text | 2026-T3 |
+
+`TIME` returns hours and minutes; seconds are omitted, not rounded.
+`MONTH` and `MONTHSHORT` use month names in the application's selected
+language. The table shows English names.
+
+A quarter spans three months: Q1 is January–March, Q2 is April–June,
+Q3 is July–September and Q4 is October–December.
+A **tertial** spans four months: T1 is January–April, T2 is May–August
+and T3 is September–December.
+
+Use year-prefixed functions such as `YEARMONTH` when you need to distinguish
+the same period in different years. `MONTH#`, for example, returns 9 for
+September regardless of the year.
+
+### Calendar year versus ISO week-year
+
+`WEEK`, `WEEK#`, `ISOYEAR` and `YEARWEEK` use ISO weeks, which start on Monday.
+ISO week 1 is the week containing January 4. Near New Year, a date can belong
+to a different ISO week-year than its calendar year:
+
+| When | `YEAR([When])` | `ISOYEAR([When])` | `YEARWEEK([When])` |
+|---|---|---|---|
+| 2019-12-30 | 2019 | 2020 | 2020-W01 |
+| 2021-01-01 | 2021 | 2020 | 2020-W53 |
+| 2021-01-04 | 2021 | 2021 | 2021-W01 |
+
+Use `YEARWEEK` for a combined week label rather than pairing `YEAR` with
+`WEEK#`, which can give the wrong year at these boundaries.
+
+### Use extracted values in conditions
+
+Numeric functions can be used in arithmetic and comparisons. This formula
+labels dates in the first or second half of a year, while explicitly handling
+missing dates:
+
+```text
+IF([When] IS NULL; 'Missing date'; IF(MONTH#([When]) <= 6; 'H1'; 'H2'))
+```
+
+| When | Result |
+|---|---|
+| 2026-01-01 | H1 |
+| 2026-09-01 | H2 |
+| Missing | Missing date |
+
+### Missing dates and time zones
+
+Each date/time function returns a missing value for a missing date.
+Use `IS NULL` when you need a replacement label, as in the example above.
+
+For timezone-aware columns, values are extracted in the column's stored time
+zone without conversion. This matters for times near midnight, when converting
+to another time zone could change the date, month or year.
+
 ## Editor assistance {#editor-assistance}
 
 ### Column autocomplete
