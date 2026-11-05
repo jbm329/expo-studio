@@ -1,6 +1,6 @@
 # Expo Studio User Manual
 
-<figure>
+<figure style="text-align: left; margin-left: 0;">
   <img src="assets/splash.png" alt="Expo Studio" width="600">
 </figure>
 
