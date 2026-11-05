@@ -58,7 +58,11 @@ application-job inspection. Release proposals additionally require successful
 application publication; manual proposals do not query that job. Supply context
 only from the trusted runner, never from publication inputs. This command does
 not deploy, validate source eligibility, or inspect previous publication history.
-It is not connected to the workflow yet.
+The publication pipeline now invokes it before initial source validation and
+again before final deployment eligibility checks. Main-only guards remain in
+both jobs, so release-tag execution and the automatic release caller are still
+disabled. Manual publication now validates its exact workflow identity as well
+as its branch, without changing deployment inputs or permissions.
 
 ## Manual documentation publication recovery
 

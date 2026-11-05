@@ -99,6 +99,31 @@ def test_reusable_publication_contract_preserves_explicit_inputs(publication_wor
     assert "secrets" not in triggers["workflow_call"]
 
 
+@pytest.mark.parametrize(
+    ("job_name", "proposal", "next_check"),
+    [
+        ("prepare", "$RUNNER_TEMP/publication-request.json", "docs_publication.py prepare"),
+        ("deploy", "$RUNNER_TEMP/validated-proposal/validated-publication.json", "docs_publication.py prepare"),
+    ],
+)
+def test_publication_workflow_checks_caller_before_source(
+    publication_workflow: dict[str, object], job_name: str, proposal: str, next_check: str
+) -> None:
+    steps = publication_workflow["jobs"][job_name]["steps"]
+    checks = [
+        (index, step) for index, step in enumerate(steps) if "docs_publication.py verify-caller" in step.get("run", "")
+    ]
+    assert len(checks) == 1
+    index, check = checks[0]
+    assert f'--proposed "{proposal}"' in check["run"]
+    assert '--repository-slug "$GITHUB_REPOSITORY"' in check["run"]
+    assert check["env"] == {"GH_TOKEN": "${{ github.token }}"}
+    assert next_check in steps[index + 1]["run"]
+    guard = steps[0]
+    assert guard["env"] == {"WORKFLOW_REF": "${{ github.ref }}"}
+    assert '"$WORKFLOW_REF" != "refs/heads/main"' in guard["run"]
+
+
 def test_publication_workflow_limits_write_permissions(publication_workflow: dict[str, object]) -> None:
     jobs = publication_workflow["jobs"]
     deploy = jobs["deploy"]
