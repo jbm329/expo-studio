@@ -46,6 +46,66 @@ value in **Quantity**.
 
 Use the column names from your own dataset when adapting the example.
 
+## Writing formulas {#writing-formulas}
+
+Enter the expression directly in **f(x)**, without a leading `=`. This editor
+uses its own formula language, not Excel formulas, Python or a complete SQL
+expression language.
+
+### Column references
+
+Put column names in square brackets, including names containing spaces:
+
+```text
+[Unit price] * [Quantity]
+```
+
+Match the column name exactly, including its capitalization. Autocomplete
+searches without regard to case, but inserts the actual column name for you.
+
+If a column name contains a closing bracket, write that bracket twice.
+For example, the column `Cost [net]` is referenced as `[Cost [net]]]`.
+Autocomplete handles this escaping automatically.
+
+### Numbers and text
+
+Write numbers without quotes. Use a dot as the decimal separator and do not
+include thousands separators: write `1250.50`, not `1,250.50` or `1250,50`.
+Negative numbers such as `-5` and scientific notation such as `2.5e-3` are
+also supported.
+
+Put literal text in single quotes. Double an apostrophe inside the text:
+
+| Expression | Text value |
+|---|---|
+| `'Standard'` | Standard |
+| `'O''Brien'` | O'Brien |
+
+A formula consisting only of a number or quoted text repeats that value in
+every row. By contrast, `[Price]` reads a value from a column, and `'Price'`
+is the literal word Price.
+
+### Arithmetic
+
+Arithmetic requires numeric values; text that looks like a number is not
+automatically converted.
+
+| Operator | Meaning | Example |
+|---|---|---|
+| `+` | Add | `[Price] + 5` |
+| `-` | Subtract | `[Price] - 5` |
+| `*` | Multiply | `[Price] * [Quantity]` |
+| `/` | Divide | `[Price] / 2` |
+
+Multiplication and division are evaluated before addition and subtraction.
+Operators at the same level are evaluated from left to right. Use parentheses
+to control the order:
+
+| Formula | Result when Price is 10 |
+|---|---|
+| `[Price] + 2 * 3` | 16 |
+| `([Price] + 2) * 3` | 36 |
+
 ## Editor assistance {#editor-assistance}
 
 ### Column autocomplete
