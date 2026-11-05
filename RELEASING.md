@@ -28,6 +28,14 @@ automatic integration must run only after successful `publish-release`, verify
 that the release remains the newest stable release, and share the manual
 publication concurrency group.
 
+The existing publication pipeline exposes a `workflow_call` interface with the
+same explicit inputs as manual dispatch. Deployment and initial-bootstrap
+confirmation both default to false; no custom secrets are requested.
+No release caller is connected yet, and main-only execution guards remain in
+place. Caller-aware eligibility and provenance validation must be added before
+release-tag execution is enabled. Manual and automatic entry points will share
+this pipeline rather than duplicate its build and deployment safeguards.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default

@@ -1,6 +1,30 @@
 name: Documentation publication
 
 on:
+  workflow_call:
+    inputs:
+      mode:
+        description: "Publication mode; validated by the publication policy"
+        required: true
+        type: string
+      baseline_tag:
+        description: "Latest published stable application tag"
+        required: true
+        type: string
+      source_sha:
+        description: "Full reviewed source commit SHA"
+        required: true
+        type: string
+      confirm_initial_bootstrap:
+        description: "Explicit initial placeholder publication confirmation"
+        required: false
+        type: boolean
+        default: false
+      deploy_website:
+        description: "Explicitly enable deployment after all checks pass"
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       mode:

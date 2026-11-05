@@ -72,7 +72,7 @@ def test_release_workflow_exposes_validated_documentation_gate(
 
 def test_publication_workflow_requires_explicit_deployment(publication_workflow: dict[str, object]) -> None:
     workflow = publication_workflow
-    assert set(workflow["on"]) == {"workflow_dispatch"}
+    assert set(workflow["on"]) == {"workflow_dispatch", "workflow_call"}
     inputs = workflow["on"]["workflow_dispatch"]["inputs"]
     for name in ("deploy_website", "confirm_initial_bootstrap"):
         assert inputs[name]["type"] == "boolean"
@@ -82,6 +82,21 @@ def test_publication_workflow_requires_explicit_deployment(publication_workflow:
     deploy = workflow["jobs"]["deploy"]
     assert deploy["if"] == "${{ inputs.deploy_website }}"
     assert set(deploy["needs"]) == {"prepare", "inspect", "build", "verify", "recheck"}
+
+
+def test_reusable_publication_contract_preserves_explicit_inputs(publication_workflow: dict[str, object]) -> None:
+    triggers = publication_workflow["on"]
+    inputs = triggers["workflow_call"]["inputs"]
+    assert set(inputs) == set(triggers["workflow_dispatch"]["inputs"])
+    for name in ("mode", "baseline_tag", "source_sha"):
+        assert inputs[name]["required"] == "true"
+        assert inputs[name]["type"] == "string"
+        assert "default" not in inputs[name]
+    for name in ("confirm_initial_bootstrap", "deploy_website"):
+        assert inputs[name]["type"] == "boolean"
+        assert inputs[name]["required"] == "false"
+        assert inputs[name]["default"] == "false"
+    assert "secrets" not in triggers["workflow_call"]
 
 
 def test_publication_workflow_limits_write_permissions(publication_workflow: dict[str, object]) -> None:
