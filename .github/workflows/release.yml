@@ -234,3 +234,21 @@ jobs:
             options+=(--prerelease)
           fi
           gh release create "$GITHUB_REF_NAME" release-windows/* release-linux/* "${options[@]}"
+
+  publish-documentation:
+    name: Publish documentation
+    needs: [validate-release, publish-release]
+    if: ${{ needs.validate-release.outputs.stable_release == 'true' }}
+    permissions:
+      contents: read
+      actions: read
+      deployments: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/publish-docs.yml
+    with:
+      mode: release
+      baseline_tag: ${{ github.ref_name }}
+      source_sha: ${{ needs.validate-release.outputs.source_sha }}
+      confirm_initial_bootstrap: false
+      deploy_website: true

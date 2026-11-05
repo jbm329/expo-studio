@@ -70,6 +70,37 @@ def test_release_workflow_exposes_validated_documentation_gate(
     ]
 
 
+def test_release_workflow_publishes_documentation_only_after_stable_application_release() -> None:
+    workflow = yaml.load(
+        (HELPER_PATH.parents[1] / "workflows" / "release.yml").read_text(encoding="utf-8"),
+        Loader=yaml.BaseLoader,
+    )
+    caller = workflow["jobs"]["publish-documentation"]
+    assert caller["name"] == "Publish documentation"
+    assert set(caller["needs"]) == {"validate-release", "publish-release"}
+    assert caller["if"] == "${{ needs.validate-release.outputs.stable_release == 'true' }}"
+    assert "always()" not in caller["if"]
+    assert "continue-on-error" not in caller
+    assert caller["uses"] == "./.github/workflows/publish-docs.yml"
+    assert caller["with"] == {
+        "mode": "release",
+        "baseline_tag": "${{ github.ref_name }}",
+        "source_sha": "${{ needs.validate-release.outputs.source_sha }}",
+        "confirm_initial_bootstrap": "false",
+        "deploy_website": "true",
+    }
+    assert caller["permissions"] == {
+        "contents": "read",
+        "actions": "read",
+        "deployments": "read",
+        "pages": "write",
+        "id-token": "write",
+    }
+    assert "secrets" not in caller
+    assert "concurrency" not in caller
+    assert workflow["concurrency"]["group"] == "release-${{ github.ref }}"
+
+
 def test_publication_workflow_requires_explicit_deployment(publication_workflow: dict[str, object]) -> None:
     workflow = publication_workflow
     assert set(workflow["on"]) == {"workflow_dispatch", "workflow_call"}

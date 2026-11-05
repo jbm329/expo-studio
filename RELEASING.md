@@ -19,20 +19,33 @@ A release tag points to a **commit**, not to a branch. Tag a commit **after it h
 Your branch can be deleted after the merge; the release tag remains attached to the merged commit. **Do not tag the feature branch before merging**: that could release a commit different from the one on `main`. If GitHub rejects the tag push, that is a separate tag-permission or repository-rules setting, not a need for direct-push access to `main`.
 
 
-## Automatic documentation publication preparation
+## Automatic documentation publication
+
+Stable application releases now call the shared documentation pipeline only
+after `publish-release` succeeds. The `Publish documentation` caller supplies
+release mode, the validated exact release commit, and the tag, with deployment
+enabled and bootstrap confirmation disabled. Prereleases skip this caller.
+The workflow call uses the pipeline from the same commit, with only the
+permissions its jobs require and no inherited custom secrets.
+
+The shared pipeline still checks that this is the latest published stable
+release and that the source matches its tag, then verifies existing provenance
+and source progress before deploying. It shares the manual publication lock;
+the release caller adds no competing documentation concurrency group.
+Documentation failure fails the overall workflow but does not remove or roll
+back the application release that has already been published.
+Do not create a release solely to test this integration; hosted acceptance
+will occur with the next intentional stable application release.
 
 Release validation exposes whether the validated tag is a canonical stable
 version and the exact checked-out release commit. Prerelease tags are explicitly
-classified as non-stable. These outputs do not publish documentation yet:
-automatic integration must run only after successful `publish-release`, verify
-that the release remains the newest stable release, and share the manual
-publication concurrency group.
+classified as non-stable. These outputs gate the downstream publication call.
 
 The existing publication pipeline exposes a `workflow_call` interface with the
 same explicit inputs as manual dispatch. Deployment and initial-bootstrap
 confirmation both default to false; no custom secrets are requested.
-No release caller is connected yet. Caller-aware eligibility and provenance
-validation are in place in the shared pipeline. Manual and automatic entry points will share
+Caller-aware eligibility and provenance
+validation are in place in the shared pipeline. Manual and automatic entry points share
 this pipeline rather than duplicate its build and deployment safeguards.
 
 The helper's caller rule distinguishes manual dispatch from automatic tag
@@ -75,16 +88,15 @@ successful application publication in that verified attempt before checking the
 documentation deployment job, then rechecks the selected deployment as usual.
 Manual bootstrap/correction retains the manual path. This makes later
 corrections capable of inspecting an automatically published site's provenance,
-but does not enable automatic execution or relax source-progress policy.
+without relaxing source-progress policy.
 
 GitHub prefixes jobs invoked through a reusable workflow with the caller job's
-display name. The planned release caller must be named `Publish documentation`,
+display name. The release caller must remain named `Publish documentation`,
 giving its deployment job the exact API name
 `Publish documentation / Deploy documentation`. Historical release checks
 require that full name; manual runs retain `Deploy documentation`. Executing-job
 lookup accepts these two exact names only and still requires a unique match,
 current attempt, commit, and runner. Arbitrary caller prefixes are not accepted.
-The release caller is not connected yet.
 
 The shared pipeline now uses `verify-caller` instead of its former main-only
 shell guards. Manual calls still require the exact publication workflow
@@ -93,8 +105,6 @@ and commit plus successful application publication. Initial verification runs
 before source validation or artifact upload, and final verification runs before
 deployment eligibility checks. The preparation job now has `actions: read` for
 the application-job query, with no write permissions added.
-There is still no automatic caller in `release.yml`, so no application release
-starts documentation publication yet.
 
 ## Manual documentation publication recovery
 
