@@ -6,13 +6,31 @@
 
 Practical guidance for working with your data in Expo Studio.
 
+Start with [What you can do with Expo Studio](application-overview.md) for an
+overview of data sources, reviewing and preparing datasets, analysis, reports
+and exports. Read [Workbench window](workbench/index.md) to find your way around
+the menus, toolbar, source panels and editor/result areas.
+
 ## About this manual
 
-This manual is being written a section at a time. It is not yet a complete
-guide to the application.
+This manual is being written a section at a time. The application overview
+introduces the main capabilities; the guides below explain selected workflows
+in detail. It is not yet a complete guide to the application.
 
 ## Available guides
 
+- [Workbench window](workbench/index.md) — locate the main controls, understand
+  editor and result tabs, and adjust the layout.
+- [Settings](workbench/settings.md) — configure application preferences, CSV and
+  Excel processing, undo limits and schema caching.
+- [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
+  output destinations and file rotation.
+- [Database connections](workbench/database-connections.md) — configure and test
+  named database connections, choose drivers and authentication, and connect
+  to local SQLite or read-only DuckDB files.
+- [REST API connections](workbench/rest-api-connections.md) — configure JSON
+  requests, authentication and pagination, and generate SCB request syntax
+  with the query builder.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,
@@ -39,5 +57,6 @@ guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-This manual covers selected workflows, not every feature in the application.
-Navigation will grow as more guides are added.
+Detailed file source-setup, general cleaning, dataset-combination and
+dataset-export guides are not yet available. Navigation will grow as more guides
+are added.
