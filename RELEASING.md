@@ -43,6 +43,14 @@ mode belongs to `release.yml` on the exact stable baseline tag with the exact
 source commit. This pure rule is not wired into execution yet and does not
 replace independent verification of a successful application publication job.
 
+Application-publication verification now checks every jobs page for the exact
+current run attempt and requires one completed, successful `publish-release`
+job at the proposal's source commit. Missing, duplicate, failed, cancelled,
+skipped, or mismatched jobs fail explicitly. The overall release workflow may
+still be running because documentation follows application publication.
+This helper is not wired into execution yet; it supplements caller validation
+and does not replace checking the current published stable release.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default

@@ -195,6 +195,162 @@ require_pages_artifact = HELPER["require_pages_artifact"]
 require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
 require_current_deployment_identity = HELPER["require_current_deployment_identity"]
 fetch_executing_publication_job = HELPER["fetch_executing_publication_job"]
+require_application_publication_job = HELPER["require_application_publication_job"]
+
+
+@pytest.fixture
+def application_publication_job(publication_manifest: dict[str, object]) -> dict[str, object]:
+    return {
+        "id": 789,
+        "name": "publish-release",
+        "run_id": int(publication_manifest["run_id"]),
+        "run_attempt": 2,
+        "head_sha": publication_manifest["source_sha"],
+        "status": "completed",
+        "conclusion": "success",
+    }
+
+
+def test_application_publication_job_requires_success_in_current_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    application_publication_job: dict[str, object],
+) -> None:
+    pages = [{"jobs": [{"name": "validate-release"}]}, {"jobs": [application_publication_job]}]
+    runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    require_application_publication_job(
+        "jbm329/expo-studio",
+        {**publication_manifest, "mode": "release"},
+        run_id=str(publication_manifest["run_id"]),
+        run_attempt=2,
+    )
+
+    assert "/attempts/2/jobs?per_page=100" in runner.call_args.args[0][-1]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("id", True),
+        ("id", 0),
+        ("run_id", 1),
+        ("run_id", True),
+        ("run_attempt", 1),
+        ("run_attempt", True),
+        ("head_sha", "b" * 40),
+        ("status", "in_progress"),
+        ("conclusion", "failure"),
+        ("conclusion", "cancelled"),
+        ("conclusion", "skipped"),
+        ("name", "build-release-linux"),
+    ],
+)
+def test_application_publication_job_rejects_mismatches(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    application_publication_job: dict[str, object],
+    field: str,
+    value: object,
+) -> None:
+    pages = [{"jobs": [{**application_publication_job, field: value}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError):
+        require_application_publication_job(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": "release"},
+            run_id=str(publication_manifest["run_id"]),
+            run_attempt=2,
+        )
+
+
+@pytest.mark.parametrize("count", [0, 2])
+def test_application_publication_job_requires_unique_match(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    application_publication_job: dict[str, object],
+    count: int,
+) -> None:
+    pages = [{"jobs": [application_publication_job] * count}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+
+    with pytest.raises(ValueError, match="exactly one"):
+        require_application_publication_job(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": "release"},
+            run_id=str(publication_manifest["run_id"]),
+            run_attempt=2,
+        )
+
+
+@pytest.mark.parametrize(
+    ("mode", "run_id", "attempt"),
+    [
+        ("bootstrap", "123", 2),
+        ("correction", "123", 2),
+        ("release", "999", 2),
+        ("release", None, 2),
+        ("release", "123", 0),
+        ("release", "123", True),
+    ],
+)
+def test_application_publication_job_rejects_context_before_api(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    mode: str,
+    run_id: str | None,
+    attempt: int,
+) -> None:
+    runner = Mock()
+    monkeypatch.setattr(subprocess, "run", runner)
+
+    with pytest.raises(ValueError):
+        require_application_publication_job(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": mode, "run_id": "123"},
+            run_id=run_id,
+            run_attempt=attempt,
+        )
+
+    runner.assert_not_called()
+
+
+@pytest.mark.parametrize("response", ["null", "[{}]", '[{"jobs": [null]}]'])
+def test_application_publication_job_rejects_malformed_api(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    response: str,
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=response)))
+
+    with pytest.raises(TypeError):
+        require_application_publication_job(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": "release"},
+            run_id=str(publication_manifest["run_id"]),
+            run_attempt=2,
+        )
+
+
+def test_application_publication_job_propagates_api_failure(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+) -> None:
+    monkeypatch.setattr(subprocess, "run", Mock(side_effect=subprocess.CalledProcessError(1, ["gh", "api"])))
+
+    with pytest.raises(subprocess.CalledProcessError):
+        require_application_publication_job(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": "release"},
+            run_id=str(publication_manifest["run_id"]),
+            run_attempt=2,
+        )
 
 
 @pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])

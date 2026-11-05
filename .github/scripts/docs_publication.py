@@ -824,6 +824,61 @@ def _fetch_publication_jobs(repository_slug: str, run_id: str, run_attempt: int)
     return jobs
 
 
+def require_application_publication_job(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    *,
+    run_id: str,
+    run_attempt: int,
+) -> None:
+    """Require successful application publication in the current release attempt.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        manifest: Automatic release publication proposal.
+        run_id: Current trusted GITHUB_RUN_ID.
+        run_attempt: Current trusted GITHUB_RUN_ATTEMPT as an integer.
+
+    Raises:
+        ValueError: If mode, run, attempt, job identity, commit, or success differs.
+        TypeError: If GitHub job metadata is malformed.
+        subprocess.CalledProcessError: If the API request fails.
+        OSError: If the GitHub CLI cannot be started.
+
+    Notes:
+        Requires actions: read and GH_TOKEN. Caller identity must be validated
+        separately. This does not require the overall run to have completed,
+        nor replace current release/tag eligibility or deployment checks.
+    """
+    proposed = parse_publication_manifest(manifest)
+    if proposed["mode"] != "release" or run_id != proposed["run_id"]:
+        message = "Application publication verification requires release mode in the proposal's current run."
+        raise ValueError(message)
+    jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
+    matching = [job for job in jobs if job["name"] == "publish-release"]
+    if len(matching) != 1:
+        message = "Current attempt must contain exactly one publish-release job."
+        raise ValueError(message)
+    job = matching[0]
+    identifier = job.get("id")
+    expected = {
+        "run_id": int(run_id),
+        "run_attempt": run_attempt,
+        "head_sha": proposed["source_sha"],
+        "status": "completed",
+        "conclusion": "success",
+    }
+    if (
+        type(identifier) is not int
+        or identifier <= 0
+        or type(job.get("run_id")) is not int
+        or type(job.get("run_attempt")) is not int
+        or any(job.get(key) != value for key, value in expected.items())
+    ):
+        message = "Application publication job must succeed in the current attempt at the proposed release commit."
+        raise ValueError(message)
+
+
 def fetch_executing_publication_job(
     repository_slug: str, *, run_id: str, run_attempt: int, workflow_sha: str, runner_name: str
 ) -> str:
