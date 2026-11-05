@@ -6,10 +6,15 @@
 
 Practical guidance for working with your data in Expo Studio.
 
+Start with [What you can do with Expo Studio](application-overview.md) for an
+overview of data sources, reviewing and preparing datasets, analysis, reports
+and exports.
+
 ## About this manual
 
-This manual is being written a section at a time. It is not yet a complete
-guide to the application.
+This manual is being written a section at a time. The application overview
+introduces the main capabilities; the guides below explain selected workflows
+in detail. It is not yet a complete guide to the application.
 
 ## Available guides
 
@@ -39,5 +44,5 @@ guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-This manual covers selected workflows, not every feature in the application.
-Navigation will grow as more guides are added.
+Detailed source-setup, general cleaning, dataset-combination and dataset-export
+guides are not yet available. Navigation will grow as more guides are added.
