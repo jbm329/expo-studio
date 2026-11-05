@@ -21,6 +21,8 @@ in detail. It is not yet a complete guide to the application.
 
 - [Workbench window](workbench/index.md) — locate the main controls, understand
   editor and result tabs, and adjust the layout.
+- [Settings](workbench/settings.md) — configure application preferences, CSV and
+  Excel processing, undo limits and schema caching.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,

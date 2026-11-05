@@ -38,6 +38,12 @@ The **File → Export…** submenu offers CSV, Excel and binary data-file export
 These are dataset exports, not the separate **Export** and **Reports** controls
 inside Advanced analysis.
 
+## Change application settings {#settings}
+
+Select **Tools → Settings…** to configure language, highlighting, the documents
+directory, undo limits and data-processing options. See the
+[Settings guide](settings.md) for the dialog screenshot and field descriptions.
+
 ## Use the toolbar {#toolbar}
 
 The toolbar is arranged in groups from left to right. Hover over a button to
