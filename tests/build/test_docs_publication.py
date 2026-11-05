@@ -1937,6 +1937,8 @@ def manual_metadata_checks(
         "fetch_published_manifest": checks.manifest,
         "require_deployment_run": checks.association,
         "require_manual_publication_run": checks.run,
+        "require_release_publication_run": checks.release_run,
+        "require_application_publication_job": checks.application,
         "require_publication_job": checks.job,
     }
     for name, dependency in dependencies.items():
@@ -1944,8 +1946,10 @@ def manual_metadata_checks(
     return checks
 
 
-def test_fetch_manual_publication_metadata_connects_checks(manual_metadata_checks: Mock) -> None:
+@pytest.mark.parametrize("mode", ["bootstrap", "correction"])
+def test_fetch_manual_publication_metadata_connects_checks(manual_metadata_checks: Mock, mode: str) -> None:
     checks = manual_metadata_checks
+    checks.manifest.return_value["mode"] = mode
     slug = "jbm329/expo-studio"
     deployment, status = checks.current.return_value
     manifest = checks.manifest.return_value
@@ -1956,6 +1960,61 @@ def test_fetch_manual_publication_metadata_connects_checks(manual_metadata_check
     checks.association.assert_called_once_with(slug, status, manifest)
     checks.run.assert_called_once_with(slug, deployment, manifest)
     checks.job.assert_called_once_with(slug, status, manifest, 2)
+    checks.release_run.assert_not_called()
+    checks.application.assert_not_called()
+
+
+def test_release_metadata_inspection_connects_run_and_both_jobs(manual_metadata_checks: Mock) -> None:
+    checks = manual_metadata_checks
+    checks.manifest.return_value["mode"] = "release"
+    checks.release_run.return_value = 3
+    slug = "jbm329/expo-studio"
+    deployment, status = checks.current.return_value
+    manifest = checks.manifest.return_value
+
+    assert fetch_manual_publication_metadata(slug) == manifest
+
+    assert [item[0] for item in checks.mock_calls] == [
+        "current",
+        "manifest",
+        "association",
+        "release_run",
+        "application",
+        "job",
+        "current",
+    ]
+    checks.release_run.assert_called_once_with(slug, deployment, manifest)
+    checks.application.assert_called_once_with(slug, manifest, run_id=manifest["run_id"], run_attempt=3)
+    checks.job.assert_called_once_with(slug, status, manifest, 3)
+    checks.run.assert_not_called()
+
+
+@pytest.mark.parametrize("failure_point", ["release_run", "application", "job"])
+def test_release_metadata_inspection_stops_on_failed_checks(manual_metadata_checks: Mock, failure_point: str) -> None:
+    checks = manual_metadata_checks
+    checks.manifest.return_value["mode"] = "release"
+    checks.release_run.return_value = 2
+    getattr(checks, failure_point).side_effect = ValueError("Release verification failed")
+    sequence = ["current", "manifest", "association", "release_run", "application", "job"]
+
+    with pytest.raises(ValueError, match="Release verification failed"):
+        fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    assert [item[0] for item in checks.mock_calls] == sequence[: sequence.index(failure_point) + 1]
+
+
+def test_release_metadata_inspection_rejects_changed_deployment(manual_metadata_checks: Mock) -> None:
+    checks = manual_metadata_checks
+    checks.manifest.return_value["mode"] = "release"
+    checks.release_run.return_value = 2
+    deployment, status = checks.current.return_value
+    checks.current.side_effect = [(deployment, status), ({**deployment, "id": 2}, status)]
+
+    with pytest.raises(ValueError, match="changed during"):
+        fetch_manual_publication_metadata("jbm329/expo-studio")
+
+    checks.application.assert_called_once()
+    checks.job.assert_called_once()
 
 
 def test_fetch_manual_publication_metadata_distinguishes_no_history(manual_metadata_checks: Mock) -> None:

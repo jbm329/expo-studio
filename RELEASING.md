@@ -70,7 +70,13 @@ from a push for the recorded stable tag, and match both the deployment and
 documented source commit. It returns the current attempt for separate job
 checks; overall run failure does not invalidate a successfully deployed site.
 The existing manual validator shares the same API metadata checks but still
-rejects release provenance. Historical inspection is not switched over yet.
+rejects release provenance. Historical inspection now selects the validator
+from the served manifest's mode. For release provenance it additionally requires
+successful application publication in that verified attempt before checking the
+documentation deployment job, then rechecks the selected deployment as usual.
+Manual bootstrap/correction retains the manual path. This makes later
+corrections capable of inspecting an automatically published site's provenance,
+but does not enable automatic execution or relax source-progress policy.
 
 ## Manual documentation publication recovery
 

@@ -1077,7 +1077,7 @@ def require_publication_job(
 def fetch_manual_publication_metadata(
     repository_slug: str, *, execution_context: PublicationExecutionContext | None = None
 ) -> PublicationManifest | None:
-    """Retrieve public manual provenance and cross-check its deployment metadata.
+    """Retrieve public provenance and cross-check manual or release deployment metadata.
 
     Args:
         repository_slug: Expected GitHub owner/repository identifier.
@@ -1085,7 +1085,7 @@ def fetch_manual_publication_metadata(
             identify and exclude only its own unfinished deployment record.
 
     Returns:
-        Public provenance associated with the selected manual publishing run,
+        Public provenance associated with the selected publishing run,
         or None when no prior history remains after optional current-job
         exclusion and a second history check confirms that state.
 
@@ -1101,7 +1101,9 @@ def fetch_manual_publication_metadata(
         not artifact or workflow-content verification. Reads are not atomic;
         rechecking the selected deployment detects changes during inspection,
         but deployment serialization and final eligibility checks remain needed.
-        Automatic release provenance is not accepted by this manual-only path.
+        Release provenance requires separate successful application-publication
+        and documentation-deployment jobs. The function retains its original
+        name for existing inspection callers.
     """
     if execution_context is None:
         current = fetch_current_pages_deployment(repository_slug)
@@ -1118,7 +1120,11 @@ def fetch_manual_publication_metadata(
     deployment, status = current
     manifest = fetch_published_manifest()
     require_deployment_run(repository_slug, status, manifest)
-    attempt = require_manual_publication_run(repository_slug, deployment, manifest)
+    if manifest["mode"] == "release":
+        attempt = require_release_publication_run(repository_slug, deployment, manifest)
+        require_application_publication_job(repository_slug, manifest, run_id=manifest["run_id"], run_attempt=attempt)
+    else:
+        attempt = require_manual_publication_run(repository_slug, deployment, manifest)
     require_publication_job(repository_slug, status, manifest, attempt)
     if execution_context is None:
         rechecked = fetch_current_pages_deployment(repository_slug)
@@ -1981,7 +1987,7 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     fetch.add_argument("--output", type=Path, required=True, help="Public manifest JSON output file.")
     inspect = commands.add_parser(
-        "inspect-published", help="Report manual deployment metadata without authorizing publication."
+        "inspect-published", help="Report deployment metadata without authorizing publication."
     )
     inspect.add_argument("--repository-slug", required=True, help="GitHub owner/repository identifier.")
     inspect.add_argument("--repository", type=Path, required=True, help="Full-history checkout for source comparison.")

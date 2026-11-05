@@ -190,6 +190,9 @@ workflow commit SHA. It returns the current run-attempt number for subsequent
 verification. This does not verify workflow file contents, the deployment's
 exact attempt, or artifact contents. Automatic release runs are not accepted by
 this manual check.
+Release provenance uses a separate completed `release.yml` push-run check for
+the recorded stable tag and source commit, plus a successful `publish-release`
+job in that attempt. See `RELEASING.md` for automatic-publication preparation.
 
 The overall workflow conclusion is not used as evidence of deployment success:
 the website may already have been published before a later verification fails
@@ -207,7 +210,7 @@ Job timestamps must be valid and completion cannot precede start. These checks
 do not establish artifact contents.
 
 `fetch_manual_publication_metadata` connects the current-deployment, public
-manifest, run-association, manual-run, and job checks. It rechecks the selected
+manifest, run-association, mode-specific run, and job checks. It rechecks the selected
 deployment after inspection and rejects a changed deployment or status.
 Only empty prior history (optionally excluding the verified current pending
 record) returns no metadata; every failed
