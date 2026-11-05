@@ -559,9 +559,11 @@ def executing_publication_job() -> dict[str, object]:
     }
 
 
+@pytest.mark.parametrize("name", ["Deploy documentation", "Publish documentation / Deploy documentation"])
 def test_fetch_executing_publication_job_reads_all_pages(
-    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object]
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object], name: str
 ) -> None:
+    executing_publication_job["name"] = name
     pages = [{"jobs": [{"name": "prepare"}]}, {"jobs": [executing_publication_job]}]
     runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
     monkeypatch.setattr(subprocess, "run", runner)
@@ -2102,7 +2104,7 @@ def test_fetch_manual_publication_metadata_rejects_changes_during_inspection(
 def publication_job() -> dict[str, object]:
     return {
         "id": 987,
-        "name": "Deploy documentation",
+        "name": "Publish documentation / Deploy documentation",
         "run_id": 123456789,
         "run_attempt": 2,
         "status": "completed",
@@ -2225,6 +2227,58 @@ def test_require_publication_job_rejects_malformed_pages(
 
     with pytest.raises(TypeError):
         require_publication_job("jbm329/expo-studio", deployment_success, publication_manifest, 2)
+
+
+@pytest.mark.parametrize(
+    ("mode", "name", "accepted"),
+    [
+        ("bootstrap", "Deploy documentation", True),
+        ("correction", "Deploy documentation", True),
+        ("release", "Publish documentation / Deploy documentation", True),
+        ("release", "Deploy documentation", False),
+        ("bootstrap", "Publish documentation / Deploy documentation", False),
+        ("release", "Other caller / Deploy documentation", False),
+    ],
+)
+def test_publication_job_name_matches_publication_mode(
+    monkeypatch: pytest.MonkeyPatch,
+    publication_manifest: dict[str, object],
+    publication_job: dict[str, object],
+    deployment_success: dict[str, object],
+    mode: str,
+    name: str,
+    accepted: bool,
+) -> None:
+    pages = [{"jobs": [{**publication_job, "name": name}]}]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    manifest = {**publication_manifest, "mode": mode}
+    if accepted:
+        require_publication_job("jbm329/expo-studio", deployment_success, manifest, 2)
+    else:
+        with pytest.raises(ValueError, match="exactly one"):
+            require_publication_job("jbm329/expo-studio", deployment_success, manifest, 2)
+
+
+def test_executing_job_rejects_ambiguous_manual_and_reusable_matches(
+    monkeypatch: pytest.MonkeyPatch, executing_publication_job: dict[str, object]
+) -> None:
+    pages = [
+        {
+            "jobs": [
+                executing_publication_job,
+                {**executing_publication_job, "id": 457, "name": "Publish documentation / Deploy documentation"},
+            ]
+        }
+    ]
+    monkeypatch.setattr(
+        subprocess, "run", Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(pages)))
+    )
+    with pytest.raises(ValueError, match="exactly one"):
+        fetch_executing_publication_job(
+            "jbm329/expo-studio", run_id="123", run_attempt=2, workflow_sha="a" * 40, runner_name="Hosted runner"
+        )
 
 
 def test_require_publication_job_rejects_link_to_other_job(
@@ -2480,7 +2534,7 @@ def test_manual_metadata_inspection_requires_job_success_not_overall_run_success
         fetch_manual_publication_metadata.__globals__, "fetch_published_manifest", Mock(return_value=manifest)
     )
     run = {**manual_publication_run, "conclusion": run_conclusion}
-    job = {**publication_job, "conclusion": job_conclusion}
+    job = {**publication_job, "name": "Deploy documentation", "conclusion": job_conclusion}
     runner = Mock(
         side_effect=[
             subprocess.CompletedProcess([], 0, stdout=json.dumps(run)),

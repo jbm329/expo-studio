@@ -974,7 +974,9 @@ def fetch_executing_publication_job(
         message = "Executing publication job lookup requires a runner name."
         raise ValueError(message)
     jobs = _fetch_publication_jobs(repository_slug, run_id, run_attempt)
-    matching = [job for job in jobs if job["name"] == "Deploy documentation"]
+    matching = [
+        job for job in jobs if job["name"] in ("Deploy documentation", "Publish documentation / Deploy documentation")
+    ]
     if len(matching) != 1:
         message = "Current attempt must contain exactly one Deploy documentation job."
         raise ValueError(message)
@@ -1023,19 +1025,24 @@ def require_publication_job(
 
     Notes:
         Requires actions: read and GH_TOKEN. The deployment job must be named
-        "Deploy documentation". A job-specific log URL must match that job;
+        "Deploy documentation" for manual runs or
+        "Publish documentation / Deploy documentation" for release callers.
+        A job-specific log URL must match that job;
         its success may be recorded after job completion by GitHub.
         run-only URLs rely on the success timestamp falling within its execution.
         This is a metadata cross-check, not proof of artifact contents.
     """
     require_deployment_run(repository_slug, status, manifest)
+    expected_name = (
+        "Publish documentation / Deploy documentation" if manifest["mode"] == "release" else "Deploy documentation"
+    )
     matching = [
         job
         for job in _fetch_publication_jobs(repository_slug, manifest["run_id"], run_attempt)
-        if job["name"] == "Deploy documentation"
+        if job["name"] == expected_name
     ]
     if len(matching) != 1:
-        message = "Run attempt must contain exactly one Deploy documentation job."
+        message = f"Run attempt must contain exactly one {expected_name} job."
         raise ValueError(message)
     job = matching[0]
     job_id = job.get("id")

@@ -78,6 +78,15 @@ Manual bootstrap/correction retains the manual path. This makes later
 corrections capable of inspecting an automatically published site's provenance,
 but does not enable automatic execution or relax source-progress policy.
 
+GitHub prefixes jobs invoked through a reusable workflow with the caller job's
+display name. The planned release caller must be named `Publish documentation`,
+giving its deployment job the exact API name
+`Publish documentation / Deploy documentation`. Historical release checks
+require that full name; manual runs retain `Deploy documentation`. Executing-job
+lookup accepts these two exact names only and still requires a unique match,
+current attempt, commit, and runner. Arbitrary caller prefixes are not accepted.
+The release caller is not connected yet.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default
