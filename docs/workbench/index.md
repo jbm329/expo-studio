@@ -118,6 +118,10 @@ The response is converted into a result dataset. Manage connections through
 **Tools → REST connections…**; the **SCB query builder…** is available there for
 Statistics Sweden tables.
 
+See [REST API connections](rest-api-connections.md) for request fields,
+authentication, pagination and the
+[SCB query builder](rest-api-connections.md#scb-query-builder).
+
 Unlike the SQL editor, loading a REST request does not require writing a SQL
 query.
 

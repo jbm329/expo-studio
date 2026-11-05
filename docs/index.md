@@ -28,6 +28,9 @@ in detail. It is not yet a complete guide to the application.
 - [Database connections](workbench/database-connections.md) — configure and test
   named database connections, choose drivers and authentication, and connect
   to local SQLite or read-only DuckDB files.
+- [REST API connections](workbench/rest-api-connections.md) — configure JSON
+  requests, authentication and pagination, and generate SCB request syntax
+  with the query builder.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,
@@ -54,6 +57,6 @@ in detail. It is not yet a complete guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-Detailed file and REST source-setup, general cleaning, dataset-combination and
+Detailed file source-setup, general cleaning, dataset-combination and
 dataset-export guides are not yet available. Navigation will grow as more guides
 are added.
