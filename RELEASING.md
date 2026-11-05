@@ -36,6 +36,13 @@ place. Caller-aware eligibility and provenance validation must be added before
 release-tag execution is enabled. Manual and automatic entry points will share
 this pipeline rather than duplicate its build and deployment safeguards.
 
+The helper's caller rule distinguishes manual dispatch from automatic tag
+publication using trusted GitHub event, workflow identity, ref, and commit.
+Manual bootstrap/correction belongs to `publish-docs.yml` on `main`; release
+mode belongs to `release.yml` on the exact stable baseline tag with the exact
+source commit. This pure rule is not wired into execution yet and does not
+replace independent verification of a successful application publication job.
+
 ## Manual documentation publication recovery
 
 Documentation publication is separate from application releases. Its default

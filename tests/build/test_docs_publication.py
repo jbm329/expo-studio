@@ -184,6 +184,7 @@ fetch_deployment_statuses = HELPER["fetch_deployment_statuses"]
 latest_deployment_status = HELPER["latest_deployment_status"]
 fetch_current_pages_deployment = HELPER["fetch_current_pages_deployment"]
 require_deployment_run = HELPER["require_deployment_run"]
+require_publication_caller = HELPER["require_publication_caller"]
 require_manual_publication_run = HELPER["require_manual_publication_run"]
 require_publication_job = HELPER["require_publication_job"]
 fetch_manual_publication_metadata = HELPER["fetch_manual_publication_metadata"]
@@ -194,6 +195,66 @@ require_pages_artifact = HELPER["require_pages_artifact"]
 require_unique_pages_artifact = HELPER["require_unique_pages_artifact"]
 require_current_deployment_identity = HELPER["require_current_deployment_identity"]
 fetch_executing_publication_job = HELPER["fetch_executing_publication_job"]
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_publication_caller_accepts_only_matching_entry_point(
+    publication_manifest: dict[str, object], mode: str
+) -> None:
+    automatic = mode == "release"
+    ref = f"refs/tags/{publication_manifest['baseline_tag']}" if automatic else "refs/heads/main"
+    workflow = "release.yml" if automatic else "publish-docs.yml"
+
+    require_publication_caller(
+        "jbm329/expo-studio",
+        {**publication_manifest, "mode": mode},
+        event_name="push" if automatic else "workflow_dispatch",
+        workflow_ref=f"jbm329/expo-studio/.github/workflows/{workflow}@{ref}",
+        ref=ref,
+        workflow_sha=str(publication_manifest["source_sha"]) if automatic else "b" * 40,
+    )
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+@pytest.mark.parametrize("field", ["event_name", "workflow_ref", "ref", "workflow_sha"])
+def test_publication_caller_rejects_mismatched_context(
+    publication_manifest: dict[str, object], mode: str, field: str
+) -> None:
+    automatic = mode == "release"
+    ref = f"refs/tags/{publication_manifest['baseline_tag']}" if automatic else "refs/heads/main"
+    workflow = "release.yml" if automatic else "publish-docs.yml"
+    context = {
+        "event_name": "push" if automatic else "workflow_dispatch",
+        "workflow_ref": f"jbm329/expo-studio/.github/workflows/{workflow}@{ref}",
+        "ref": ref,
+        "workflow_sha": str(publication_manifest["source_sha"]),
+    }
+    context[field] = {
+        "event_name": "pull_request",
+        "workflow_ref": f"other/repo/.github/workflows/{workflow}@{ref}",
+        "ref": "refs/heads/feature",
+        "workflow_sha": "b" * 40 if automatic else "invalid",
+    }[field]
+
+    with pytest.raises(ValueError):
+        require_publication_caller("jbm329/expo-studio", {**publication_manifest, "mode": mode}, **context)
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "correction", "release"])
+def test_publication_caller_rejects_crossed_workflows(publication_manifest: dict[str, object], mode: str) -> None:
+    automatic = mode == "release"
+    ref = f"refs/tags/{publication_manifest['baseline_tag']}" if automatic else "refs/heads/main"
+    workflow = "publish-docs.yml" if automatic else "release.yml"
+
+    with pytest.raises(ValueError):
+        require_publication_caller(
+            "jbm329/expo-studio",
+            {**publication_manifest, "mode": mode},
+            event_name="push" if automatic else "workflow_dispatch",
+            workflow_ref=f"jbm329/expo-studio/.github/workflows/{workflow}@{ref}",
+            ref=ref,
+            workflow_sha=str(publication_manifest["source_sha"]),
+        )
 
 
 @pytest.fixture

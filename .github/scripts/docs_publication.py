@@ -510,6 +510,56 @@ def parse_publication_manifest(value: object) -> PublicationManifest:
     }
 
 
+def require_publication_caller(
+    repository_slug: str,
+    manifest: PublicationManifest,
+    *,
+    event_name: str,
+    workflow_ref: str,
+    ref: str,
+    workflow_sha: str,
+) -> None:
+    """Validate publication mode against explicit trusted GitHub caller context.
+
+    Args:
+        repository_slug: Expected GitHub owner/repository identifier.
+        manifest: Publication proposal to validate.
+        event_name: Caller's GITHUB_EVENT_NAME.
+        workflow_ref: Caller's GITHUB_WORKFLOW_REF, including its ref suffix.
+        ref: Caller's GITHUB_REF.
+        workflow_sha: Caller's GITHUB_SHA, not the documentation source input.
+
+    Raises:
+        ValueError: If caller identity, event, ref, commit, or mode is invalid.
+
+    Notes:
+        Context must come from GitHub, not manual inputs. Reusable workflows
+        inherit the caller's context. This rule does not establish successful
+        application publication; release-job API verification is also required.
+    """
+    _require_repository_slug(repository_slug)
+    proposed = parse_publication_manifest(manifest)
+    sha = validate_commit_sha(workflow_sha)
+    if proposed["mode"] == "release":
+        expected_ref = f"refs/tags/{proposed['baseline_tag']}"
+        expected_workflow = f"{repository_slug}/.github/workflows/release.yml@{expected_ref}"
+        if (
+            event_name != "push"
+            or ref != expected_ref
+            or workflow_ref != expected_workflow
+            or sha != proposed["source_sha"]
+        ):
+            message = "Automatic publication requires the release workflow's matching stable tag and source commit."
+            raise ValueError(message)
+    elif (
+        event_name != "workflow_dispatch"
+        or ref != "refs/heads/main"
+        or workflow_ref != f"{repository_slug}/.github/workflows/publish-docs.yml@refs/heads/main"
+    ):
+        message = "Manual publication requires the publication workflow dispatched from main."
+        raise ValueError(message)
+
+
 def require_deployment_run(repository_slug: str, status: GitHubDeploymentStatus, manifest: PublicationManifest) -> None:
     """Require a successful deployment status to reference the manifest's run.
 
