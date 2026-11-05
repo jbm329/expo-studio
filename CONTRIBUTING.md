@@ -119,14 +119,18 @@ uv sync --frozen --extra docs
 Start the local preview:
 
 ```powershell
-uv run --frozen --extra docs zensical serve
+uv run preview-documentation
 ```
 
 Create a clean build with warnings treated as errors:
 
 ```powershell
-uv run --frozen --extra docs zensical build --clean --strict
+uv run build-documentation
 ```
+
+These commands run Zensical with `uv run --frozen --extra docs`: preview uses
+`serve`, while build uses `build --clean --strict`. They only run locally and
+do not publish the website. Stop the preview with Ctrl+C.
 
 The generated website is written to `site/`. Do not edit or commit that
 directory.
