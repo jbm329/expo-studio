@@ -60,12 +60,40 @@ The app is centered on tabular data flows: file loads, SQL result sets, REST-nor
 
 ## Development workflow
 
-### User manual infrastructure
+### User manual authoring and maintenance
 
 The English-only online user manual uses Zensical (`docs/`, `zensical.toml`).
-Keep the initial under-construction landing page unchanged until manual
-authoring is explicitly requested. Do not generate or commit `site/` output
-or generated `publication.json` provenance.
+It is authored incrementally; do not generate a comprehensive manual or empty
+navigation sections. Home currently describes coverage, and planned guides
+must not be presented as available until they exist.
+
+For changes to user-facing features, workflows, formulas, validation, or error
+behavior, review the documentation impact. Update affected existing guides in
+the same PR. If an affected area has no guide, explicitly note that gap in the
+PR and propose a focused follow-up rather than silently ignoring it or writing
+unrequested broad documentation. Internal-only changes need no manual update
+unless they change observable behavior.
+
+Verify instructions and examples against the implementation and relevant tests;
+do not infer supported syntax or behavior from UI labels alone. Use the app's
+English terminology, task-oriented instructions, and small reproducible examples.
+Reuse shared explanations where behavior genuinely matches, but document editor
+differences explicitly. Screenshots are optional and should explain a task;
+keep them free of personal data and secrets.
+
+Add navigation entries only for useful pages that exist. Preserve established
+page paths and explicit anchors used as help targets; review links before
+renaming them. Keep Home's coverage notice accurate as sections are added.
+Use local preview and PR artifacts to review changes, and run
+`uv run --frozen --extra docs zensical build --clean --strict`.
+Do not generate or commit `site/` output or generated `publication.json`.
+
+The public manual represents the latest stable application release. Document
+new behavior alongside its feature change for preview and release together;
+do not publish unreleased instructions through a stable documentation correction.
+Documentation-only corrections must describe behavior available in their stable
+baseline. Site configuration changes are outside that correction route and
+must wait for an eligible application release, not weaken publication policy.
 
 Follow `CONTRIBUTING.md` for documentation builds and publication policy, and
 `RELEASING.md` for manual and automatic publication recovery. Manual publication
