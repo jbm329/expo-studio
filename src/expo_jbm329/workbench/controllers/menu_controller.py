@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QT_TR_NOOP
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import QMenu, QMenuBar
 
 from expo_jbm329.utils.i18n_utils import translate
@@ -53,6 +53,7 @@ class MenuController:
     TR_DATA_PROFILING = QT_TR_NOOP("Data profiling…")
 
     TR_HELP = QT_TR_NOOP("Help")
+    TR_USER_MANUAL = QT_TR_NOOP("User manual")
     TR_ABOUT = QT_TR_NOOP("About Expo studio…")
 
     @staticmethod
@@ -78,6 +79,7 @@ class MenuController:
         open_connection_dialog: Callable[[], None],
         open_rest_connection_dialog: Callable[[], None],
         show_about_dialog: Callable[[], None],
+        open_user_manual: Callable[[], None],
     ) -> None:
         """Initialize the MenuController.
 
@@ -98,6 +100,7 @@ class MenuController:
             open_connection_dialog: Callback for open connection dialog.
             open_rest_connection_dialog: Callback for open REST connection dialog.
             show_about_dialog: Callback for show about dialog.
+            open_user_manual: Callback for opening the online user manual.
         """
         self._menubar = menubar
         self._new_file = new_file
@@ -115,6 +118,7 @@ class MenuController:
         self._open_connections = open_connection_dialog
         self._open_rest_connections = open_rest_connection_dialog
         self._show_about = show_about_dialog
+        self._open_user_manual = open_user_manual
 
         self._build_menu_bar()
         self._connect_menu_logic()
@@ -199,6 +203,10 @@ class MenuController:
         self._menu_help = QMenu(self._tr(self.TR_HELP), mb)
         mb.addMenu(self._menu_help)
 
+        self._act_user_manual = QAction(self._tr(self.TR_USER_MANUAL), mb)
+        self._act_user_manual.setShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents))
+        self._menu_help.addAction(self._act_user_manual)
+
         self._act_about = QAction(self._tr(self.TR_ABOUT), mb)
         self._menu_help.addAction(self._act_about)
 
@@ -228,6 +236,7 @@ class MenuController:
         self._act_rest_connections.triggered.connect(self._open_rest_connections)
 
         # Help
+        self._act_user_manual.triggered.connect(self._open_user_manual)
         self._act_about.triggered.connect(self._show_about)
 
     # ----------------------------------------------------------------------
@@ -271,4 +280,5 @@ class MenuController:
         self._act_rest_connections.setText(self._tr(self.TR_REST_CONNECTIONS))
 
         self.act_data_profiling.setText(self._tr(self.TR_DATA_PROFILING))
+        self._act_user_manual.setText(self._tr(self.TR_USER_MANUAL))
         self._act_about.setText(self._tr(self.TR_ABOUT))

@@ -27,6 +27,7 @@ def test_menu_actions_wire_callbacks():
             "open_connection_dialog",
             "open_rest_connection_dialog",
             "show_about_dialog",
+            "open_user_manual",
         ]
     }
 
@@ -38,7 +39,9 @@ def test_menu_actions_wire_callbacks():
     ctrl._act_quit.trigger()
     ctrl._act_clear.trigger()
     ctrl.act_data_profiling.trigger()
+    ctrl._act_user_manual.trigger()
 
+    assert callbacks["open_user_manual"].called
     assert callbacks["new_file"].called
     assert callbacks["open_file"].called
     assert callbacks["save_file"].called
@@ -67,6 +70,7 @@ def test_has_data_state_and_retranslate():
         open_connection_dialog=lambda: None,
         open_rest_connection_dialog=lambda: None,
         show_about_dialog=lambda: None,
+        open_user_manual=lambda: None,
     )
 
     ctrl.apply_has_data_state(True)
