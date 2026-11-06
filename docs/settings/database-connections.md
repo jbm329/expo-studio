@@ -1,11 +1,13 @@
 # Database connections
 
-Select **Tools → Database connections…** in the [workbench window](index.md)
+Select **Tools → Database connections…** in the [workbench window](../workbench/index.md)
 to manage named database connections. Save the connection details here, then
 connect through the workbench's **Database connections** panel to browse the
 schema and prepare queries.
 
-![Database connections dialog with a saved connection selected on the left and SQL Server, ODBC, server, authentication and advanced fields on the right.](../assets/workbench/db_connections.png)
+![Database connections dialog with a saved connection selected on the left and SQL Server, ODBC, server, authentication and advanced fields on the right.](../assets/settings/db_connections.png)
+
+For other configuration topics, see the [Settings overview](index.md).
 
 *The dialog with a SQL Server connection selected. Names, server details and
 authentication settings depend on your environment. Not every field applies
@@ -118,8 +120,9 @@ To browse and query:
 5. Check the editor tab's connection, then select **Run query** to load results.
 
 Generating SQL and executing it are separate actions. See
-[SQL editor tabs](index.md#sql-editor) and
-[result tabs](index.md#result-tabs) for the corresponding workbench areas.
+[SQL editor tabs](../workbench/index.md#sql-editor) and
+[result tabs](../workbench/index.md#result-tabs) for the corresponding workbench
+areas.
 For a complete walkthrough, see
 [Load data with SQL](../get-data/sql-queries.md).
 

@@ -1,9 +1,10 @@
-# Settings
+# General settings
 
-Select **Tools → Settings…** in the [workbench window](index.md) to open the
-Settings dialog.
+Select **Tools → Settings…** in the [workbench window](../workbench/index.md)
+to open the Settings dialog. For other configuration topics, see the
+[Settings overview](index.md).
 
-![Settings dialog with Basic settings, CSV settings, Excel settings, Schema cache and SQL editor groups, plus Reset defaults, Cancel and Save buttons.](../assets/workbench/settings.png)
+![Settings dialog with Basic settings, CSV settings, Excel settings, Schema cache and SQL editor groups, plus Reset defaults, Cancel and Save buttons.](../assets/settings/settings.png)
 
 *The Settings dialog. The directory and values shown are examples from this
 configuration, not a list of application defaults.*

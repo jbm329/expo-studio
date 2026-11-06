@@ -7,10 +7,13 @@ nav = [
     { "Home" = "index.md" },
     { "What you can do with Expo Studio" = "application-overview.md" },
     { "Workbench window" = "workbench/index.md" },
-    { "Settings" = "workbench/settings.md" },
-    { "Log settings" = "workbench/log-settings.md" },
-    { "Database connections" = "workbench/database-connections.md" },
-    { "REST API connections" = "workbench/rest-api-connections.md" },
+    { "Settings" = [
+        { "Overview" = "settings/index.md" },
+        { "General settings" = "settings/general-settings.md" },
+        { "Log settings" = "settings/log-settings.md" },
+        { "Database connections" = "settings/database-connections.md" },
+        { "REST API connections" = "settings/rest-api-connections.md" },
+    ] },
     { "Get data" = [
         { "Overview" = "get-data/index.md" },
         { "Load data with SQL" = "get-data/sql-queries.md" },

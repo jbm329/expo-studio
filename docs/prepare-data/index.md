@@ -20,7 +20,7 @@ find the available actions.
 
 Review the changed result before using it. Select **Undo** on the toolbar to
 reverse a recent change when an undo step is available. The retained history is
-controlled by [undo settings](../workbench/settings.md#basic-settings).
+controlled by [undo settings](../settings/general-settings.md#basic-settings).
 
 ## Continue your workflow
 

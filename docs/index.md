@@ -48,16 +48,16 @@ it does not describe every feature, file format or service-specific behavior.
   - [Join datasets](transform-data/join.md) — match rows using key columns.
   - [Concatenate datasets](transform-data/concatenate.md) — append rows from
     two result datasets.
-- [Settings](workbench/settings.md) — configure application preferences, CSV and
-  Excel processing, undo limits and schema caching.
-- [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
-  output destinations and file rotation.
-- [Database connections](workbench/database-connections.md) — configure and test
-  named database connections, choose drivers and authentication, and connect
-  to local SQLite or read-only DuckDB files.
-- [REST API connections](workbench/rest-api-connections.md) — configure JSON
-  requests, authentication and pagination, and generate SCB request syntax
-  with the query builder.
+- [Settings](settings/index.md) — configure application preferences, logging,
+  database connections and REST API requests.
+  - [General settings](settings/general-settings.md) — configure preferences,
+    file processing, undo limits and schema caching.
+  - [Log settings](settings/log-settings.md) — configure diagnostic log levels,
+    output destinations and file rotation.
+  - [Database connections](settings/database-connections.md) — configure and
+    test named connections, drivers and authentication.
+  - [REST API connections](settings/rest-api-connections.md) — configure JSON
+    requests, authentication and pagination, and generate SCB request syntax.
 - [Analyze data overview](analyze-data/index.md) — choose an analysis for a
   ready result dataset and find the guide for its inputs and results.
 - [Export data](export-and-report/index.md) — save datasets, analysis results

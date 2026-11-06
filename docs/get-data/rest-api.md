@@ -1,9 +1,9 @@
 # Load a REST response
 
 Configure and save a request in **Tools → REST connections…** first. The
-[REST API connections guide](../workbench/rest-api-connections.md) explains
+[REST API connections guide](../settings/rest-api-connections.md) explains
 request fields, authentication, response paths, pagination and the
-[SCB query builder](../workbench/rest-api-connections.md#scb-query-builder).
+[SCB query builder](../settings/rest-api-connections.md#scb-query-builder).
 
 1. In the workbench's **REST connections** panel, find the saved request.
 2. Double-click it, or right-click it and select **Load data**.

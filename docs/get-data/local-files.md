@@ -3,7 +3,7 @@
 Use **Open** on the toolbar or **File → Open**, or double-click a supported data
 file in the workbench's **Files** panel. Opening a data file creates a result
 tab. The Files panel shows the configured documents directory; change it in
-[Settings](../workbench/settings.md#basic-settings).
+[General settings](../settings/general-settings.md#basic-settings).
 
 ## Supported data-file formats
 
@@ -20,7 +20,7 @@ tab. The Files panel shows the configured documents directory; change it in
 
 Importing is not the same as exporting: the supported output formats are
 different. For CSV reading options such as delimiter detection and encoding,
-see [CSV settings](../workbench/settings.md#csv-settings). For supported
+see [CSV settings](../settings/general-settings.md#csv-settings). For supported
 outputs, see [Export a dataset](../export-and-report/export-data.md).
 
 ## Other file types

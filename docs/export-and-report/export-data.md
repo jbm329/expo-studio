@@ -33,12 +33,12 @@ supported does not mean Expo Studio can export it.
 
 CSV exports use comma separators and UTF-8 encoding. The CSV reading settings
 do not change these output defaults. To read CSV files with other delimiters or
-encodings, see [CSV settings](../workbench/settings.md#csv-settings).
+encodings, see [CSV settings](../settings/general-settings.md#csv-settings).
 
 Excel writing follows the Excel settings. In streaming mode, a large dataset
 can continue onto additional worksheets when it reaches the configured
 per-sheet row limit; that limit includes each worksheet's header row. See
-[Excel settings](../workbench/settings.md#excel-settings) for the row-batch,
+[Excel settings](../settings/general-settings.md#excel-settings) for the row-batch,
 streaming and worksheet-limit options. These settings affect future exports,
 not datasets already open.
 

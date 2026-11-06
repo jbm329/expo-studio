@@ -33,17 +33,18 @@ Use the links below for details on the task behind each command:
 |---|---|
 | **File** | [Open local data](../get-data/local-files.md), [export a dataset](../export-and-report/export-data.md), or save SQL text in an editor tab. |
 | **Edit** | Editor actions such as clearing SQL text. |
-| **Tools** | [Settings](settings.md), [Log settings](log-settings.md), [Database connections](database-connections.md) and [REST API connections](rest-api-connections.md). |
+| **Tools** | [Settings](../settings/index.md), including [general settings](../settings/general-settings.md), [log settings](../settings/log-settings.md), [database connections](../settings/database-connections.md) and [REST API connections](../settings/rest-api-connections.md). |
 | **External tools** | [Data profiling reports](../export-and-report/analysis-results-and-reports.md#data-profiling-reports). |
 | **Help** | Application information. |
 
 ## Change application settings {#settings}
 
 Use **Tools → Settings…** for application preferences and file-processing
-options. See the [Settings guide](settings.md) for field descriptions.
+options. See [General settings](../settings/general-settings.md) for field
+descriptions.
 
 Use **Tools → Log settings…** to configure diagnostic logging. See
-[Log settings](log-settings.md) for details.
+[Log settings](../settings/log-settings.md) for details.
 
 ## Use the toolbar {#toolbar}
 
@@ -70,7 +71,8 @@ request presets. Use the corresponding guides for configuration and loading:
 
 ### Database connections
 
-Configure named connections in [Database connections](database-connections.md),
+Configure named connections in
+[Database connections](../settings/database-connections.md),
 then follow [Load data with SQL](../get-data/sql-queries.md) to load
 query results.
 
@@ -81,7 +83,8 @@ supported formats and opening behavior, see [Open a local file](../get-data/loca
 
 ### REST connections
 
-Configure requests in [REST API connections](rest-api-connections.md), then
+Configure requests in
+[REST API connections](../settings/rest-api-connections.md), then
 follow [Load a REST response](../get-data/rest-api.md) to load its data.
 
 ## Work with SQL editor tabs {#sql-editor}

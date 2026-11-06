@@ -1,7 +1,7 @@
 # Load data with SQL
 
 Use a database query to load rows into a result tab. Configure a named
-connection first; see [Database connections](../workbench/database-connections.md)
+connection first; see [Database connections](../settings/database-connections.md)
 for supported connection types, drivers, authentication and testing.
 
 1. In the workbench's **Database connections** panel, right-click the saved
