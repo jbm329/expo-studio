@@ -18,7 +18,7 @@ and links to database and REST connection setup.
 Inspect a ready result dataset before changing or analyzing it. Start with
 [Dataset Overview](analyze-data/overview.md) or
 [Statistics](analyze-data/statistics.md), or browse the
-[analysis guides](analyze-data/index.md#section-guides).
+[analysis guides](analyze-data/index.md#choose-an-analysis).
 
 ## Clean and transform data {#clean-and-transform}
 

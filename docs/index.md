@@ -13,9 +13,11 @@ the menus, toolbar, source panels and editor/result areas.
 
 ## About this manual
 
-This manual is being written a section at a time. The application overview
-introduces the main capabilities; the guides below explain selected workflows
-in detail. It is not yet a complete guide to the application.
+This manual is organized around common tasks: getting data, preparing and
+transforming it, analyzing results, and exporting datasets or reports. Start
+with a section overview to choose a workflow, then follow its task guides for
+step-by-step instructions. The manual covers the workflows documented here;
+it does not describe every feature, file format or service-specific behavior.
 
 ## Available guides
 
@@ -50,8 +52,8 @@ in detail. It is not yet a complete guide to the application.
 - [REST API connections](workbench/rest-api-connections.md) — configure JSON
   requests, authentication and pagination, and generate SCB request syntax
   with the query builder.
-- [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
-  result dataset, work with its settings and results, and build an HTML report.
+- [Analyze data overview](analyze-data/index.md) — choose an analysis for a
+  ready result dataset and find the guide for its inputs and results.
 - [Export data](export-and-report/index.md) — save datasets, analysis results
   and HTML reports.
   - [Export a dataset](export-and-report/export-data.md) — save a result tab as

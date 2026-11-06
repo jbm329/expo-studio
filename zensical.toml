@@ -26,7 +26,7 @@ nav = [
         { "Concatenate datasets" = "transform-data/concatenate.md" },
     ] },
     { "Analyze data" = [
-        { "Advanced analysis" = "analyze-data/index.md" },
+        { "Overview" = "analyze-data/index.md" },
         { "Dataset Overview" = "analyze-data/overview.md" },
         { "Statistics" = "analyze-data/statistics.md" },
         { "Hypothesis Tests" = "analyze-data/hypothesis-tests.md" },

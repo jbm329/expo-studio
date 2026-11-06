@@ -14,7 +14,7 @@ columns in a result tab.
 
 The choices depend on the analysis. Exports use the applied result, not edits
 to settings that have not been applied. See the relevant
-[analysis guide](../analyze-data/index.md#section-guides) for the outputs
+[analysis guide](../analyze-data/index.md#choose-an-analysis) for the outputs
 available in that section. A selected table can be saved as CSV or a binary
 data file; an Excel workbook can contain selected tables and available charts.
 The [dataset export guide](export-data.md) describes the output formats.
