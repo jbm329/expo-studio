@@ -187,4 +187,4 @@ dialog.
 
 Use **Undo** on the toolbar to reverse a recent operation when an undo step is
 available. To save the prepared dataset, select its result tab and export it;
-see [Export prepared data](../application-overview.md#export-data).
+see [Export a dataset](../export-and-report/export-data.md).

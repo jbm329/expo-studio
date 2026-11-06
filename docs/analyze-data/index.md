@@ -53,15 +53,11 @@ guarantees that a model is appropriate for a dataset.
 
 ## Export results and prepare a report {#export-and-report}
 
-After an analysis has a successful result, select **Export** to see the tables,
-charts and file formats available for that section. The available choices
-depend on the analysis; exports use the applied result, not an un-applied
-configuration.
-
-Select **Add to report** to include the displayed result. Open **Reports** to
-edit the report title and description, arrange or remove entries, edit an
-entry's selected content and notes, preview the report, or choose
-**Generate HTML report**. Only successfully calculated results can be added.
+For shared steps to export analysis outputs, assemble an HTML report or create
+a data-profiling report, see
+[Export analysis results and reports](../export-and-report/analysis-results-and-reports.md).
+The available tables and charts are specific to each analysis; the section
+guides below describe those outputs.
 
 ## Section guides {#section-guides}
 

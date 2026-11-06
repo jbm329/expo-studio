@@ -36,6 +36,11 @@ nav = [
         { "PCA" = "analyze-data/pca.md" },
         { "Time Series" = "analyze-data/time-series.md" },
     ] },
+    { "Export data" = [
+        { "Overview" = "export-and-report/index.md" },
+        { "Export a dataset" = "export-and-report/export-data.md" },
+        { "Export analysis results and reports" = "export-and-report/analysis-results-and-reports.md" },
+    ] },
 ]
 
 [project.theme]

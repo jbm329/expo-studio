@@ -20,7 +20,8 @@ Review the changed result before using it. Select **Undo** on the toolbar to
 reverse a recent change when an undo step is available. The retained history is
 controlled by the undo settings; see [Settings](../workbench/settings.md#basic-settings).
 To save the prepared dataset, select its result tab and use an export action.
-See [Export prepared data](../application-overview.md#export-data).
+See [Export a dataset](../export-and-report/export-data.md) for file formats
+and export steps.
 
 For an overview of the workbench and result tabs, see
 [Workbench window](../workbench/index.md#result-tabs).

@@ -31,12 +31,14 @@ names and files depend on your configuration.*
 | **File** | **New file**, **Open**, **Save**, **Save as…**, the **Export…** submenu and **Quit**. New and Save actions concern SQL text; Export saves dataset contents. |
 | **Edit** | **Clear editor** clears the active SQL editor. |
 | **Tools** | **Settings…**, **Log settings…**, **Database connections…** and **REST connections…**. |
-| **External tools** | **Data profiling…** generates an HTML data profile, with a comparison option when multiple ready datasets are open. This optional tool requires the profiling dependency. |
+| **External tools** | **Data profiling…** generates an HTML data profile, with a comparison option when multiple ready datasets are open. This optional tool requires the profiling dependency; see [Data profiling reports](../export-and-report/analysis-results-and-reports.md#data-profiling-reports). |
 | **Help** | **About Expo studio…** opens application information. |
 
 The **File → Export…** submenu offers CSV, Excel and binary data-file exports.
 These are dataset exports, not the separate **Export** and **Reports** controls
-inside Advanced analysis.
+inside Advanced analysis. See [Export a dataset](../export-and-report/export-data.md)
+for file formats and steps, or
+[Export data](../export-and-report/index.md) to choose another export workflow.
 
 ## Change application settings {#settings}
 
@@ -168,10 +170,11 @@ For detailed workflows, see:
 - [Derived columns](../transform-data/derived-columns.md) for calculated columns.
 - [Reshape](../transform-data/reshape.md) for grouped summaries in a new dataset.
 - [Advanced analysis](../analyze-data/index.md) for statistics, models, analysis
-  exports and HTML reports.
+  and section-specific analysis results.
 
 Use the toolbar's dataset export buttons to keep a prepared dataset. See
-[Export prepared data](../application-overview.md#export-data) for output formats.
+[Export data](../export-and-report/index.md) for dataset, analysis and report
+workflows.
 
 ## Read the status bar {#status-bar}
 

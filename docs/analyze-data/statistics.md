@@ -41,4 +41,5 @@ summarize.
 Select **Export** to choose available continuous or categorical tables and
 charts. Exports reflect the displayed Statistics result. The frequency
 eligibility limit is 50 distinct values; it does not cap numeric summary
-calculations.
+calculations. For shared export steps and report workflows, see
+[Export data](../export-and-report/index.md).

@@ -117,42 +117,20 @@ Required column types, settings and limits vary by analysis. The
 [section guides](analyze-data/index.md#choose-an-analysis) explain how to
 configure and interpret each one.
 
-### Export analysis results
-
-After a successful calculation, select **Export** in Advanced analysis.
-Depending on the section and your selection, you can export result tables to
-CSV or a binary data file, or put selected tables and available charts in an
-Excel workbook. Exports use the applied result, not settings you have edited
-but not yet applied.
-
-### Build an HTML analysis report
-
-Select **Add to report** for a successful analysis result. In **Reports**, choose
-the content to include, arrange entries and add notes. You can edit the report
-title and description, preview it and select **Generate HTML report** to save a
-shareable report. See
-[Export results and prepare a report](analyze-data/index.md#export-and-report).
-
-There is also a separate **External tools → Data profiling…** workflow for
-generating an HTML profile of one dataset or comparing ready datasets. This
-optional tool requires the profiling dependency; it is distinct from the report
-you assemble in Advanced analysis.
+For shared instructions on exporting analysis results, assembling an HTML
+analysis report, and generating a data-profiling report, see
+[Export data](export-and-report/index.md). The available analysis outputs
+depend on the section; each [analysis guide](analyze-data/index.md#section-guides)
+lists its own tables and charts.
 
 ## Export prepared data {#export-data}
 
-To save the data itself rather than an analysis, select the result tab you want
-to export and use a toolbar export action:
-
-| Action | Output |
-|---|---|
-| **Export to CSV** | CSV (`.csv`) |
-| **Export to Excel** | Excel workbook (`.xlsx`) |
-| **Export to data file** | Pickle (`.df`), Feather (`.feather`, `.ft`) or Parquet (`.parquet`) |
-
-For example, export a cleaned file, a query result, joined data or a grouped
-summary. Saving SQL text is not the same as exporting the dataset. Likewise,
-an HTML analysis report shares selected findings rather than serving as a
-replacement for a data export.
+To save the data itself rather than an analysis, select the ready result tab
+and use **Export to CSV**, **Export to Excel** or **Export to data file**.
+See [Export a dataset](export-and-report/export-data.md) for output formats and
+steps. Saving SQL text is not the same as exporting a dataset; an HTML report
+is a separate way to share selected analysis results. See
+[Export data](export-and-report/index.md) to choose between these workflows.
 
 ## Try a small sales workflow {#try-a-workflow}
 
@@ -192,11 +170,12 @@ The summary contains:
 Displayed number formatting may differ. The line-level dataset remains in its
 own tab, including the derived column.
 
-Select the summary tab and **Export to CSV** or **Export to Excel** to save it.
+Select the summary tab and [export it as a dataset](export-and-report/export-data.md).
 To explore the individual sales lines instead, select the original tab and
-open **Analyze data → Statistics**. After it calculates successfully, use
-**Add to report** and **Reports** to prepare an HTML report. This tiny example
-demonstrates the workflow, not a basis for statistical conclusions.
+open **Analyze data → Statistics**. After it calculates successfully, follow
+[the HTML report workflow](export-and-report/analysis-results-and-reports.md#build-an-html-analysis-report)
+to prepare a report. This tiny example demonstrates the workflow, not a basis
+for statistical conclusions.
 
 ## Continue with the guides {#continue}
 
@@ -205,5 +184,5 @@ For detailed steps, start with [Derived columns](transform-data/derived-columns.
 [Advanced analysis](analyze-data/index.md). [Home](index.md#available-guides)
 lists all currently available guides.
 
-This page is a capability overview, not a complete manual. Detailed source setup
-and dataset-export guides are not yet available.
+This page is a capability overview, not a complete manual. Detailed source
+setup guides are not yet available.

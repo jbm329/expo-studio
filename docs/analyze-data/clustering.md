@@ -41,4 +41,6 @@ do not define a valid multi-cluster comparison.
 
 After a successful fit, select **Export** for the available cluster-size,
 model-summary and chart outputs. The projection may show a bounded sample
-even when the exported model summaries cover the complete fit.
+even when the exported model summaries cover the complete fit. For shared
+export steps and report workflows, see
+[Export data](../export-and-report/index.md).

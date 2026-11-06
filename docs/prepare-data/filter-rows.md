@@ -58,4 +58,4 @@ Each filter changes the current result dataset. A later filter works on the
 rows that remain, so successive filters narrow the result further. Use
 **Undo** on the toolbar to reverse an available filter. To save the prepared
 dataset, select its result tab and export it; see
-[Export prepared data](../application-overview.md#export-data).
+[Export a dataset](../export-and-report/export-data.md).

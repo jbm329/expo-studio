@@ -37,4 +37,5 @@ not calculation limits.
 
 After a successful matrix calculation, select **Export** to review available
 correlation tables and charts. The export corresponds to the applied
-method and matrix selection.
+method and matrix selection. For shared export steps and report workflows, see
+[Export data](../export-and-report/index.md).

@@ -43,6 +43,12 @@ in detail. It is not yet a complete guide to the application.
   with the query builder.
 - [Advanced analysis](analyze-data/index.md) — choose an analysis for a ready
   result dataset, work with its settings and results, and build an HTML report.
+- [Export data](export-and-report/index.md) — save datasets, analysis results
+  and HTML reports.
+  - [Export a dataset](export-and-report/export-data.md) — save a result tab as
+    CSV, Excel or a binary data file.
+  - [Export analysis results and reports](export-and-report/analysis-results-and-reports.md)
+    — save analysis outputs or create HTML reports.
 - [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,
   missing values, duplicate rows and bounded first/last samples.
 - [Statistics](analyze-data/statistics.md) — review numeric summaries,
@@ -71,5 +77,5 @@ in detail. It is not yet a complete guide to the application.
 - [Concatenate datasets](transform-data/concatenate.md) — append rows from two
   open result datasets and align columns by name.
 
-Detailed file-format setup and dataset-export guides are not yet available.
-Navigation will grow as more guides are added.
+Detailed file-format setup guides are not yet available. Navigation will grow
+as more guides are added.

@@ -56,4 +56,4 @@ the table, not row order or cell values.
 
 Review the result after each operation. Use **Undo** on the toolbar to reverse
 an available change. To save the prepared dataset, select the result tab and
-export it; see [Export prepared data](../application-overview.md#export-data).
+export it; see [Export a dataset](../export-and-report/export-data.md).

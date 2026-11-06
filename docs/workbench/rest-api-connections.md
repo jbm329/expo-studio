@@ -203,7 +203,8 @@ Close the dialog, then double-click the saved request in the workbench's
 Loading runs as a background job and creates a result tab; it does not require
 SQL. For the source-to-result workflow, see
 [Load a REST response](../get-data/index.md#rest-apis). You can then review,
-transform, analyze or export the result like other datasets.
+transform, analyze or export the result like other datasets. See
+[Export data](../export-and-report/index.md) for the available workflows.
 
 To edit, reopen **Tools → REST connections…**, select the entry and save its
 changes. To remove an entry, select **Delete** and confirm. Deletion writes the

@@ -70,4 +70,5 @@ automatic proof that a model is invalid.
 ## Export {#export}
 
 After a successful fit, select **Export** for available model tables and
-charts. Exports use the applied model and result.
+charts. Exports use the applied model and result. For shared export steps and
+report workflows, see [Export data](../export-and-report/index.md).

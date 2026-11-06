@@ -117,9 +117,9 @@ from the workbench is the step that fetches data into a dataset.
 Select the ready result tab you want to use. You can inspect and prepare its
 columns, open **Analyze data**, or export the dataset. See
 [Review and understand your data](../application-overview.md#review-data),
-[Clean and transform data](../application-overview.md#clean-and-transform) and
-[Export prepared data](../application-overview.md#export-data) for an overview
-of those tasks.
+[Clean and transform data](../application-overview.md#clean-and-transform)
+and [Export data](../export-and-report/index.md) for the available export
+workflows.
 
 For the workbench layout, source panels and editor/result areas, see
 [Workbench window](../workbench/index.md).
