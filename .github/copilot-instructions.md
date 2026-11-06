@@ -188,7 +188,7 @@ Never mix Swedish and English in logs.
 ## User manual maintenance
 
 The English-only online manual uses Zensical. Follow the user-manual guidance
-in `AGENTS.md`, the build/publication policy in `CONTRIBUTING.md`, and recovery
+in `AGENTS.md`, the build/publication policy in `DOCUMENTATION.md`, and recovery
 instructions in `RELEASING.md`. For user-facing changes, update affected existing
 guides in the same PR; if coverage is missing, record the gap and propose a
 focused follow-up. Author incrementally, verify examples against actual behavior,

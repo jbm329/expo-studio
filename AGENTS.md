@@ -103,9 +103,10 @@ Documentation-only corrections must describe behavior available in their stable
 baseline. Site configuration changes are outside that correction route and
 must wait for an eligible application release, not weaken publication policy.
 
-Follow `CONTRIBUTING.md` for documentation builds and publication policy, and
-`RELEASING.md` for manual and automatic publication recovery. Manual publication
-defaults to preview; deployment requires explicit operator selection from `main`.
+Follow `DOCUMENTATION.md` for detailed documentation builds and publication
+policy, and `RELEASING.md` for manual and automatic publication recovery. Manual
+publication defaults to preview; deployment requires explicit operator
+selection from `main`.
 Stable application releases invoke the shared pipeline after successful
 application publication; prereleases do not. Preserve caller verification,
 release eligibility, source-progress checks, and shared publication concurrency.
