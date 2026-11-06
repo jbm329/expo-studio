@@ -16,7 +16,8 @@ import time
 from functools import partial
 from typing import TYPE_CHECKING, override
 
-from PyQt6.QtCore import QEvent, Qt, QTimer
+from PyQt6.QtCore import QEvent, Qt, QTimer, QUrl
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QDockWidget,
     QMainWindow,
@@ -28,6 +29,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.app.app_services import AppServices
+from expo_jbm329.app.metadata import USER_MANUAL_URL
 from expo_jbm329.app.settings.config_store import load_settings
 from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
@@ -424,6 +426,7 @@ class ExpoStudio(QMainWindow):
             open_connection_dialog=self._open_connection_dialog,
             open_rest_connection_dialog=self.open_rest_connection_dialog,
             show_about_dialog=self._show_about_dialog,
+            open_user_manual=self._open_user_manual,
         )
         self.menu_controller.apply_has_data_state(False)
         workbench.results.apply_toolbar_data_state(self.menu_controller.apply_has_data_state)
@@ -492,6 +495,15 @@ class ExpoStudio(QMainWindow):
         """Show the professional About dialog."""
         dlg = AboutDialog(parent=self, dialogs=self._require_dialogs())
         dlg.exec()
+
+    def _open_user_manual(self) -> None:
+        """Open the online user manual in the default browser."""
+        if not QDesktopServices.openUrl(QUrl(USER_MANUAL_URL)):
+            self._require_dialogs().warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=USER_MANUAL_URL),
+            )
 
     # ==================================================================
     # Logging and undo

@@ -18,6 +18,8 @@ from importlib.metadata import PackageNotFoundError, metadata
 from typing import TypedDict
 
 REPOSITORY_URL = "https://github.com/jbm329/expo-studio"
+# Must match site_url in zensical.toml.
+USER_MANUAL_URL = "https://jbm329.github.io/expo-studio/"
 
 
 class AppMetadata(TypedDict):
