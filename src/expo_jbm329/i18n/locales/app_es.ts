@@ -4185,14 +4185,16 @@ Hay cambios sin guardar en {dirty_tabs} pestañas.
     <message>
         <location filename="../../app/expo_studio.py" line="504" />
         <source>Unable to open link</source>
-        <translation type="unfinished">No se puede abrir el enlace</translation>
+        <translation>No se puede abrir el enlace</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="505" />
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation type="unfinished" />
+        <translation>No se pudo abrir el manual de usuario.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="573" />
@@ -5755,7 +5757,7 @@ Guardado en:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation type="unfinished" />
+        <translation>Manual de usuario</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />

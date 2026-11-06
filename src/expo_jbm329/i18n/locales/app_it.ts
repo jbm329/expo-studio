@@ -4185,14 +4185,16 @@ Continuare?</translation>
     <message>
         <location filename="../../app/expo_studio.py" line="504" />
         <source>Unable to open link</source>
-        <translation type="unfinished">Impossibile aprire il collegamento</translation>
+        <translation>Impossibile aprire il collegamento</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="505" />
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation type="unfinished" />
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="573" />
@@ -5755,7 +5757,7 @@ Salvato in:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation type="unfinished" />
+        <translation>Manuale utente</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />

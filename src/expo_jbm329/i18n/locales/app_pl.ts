@@ -4185,14 +4185,16 @@ Czy kontynuować?</translation>
     <message>
         <location filename="../../app/expo_studio.py" line="504" />
         <source>Unable to open link</source>
-        <translation type="unfinished">Nie można otworzyć łącza</translation>
+        <translation>Nie można otworzyć łącza</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="505" />
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation type="unfinished" />
+        <translation>Nie mo?na otworzy? podr?cznika u?ytkownika.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="573" />
@@ -5755,7 +5757,7 @@ Zapisano w:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation type="unfinished" />
+        <translation>Podr?cznik u?ytkownika</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />

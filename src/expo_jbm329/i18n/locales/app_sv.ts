@@ -4185,14 +4185,16 @@ Fortsätt?</translation>
     <message>
         <location filename="../../app/expo_studio.py" line="504" />
         <source>Unable to open link</source>
-        <translation type="unfinished">Det gick inte att öppna länken</translation>
+        <translation>Det gick inte att öppna länken</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="505" />
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation type="unfinished" />
+        <translation>Anv?ndarhandboken kunde inte ?ppnas.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../app/expo_studio.py" line="573" />
@@ -5755,7 +5757,7 @@ Sparad till:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation type="unfinished" />
+        <translation>Anv?ndarhandbok</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />
