@@ -1,15 +1,17 @@
 # REST API connections
 
-Select **Tools → REST connections…** in the [workbench window](index.md)
+Select **Tools → REST connections…** in the [workbench window](../workbench/index.md)
 to manage named requests to REST APIs. Configure the endpoint and request
 options here, then load the response as a result dataset from the workbench's
 **REST connections** panel.
+
+For other configuration topics, see the [Settings overview](index.md).
 
 The editor supports **GET** and **POST** requests returning JSON. It is not a
 general-purpose client for every HTTP method or response format. Use the API
 provider's documentation for its endpoint, parameters, authentication and limits.
 
-![REST API connections dialog showing a saved SCB request, its URL, GET method, response path and JSON query parameters, with Authentication and Pagination collapsed.](../assets/workbench/rest_api_connections.png)
+![REST API connections dialog showing a saved SCB request, its URL, GET method, response path and JSON query parameters, with Authentication and Pagination collapsed.](../assets/settings/rest_api_connections.png)
 
 *A configured Statistics Sweden request. The URL and parameters depend on the
 chosen table and selections; they are not defaults for other APIs.*
@@ -148,7 +150,7 @@ Statistics Sweden's statistical database. Instead of writing the endpoint and
 SCB parameter syntax by hand, browse tables and select variable values.
 Internet access is required to retrieve the table list and metadata.
 
-![SCB query builder showing English table search, a selected table, Variables and Variable values lists, checkboxes, the selected-cell counter and Apply to REST connection.](../assets/workbench/scb_query_builder.png)
+![SCB query builder showing English table search, a selected table, Variables and Variable values lists, checkboxes, the selected-cell counter and Apply to REST connection.](../assets/settings/scb_query_builder.png)
 
 *The builder displays labels from SCB metadata while generating parameters using
 the corresponding variable and value codes. The screenshot illustrates the
@@ -201,8 +203,10 @@ manually through the generic REST fields.
 Close the dialog, then double-click the saved request in the workbench's
 **REST connections** panel, or right-click it and select **Load data**.
 Loading runs as a background job and creates a result tab; it does not require
-SQL. You can then review, transform, analyze or export the result like other
-datasets.
+SQL. For the source-to-result workflow, see
+[Load a REST response](../get-data/rest-api.md). You can then review,
+transform, analyze or export the result like other datasets. See
+[Export data](../export-and-report/index.md) for the available workflows.
 
 To edit, reopen **Tools → REST connections…**, select the entry and save its
 changes. To remove an entry, select **Delete** and confirm. Deletion writes the

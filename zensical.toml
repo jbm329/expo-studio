@@ -7,12 +7,34 @@ nav = [
     { "Home" = "index.md" },
     { "What you can do with Expo Studio" = "application-overview.md" },
     { "Workbench window" = "workbench/index.md" },
-    { "Settings" = "workbench/settings.md" },
-    { "Log settings" = "workbench/log-settings.md" },
-    { "Database connections" = "workbench/database-connections.md" },
-    { "REST API connections" = "workbench/rest-api-connections.md" },
+    { "Settings" = [
+        { "Overview" = "settings/index.md" },
+        { "General settings" = "settings/general-settings.md" },
+        { "Log settings" = "settings/log-settings.md" },
+        { "Database connections" = "settings/database-connections.md" },
+        { "REST API connections" = "settings/rest-api-connections.md" },
+    ] },
+    { "Get data" = [
+        { "Overview" = "get-data/index.md" },
+        { "Load data with SQL" = "get-data/sql-queries.md" },
+        { "Open a local file" = "get-data/local-files.md" },
+        { "Load a REST response" = "get-data/rest-api.md" },
+    ] },
+    { "Prepare data" = [
+        { "Overview" = "prepare-data/index.md" },
+        { "Organize columns" = "prepare-data/organize-columns.md" },
+        { "Clean values" = "prepare-data/clean-values.md" },
+        { "Filter rows" = "prepare-data/filter-rows.md" },
+    ] },
+    { "Transform data" = [
+        { "Overview" = "transform-data/index.md" },
+        { "Derived columns" = "transform-data/derived-columns.md" },
+        { "Reshape" = "transform-data/reshape.md" },
+        { "Join datasets" = "transform-data/join.md" },
+        { "Concatenate datasets" = "transform-data/concatenate.md" },
+    ] },
     { "Analyze data" = [
-        { "Advanced analysis" = "analyze-data/index.md" },
+        { "Overview" = "analyze-data/index.md" },
         { "Dataset Overview" = "analyze-data/overview.md" },
         { "Statistics" = "analyze-data/statistics.md" },
         { "Hypothesis Tests" = "analyze-data/hypothesis-tests.md" },
@@ -23,9 +45,10 @@ nav = [
         { "PCA" = "analyze-data/pca.md" },
         { "Time Series" = "analyze-data/time-series.md" },
     ] },
-    { "Transform data" = [
-        { "Derived columns" = "transform-data/derived-columns.md" },
-        { "Reshape" = "transform-data/reshape.md" },
+    { "Export data" = [
+        { "Overview" = "export-and-report/index.md" },
+        { "Export a dataset" = "export-and-report/export-data.md" },
+        { "Export analysis results and reports" = "export-and-report/analysis-results-and-reports.md" },
     ] },
 ]
 

@@ -29,4 +29,5 @@ The explained variance and loadings are calculated from the full fit.
 ## Export {#export}
 
 After a successful fit, select **Export** for the available explained
-variance, feature-loading and chart outputs.
+variance, feature-loading and chart outputs. For shared export steps and
+report workflows, see [Export data](../export-and-report/index.md).

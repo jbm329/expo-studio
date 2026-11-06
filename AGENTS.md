@@ -81,6 +81,14 @@ Reuse shared explanations where behavior genuinely matches, but document editor
 differences explicitly. Screenshots are optional and should explain a task;
 keep them free of personal data and secrets.
 
+Organize guides by task in `docs/<section>/`, with screenshots in the matching
+`docs/assets/<section>/`: `workbench` (app shell, settings, connections),
+`get-data`, `prepare-data` (same columns and meaning: filter, sort, rename,
+remove, reorder, data types, missing values, cleansing), `transform-data`
+(new columns or granularity, or combined datasets: derived columns, reshape,
+split/merge columns, join, concatenate), `analyze-data` and `export-and-report`.
+Folders may exist before their guides; `.gitkeep` files are placeholders.
+
 Add navigation entries only for useful pages that exist. Preserve established
 page paths and explicit anchors used as help targets; review links before
 renaming them. Keep Home's coverage notice accurate as sections are added.

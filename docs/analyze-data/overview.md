@@ -40,7 +40,8 @@ limits do not reduce the row, missing-cell, duplicate or per-column counts.
 Select **Export** for the available **Summary**, **Columns** and **Sample**
 tables. Sample exports contain captured first/last rows, not a full data
 export. Depending on the selection, samples can be combined or split into
-separate tables.
+separate tables. For shared export steps and report workflows, see
+[Export data](../export-and-report/index.md).
 
 ## Empty datasets {#empty-datasets}
 

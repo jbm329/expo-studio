@@ -122,6 +122,8 @@ Start the local preview:
 uv run preview-documentation
 ```
 
+Press **Ctrl+C** to stop the preview and return to the terminal.
+
 Create a clean build with warnings treated as errors:
 
 ```powershell

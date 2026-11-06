@@ -42,4 +42,5 @@ than filled by interpolating gaps.
 ## Export {#export}
 
 After a successful analysis, select **Export** for available series,
-autocorrelation, decomposition and chart outputs.
+autocorrelation, decomposition and chart outputs. For shared export steps and
+report workflows, see [Export data](../export-and-report/index.md).

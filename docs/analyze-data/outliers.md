@@ -50,4 +50,5 @@ methods consider feature combinations and can flag a row that is not
 extreme in any one column.
 
 After a successful screen, use **Export** to see the available summary,
-detail and chart outputs.
+detail and chart outputs. For shared export steps and report workflows, see
+[Export data](../export-and-report/index.md).

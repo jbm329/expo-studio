@@ -68,4 +68,5 @@ practical importance or prove a causal relationship.
 After a successful **Apply**, select **Export** for the available result
 tables and charts. The chi-square heatmap's 100-cell annotation limit and
 the paired chart's 200-trajectory limit apply to presentation, not to the
-test calculations.
+test calculations. For shared export steps and report workflows, see
+[Export data](../export-and-report/index.md).

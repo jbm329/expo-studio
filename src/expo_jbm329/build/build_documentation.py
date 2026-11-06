@@ -16,8 +16,12 @@ def main() -> int:
 
 def preview() -> int:
     """Serve the local documentation preview until interrupted."""
-    return subprocess.run(
-        ["uv", "run", "--frozen", "--extra", "docs", "zensical", "serve"],  # noqa: S607
-        cwd=project_root(),
-        check=False,
-    ).returncode
+    try:
+        return subprocess.run(
+            ["uv", "run", "--frozen", "--extra", "docs", "zensical", "serve"],  # noqa: S607
+            cwd=project_root(),
+            check=False,
+        ).returncode
+    except KeyboardInterrupt:
+        print("Documentation preview stopped.")
+        return 0

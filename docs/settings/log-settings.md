@@ -1,10 +1,13 @@
 # Log settings
 
-Select **Tools → Log settings…** in the [workbench window](index.md) to configure
+Select **Tools → Log settings…** in the [workbench window](../workbench/index.md) to configure
 diagnostic logging. These settings control application log messages, not the
 contents of your datasets or analysis reports.
 
-![Log settings dialog showing the log-file location, root and third-party levels, File and Console destinations, and application namespace loggers.](../assets/workbench/log_settings.png)
+![Log settings dialog showing the log-file location, root and third-party levels, File and Console destinations, and application namespace loggers.](../assets/settings/log_settings.png)
+
+For general preferences and saved connections, see the
+[Settings overview](index.md).
 
 *The Log settings dialog, with an illustrative username substituted in the path.
 The log-file path and selected values depend on your installation and
@@ -18,8 +21,8 @@ requiring a restart. Select **Cancel** to close without saving your edits.
 
 **Reset defaults** fills the dialog with the default logging configuration.
 Select **Save** to persist it, or **Cancel** to keep your saved configuration.
-Resetting logging does not reset the separate [application settings](settings.md)
-or delete existing log files.
+Resetting logging does not reset the separate
+[general settings](general-settings.md) or delete existing log files.
 
 ## Locate the log file {#log-file}
 

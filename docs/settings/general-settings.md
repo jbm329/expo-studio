@@ -1,9 +1,10 @@
-# Settings
+# General settings
 
-Select **Tools → Settings…** in the [workbench window](index.md) to open the
-Settings dialog.
+Select **Tools → Settings…** in the [workbench window](../workbench/index.md)
+to open the Settings dialog. For other configuration topics, see the
+[Settings overview](index.md).
 
-![Settings dialog with Basic settings, CSV settings, Excel settings, Schema cache and SQL editor groups, plus Reset defaults, Cancel and Save buttons.](../assets/workbench/settings.png)
+![Settings dialog with Basic settings, CSV settings, Excel settings, Schema cache and SQL editor groups, plus Reset defaults, Cancel and Save buttons.](../assets/settings/settings.png)
 
 *The Settings dialog. The directory and values shown are examples from this
 configuration, not a list of application defaults.*
@@ -52,7 +53,8 @@ uncheck **Identify delimiter automatically**, select **;** in
 
 These delimiter settings concern reading. The standard CSV export writes
 comma-separated UTF-8 data; changing the input delimiter or encoding does not
-change that export format.
+change that export format. For the dataset export steps and other output
+formats, see [Export a dataset](../export-and-report/export-data.md).
 
 ## Excel settings {#excel-settings}
 
@@ -69,6 +71,9 @@ limit, but that does not make larger worksheets supported.
 
 Streaming does not mean that result datasets remain on disk: loaded datasets
 still occupy memory.
+
+For the dataset export workflow, see
+[Export a dataset](../export-and-report/export-data.md).
 
 ## Schema cache {#schema-cache}
 

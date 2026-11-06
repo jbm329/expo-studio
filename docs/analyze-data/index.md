@@ -1,39 +1,40 @@
-# Advanced analysis
+# Overview
 
-Advanced analysis calculates summaries and statistical models from a ready
-result dataset. It keeps the selected source dataset fixed while you switch
-between analysis sections.
+Use Advanced analysis to inspect a ready result dataset, compare groups,
+measure relationships or fit statistical models. Choose a task below to find
+the analysis guide for it.
 
-## Open Advanced analysis {#open-advanced-analysis}
+## Choose a task {#choose-an-analysis}
 
-1. Select the result tab containing the dataset you want to analyze.
-2. Wait until the dataset has finished loading.
-3. Select **Analyze data** on the toolbar.
+<a id="section-guides"></a>
 
-The dialog title shows the source dataset name, row count and column count.
-Advanced analysis is unavailable until a ready result dataset is active.
-
-## Choose an analysis {#choose-an-analysis}
-
-The category row at the top of the workspace contains these analyses:
-
-| Analysis | Use it to |
+| Task | Guide |
 |---|---|
-| [Dataset Overview](overview.md) | Check dataset size, column types, missing values, duplicates and sample rows. |
-| [Statistics](statistics.md) | Summarize numeric columns and review eligible category frequencies. |
-| [Hypothesis Tests](hypothesis-tests.md) | Compare numeric groups, categorical associations or repeated measurements. |
-| [Correlation](correlation.md) | Measure pairwise relationships among numeric columns. |
-| [Regression](regression.md) | Model a numeric, binary, count or survival outcome from predictors. |
-| [Outliers](outliers.md) | Screen individual numeric columns or multivariate rows for potential outliers. |
-| [Clustering](clustering.md) | Assign complete numeric rows to groups without a target column. |
-| [PCA](pca.md) | Summarize variation across numeric features as principal components. |
-| [Time Series](time-series.md) | Prepare a dated numeric series and inspect its temporal patterns. |
+| Inspect dataset structure, missingness, duplicates and sample rows | [Dataset Overview](overview.md) |
+| Summarize numeric columns and eligible category frequencies | [Statistics](statistics.md) |
+| Compare groups, categorical associations or repeated measurements | [Hypothesis Tests](hypothesis-tests.md) |
+| Measure pairwise relationships among numeric columns | [Correlation](correlation.md) |
+| Model a numeric, binary, count or survival outcome from predictors | [Regression](regression.md) |
+| Screen numeric columns or multivariate rows for potential outliers | [Outliers](outliers.md) |
+| Group complete numeric rows without a target column | [Clustering](clustering.md) |
+| Summarize variation across numeric features as principal components | [PCA](pca.md) |
+| Explore the temporal patterns in a dated numeric series | [Time Series](time-series.md) |
+
+## Use Advanced analysis {#open-advanced-analysis}
+
+Select the ready result tab you want to analyze, then choose **Analyze data** on
+the toolbar. The dialog title identifies the source dataset. The selected
+source remains fixed while you switch between analysis sections.
 
 Overview and Statistics calculate when opened. The other sections have
 configuration controls; choose the inputs and select **Apply** to calculate.
 An edit to an applied configuration makes the displayed result out of date
 until you apply the new settings. A section can be unavailable for a dataset
 that does not have the required column types or values.
+
+To load or prepare data first, see [Get data](../get-data/index.md),
+[Prepare data](../prepare-data/index.md) or
+[Transform data](../transform-data/index.md).
 
 ## Understand limits before interpreting results {#analysis-limits}
 
@@ -53,24 +54,16 @@ guarantees that a model is appropriate for a dataset.
 
 ## Export results and prepare a report {#export-and-report}
 
-After an analysis has a successful result, select **Export** to see the tables,
-charts and file formats available for that section. The available choices
-depend on the analysis; exports use the applied result, not an un-applied
-configuration.
+For shared steps to export analysis outputs, assemble an HTML report or create
+a data-profiling report, see
+[Export analysis results and reports](../export-and-report/analysis-results-and-reports.md).
+Each guide above describes its own available tables and charts.
 
-Select **Add to report** to include the displayed result. Open **Reports** to
-edit the report title and description, arrange or remove entries, edit an
-entry's selected content and notes, preview the report, or choose
-**Generate HTML report**. Only successfully calculated results can be added.
+## Continue your workflow
 
-## Section guides {#section-guides}
-
-- [Dataset Overview](overview.md)
-- [Statistics](statistics.md)
-- [Hypothesis Tests](hypothesis-tests.md)
-- [Correlation](correlation.md)
-- [Regression](regression.md)
-- [Outliers](outliers.md)
-- [Clustering](clustering.md)
-- [PCA](pca.md)
-- [Time Series](time-series.md)
+- [Prepare data](../prepare-data/index.md) or
+  [Transform data](../transform-data/index.md) before analysis.
+- [Export data](../export-and-report/index.md) to save datasets, analysis
+  outputs or reports.
+- See [Workbench window](../workbench/index.md) to orient yourself in the
+  application.
