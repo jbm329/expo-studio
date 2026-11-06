@@ -21,68 +21,22 @@ it does not describe every feature, file format or service-specific behavior.
 
 ## Available guides
 
+Choose a section below, then use its overview to find the task guide you need.
+Individual guides are also available in the navigation.
+
+- [What you can do with Expo Studio](application-overview.md) — explore the
+  main workflows and find a starting point.
 - [Workbench window](workbench/index.md) — locate the main controls, understand
   editor and result tabs, and adjust the layout.
 - [Get data](get-data/index.md) — load data with database queries, supported
   local files, or configured REST requests.
-  - [Load data with SQL](get-data/sql-queries.md) — run a query against a
-    configured database connection.
-  - [Open a local file](get-data/local-files.md) — load a supported data file
-    into a result tab.
-  - [Load a REST response](get-data/rest-api.md) — fetch data using a saved
-    REST request.
-- [Prepare data](prepare-data/index.md) — prepare a ready result dataset before
-  analysis or export.
-  - [Organize columns](prepare-data/organize-columns.md) — sort rows, rename or
-    remove columns, and change column order.
-  - [Clean values](prepare-data/clean-values.md) — clean text, replace values,
-    fill missing entries, and convert data types.
-  - [Filter rows](prepare-data/filter-rows.md) — keep or remove rows using a
-    column filter or a selected cell's value.
+- [Prepare data](prepare-data/index.md) — organize columns, clean values and
+  filter rows before analysis or export.
 - [Transform data](transform-data/index.md) — create calculated columns and
   summary datasets, or combine datasets.
-  - [Derived columns](transform-data/derived-columns.md) — calculate new values
-    with formulas, conditions and date/time functions.
-  - [Reshape](transform-data/reshape.md) — group rows and calculate summary
-    metrics.
-  - [Join datasets](transform-data/join.md) — match rows using key columns.
-  - [Concatenate datasets](transform-data/concatenate.md) — append rows from
-    two result datasets.
-- [Settings](settings/index.md) — configure application preferences, logging,
-  database connections and REST API requests.
-  - [General settings](settings/general-settings.md) — configure preferences,
-    file processing, undo limits and schema caching.
-  - [Log settings](settings/log-settings.md) — configure diagnostic log levels,
-    output destinations and file rotation.
-  - [Database connections](settings/database-connections.md) — configure and
-    test named connections, drivers and authentication.
-  - [REST API connections](settings/rest-api-connections.md) — configure JSON
-    requests, authentication and pagination, and generate SCB request syntax.
-- [Analyze data overview](analyze-data/index.md) — choose an analysis for a
-  ready result dataset and find the guide for its inputs and results.
+- [Analyze data](analyze-data/index.md) — inspect a dataset, explore patterns
+  and choose statistical analyses.
 - [Export data](export-and-report/index.md) — save datasets, analysis results
   and HTML reports.
-  - [Export a dataset](export-and-report/export-data.md) — save a result tab as
-    CSV, Excel or a binary data file.
-  - [Export analysis results and reports](export-and-report/analysis-results-and-reports.md)
-    — save analysis outputs or create HTML reports.
-- [Dataset Overview](analyze-data/overview.md) — inspect dataset structure,
-  missing values, duplicate rows and bounded first/last samples.
-- [Statistics](analyze-data/statistics.md) — review numeric summaries,
-  categorical frequencies, distributions and normality results.
-- [Hypothesis Tests](analyze-data/hypothesis-tests.md) — compare groups,
-  categorical associations and repeated measurements.
-- [Correlation](analyze-data/correlation.md) — calculate and interpret
-  Pearson, Spearman or Kendall correlations.
-- [Regression](analyze-data/regression.md) — fit linear, logistic, count or
-  Cox regression models and review their diagnostics.
-- [Outliers](analyze-data/outliers.md) — screen numeric columns or rows for
-  potential univariate and multivariate outliers.
-- [Clustering](analyze-data/clustering.md) — group numeric rows with K-means,
-  DBSCAN or agglomerative clustering.
-- [PCA](analyze-data/pca.md) — reduce numeric features to principal
-  components and inspect explained variance and loadings.
-- [Time Series](analyze-data/time-series.md) — prepare one dated numeric
-  series, inspect autocorrelation and optionally decompose seasonality.
-Detailed guides for additional workflows and individual file formats are not
-yet available. Navigation will grow as more guides are added.
+- [Settings](settings/index.md) — configure application preferences, logging,
+  database connections and REST API requests.
