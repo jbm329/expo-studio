@@ -9,11 +9,11 @@ Use this page to orient yourself; task-specific instructions live in the
 
 ## Find your way around {#window-layout}
 
-![Expo Studio workbench with menus and toolbar at the top, three source panels on the left, empty editor and result areas on the right, and a status bar at the bottom.](../assets/workbench/main_window.png)
+![Expo Studio workbench with an expanded database tree, file list and REST connections on the left, SQL editor tabs and query text above result tabs and a data grid, and a status bar at the bottom.](../assets/workbench/main_window.png)
 
-*The workbench before any editor or result tabs are open. The upper blank area
-is for SQL editor tabs; the lower blank area is for result datasets. Connection
-names and files depend on your configuration.*
+*A populated workbench with configured sources, multiple SQL editor tabs and
+result tabs open. Connection names, files and displayed data depend on your
+configuration.*
 
 | Area | Where to find it | Purpose |
 |---|---|---|
