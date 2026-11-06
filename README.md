@@ -6,6 +6,13 @@ It is shared publicly in case others find it useful.
 Connect to databases, load files, and retrieve data from REST APIs. Inspect and
 prepare datasets, then analyze them with a range of statistical methods.
 
+## User Manual
+
+The online user manual is available in English and provides guides for using
+Expo Studio.
+
+[Read the Expo Studio user manual](https://jbm329.github.io/expo-studio/)
+
 
 ![Expo Studio Splash](src/expo_jbm329/workbench/splash/splash.png)
 
