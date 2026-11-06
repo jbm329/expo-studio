@@ -202,7 +202,7 @@ Close the dialog, then double-click the saved request in the workbench's
 **REST connections** panel, or right-click it and select **Load data**.
 Loading runs as a background job and creates a result tab; it does not require
 SQL. For the source-to-result workflow, see
-[Load a REST response](../get-data/index.md#rest-apis). You can then review,
+[Load a REST response](../get-data/rest-api.md). You can then review,
 transform, analyze or export the result like other datasets. See
 [Export data](../export-and-report/index.md) for the available workflows.
 

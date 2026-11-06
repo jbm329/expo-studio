@@ -11,7 +11,12 @@ nav = [
     { "Log settings" = "workbench/log-settings.md" },
     { "Database connections" = "workbench/database-connections.md" },
     { "REST API connections" = "workbench/rest-api-connections.md" },
-    { "Get data" = "get-data/index.md" },
+    { "Get data" = [
+        { "Overview" = "get-data/index.md" },
+        { "Load data with SQL" = "get-data/sql-queries.md" },
+        { "Open a local file" = "get-data/local-files.md" },
+        { "Load a REST response" = "get-data/rest-api.md" },
+    ] },
     { "Prepare data" = [
         { "Overview" = "prepare-data/index.md" },
         { "Organize columns" = "prepare-data/organize-columns.md" },

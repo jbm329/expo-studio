@@ -31,7 +31,7 @@ Use the links below for details on the task behind each command:
 
 | Menu | Where to find task guidance |
 |---|---|
-| **File** | [Open local data](../get-data/index.md#files), [export a dataset](../export-and-report/export-data.md), or save SQL text in an editor tab. |
+| **File** | [Open local data](../get-data/local-files.md), [export a dataset](../export-and-report/export-data.md), or save SQL text in an editor tab. |
 | **Edit** | Editor actions such as clearing SQL text. |
 | **Tools** | [Settings](settings.md), [Log settings](log-settings.md), [Database connections](database-connections.md) and [REST API connections](rest-api-connections.md). |
 | **External tools** | [Data profiling reports](../export-and-report/analysis-results-and-reports.md#data-profiling-reports). |
@@ -71,24 +71,24 @@ request presets. Use the corresponding guides for configuration and loading:
 ### Database connections
 
 Configure named connections in [Database connections](database-connections.md),
-then follow [Get data with SQL](../get-data/index.md#databases-and-sql) to load
+then follow [Load data with SQL](../get-data/sql-queries.md) to load
 query results.
 
 ### Files
 
 Use the **Files** panel to browse the configured documents directory. For
-supported formats and opening behavior, see [Open a local file](../get-data/index.md#files).
+supported formats and opening behavior, see [Open a local file](../get-data/local-files.md).
 
 ### REST connections
 
 Configure requests in [REST API connections](rest-api-connections.md), then
-follow [Load a REST response](../get-data/index.md#rest-apis) to load its data.
+follow [Load a REST response](../get-data/rest-api.md) to load its data.
 
 ## Work with SQL editor tabs {#sql-editor}
 
 The upper area contains SQL editor tabs. Each tab holds query text and its
 connection association. For opening, associating and running a query, see
-[Load data with SQL](../get-data/index.md#databases-and-sql).
+[Load data with SQL](../get-data/sql-queries.md).
 
 ## Work with result tabs {#result-tabs}
 

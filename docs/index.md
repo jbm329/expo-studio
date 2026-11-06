@@ -25,6 +25,12 @@ it does not describe every feature, file format or service-specific behavior.
   editor and result tabs, and adjust the layout.
 - [Get data](get-data/index.md) — load data with database queries, supported
   local files, or configured REST requests.
+  - [Load data with SQL](get-data/sql-queries.md) — run a query against a
+    configured database connection.
+  - [Open a local file](get-data/local-files.md) — load a supported data file
+    into a result tab.
+  - [Load a REST response](get-data/rest-api.md) — fetch data using a saved
+    REST request.
 - [Prepare data](prepare-data/index.md) — prepare a ready result dataset before
   analysis or export.
   - [Organize columns](prepare-data/organize-columns.md) — sort rows, rename or
