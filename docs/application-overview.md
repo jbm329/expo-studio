@@ -67,6 +67,9 @@ type and contents, you can:
 - Convert data types, such as text to numbers or datetimes, and manage categories.
 - Rename, reorder or remove columns, and split or merge text columns.
 
+For step-by-step instructions on sorting, filtering, cleaning values and
+changing columns, see [Prepare data](prepare-data/index.md).
+
 Use [Derived columns](transform-data/derived-columns.md) to create calculated
 values from existing columns. For example, multiply a price by a quantity or
 assign labels with a conditional formula.
@@ -203,4 +206,4 @@ For detailed steps, start with [Derived columns](transform-data/derived-columns.
 lists all currently available guides.
 
 This page is a capability overview, not a complete manual. Detailed source setup,
-general cleaning, joining and dataset-export guides are not yet available.
+joining and dataset-export guides are not yet available.

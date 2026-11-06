@@ -23,6 +23,14 @@ in detail. It is not yet a complete guide to the application.
   editor and result tabs, and adjust the layout.
 - [Get data](get-data/index.md) — load data with database queries, supported
   local files, or configured REST requests.
+- [Prepare data](prepare-data/index.md) — prepare a ready result dataset before
+  analysis or export.
+  - [Organize columns](prepare-data/organize-columns.md) — sort rows, rename or
+    remove columns, and change column order.
+  - [Clean values](prepare-data/clean-values.md) — clean text, replace values,
+    fill missing entries, and convert data types.
+  - [Filter rows](prepare-data/filter-rows.md) — keep or remove rows using a
+    column filter or a selected cell's value.
 - [Settings](workbench/settings.md) — configure application preferences, CSV and
   Excel processing, undo limits and schema caching.
 - [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
@@ -59,6 +67,5 @@ in detail. It is not yet a complete guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-Detailed file-format setup, general cleaning, dataset-combination and
-dataset-export guides are not yet available. Navigation will grow as more
-guides are added.
+Detailed file-format setup, dataset-combination and dataset-export guides are
+not yet available. Navigation will grow as more guides are added.

@@ -12,6 +12,12 @@ nav = [
     { "Database connections" = "workbench/database-connections.md" },
     { "REST API connections" = "workbench/rest-api-connections.md" },
     { "Get data" = "get-data/index.md" },
+    { "Prepare data" = [
+        { "Overview" = "prepare-data/index.md" },
+        { "Organize columns" = "prepare-data/organize-columns.md" },
+        { "Clean values" = "prepare-data/clean-values.md" },
+        { "Filter rows" = "prepare-data/filter-rows.md" },
+    ] },
     { "Transform data" = [
         { "Derived columns" = "transform-data/derived-columns.md" },
         { "Reshape" = "transform-data/reshape.md" },

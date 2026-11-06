@@ -163,6 +163,8 @@ and selection.
 
 For detailed workflows, see:
 
+- [Prepare data](../prepare-data/index.md) for sorting, filtering, cleaning
+  values and changing columns in a result tab.
 - [Derived columns](../transform-data/derived-columns.md) for calculated columns.
 - [Reshape](../transform-data/reshape.md) for grouped summaries in a new dataset.
 - [Advanced analysis](../analyze-data/index.md) for statistics, models, analysis
