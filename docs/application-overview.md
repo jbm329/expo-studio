@@ -24,6 +24,8 @@ dataset.
 | REST APIs | Configured GET or POST requests whose supported JSON responses can be converted into tabular data. |
 | Statistics Sweden (SCB) | Use the **SCB query builder…** in REST connection settings to browse tables and select variable values, then load the data through the REST connection. |
 
+For step-by-step source workflows, see [Get data](get-data/index.md).
+
 Database connections need the appropriate access and drivers. DuckDB connections
 open an existing database file read-only. Opening a `.sql` file opens query text;
 run the query against a connection to obtain a result dataset.

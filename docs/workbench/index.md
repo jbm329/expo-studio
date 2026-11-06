@@ -96,6 +96,8 @@ columns.
 Double-click a table or view to insert a generated SELECT statement into an
 editor tab associated with that connection. This prepares SQL; it does not
 execute the query. Use the query buttons when you are ready to load results.
+See [Get data with SQL](../get-data/index.md#databases-and-sql) for the complete
+connection-to-result workflow.
 
 ### Files
 
@@ -105,8 +107,8 @@ in an editor tab. HTML files open in the browser rather than as datasets.
 
 You can also use **Open** on the toolbar or **File → Open** without locating the
 file in this panel. See
-[Get data from different sources](../application-overview.md#get-data) for
-supported data formats.
+[Open a local file](../get-data/index.md#files) for supported formats and
+opening behavior.
 
 ### REST connections
 
@@ -121,6 +123,8 @@ Statistics Sweden tables.
 See [REST API connections](rest-api-connections.md) for request fields,
 authentication, pagination and the
 [SCB query builder](rest-api-connections.md#scb-query-builder).
+For the steps from a saved request to a result dataset, see
+[Load a REST response](../get-data/index.md#rest-apis).
 
 Unlike the SQL editor, loading a REST request does not require writing a SQL
 query.

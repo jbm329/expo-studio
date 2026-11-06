@@ -21,6 +21,8 @@ in detail. It is not yet a complete guide to the application.
 
 - [Workbench window](workbench/index.md) — locate the main controls, understand
   editor and result tabs, and adjust the layout.
+- [Get data](get-data/index.md) — load data with database queries, supported
+  local files, or configured REST requests.
 - [Settings](workbench/settings.md) — configure application preferences, CSV and
   Excel processing, undo limits and schema caching.
 - [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
@@ -57,6 +59,6 @@ in detail. It is not yet a complete guide to the application.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
 
-Detailed file source-setup, general cleaning, dataset-combination and
-dataset-export guides are not yet available. Navigation will grow as more guides
-are added.
+Detailed file-format setup, general cleaning, dataset-combination and
+dataset-export guides are not yet available. Navigation will grow as more
+guides are added.

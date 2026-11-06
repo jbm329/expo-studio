@@ -120,6 +120,8 @@ To browse and query:
 Generating SQL and executing it are separate actions. See
 [SQL editor tabs](index.md#sql-editor) and
 [result tabs](index.md#result-tabs) for the corresponding workbench areas.
+For a complete walkthrough, see
+[Load data with SQL](../get-data/index.md#databases-and-sql).
 
 If a test fails, check the selected engine/protocol, driver installation, server,
 port, database, access permissions and authentication. Use the error message

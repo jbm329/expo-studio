@@ -11,6 +11,11 @@ nav = [
     { "Log settings" = "workbench/log-settings.md" },
     { "Database connections" = "workbench/database-connections.md" },
     { "REST API connections" = "workbench/rest-api-connections.md" },
+    { "Get data" = "get-data/index.md" },
+    { "Transform data" = [
+        { "Derived columns" = "transform-data/derived-columns.md" },
+        { "Reshape" = "transform-data/reshape.md" },
+    ] },
     { "Analyze data" = [
         { "Advanced analysis" = "analyze-data/index.md" },
         { "Dataset Overview" = "analyze-data/overview.md" },
@@ -22,10 +27,6 @@ nav = [
         { "Clustering" = "analyze-data/clustering.md" },
         { "PCA" = "analyze-data/pca.md" },
         { "Time Series" = "analyze-data/time-series.md" },
-    ] },
-    { "Transform data" = [
-        { "Derived columns" = "transform-data/derived-columns.md" },
-        { "Reshape" = "transform-data/reshape.md" },
     ] },
 ]
 

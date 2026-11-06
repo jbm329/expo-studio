@@ -201,8 +201,9 @@ manually through the generic REST fields.
 Close the dialog, then double-click the saved request in the workbench's
 **REST connections** panel, or right-click it and select **Load data**.
 Loading runs as a background job and creates a result tab; it does not require
-SQL. You can then review, transform, analyze or export the result like other
-datasets.
+SQL. For the source-to-result workflow, see
+[Load a REST response](../get-data/index.md#rest-apis). You can then review,
+transform, analyze or export the result like other datasets.
 
 To edit, reopen **Tools → REST connections…**, select the entry and save its
 changes. To remove an entry, select **Delete** and confirm. Deletion writes the
