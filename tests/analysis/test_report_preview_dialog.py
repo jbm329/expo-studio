@@ -38,7 +38,7 @@ def test_report_preview_scenario_in_isolated_process(
         [sys.executable, str(test_file), WORKER_ARGUMENT, scenario],
         capture_output=True,
         check=False,
-        timeout=45,
+        timeout=90,
     )
 
     assert result.returncode == 0, (
@@ -85,7 +85,8 @@ def _run_worker(scenario: str) -> None:
         assert dialog.testAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         dialog.show()
         load_spy = QSignalSpy(dialog._web_view.loadFinished)
-        assert load_spy.wait(10_000), "The large report did not finish loading."
+        # CI runners render in software and can be slow to load a 2 MB document.
+        assert load_spy.wait(30_000), "The large report did not finish loading."
         assert load_spy[0][0], "WebEngine failed to load the large report."
         _finish_and_wait_for_html_cleanup(app, dialog, html_path, dialog.close)
     elif scenario == "offline-read-only-policy":
