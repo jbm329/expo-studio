@@ -66,6 +66,10 @@ in detail. It is not yet a complete guide to the application.
   values, and troubleshoot formula errors.
 - [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
   conditions, and preview a new summary dataset.
+- [Join datasets](transform-data/join.md) — combine open result datasets by
+  matching key columns, choose a join type, and preview the matches.
+- [Concatenate datasets](transform-data/concatenate.md) — append rows from two
+  open result datasets and align columns by name.
 
-Detailed file-format setup, dataset-combination and dataset-export guides are
-not yet available. Navigation will grow as more guides are added.
+Detailed file-format setup and dataset-export guides are not yet available.
+Navigation will grow as more guides are added.

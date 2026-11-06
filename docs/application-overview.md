@@ -90,8 +90,8 @@ matches your task:
 
 | Action | Use it to |
 |---|---|
-| **Join datasets** | Match rows using one or more key columns and bring related columns together, such as sales and customer details. |
-| **Concatenate datasets** | Append one dataset's rows to another, such as two monthly extracts. Columns align by name; unmatched columns have missing values. You can optionally remove duplicate rows. |
+| [**Join datasets**](transform-data/join.md) | Match rows using one key column from each dataset and bring related columns together, such as sales and customer details. |
+| [**Concatenate datasets**](transform-data/concatenate.md) | Append one dataset's rows to another, such as two monthly extracts. Columns align by name; unmatched columns have missing values. |
 
 These operations create a new combined result dataset. A join matches keys;
 concatenation stacks rows. Neither requires the original datasets to have come
@@ -205,5 +205,5 @@ For detailed steps, start with [Derived columns](transform-data/derived-columns.
 [Advanced analysis](analyze-data/index.md). [Home](index.md#available-guides)
 lists all currently available guides.
 
-This page is a capability overview, not a complete manual. Detailed source setup,
-joining and dataset-export guides are not yet available.
+This page is a capability overview, not a complete manual. Detailed source setup
+and dataset-export guides are not yet available.
