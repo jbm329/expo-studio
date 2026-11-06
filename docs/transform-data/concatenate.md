@@ -77,3 +77,6 @@ literal text.
 | Some output cells are missing | One input dataset does not have a column with that name. This is expected when the inputs have different columns. |
 | Duplicate rows remain | Concatenate preserves all input rows. Remove duplicates in a separate preparation step if needed. |
 | Rows appear in an unexpected order | The active dataset is first, and its rows precede the rows from the selected second dataset. |
+
+For calculated columns, summaries or matching records, see
+[Transform data](index.md).

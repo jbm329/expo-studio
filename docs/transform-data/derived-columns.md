@@ -504,3 +504,6 @@ For unexpected missing results, review
 [Missing values and result types](#missing-values-and-result-types).
 For unexpected labels, check the order of nested `IF` conditions and whether a
 missing value is sending a row to the else branch.
+
+For summaries and dataset-combination tasks, see
+[Transform data](index.md).

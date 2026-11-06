@@ -424,3 +424,6 @@ missing values do not count.
 | FIRST/LAST returns a missing value | Check missing ordering values, the metric condition and whether the selected row's value is itself missing. |
 | Preview shows only five rows | This is the display limit. Check its total row count; OK creates the complete result. |
 | Preview is out of date | Select Preview again after configuration changes. |
+
+For calculated columns or combining datasets, see
+[Transform data](index.md).

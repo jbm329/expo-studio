@@ -19,6 +19,7 @@ nav = [
         { "Filter rows" = "prepare-data/filter-rows.md" },
     ] },
     { "Transform data" = [
+        { "Overview" = "transform-data/index.md" },
         { "Derived columns" = "transform-data/derived-columns.md" },
         { "Reshape" = "transform-data/reshape.md" },
         { "Join datasets" = "transform-data/join.md" },

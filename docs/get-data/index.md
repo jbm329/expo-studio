@@ -4,11 +4,13 @@ Bring data into Expo Studio from a database, a local data file or a configured
 REST request. Database queries, supported data files and REST responses appear
 as datasets in result tabs; SQL text and HTML files open elsewhere.
 
-| Source | Start here |
+## Choose a task
+
+| Task | Guide |
 |---|---|
-| Database | Connect to a database, write or generate SQL, then run it. |
-| Local file | Open a supported data file from the Files panel or the Open command. |
-| REST API | Load a saved request from the REST connections panel. |
+| Load query results | [Load data with SQL](#databases-and-sql) |
+| Open a supported local data file | [Open a local file](#files) |
+| Load a saved REST request | [Load a REST response](#rest-apis) |
 
 ## Load data with SQL {#databases-and-sql}
 
@@ -112,14 +114,14 @@ client for every HTTP method, response format or API pagination scheme.
 form. It does not save the form or create a result tab. Loading a saved request
 from the workbench is the step that fetches data into a dataset.
 
-## Work with the loaded dataset {#next-steps}
+## Continue your workflow {#next-steps}
 
 Select the ready result tab you want to use. You can inspect and prepare its
 columns, open **Analyze data**, or export the dataset. See
-[Review and understand your data](../application-overview.md#review-data),
-[Clean and transform data](../application-overview.md#clean-and-transform)
-and [Export data](../export-and-report/index.md) for the available export
-workflows.
+[Prepare data](../prepare-data/index.md),
+[Transform data](../transform-data/index.md),
+[Analyze data](../analyze-data/index.md) or
+[Export data](../export-and-report/index.md) for the relevant workflow.
 
 For the workbench layout, source panels and editor/result areas, see
 [Workbench window](../workbench/index.md).

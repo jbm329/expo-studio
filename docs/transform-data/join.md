@@ -124,3 +124,6 @@ especially when the preview reports many-to-many cardinality.
 | Values are missing after a join | An outer, left, or right join retains unmatched rows; inspect **join_status** to see which side had no match. |
 | A column name has a dataset suffix | Both datasets contain a selected column with that name. Rename the source columns or use the suffix to distinguish them. |
 | The preview estimate differs from the final row count | The preview row sample and estimated row count are not a complete calculation. Review the created result and its **join_status** values. |
+
+For calculated columns, summaries or appending rows, see
+[Transform data](index.md).

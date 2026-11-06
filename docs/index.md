@@ -31,6 +31,15 @@ in detail. It is not yet a complete guide to the application.
     fill missing entries, and convert data types.
   - [Filter rows](prepare-data/filter-rows.md) — keep or remove rows using a
     column filter or a selected cell's value.
+- [Transform data](transform-data/index.md) — create calculated columns and
+  summary datasets, or combine datasets.
+  - [Derived columns](transform-data/derived-columns.md) — calculate new values
+    with formulas, conditions and date/time functions.
+  - [Reshape](transform-data/reshape.md) — group rows and calculate summary
+    metrics.
+  - [Join datasets](transform-data/join.md) — match rows using key columns.
+  - [Concatenate datasets](transform-data/concatenate.md) — append rows from
+    two result datasets.
 - [Settings](workbench/settings.md) — configure application preferences, CSV and
   Excel processing, undo limits and schema caching.
 - [Log settings](workbench/log-settings.md) — configure diagnostic log levels,
@@ -67,15 +76,5 @@ in detail. It is not yet a complete guide to the application.
   components and inspect explained variance and loadings.
 - [Time Series](analyze-data/time-series.md) — prepare one dated numeric
   series, inspect autocorrelation and optionally decompose seasonality.
-- [Derived columns](transform-data/derived-columns.md) — create your first
-  calculated column, write conditional formulas, work with dates and missing
-  values, and troubleshoot formula errors.
-- [Reshape](transform-data/reshape.md) — group rows, calculate metrics, build
-  conditions, and preview a new summary dataset.
-- [Join datasets](transform-data/join.md) — combine open result datasets by
-  matching key columns, choose a join type, and preview the matches.
-- [Concatenate datasets](transform-data/concatenate.md) — append rows from two
-  open result datasets and align columns by name.
-
-Detailed file-format setup guides are not yet available. Navigation will grow
-as more guides are added.
+Detailed guides for additional workflows and individual file formats are not
+yet available. Navigation will grow as more guides are added.

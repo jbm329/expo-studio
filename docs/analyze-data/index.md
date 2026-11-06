@@ -12,6 +12,9 @@ between analysis sections.
 
 The dialog title shows the source dataset name, row count and column count.
 Advanced analysis is unavailable until a ready result dataset is active.
+To load or prepare data first, see [Get data](../get-data/index.md),
+[Prepare data](../prepare-data/index.md) or
+[Transform data](../transform-data/index.md).
 
 ## Choose an analysis {#choose-an-analysis}
 

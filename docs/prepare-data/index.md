@@ -1,14 +1,9 @@
 # Prepare data
 
-Prepare a dataset in its result tab before analysis, combining it with other
-datasets or exporting it. These actions work on a **ready result tab**. They
-change the dataset shown in that tab; they do not edit the source file or
-database, and they do not create a separate result tab.
+Prepare a ready result dataset before analysis or export. Choose a task below
+to find its step-by-step guide.
 
-Start by selecting the result tab you want to prepare. Right-click a column
-header to sort rows, change a column, clean values, fill missing values,
-convert a data type or filter rows. Right-click a cell for actions based on
-that value.
+## Choose a task
 
 | Task | Guide |
 |---|---|
@@ -16,12 +11,23 @@ that value.
 | Clean text, replace a cell value, fill missing values or convert a data type | [Clean values](clean-values.md) |
 | Keep or remove rows based on column values | [Filter rows](filter-rows.md) |
 
+## How preparation changes your dataset {#preparation-results}
+
+These actions change the data shown in the current result tab; they do not
+edit its source file or database, and they do not create a separate result tab.
+Select the ready result tab first. Right-click its column headers or cells to
+find the available actions.
+
 Review the changed result before using it. Select **Undo** on the toolbar to
 reverse a recent change when an undo step is available. The retained history is
-controlled by the undo settings; see [Settings](../workbench/settings.md#basic-settings).
-To save the prepared dataset, select its result tab and use an export action.
-See [Export a dataset](../export-and-report/export-data.md) for file formats
-and export steps.
+controlled by [undo settings](../workbench/settings.md#basic-settings).
 
-For an overview of the workbench and result tabs, see
-[Workbench window](../workbench/index.md#result-tabs).
+## Continue your workflow
+
+- [Transform data](../transform-data/index.md) to create columns, summaries or
+  combined datasets.
+- [Analyze data](../analyze-data/index.md) when the dataset is ready.
+- [Export a dataset](../export-and-report/export-data.md) to save the prepared
+  result.
+- See [Workbench window](../workbench/index.md#result-tabs) for the result-tab
+  layout.
