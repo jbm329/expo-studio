@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-11-06
+
+### Added
+- Online user manual with task-based guides for the workbench, data sources, data preparation and transformation, analysis, exports, and reports
+- Help menu link to open the user manual
+
+### Technical
+- Documentation build and preview commands, with validated and guarded publication for stable releases
+
 ## [1.3.0] - 2026-11-03
 
 ### Added
