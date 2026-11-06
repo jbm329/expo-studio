@@ -30,6 +30,9 @@ Start with this dataset. **Amount** must be a numeric column.
    the metric `Recorded amounts`.
 6. Select **Preview**.
 
+![Reshape dialog with Region as dimension, two metrics and a preview of North
+and South totals](../assets/transform-data/reshape.png)
+
 The preview shows:
 
 | Region | Total amount | Recorded amounts |
@@ -167,6 +170,9 @@ To add product A sales alongside the totals from the first example, add:
 |---|---|---|---|
 | Product A amount | SUM | Amount | `[Product] = 'A'` |
 
+![Reshape dialog with a third metric whose condition editor contains
+[Product] = 'A'](../assets/transform-data/reshape_metric_condition_editor.png)
+
 The result becomes:
 
 | Region | Total amount | Recorded amounts | Product A amount |
@@ -185,6 +191,9 @@ applied before aggregation, not to the aggregated total.
 3. Select a column and an operator, such as **Product** and **Equal to**.
 4. Open **Select values**, then check the desired value.
 5. Select **Apply** to put the generated condition into that metric.
+
+![Build condition dialog with one rule: Product, Equal to, one value
+selected](../assets/transform-data/reshape_metric_condition_builder.png){ width="600" }
 
 The builder's **Apply** button only updates the condition. It does not run
 Reshape. **Cancel** leaves the metric's existing condition unchanged.

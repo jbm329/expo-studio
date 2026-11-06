@@ -18,13 +18,12 @@ a dataset containing these numeric columns:
 2. Select **Derived column…**.
 3. In **Column name**, enter `Line total`. Use a name that does not already
    exist in the dataset.
-4. In **f(x)**, enter:
-
-   ```text
-   [Price] * [Quantity]
-   ```
-
+4. In **f(x)**, enter `[Price] * [Quantity]`. The dialog confirms
+   **Valid formula.**
 5. Select **OK** to create the column.
+
+![Derived column dialog with Column name set to Line total and f(x) set to
+[Price] * [Quantity]](../assets/transform-data/derived_column.png){ width="420" }
 
 The new column appears immediately after the column whose header you
 right-clicked. In this example, the result is:
