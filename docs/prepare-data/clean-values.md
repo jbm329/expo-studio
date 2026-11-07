@@ -89,6 +89,11 @@ order does not rearrange rows or move the column. Use **Sort ascending** or
 
 ### Convert a column to category {#convert-to-category}
 
+In **Convert to categories**, select **Help** at the bottom left or press
+**F1** to open this section. **OK** and **Cancel** remain on the right.
+Help preserves the selected options and does not convert the column.
+If the browser cannot be opened, a warning includes the manual URL.
+
 1. Right-click the column header and select **Datatype… → Convert to category…**.
 2. Choose a **Category order** and review the checkboxes described below.
 3. Select **OK** to convert the column.

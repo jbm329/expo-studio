@@ -7,9 +7,10 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt, QTimer, QTranslator, QUrl
-from PyQt6.QtGui import QKeyEvent
+from PyQt6.QtGui import QAction, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
     QApplication,
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -19,6 +20,7 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QPlainTextEdit,
     QPushButton,
+    QRadioButton,
 )
 
 from expo_jbm329.app.help_topics import HelpTopic
@@ -37,8 +39,10 @@ from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.rest import scb_browser_dialog
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
+from expo_jbm329.gui.dialogs.service.categories import conversion
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import ConcatDialog
 from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import DerivedColumnDialog
 from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
@@ -650,6 +654,116 @@ def test_analysis_help_follows_pending_selection_and_reports(
             )
     finally:
         dialog.close()
+
+
+@pytest.mark.parametrize("opened", [True, False])
+@pytest.mark.parametrize("accepted", [True, False])
+def test_category_conversion_help_preserves_options_and_modal_result(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str, opened: bool, accepted: bool
+) -> None:
+    opener = MagicMock(return_value=opened)
+    monkeypatch.setattr(conversion.QDesktopServices, "openUrl", opener)
+    service = QtDialogService()
+    warning = MagicMock()
+    monkeypatch.setattr(service, "warn", warning)
+    parent = QMainWindow()
+    homepage = MagicMock()
+    action = QAction(parent)
+    action.setShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents))
+    action.triggered.connect(homepage)
+    parent.addAction(action)
+
+    def execute(dialog: QDialog) -> int:
+        dialog.show()
+        qt_app.processEvents()
+        help_boxes = [
+            box
+            for box in dialog.findChildren(QDialogButtonBox)
+            if box.button(QDialogButtonBox.StandardButton.Help) is not None
+        ]
+        assert len(help_boxes) == 1
+        help_button = help_boxes[0].button(QDialogButtonBox.StandardButton.Help)
+        assert help_button is not None
+        assert help_button.text() == HELP_LABELS[help_language]
+        assert not help_button.autoDefault()
+        assert not help_button.isDefault()
+        actions = [
+            box
+            for box in dialog.findChildren(QDialogButtonBox)
+            if box.button(QDialogButtonBox.StandardButton.Ok) is not None
+        ]
+        assert len(actions) == 1
+        for standard in (QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel):
+            button = actions[0].button(standard)
+            assert button is not None
+            assert help_button.mapTo(dialog, help_button.rect().topLeft()).x() < (
+                button.mapTo(dialog, button.rect().topLeft()).x()
+            )
+        radios = dialog.findChildren(QRadioButton)
+        checks = dialog.findChildren(QCheckBox)
+        assert len(radios) == 3
+        assert len(checks) == 2
+        assert [radio.isChecked() for radio in radios] == [True, False, False]
+        assert [check.isChecked() for check in checks] == [False, False]
+        radios[1].setChecked(True)
+        for check in checks:
+            check.setChecked(True)
+        finished = MagicMock()
+        dialog.finished.connect(finished)
+
+        help_button.click()
+        qt_app.processEvents()
+        qt_app.setActiveWindow(dialog)
+        checks[1].setFocus()
+        for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            qt_app.sendEvent(checks[1], QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+
+        assert opener.call_count == 2
+        assert all(call.args[0].toString() == HelpTopic.CONVERT_TO_CATEGORIES.url for call in opener.call_args_list)
+        assert dialog.isVisible()
+        assert [radio.isChecked() for radio in radios] == [False, True, False]
+        assert all(check.isChecked() for check in checks)
+        finished.assert_not_called()
+        homepage.assert_not_called()
+        if opened:
+            warning.assert_not_called()
+        else:
+            assert warning.call_count == 2
+            warning.assert_called_with(
+                dialog,
+                conversion.translate("CategoryConversion", conversion.TR_UNABLE_TO_OPEN_LINK),
+                conversion.translate_fmt(
+                    "CategoryConversion", conversion.TR_MANUAL_OPEN_FAILED, url=HelpTopic.CONVERT_TO_CATEGORIES.url
+                ),
+            )
+            if help_language != "en":
+                assert warning.call_args.args[1] != "Unable to open link"
+        standard = QDialogButtonBox.StandardButton.Ok if accepted else QDialogButtonBox.StandardButton.Cancel
+        button = actions[0].button(standard)
+        assert button is not None
+        button.click()
+        assert not dialog.isVisible()
+        finished.assert_called_once()
+        return dialog.result()
+
+    monkeypatch.setattr(QDialog, "exec", execute)
+    try:
+        parent.show()
+        result = service.prompt_category_conversion(
+            parent, title="Convert to categories", default_order="alpha", default_ordered=False, default_strict=False
+        )
+        assert result == (
+            {"order": "freq", "ordered": True, "strict": True, "ok": True}
+            if accepted
+            else {"order": "alpha", "ordered": False, "strict": False, "ok": False}
+        )
+        qt_app.processEvents()
+        qt_app.setActiveWindow(parent)
+        for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            qt_app.sendEvent(parent, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+        homepage.assert_called_once_with(False)
+    finally:
+        parent.close()
 
 
 def test_condition_default_width_preserves_nested_rules(qt_app: QApplication, help_language: str) -> None:

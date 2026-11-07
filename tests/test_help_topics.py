@@ -91,6 +91,10 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
     ("topic", "expected"),
     [
         (HelpTopic.HOME, "https://jbm329.github.io/expo-studio/"),
+        (
+            HelpTopic.CONVERT_TO_CATEGORIES,
+            "https://jbm329.github.io/expo-studio/prepare-data/clean-values/#convert-to-category",
+        ),
         (HelpTopic.ADVANCED_ANALYSIS, "https://jbm329.github.io/expo-studio/analyze-data/"),
         (HelpTopic.ANALYSIS_OVERVIEW, "https://jbm329.github.io/expo-studio/analyze-data/overview/"),
         (HelpTopic.ANALYSIS_STATISTICS, "https://jbm329.github.io/expo-studio/analyze-data/statistics/"),

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QCheckBox,
@@ -17,17 +18,19 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import (
     localize_dialog_buttons,
 )
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.utils.i18n_utils import translate
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         CategoryConversionResult,
+        DialogService,
     )
     from expo_jbm329.services.data_operations.category_orders import CategoryOrderKey
 
@@ -41,6 +44,8 @@ TR_BY_FREQUENCY = QT_TRANSLATE_NOOP("CategoryConversion", "By frequency")
 TR_PRESERVE_ORDER = QT_TRANSLATE_NOOP("CategoryConversion", "Preserve existing order")
 TR_CATEGORIES_ORDERED = QT_TRANSLATE_NOOP("CategoryConversion", "Categories should be ordered")
 TR_STRICT_MODE = QT_TRANSLATE_NOOP("CategoryConversion", "Strict mode (unknown values → NA)")
+TR_UNABLE_TO_OPEN_LINK = QT_TRANSLATE_NOOP("CategoryConversion", "Unable to open link")
+TR_MANUAL_OPEN_FAILED = QT_TRANSLATE_NOOP("CategoryConversion", "The user manual could not be opened.\n\n{url}")
 
 
 def _tr(text: str) -> str:
@@ -58,8 +63,21 @@ def prompt_category_conversion(
     default_order: CategoryOrderKey,
     default_ordered: bool,
     default_strict: bool,
+    dialogs: DialogService,
 ) -> CategoryConversionResult:
-    """Prompt the user for category conversion settings."""
+    """Prompt the user for category conversion settings.
+
+    Args:
+        parent: Parent widget.
+        title: Translated dialog title.
+        default_order: Initial category ordering.
+        default_ordered: Initial ordered-category flag.
+        default_strict: Initial strict-mode flag.
+        dialogs: Service for displaying browser-opening warnings.
+
+    Returns:
+        Selected options on OK, or unchanged defaults on Cancel.
+    """
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
 
@@ -123,7 +141,32 @@ def prompt_category_conversion(
     localize_dialog_buttons(buttons)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)
-    root.addWidget(buttons)
+
+    def open_help() -> None:
+        url = HelpTopic.CONVERT_TO_CATEGORIES.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            dialogs.warn(
+                dlg,
+                _tr(TR_UNABLE_TO_OPEN_LINK),
+                translate_fmt("CategoryConversion", TR_MANUAL_OPEN_FAILED, url=url),
+            )
+
+    help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, dlg)
+    localize_dialog_buttons(help_buttons)
+    help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+    if help_button is None:
+        message = "Category conversion help button has not been created."
+        raise RuntimeError(message)
+    help_button.setAutoDefault(False)
+    help_buttons.helpRequested.connect(open_help)
+    button_row = QHBoxLayout()
+    button_row.addWidget(help_buttons)
+    button_row.addStretch(1)
+    button_row.addWidget(buttons)
+    root.addLayout(button_row)
+    help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), dlg)
+    help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+    help_shortcut.activated.connect(open_help)
 
     apply_dialog_window_hints(dlg, min_width=500)
 
