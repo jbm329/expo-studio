@@ -15,6 +15,7 @@ class HelpTopic(StrEnum):
     HOME = ""
     WORKBENCH_LAYOUT = "workbench/#window-layout"
     GENERAL_SETTINGS = "settings/general-settings/"
+    LOG_SETTINGS = "settings/log-settings/"
 
     @property
     def url(self) -> str:

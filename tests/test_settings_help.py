@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import QApplication, QDialogButtonBox, QMainWindow, QPushBu
 
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings import settings_editor
-from expo_jbm329.app.settings.config_store import load_settings
+from expo_jbm329.app.settings.config_store import load_settings, read_log_config
+from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
 from expo_jbm329.app.settings.settings_editor import SettingsEditor
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
@@ -44,7 +45,23 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
     )
 
 
-def _help_button(dialog: SettingsEditor) -> QPushButton:
+@pytest.fixture(params=[HelpTopic.GENERAL_SETTINGS, HelpTopic.LOG_SETTINGS], ids=["general", "log"])
+def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
+    topic = request.param
+    assert isinstance(topic, HelpTopic)
+    return topic
+
+
+def _dialog_for_topic(
+    topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None
+) -> SettingsEditor | LogConfigEditor:
+    if topic is HelpTopic.LOG_SETTINGS:
+        return LogConfigEditor(parent=parent, dialogs=dialogs)
+    assert topic is HelpTopic.GENERAL_SETTINGS
+    return _settings_dialog(dialogs, parent)
+
+
+def _help_button(dialog: SettingsEditor | LogConfigEditor) -> QPushButton:
     boxes = dialog.findChildren(QDialogButtonBox)
     assert len(boxes) == 1
     button = boxes[0].button(QDialogButtonBox.StandardButton.Help)
@@ -53,11 +70,12 @@ def _help_button(dialog: SettingsEditor) -> QPushButton:
     return button
 
 
-def _press_f1(app: QApplication, dialog: SettingsEditor) -> None:
-    dialog.txt_documents_dir.setFocus()
+def _press_f1(app: QApplication, dialog: SettingsEditor | LogConfigEditor) -> None:
+    focus_widget = dialog.txt_documents_dir if isinstance(dialog, SettingsEditor) else dialog.cb_logger_level
+    focus_widget.setFocus()
     app.processEvents()
     for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
-        app.sendEvent(dialog.txt_documents_dir, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+        app.sendEvent(focus_widget, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
 
 
 def test_standard_help_button_localizes_in_every_language(help_language: str) -> None:
@@ -70,7 +88,7 @@ def test_standard_help_button_localizes_in_every_language(help_language: str) ->
 
 @pytest.mark.parametrize("opened", [True, False])
 def test_settings_help_button_and_f1_preserve_edits(
-    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str, opened: bool
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str, help_topic: HelpTopic, opened: bool
 ) -> None:
     urls: list[str] = []
 
@@ -80,9 +98,12 @@ def test_settings_help_button_and_f1_preserve_edits(
 
     monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
     dialogs = MagicMock(spec=DialogService)
-    dialog = _settings_dialog(dialogs)
-    persisted = load_settings()
-    dialog.spin_undo_limit.setValue(37)
+    dialog = _dialog_for_topic(help_topic, dialogs)
+    persisted = load_settings() if isinstance(dialog, SettingsEditor) else read_log_config()
+    if isinstance(dialog, SettingsEditor):
+        dialog.spin_undo_limit.setValue(37)
+    else:
+        dialog.spin_file_backup.setValue(37)
     try:
         dialog.show()
         dialog.activateWindow()
@@ -100,12 +121,16 @@ def test_settings_help_button_and_f1_preserve_edits(
         help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
         assert all(button.mapTo(dialog, button.rect().topLeft()).x() > help_left for button in action_buttons)
         help_button.click()
-        assert urls == [HelpTopic.GENERAL_SETTINGS.url]
+        assert urls == [help_topic.url]
         _press_f1(qt_app, dialog)
-        assert urls == [HelpTopic.GENERAL_SETTINGS.url] * 2
+        assert urls == [help_topic.url] * 2
         assert dialog.isVisible()
-        assert dialog.spin_undo_limit.value() == 37
-        assert load_settings() == persisted
+        if isinstance(dialog, SettingsEditor):
+            assert dialog.spin_undo_limit.value() == 37
+            assert load_settings() == persisted
+        else:
+            assert dialog.spin_file_backup.value() == 37
+            assert read_log_config() == persisted
         dialogs.info.assert_not_called()
         dialogs.critical.assert_not_called()
         if opened:
@@ -115,7 +140,7 @@ def test_settings_help_button_and_f1_preserve_edits(
             dialogs.warn.assert_called_with(
                 dialog,
                 dialog.tr("Unable to open link"),
-                dialog.tr("The user manual could not be opened.\n\n{url}").format(url=HelpTopic.GENERAL_SETTINGS.url),
+                dialog.tr("The user manual could not be opened.\n\n{url}").format(url=help_topic.url),
             )
             if help_language != "en":
                 assert dialog.tr("Unable to open link") != "Unable to open link"
@@ -127,7 +152,7 @@ def test_settings_help_button_and_f1_preserve_edits(
 
 
 def test_settings_f1_does_not_trigger_parent_manual_action(
-    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_topic: HelpTopic
 ) -> None:
     opener = MagicMock(return_value=True)
     monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", opener)
@@ -155,7 +180,7 @@ def test_settings_f1_does_not_trigger_parent_manual_action(
         show_about_dialog=noop,
         open_user_manual=homepage,
     )
-    dialog = _settings_dialog(MagicMock(spec=DialogService), parent)
+    dialog = _dialog_for_topic(help_topic, MagicMock(spec=DialogService), parent)
     try:
         parent.show()
         dialog.show()
@@ -163,7 +188,7 @@ def test_settings_f1_does_not_trigger_parent_manual_action(
         qt_app.processEvents()
         _press_f1(qt_app, dialog)
         opener.assert_called_once()
-        assert opener.call_args.args[0].toString() == HelpTopic.GENERAL_SETTINGS.url
+        assert opener.call_args.args[0].toString() == help_topic.url
         homepage.assert_not_called()
         dialog.close()
         parent.activateWindow()

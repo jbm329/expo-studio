@@ -4,6 +4,11 @@ Select **Tools → Log settings…** in the [workbench window](../workbench/inde
 diagnostic logging. These settings control application log messages, not the
 contents of your datasets or analysis reports.
 
+Select **Help** at the bottom left of the dialog or press **F1** to open this
+Log settings page in your default browser. Help does not save your edits or
+close the dialog. If the browser cannot be opened, a warning includes the
+manual URL.
+
 ![Log settings dialog showing the log-file location, root and third-party levels, File and Console destinations, and application namespace loggers.](../assets/settings/log_settings.png)
 
 For general preferences and saved connections, see the
