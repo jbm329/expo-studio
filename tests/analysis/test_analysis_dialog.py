@@ -1396,10 +1396,20 @@ def test_report_candidates_across_categories_and_configurations_keep_the_fixed_s
     assert first_pca_entry.entry_id != second_pca_entry.entry_id
 
 
+def _analysis_action_buttons(dialog: AnalysisDialog) -> QDialogButtonBox:
+    boxes = [
+        box
+        for box in dialog.findChildren(QDialogButtonBox)
+        if box.button(QDialogButtonBox.StandardButton.Close) is not None
+    ]
+    assert len(boxes) == 1
+    return boxes[0]
+
+
 def test_dialog_has_a_localized_close_button():
     dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
-    button_box = dialog.findChild(QDialogButtonBox)
+    button_box = _analysis_action_buttons(dialog)
     assert button_box is not None
     close_button = button_box.button(QDialogButtonBox.StandardButton.Close)
     assert close_button is not None
@@ -1415,12 +1425,14 @@ def test_dialog_routes_close_button_through_the_shared_localization_helper(monke
 
     dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
 
-    assert calls == [dialog.findChild(QDialogButtonBox)]
+    assert len(calls) == 2
+    assert calls[0] is _analysis_action_buttons(dialog)
+    assert calls[1].button(QDialogButtonBox.StandardButton.Help) is not None
 
 
 def test_clicking_close_button_rejects_the_dialog():
     dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
-    button_box = dialog.findChild(QDialogButtonBox)
+    button_box = _analysis_action_buttons(dialog)
     close_button = button_box.button(QDialogButtonBox.StandardButton.Close)
 
     close_button.click()
@@ -2373,7 +2385,7 @@ def test_footer_has_no_export_explanation():
 @pytest.mark.parametrize("category", list(AnalysisCategory))
 def test_analysis_actions_share_a_compact_right_aligned_footer(category):
     dialog = AnalysisDialog(parent=None, source_dataset=_make_datasets()[0])
-    buttons = dialog.findChild(QDialogButtonBox)
+    buttons = _analysis_action_buttons(dialog)
     assert buttons is not None
     close = buttons.button(QDialogButtonBox.StandardButton.Close)
     assert close is not None

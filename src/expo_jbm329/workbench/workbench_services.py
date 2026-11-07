@@ -523,6 +523,7 @@ class WorkbenchServices:
             get_df_for_tab=results.get_df_by_title,
             set_status=ui.set_status,
             logger=app.log_ui,
+            dialogs=app.dialogs,
         )
         results.set_concat_controller(concat)
 

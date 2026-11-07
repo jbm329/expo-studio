@@ -189,72 +189,86 @@
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="219" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="242" />
         <source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Avancerad analys — {dataset} ({rows} rader × {columns} kolumner)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="284" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="310" />
         <source>Analysis</source>
         <translation>Analys</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="297" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="323" />
         <source>Reports(0)</source>
         <translation>Rapporter(0)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="796" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="593" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="590" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="822" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="619" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
         <source>Add to report</source>
         <translation>Lägg till i rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="598" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="642" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="624" />
         <source>Replace report result</source>
         <translation>Ersätt rapportresultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="618" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="644" />
         <source>Update report result</source>
         <translation>Uppdatera rapportresultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="621" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="647" />
         <source>Remove from report</source>
         <translation>Ta bort från rapporten</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Replace in report</source>
         <translation>Ersätt i rapporten</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Update result</source>
         <translation>Uppdatera resultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="757" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="783" />
         <source>Reports({count})</source>
         <translation>Rapporter({count})</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="762" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="788" />
         <source>Result</source>
         <translation>Resultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="776" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="802" />
         <source>Configuration</source>
         <translation>Konfiguration</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="793" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="819" />
         <source>Export</source>
         <translation>Exportera</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="863" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="864" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../services/analysis/presentation.py" line="654" />
@@ -1387,34 +1401,48 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>CategoryConversion</name>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="38" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="41" />
         <source>Category order:</source>
         <translation>Ordna kategorier:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="39" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="42" />
         <source>Alphabetically</source>
         <translation>Alfabetiskt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="40" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="43" />
         <source>By frequency</source>
         <translation>Efter frekvens</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="41" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="44" />
         <source>Preserve existing order</source>
         <translation>Bevara nuvarande ordning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="42" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="45" />
         <source>Categories should be ordered</source>
         <translation>Kategorier ska ordnas</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="43" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="46" />
         <source>Strict mode (unknown values → NA)</source>
         <translation>Strikt läge (okända värden → NA)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="47" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="48" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
     </message>
 </context><context>
     <name>CategoryRename</name>
@@ -1431,44 +1459,58 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>CategorySetOrder</name>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="39" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="42" />
         <source>Order categories (drag and drop):</source>
         <translation>Ordna kategorier (dra och släpp):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="40" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="43" />
         <source>Up</source>
         <translation>Upp</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="41" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="44" />
         <source>Down</source>
         <translation>Ner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="42" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="45" />
         <source>Sort alphabetically</source>
         <translation>Sortera alfabetiskt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="43" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="46" />
         <source>Restore original order</source>
         <translation>Återställ ursprungsordning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="44" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="47" />
         <source>Ordered category</source>
         <translation>Ordnad kategori</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="45" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="48" />
         <source>Strict mode (unknown values → NA)</source>
         <translation>Strikt läge (okända värden → NA)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="46" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="49" />
         <source>Add missing values last</source>
         <translation>Lägg till saknade värden sist</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/order.py" line="50" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/order.py" line="51" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
     </message>
 </context><context>
     <name>ChiSquareConfigWidget</name>
@@ -2189,88 +2231,116 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConcatController</name>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="41" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
         <source>concatenate datasets</source>
         <translation>konkatenera dataset</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="42" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
         <source>Concatenating datasets: {left} + {right}</source>
         <translation>Konkatenerar dataset: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
         <source>Concatenated datasets: {left} + {right}</source>
         <translation>Konkatenerade dataset: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
         <source>Concatenation cancelled</source>
         <translation>Konkatenering avbröts</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
         <source>Concatenated data</source>
         <translation>Konkatenerad data</translation>
     </message>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="90" />
         <source>Concatenate datasets</source>
         <translation>Konkatenera dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="94" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="102" />
         <source>First dataset</source>
         <translation>Första dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="121" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="105" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="113" />
         <source>Dataset:</source>
         <translation>Dataset:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="122" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="106" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="114" />
         <source>Columns:</source>
         <translation>Kolumner:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="111" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="119" />
         <source>Second dataset</source>
         <translation>Andra dataset</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="180" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="181" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
     </message>
 </context><context>
     <name>ConditionDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="160" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="174" />
         <source>Build condition</source>
         <translation>Skapa villkor</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="169" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="183" />
         <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
         <translation>Texten har redigerats manuellt. Verkställ ersätter den. Avbryt behåller originaltexten.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="189" />
         <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
         <translation>Tvetydiga kolumnnamn är inte tillgängliga. Byt namn på dem innan du skapar villkor.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="196" />
         <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
         <translation>Dra ett handtag till en regel för att skapa en AND-grupp. Släpp på en grupp för att lägga till i den; använd radkanterna för att ändra ordning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="209" />
         <source>Apply</source>
         <translation>Verkställ</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="291" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="248" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="249" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="330" />
         <source>Complete every rule before applying.</source>
         <translation>Fyll i alla regler innan du verkställer.</translation>
     </message>
@@ -2343,7 +2413,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Oavslutat citerat v?rde. Kontrollera om ett enkelt citattecken saknas eller ?r felplacerat tidigare i villkoret. Skriv '' f?r en apostrof.</translation>
+        <translation>Oavslutat citerat värde. Kontrollera om ett enkelt citattecken saknas eller är felplacerat tidigare i villkoret. Skriv '' för en apostrof.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2368,7 +2438,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="156" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
-        <translation>IN och NOT IN kr?ver en icke-tom, kommaseparerad lista inom parenteser.</translation>
+        <translation>IN och NOT IN kräver en icke-tom, kommaseparerad lista inom parenteser.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="157" />
@@ -2378,7 +2448,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
+        <translation>Förväntade AND, OR eller en avslutande parentes ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2402,11 +2472,11 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">F?rv?ntade ett tal eller ett v?rde inom enkla citattecken, till exempel 18 eller '18'.</translation>
+        <translation type="vanished">Förväntade ett tal eller ett värde inom enkla citattecken, till exempel 18 eller '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">F?rv?ntade True, False eller ett v?rde inom enkla citattecken.</translation>
+        <translation type="vanished">Förväntade True, False eller ett värde inom enkla citattecken.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -2423,77 +2493,77 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="50" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="54" />
         <source>Select column</source>
         <translation>Välj kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="62" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="66" />
         <source>Ambiguous column name. Rename this column first.</source>
         <translation>Tvetydigt kolumnnamn. Byt namn på kolumnen först.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="64" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
         <source>Column</source>
         <translation>Kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
         <source>Equal to</source>
         <translation>Lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
         <source>Not equal to</source>
         <translation>Inte lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
         <source>In</source>
         <translation>Ingår i</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
         <source>Not in</source>
         <translation>Ingår inte i</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
         <source>Greater than</source>
         <translation>Större än</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
         <source>Greater than or equal to</source>
         <translation>Större än eller lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="77" />
         <source>Less than</source>
         <translation>Mindre än</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="78" />
         <source>Less than or equal to</source>
         <translation>Mindre än eller lika med</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="79" />
         <source>Is missing</source>
         <translation>Saknas</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
         <source>Is not missing</source>
         <translation>Saknas inte</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="84" />
         <source>Operator</source>
         <translation>Operator</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="86" />
         <source>Remove rule</source>
         <translation>Ta bort regel</translation>
     </message>
@@ -2605,240 +2675,254 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>ConnectionEditor</name>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="160" />
+        <location filename="../../app/settings/connection_editor.py" line="163" />
         <source>Database connections</source>
         <translation>Databasanslutningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="184" />
+        <location filename="../../app/settings/connection_editor.py" line="187" />
         <source>SQL Server</source>
         <translation>SQL Server</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="185" />
+        <location filename="../../app/settings/connection_editor.py" line="188" />
         <source>PostgreSQL</source>
         <translation>PostgreSQL</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="186" />
+        <location filename="../../app/settings/connection_editor.py" line="189" />
         <source>MySQL / MariaDB</source>
         <translation>MySQL / MariaDB</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="187" />
+        <location filename="../../app/settings/connection_editor.py" line="190" />
         <source>Oracle</source>
         <translation>Oracle</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="188" />
+        <location filename="../../app/settings/connection_editor.py" line="191" />
         <source>SQLite (file-based)</source>
         <translation>SQLite (fil-baserad)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="189" />
+        <location filename="../../app/settings/connection_editor.py" line="192" />
         <source>DuckDB (file-based)</source>
         <translation>DuckDB (fil-baserad)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="190" />
+        <location filename="../../app/settings/connection_editor.py" line="193" />
         <source>Other</source>
         <translation>Annan</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="216" />
+        <location filename="../../app/settings/connection_editor.py" line="219" />
         <source>(No ODBC-drivers found)</source>
         <translation>(Inga ODBC-drivrutiner hittades)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="221" />
+        <location filename="../../app/settings/connection_editor.py" line="224" />
         <source>Use selected driver</source>
         <translation>Använd vald drivrutin</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="233" />
+        <location filename="../../app/settings/connection_editor.py" line="236" />
         <source>Browse…</source>
         <translation>Bläddra…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="237" />
+        <location filename="../../app/settings/connection_editor.py" line="240" />
         <source>Trusted Connection</source>
         <translation>Trusted Connection</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="251" />
+        <location filename="../../app/settings/connection_editor.py" line="254" />
         <source>Database:</source>
         <translation>Databas:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="252" />
+        <location filename="../../app/settings/connection_editor.py" line="255" />
         <source>Protocol:</source>
         <translation>Protokoll:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="254" />
+        <location filename="../../app/settings/connection_editor.py" line="257" />
         <source>System ODBC:</source>
         <translation>System ODBC:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="256" />
+        <location filename="../../app/settings/connection_editor.py" line="259" />
         <source>ODBC driver:</source>
         <translation>ODBC drivrutin:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="258" />
+        <location filename="../../app/settings/connection_editor.py" line="261" />
         <source>Server:</source>
         <translation>Server:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="259" />
+        <location filename="../../app/settings/connection_editor.py" line="262" />
         <source>Port:</source>
         <translation>Port:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="260" />
+        <location filename="../../app/settings/connection_editor.py" line="263" />
         <source>Database / File:</source>
         <translation>Databas / Fil:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="263" />
+        <location filename="../../app/settings/connection_editor.py" line="266" />
         <source>User:</source>
         <translation>Användare:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="264" />
+        <location filename="../../app/settings/connection_editor.py" line="267" />
         <source>Password:</source>
         <translation>Lösenord:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="265" />
+        <location filename="../../app/settings/connection_editor.py" line="268" />
         <source>Trusted Connection:</source>
         <translation>Trusted Connection:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="267" />
+        <location filename="../../app/settings/connection_editor.py" line="270" />
         <source>DSN (optional):</source>
         <translation>DSN (valfritt):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="268" />
+        <location filename="../../app/settings/connection_editor.py" line="271" />
         <source>Extra (JSON):</source>
         <translation>Extra (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="271" />
+        <location filename="../../app/settings/connection_editor.py" line="274" />
         <source>Add</source>
         <translation>Lägg till</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="272" />
+        <location filename="../../app/settings/connection_editor.py" line="275" />
         <source>Test connection</source>
         <translation>Testa anslutning</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="705" />
-        <location filename="../../app/settings/connection_editor.py" line="273" />
+        <location filename="../../app/settings/connection_editor.py" line="731" />
+        <location filename="../../app/settings/connection_editor.py" line="276" />
         <source>Delete</source>
         <translation>Radera</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="274" />
+        <location filename="../../app/settings/connection_editor.py" line="277" />
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="275" />
+        <location filename="../../app/settings/connection_editor.py" line="278" />
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="291" />
+        <location filename="../../app/settings/connection_editor.py" line="294" />
         <source>Connections:</source>
         <translation>Anslutningar:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="484" />
+        <location filename="../../app/settings/connection_editor.py" line="326" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/connection_editor.py" line="327" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/connection_editor.py" line="510" />
         <source>Select DuckDB database file</source>
         <translation>Välj DuckDB-databasfil</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="485" />
+        <location filename="../../app/settings/connection_editor.py" line="511" />
         <source>DuckDB files (*.duckdb *.ddb *.db);;All files (*.*)</source>
         <translation>DuckDB-filer (*.duckdb *.ddb *.db);;Alla filer (*.*)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="487" />
+        <location filename="../../app/settings/connection_editor.py" line="513" />
         <source>Select SQLite database file</source>
         <translation>Välj SQLite databas fil</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="488" />
+        <location filename="../../app/settings/connection_editor.py" line="514" />
         <source>SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)</source>
         <translation>SQLite filer (*.db *.sqlite *.sqlite3);;Alla filer (*.*)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="792" />
-        <location filename="../../app/settings/connection_editor.py" line="649" />
+        <location filename="../../app/settings/connection_editor.py" line="818" />
+        <location filename="../../app/settings/connection_editor.py" line="675" />
         <source>Connection error</source>
         <translation>Anslutningen misslyckades</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="662" />
+        <location filename="../../app/settings/connection_editor.py" line="688" />
         <source>New connection</source>
         <translation>Ny anslutning</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="663" />
+        <location filename="../../app/settings/connection_editor.py" line="689" />
         <source>Name:</source>
         <translation>Namn:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="753" />
-        <location filename="../../app/settings/connection_editor.py" line="672" />
+        <location filename="../../app/settings/connection_editor.py" line="779" />
+        <location filename="../../app/settings/connection_editor.py" line="698" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="672" />
+        <location filename="../../app/settings/connection_editor.py" line="698" />
         <source>There is already a connection with that name.</source>
         <translation>Det finns redan en anslutning med det namnet.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="706" />
+        <location filename="../../app/settings/connection_editor.py" line="732" />
         <source>Do you want to delete the connection '{name}'?</source>
         <translation>Vill du radera anslutningen '{name}'?</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="742" />
+        <location filename="../../app/settings/connection_editor.py" line="768" />
         <source>Saved</source>
         <translation>Sparat</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="742" />
+        <location filename="../../app/settings/connection_editor.py" line="768" />
         <source>Changes saved successfully.</source>
         <translation>Ändringarna sparades.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="753" />
+        <location filename="../../app/settings/connection_editor.py" line="779" />
         <source>No connection selected.</source>
         <translation>Ingen ansluting är vald.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="781" />
+        <location filename="../../app/settings/connection_editor.py" line="807" />
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="781" />
+        <location filename="../../app/settings/connection_editor.py" line="807" />
         <source>Connection succeeded!</source>
         <translation>Anslutningen lyckades!</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="784" />
+        <location filename="../../app/settings/connection_editor.py" line="810" />
         <source>Unknown error.</source>
         <translation>Okänt fel.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="793" />
+        <location filename="../../app/settings/connection_editor.py" line="819" />
         <source>Could not connect.
 
 {error}</source>
@@ -3767,28 +3851,42 @@ Vänligen se loggfil för mer information.</translation>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="62" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="70" />
         <source>Derived column</source>
         <translation>Beräknad kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="91" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="102" />
         <source>New column name</source>
         <translation>Namn på ny kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="92" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="103" />
         <source>Column name:</source>
         <translation>Kolumnnamn:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="105" />
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="103" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="116" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="114" />
         <source>f(x):</source>
         <translation>f(x):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="177" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="178" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="207" />
         <source>Enter column name and formula.</source>
         <translation>Ange namn och formel.</translation>
     </message>
@@ -4149,25 +4247,25 @@ Fortsätt?</translation>
 </context><context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="../../app/expo_studio.py" line="528" />
+        <location filename="../../app/expo_studio.py" line="529" />
         <location filename="../../app/expo_studio.py" line="117" />
         <source>Expo studio</source>
         <translation>Expo studio</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="531" />
+        <location filename="../../app/expo_studio.py" line="532" />
         <location filename="../../app/expo_studio.py" line="174" />
         <source>Database connections</source>
         <translation>Databasanslutningar</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="532" />
+        <location filename="../../app/expo_studio.py" line="533" />
         <location filename="../../app/expo_studio.py" line="197" />
         <source>Files</source>
         <translation>Filer</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="533" />
+        <location filename="../../app/expo_studio.py" line="534" />
         <location filename="../../app/expo_studio.py" line="217" />
         <source>REST connections</source>
         <translation>REST anslutningar</translation>
@@ -4183,36 +4281,36 @@ Fortsätt?</translation>
         <translation>Inställningar omladdade.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="504" />
+        <location filename="../../app/expo_studio.py" line="505" />
         <source>Unable to open link</source>
         <translation>Det gick inte att öppna länken</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="505" />
+        <location filename="../../app/expo_studio.py" line="506" />
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation>Anv?ndarhandboken kunde inte ?ppnas.
+        <translation>Användarhandboken kunde inte öppnas.
 
 {url}</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="573" />
+        <location filename="../../app/expo_studio.py" line="574" />
         <source>No active jobs to cancel.</source>
         <translation>Inga aktiva jobb att avbryta.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="589" />
+        <location filename="../../app/expo_studio.py" line="590" />
         <source>Cancelling active jobs…</source>
         <translation>Avbryter aktiva jobb…</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="622" />
+        <location filename="../../app/expo_studio.py" line="623" />
         <source>Confirm exit</source>
         <translation>Bekräfta avslut</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="623" />
+        <location filename="../../app/expo_studio.py" line="624" />
         <source>Do you want to quit the application?</source>
         <translation>Vill du avsluta applikationen?</translation>
     </message>
@@ -5471,184 +5569,226 @@ Sparad till:
 </context><context>
     <name>JoinDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="99" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="108" />
         <source>Join datasets</source>
         <translation>Join dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="137" />
         <source>Left dataset</source>
         <translation>Vänster dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="138" />
         <source>Right dataset</source>
         <translation>Höger dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="164" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="173" />
         <source>Join type</source>
         <translation>Jointyp</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="185" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="194" />
         <source>Preview</source>
         <translation>Förhandsgranska</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="186" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="195" />
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="187" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="196" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="228" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="240" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="241" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="260" />
         <source>Select all</source>
         <translation>Välj alla</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="231" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="263" />
         <source>Dataset:</source>
         <translation>Dataset:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="232" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="264" />
         <source>Key:</source>
         <translation>Nyckel:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="233" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="265" />
         <source>Columns to include:</source>
         <translation>Kolumner att ta med:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="341" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="373" />
         <source>Incompatible types</source>
         <translation>Inkompatibla datatyper</translation>
     </message>
 </context><context>
     <name>JoinPreviewDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="51" />
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="60" />
         <source>Join preview</source>
         <translation>Join förhandsgranskning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="96" />
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="114" />
         <source>Close</source>
         <translation>Stäng</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="138" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="139" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
     </message>
 </context><context>
     <name>LogConfigEditor</name>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="108" />
+        <location filename="../../app/settings/log_config_editor.py" line="111" />
         <source>Log settings</source>
         <translation>Logginställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="167" />
+        <location filename="../../app/settings/log_config_editor.py" line="170" />
         <source>Log file:</source>
         <translation>Loggfil:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="172" />
+        <location filename="../../app/settings/log_config_editor.py" line="175" />
         <source>Root log level:</source>
         <translation>Root loggnivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="177" />
+        <location filename="../../app/settings/log_config_editor.py" line="180" />
         <source>Third party log level:</source>
         <translation>Tredje part loggnivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="198" />
+        <location filename="../../app/settings/log_config_editor.py" line="201" />
         <source>File</source>
         <translation>Fil</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="266" />
-        <location filename="../../app/settings/log_config_editor.py" line="234" />
-        <location filename="../../app/settings/log_config_editor.py" line="201" />
+        <location filename="../../app/settings/log_config_editor.py" line="269" />
+        <location filename="../../app/settings/log_config_editor.py" line="237" />
+        <location filename="../../app/settings/log_config_editor.py" line="204" />
         <source>Activate</source>
         <translation>Aktivera</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="284" />
-        <location filename="../../app/settings/log_config_editor.py" line="239" />
-        <location filename="../../app/settings/log_config_editor.py" line="206" />
+        <location filename="../../app/settings/log_config_editor.py" line="287" />
+        <location filename="../../app/settings/log_config_editor.py" line="242" />
+        <location filename="../../app/settings/log_config_editor.py" line="209" />
         <source>Level:</source>
         <translation>Nivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="243" />
-        <location filename="../../app/settings/log_config_editor.py" line="210" />
+        <location filename="../../app/settings/log_config_editor.py" line="246" />
+        <location filename="../../app/settings/log_config_editor.py" line="213" />
         <source>Formatting:</source>
         <translation>Formatering:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="215" />
+        <location filename="../../app/settings/log_config_editor.py" line="218" />
         <source>Max size (bytes):</source>
         <translation>Max storlek (bytes):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="219" />
+        <location filename="../../app/settings/log_config_editor.py" line="222" />
         <source>Backup:</source>
         <translation>Backup:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="231" />
+        <location filename="../../app/settings/log_config_editor.py" line="234" />
         <source>Console</source>
         <translation>Konsol</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="258" />
+        <location filename="../../app/settings/log_config_editor.py" line="261" />
         <source>Namespace loggers</source>
         <translation>Namngivna loggare</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="409" />
-        <location filename="../../app/settings/log_config_editor.py" line="302" />
+        <location filename="../../app/settings/log_config_editor.py" line="435" />
+        <location filename="../../app/settings/log_config_editor.py" line="318" />
         <source>Reset defaults</source>
         <translation>Återställ standard</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="304" />
+        <location filename="../../app/settings/log_config_editor.py" line="320" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="306" />
+        <location filename="../../app/settings/log_config_editor.py" line="322" />
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="410" />
+        <location filename="../../app/settings/log_config_editor.py" line="338" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="339" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="436" />
         <source>Log configuration has been reset to default values.</source>
         <translation>Logginställningar har återställts till standardvärden</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="475" />
+        <location filename="../../app/settings/log_config_editor.py" line="501" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="476" />
+        <location filename="../../app/settings/log_config_editor.py" line="502" />
         <source>Could not save log configuration:
 {error}</source>
         <translation>Kunde inte spara logginställningar:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="481" />
+        <location filename="../../app/settings/log_config_editor.py" line="507" />
         <source>Log configuration saved</source>
         <translation>Logginställningar sparade</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="481" />
+        <location filename="../../app/settings/log_config_editor.py" line="507" />
         <source>Log configuration has been saved.</source>
         <translation>Logginställningarna har sparats</translation>
     </message>
@@ -5757,7 +5897,7 @@ Sparad till:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation>Anv?ndarhandbok</translation>
+        <translation>Användarhandbok</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />
@@ -5942,7 +6082,7 @@ Sparad till:
         <translation>Rad</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1338" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1339" />
         <location filename="../../services/analysis/report.py" line="2381" />
         <location filename="../../services/analysis/report.py" line="1591" />
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="206" />
@@ -6182,7 +6322,7 @@ Sparad till:
         <translation>Ingen spridning</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1340" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
         <location filename="../../services/analysis/report.py" line="2384" />
         <location filename="../../services/analysis/report.py" line="1594" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="335" />
@@ -6190,7 +6330,7 @@ Sparad till:
         <translation>Avstånd förbi gränsen</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
         <location filename="../../services/analysis/report.py" line="2385" />
         <location filename="../../services/analysis/report.py" line="1595" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="337" />
@@ -6198,7 +6338,7 @@ Sparad till:
         <translation>z</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1343" />
         <location filename="../../services/analysis/report.py" line="2386" />
         <location filename="../../services/analysis/report.py" line="1596" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="339" />
@@ -6970,6 +7110,11 @@ Sparad till:
         <location filename="../../gui/dialogs/service/common/localization.py" line="12" />
         <source>Close</source>
         <translation>Stäng</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/common/localization.py" line="13" />
+        <source>Help</source>
+        <translation>Hjälp</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/service/prompts/choice.py" line="31" />
@@ -7974,151 +8119,165 @@ Tips: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="95" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="102" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Omforma — {dataset} ({rows} rader × {columns} kolumner)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="106" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="113" />
         <source>Preview uses the full dataset. Apply creates a new result dataset.</source>
         <translation>Förhandsvisningen använder hela datasetet. Verkställ skapar ett nytt resultatdataset.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="112" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="119" />
         <source>Dimensions</source>
         <translation>Dimensioner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="116" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="123" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="122" />
         <source>Search dimensions</source>
         <translation>Sök dimensioner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="142" />
         <source>Metrics</source>
         <translation>Mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="138" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="145" />
         <source>SUM, AVG and MEDIAN accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
         <translation>SUM, AVG och MEDIAN accepterar endast heltals- och flyttalskolumner. MIN och MAX accepterar även datum- och tidskolumner. COUNT och COUNT DISTINCT accepterar alla kolumner. Om funktionen ändras rensas ett inkompatibelt val av källkolumn.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="154" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="161" />
         <source>Metric name</source>
         <translation>Måttnamn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="246" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="155" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="276" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="162" />
         <source>Function</source>
         <translation>Funktion</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="156" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="163" />
         <source>Source column</source>
         <translation>Källkolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="157" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="164" />
         <source>Condition (optional)</source>
         <translation>Villkor (valfritt)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="172" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="179" />
         <source>Add metric</source>
         <translation>Lägg till mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="180" />
         <source>Remove selected metrics</source>
         <translation>Ta bort markerade mått</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="189" />
         <source>Preview (5 rows)</source>
         <translation>Förhandsvisning (5 rader)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="186" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="193" />
         <source>Configure metrics and press Preview to calculate up to five output rows.</source>
         <translation>Konfigurera mått och tryck på Förhandsvisa för att beräkna upp till fem utdatarader.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="201" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="208" />
         <source>Preview</source>
         <translation>Förhandsvisa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="298" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="256" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="257" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="328" />
         <source>Preview is out of date. Press Preview to recalculate.</source>
         <translation>Förhandsvisningen är inaktuell. Tryck på Förhandsvisa för att beräkna igen.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="366" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="396" />
         <source>Calculating preview...</source>
         <translation>Beräknar förhandsvisning...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="379" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="409" />
         <source>Showing {shown} of {total} output rows.</source>
         <translation>Visar {shown} av {total} utdatarader.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="394" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="424" />
         <source>Complete every metric and correct condition errors before previewing.</source>
         <translation>Fyll i alla mått och rätta villkorsfelen före förhandsvisning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="455" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="397" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="485" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="427" />
         <source>Output column names must be unique across dimensions and metrics.</source>
         <translation>Utdatakolumnernas namn måste vara unika bland dimensioner och mått.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="398" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="428" />
         <source>A condition value cannot be interpreted for column '{name}'.</source>
         <translation>Ett villkorsvärde kan inte tolkas för kolumnen '{name}'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="399" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="429" />
         <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
         <translation>Kan inte jämföra eller aggregera valda data för '{name}'. Kontrollera dess värden och typer.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="448" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="478" />
         <source>Correct condition errors before applying.</source>
         <translation>Rätta villkorsfelen innan du tillämpar.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="457" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="450" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="487" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="480" />
         <source>Select an ordering column for every FIRST/LAST metric.</source>
         <translation>Välj en sorteringskolumn för varje FIRST/LAST-mått.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="452" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="482" />
         <source>Apply creates a new result dataset.</source>
         <translation>Verkställ skapar ett nytt resultatdataset.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="459" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="489" />
         <source>Calculate up to five output rows from the full dataset.</source>
         <translation>Beräkna upp till fem utdatarader från hela datasetet.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="483" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="513" />
         <source>Select column</source>
         <translation>Välj kolumn</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="516" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="546" />
         <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
         <translation>FIRST/LAST tillåter valfri värdekolumn. Sortera efter en numerisk kolumn eller en datum/tid-kolumn: FIRST väljer det lägsta/tidigaste, LAST det högsta/senaste. Villkor filtrerar rader före sortering. Saknade sorteringsvärden utesluts; valda saknade värden behålls. Vid lika sorteringsvärden används källans radordning.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="523" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="553" />
         <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
         <translation>FIRST/LAST kräver en numerisk sorteringskolumn eller en datum/tid-kolumn. Detta dataset saknar en sådan. Konvertera sorteringskolumnens datatyp före omformning, eller välj en annan funktion.</translation>
     </message>
@@ -8270,180 +8429,194 @@ Tips: {error_hint}</translation>
 </context><context>
     <name>RestConnectionEditor</name>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="143" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="146" />
         <source>REST API connections</source>
         <translation>REST API anslutningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="165" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="168" />
         <source>SCB query builder…</source>
         <translation>SCB frågeguide…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="223" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="226" />
         <source>Wizards</source>
         <translation>Guider</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="227" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
         <source>General</source>
         <translation>Allmänt</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="228" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="231" />
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="229" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
         <source>Method:</source>
         <translation>Metod:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
         <source>Response path:</source>
         <translation>Svarssökväg:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
         <source>Request</source>
         <translation>Anrop(Request)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="236" />
         <source>JSON body:</source>
         <translation>JSON body:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="234" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
         <source>Headers (JSON):</source>
         <translation>Headers (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="238" />
         <source>Query params (JSON):</source>
         <translation>Query params (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
         <source>Authentication</source>
         <translation>Autentisering</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="243" />
         <source>Pagination</source>
         <translation>Paginering</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="247" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
         <source>Add</source>
         <translation>Lägg till</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="248" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
         <source>Test</source>
         <translation>Testa</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="995" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="253" />
         <source>Delete</source>
         <translation>Radera</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="254" />
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="252" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="255" />
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="270" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="273" />
         <source>Connections:</source>
         <translation>Anslutningar:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="763" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="497" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="321" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="322" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="789" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="523" />
         <source>JSON body</source>
         <translation>JSON body</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="828" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="522" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="854" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="548" />
         <source>Page-number pagination requires a page parameter name</source>
         <translation>Sidnummerbaserad paginering kräver ett sidparameternamn</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="832" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="772" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="528" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="858" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="554" />
         <source>Start page</source>
         <translation>Startsida</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="833" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="773" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="538" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="859" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="799" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="564" />
         <source>Page size</source>
         <translation>Sidstorlek</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="834" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="774" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="544" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="860" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="800" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="570" />
         <source>Max pages</source>
         <translation>Max antal sidor</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="812" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="553" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="838" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="579" />
         <source>Headers</source>
         <translation>Headers</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="813" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="560" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="839" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="586" />
         <source>Query params</source>
         <translation>Query params</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="621" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="647" />
         <source>{field} must contain valid JSON.</source>
         <translation>{field} måste innehålla giltig JSON.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="624" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="650" />
         <source>{field} must be a JSON object.</source>
         <translation>{field} måste vara ett JSON objekt.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="741" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="728" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="767" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="754" />
         <source>{field} must be an integer</source>
         <translation>{field} måste vara en siffra</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="743" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="730" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="769" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="756" />
         <source>{field} must be &gt;= 1</source>
         <translation>{field} måste vara &gt;= 1</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="779" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="805" />
         <source>Validation request</source>
         <translation>Validation request</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="791" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="817" />
         <source>POST requests require a valid JSON body</source>
         <translation>POST‑anrop kräver en giltig JSON‑body</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="824" />
         <source>Invalid response path.
 Use dot-separated keys or numeric indices.
 Examples:
@@ -8460,37 +8633,37 @@ Exempel:
   results.0.values</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="873" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="899" />
         <source>New REST connection</source>
         <translation>Ny REST anslutning</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="874" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="900" />
         <source>Name:</source>
         <translation>Namn:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="884" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="885" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="911" />
         <source>A REST connection with that name already exists.</source>
         <translation>Det finns redan en REST anslutning med det namnet.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="936" />
         <source>Test request</source>
         <translation>Testförfrågan</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="938" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="964" />
         <source>Invalid response path</source>
         <translation>Ogiltig svarssökväg</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="939" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="965" />
         <source>The response path could not be applied to the API response.
 
 {error}</source>
@@ -8499,12 +8672,12 @@ Exempel:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="948" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="974" />
         <source>none</source>
         <translation>ingen</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="955" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="981" />
         <source>API test successful.
 
 Returned {rows} rows and {cols} columns.
@@ -8517,27 +8690,27 @@ Kolumner: {columns}.
 Tid: {sec:.2f}s{sample}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="966" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="992" />
         <source>Test successful</source>
         <translation>Test lyckades</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="982" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1008" />
         <source>Test failed</source>
         <translation>Test misslyckades</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="996" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
         <source>Do you want to delete '{name}'?</source>
         <translation>Vill du ta bort '{name}'?</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1047" />
         <source>Saved</source>
         <translation>Sparat</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1048" />
         <source>REST connection saved successfully.</source>
         <translation>REST anslutningen sparades.</translation>
     </message>
@@ -10201,129 +10374,143 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ScbBrowserDialog</name>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="52" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="56" />
         <source>SCB query builder</source>
         <translation>SCB frågeguide</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="58" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="62" />
         <source>Table:</source>
         <translation>Tabell:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="61" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="65" />
         <source>Search table...</source>
         <translation>Sök tabell...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="79" />
         <source>Language:</source>
         <translation>Språk:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="79" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="83" />
         <source>Swedish</source>
         <translation>Svenska</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="80" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="84" />
         <source>English</source>
         <translation>Engelska</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="382" />
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="241" />
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="83" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="409" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="268" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="87" />
         <source>No table selected</source>
         <translation>Ingen tabell vald</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="99" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="103" />
         <source>Selected cells: 0 / {0}</source>
         <translation>Valda celler: 0 / {0}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="105" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="109" />
         <source>Select all</source>
         <translation>Välj alla</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="107" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="111" />
         <source>Clear</source>
         <translation>Rensa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="110" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="114" />
         <source>Apply to REST connection</source>
         <translation>Lägg till REST anslutning</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="112" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="116" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="145" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="161" />
         <source>Variables</source>
         <translation>Variabler</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="147" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="163" />
         <source>Variable values</source>
         <translation>Variabelvärden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="188" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="202" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="203" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="215" />
         <source>SCB browser error</source>
         <translation>SCB browser fel</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="223" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="250" />
         <source>No matching tables found</source>
         <translation>Inga matchande tabeller hittades</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="259" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="286" />
         <source>Selected cells: {0} / {1}</source>
         <translation>Valda celler: {0} / {1}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="264" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="291" />
         <source>This selection exceeds the SCB limit.</source>
         <translation>Detta urval överskrider SCBs gräns.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="293" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="320" />
         <source>SCB metadata error</source>
         <translation>SCB metadata fel</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="383" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="410" />
         <source>Please select an SCB table first.</source>
         <translation>Vänligen välj en SCB tabell först.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="391" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="418" />
         <source>No metadata loaded</source>
         <translation>Ingen metadata är laddad</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="392" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="419" />
         <source>Please load a table before applying it.</source>
         <translation>Vänligen ladda en tabell innan den läggs till.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="406" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="433" />
         <source>No values selected</source>
         <translation>Inga värden valda</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="407" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="434" />
         <source>Select at least one value before applying the query.</source>
         <translation>Välj minst ett värde innan frågan läggs till.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="436" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="463" />
         <source>SCB query error</source>
         <translation>SCB fråga fel</translation>
     </message>
@@ -10391,189 +10578,203 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>SettingsEditor</name>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="97" />
+        <location filename="../../app/settings/settings_editor.py" line="100" />
         <source>Settings</source>
         <translation>Inställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="139" />
+        <location filename="../../app/settings/settings_editor.py" line="142" />
         <source>Basic settings</source>
         <translation>Grundinställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="145" />
+        <location filename="../../app/settings/settings_editor.py" line="148" />
         <source>Language:</source>
         <translation>Språk:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="158" />
+        <location filename="../../app/settings/settings_editor.py" line="161" />
         <source>GUI theme:</source>
         <translation>GUI tema:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="168" />
+        <location filename="../../app/settings/settings_editor.py" line="171" />
         <source>Highlighter theme:</source>
         <translation>Highlighter tema:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="181" />
+        <location filename="../../app/settings/settings_editor.py" line="184" />
         <source>Select directory…</source>
         <translation>Välj mapp:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="185" />
+        <location filename="../../app/settings/settings_editor.py" line="188" />
         <source>Documents directory:</source>
         <translation>Dokumentmapp:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="191" />
+        <location filename="../../app/settings/settings_editor.py" line="194" />
         <source>Max undo steps/tab:</source>
         <translation>Max ångra steg/flik:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="203" />
+        <location filename="../../app/settings/settings_editor.py" line="206" />
         <source>Max undo size (MB):</source>
         <translation>Max ångra storlek:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="224" />
+        <location filename="../../app/settings/settings_editor.py" line="227" />
         <source>CSV settings</source>
         <translation>CSV inställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="230" />
+        <location filename="../../app/settings/settings_editor.py" line="233" />
         <source>Read bit size (rows):</source>
         <translation>Läs bitstorlek (rader):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="235" />
+        <location filename="../../app/settings/settings_editor.py" line="238" />
         <source>Write bit size (rows):</source>
         <translation>Skriv bitstorlek (rader):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="239" />
+        <location filename="../../app/settings/settings_editor.py" line="242" />
         <source>Standard encoding:</source>
         <translation>Standardkodning:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="241" />
+        <location filename="../../app/settings/settings_editor.py" line="244" />
         <source>Identify delimiter automatically</source>
         <translation>Identifiera avgränsare automatiskt</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="243" />
+        <location filename="../../app/settings/settings_editor.py" line="246" />
         <source>When this is on the reader tries to guess the delimiter, ex. ',' ';' '\t' '|'.</source>
         <translation>När detta är på försöker läsaren gissa avgränsare, t.ex. ',' ';' '\t' '|'.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="249" />
+        <location filename="../../app/settings/settings_editor.py" line="252" />
         <source>Automatic</source>
         <translation>Automatisk</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="255" />
+        <location filename="../../app/settings/settings_editor.py" line="258" />
         <source>Standard delimiter used when sniff is disabled or as fallback on failure.</source>
         <translation>Standardavgränsare när ej automatisk eller fallback</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="258" />
+        <location filename="../../app/settings/settings_editor.py" line="261" />
         <source>Standard delimiter:</source>
         <translation>Standardavgränsare:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="264" />
+        <location filename="../../app/settings/settings_editor.py" line="267" />
         <source>Excel settings</source>
         <translation>Excel inställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="270" />
+        <location filename="../../app/settings/settings_editor.py" line="273" />
         <source>Read/write bit size (rows):</source>
         <translation>Läs/skriv bitstorlek (rader):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="275" />
+        <location filename="../../app/settings/settings_editor.py" line="278" />
         <source>Max rows per sheet:</source>
         <translation>Max rader per ark:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="277" />
+        <location filename="../../app/settings/settings_editor.py" line="280" />
         <source>Excel streaming</source>
         <translation>Excel streaming</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="293" />
+        <location filename="../../app/settings/settings_editor.py" line="296" />
         <source>Schema cache</source>
         <translation>Schema cache</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="299" />
+        <location filename="../../app/settings/settings_editor.py" line="302" />
         <source>Max objects preload:</source>
         <translation>Max objekt att förladda:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="304" />
+        <location filename="../../app/settings/settings_editor.py" line="307" />
         <source>Batch size:</source>
         <translation>Batchstorlek:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="309" />
+        <location filename="../../app/settings/settings_editor.py" line="312" />
         <source>TTL (seconds):</source>
         <translation>TTL (sekunder):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="316" />
+        <location filename="../../app/settings/settings_editor.py" line="319" />
         <source>SQL editor</source>
         <translation>SQL editor</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="322" />
+        <location filename="../../app/settings/settings_editor.py" line="325" />
         <source>Row limit for generated SELECT (0 = no limit):</source>
         <translation>Radgräns för genererad SELECT (0 = ingen gräns):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="481" />
-        <location filename="../../app/settings/settings_editor.py" line="334" />
+        <location filename="../../app/settings/settings_editor.py" line="507" />
+        <location filename="../../app/settings/settings_editor.py" line="350" />
         <source>Reset defaults</source>
         <translation>Återställ standard</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="336" />
+        <location filename="../../app/settings/settings_editor.py" line="352" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="338" />
+        <location filename="../../app/settings/settings_editor.py" line="354" />
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="481" />
+        <location filename="../../app/settings/settings_editor.py" line="370" />
+        <source>Unable to open link</source>
+        <translation>Det gick inte att öppna länken</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/settings_editor.py" line="371" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Användarhandboken kunde inte öppnas.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/settings_editor.py" line="507" />
         <source>Settings have been reset to default values.</source>
         <translation>Inställningar har återställts till standardvärden.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="490" />
+        <location filename="../../app/settings/settings_editor.py" line="516" />
         <source>Select documents root (Expo)</source>
         <translation>Välj dokument rotmapp (Expo)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="571" />
+        <location filename="../../app/settings/settings_editor.py" line="597" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="572" />
+        <location filename="../../app/settings/settings_editor.py" line="598" />
         <source>Could not save settings:
 {error}</source>
         <translation>Kunde inte spara inställningar: {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="576" />
+        <location filename="../../app/settings/settings_editor.py" line="602" />
         <source>Saved settings</source>
         <translation>Inställningar sparade</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="576" />
+        <location filename="../../app/settings/settings_editor.py" line="602" />
         <source>Settings have been saved.</source>
         <translation>Inställningarna har sparats.</translation>
     </message>

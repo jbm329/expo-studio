@@ -113,7 +113,21 @@ release eligibility, source-progress checks, and shared publication concurrency.
 Do not publish, rerun publication jobs, delete deployment records, or change
 Pages settings without explicit approval. Do not create a release to test
 documentation automation or rerun a release solely to retry documentation.
-In-app help links are not implemented yet.
+The Help menu opens the manual home page. General Settings, Log settings,
+Database connections and REST API connections have a Help button and contextual
+F1 link. The SCB query builder also links to its manual section through Help/F1.
+The Join datasets dialog provides Help/F1 for its guide; Join preview links
+to the preview section.
+Concatenate datasets also provides Help/F1 for its guide.
+The Derived column dialog provides Help/F1 for the Derived columns guide.
+The Reshape dialog provides Help/F1 for its guide.
+Build condition provides Help/F1 for the Reshape guide's visual condition builder.
+Advanced analysis provides selection-aware Help/F1 for analysis guides,
+Hypothesis Tests sections and the reports guide.
+Convert to categories provides Help/F1 for its conversion section in Clean values.
+Order categories provides Help/F1 for the Set category order section.
+Register manual destinations in
+`app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 
 Use `uv` from the repository root.
 

@@ -5,6 +5,11 @@ to manage named requests to REST APIs. Configure the endpoint and request
 options here, then load the response as a result dataset from the workbench's
 **REST connections** panel.
 
+Select **Help** below the **Connections** list or press **F1** to open this
+REST API connections page in your default browser. Help does not save or send
+the request and leaves your edits and the dialog open. If the browser cannot
+be opened, a warning includes the manual URL.
+
 For other configuration topics, see the [Settings overview](index.md).
 
 The editor supports **GET** and **POST** requests returning JSON. It is not a
@@ -149,6 +154,11 @@ The **SCB query builder…** under **Wizards** helps construct requests for
 Statistics Sweden's statistical database. Instead of writing the endpoint and
 SCB parameter syntax by hand, browse tables and select variable values.
 Internet access is required to retrieve the table list and metadata.
+
+In the builder, select **Help** at the bottom left or press **F1** to open
+this section. The selected-cell counter and any limit warning are above the
+bottom buttons. Help leaves your selections unchanged and does not apply the
+query to the REST connection.
 
 ![SCB query builder showing English table search, a selected table, Variables and Variable values lists, checkboxes, the selected-cell counter and Apply to REST connection.](../assets/settings/scb_query_builder.png)
 

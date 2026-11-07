@@ -105,6 +105,7 @@ def controller(monkeypatch):
         list_tab_titles=lambda: ["left", "right"],
         get_df_for_tab=lambda title: df_map[title],
         set_status=status,
+        dialogs=MagicMock(),
     )
     return ctrl, async_ops, results, status
 
@@ -117,6 +118,17 @@ def test_open_concat_dialog_runs_concat(controller):
     assert async_ops.calls
     assert results.pending
     assert results.bind_calls == [("pending-1", "job-1")]
+
+
+def test_open_concat_dialog_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, _, _, _ = controller
+    dialogs = ctrl._dialogs
+    factory = MagicMock(return_value=DummyDialog(accepted=False))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.concat_controller.ConcatDialog", factory)
+
+    ctrl.open_concat_dialog()
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
 
 
 def test_concat_result_updates_pending_tab(controller):

@@ -5,6 +5,11 @@ to manage named database connections. Save the connection details here, then
 connect through the workbench's **Database connections** panel to browse the
 schema and prepare queries.
 
+Select **Help** below the **Connections** list or press **F1** to open this
+Database connections page in your default browser. Help does not save or test
+a connection and leaves your edits and the dialog open. If the browser cannot
+be opened, a warning includes the manual URL.
+
 ![Database connections dialog with a saved connection selected on the left and SQL Server, ODBC, server, authentication and advanced fields on the right.](../assets/settings/db_connections.png)
 
 For other configuration topics, see the [Settings overview](index.md).

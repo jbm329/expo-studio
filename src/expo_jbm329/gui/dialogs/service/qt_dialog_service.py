@@ -419,6 +419,7 @@ class QtDialogService(DialogService):
             default_order=default_order,
             default_ordered=default_ordered,
             default_strict=default_strict,
+            dialogs=self,
         )
 
     def prompt_category_rename(
@@ -465,6 +466,7 @@ class QtDialogService(DialogService):
             default_ordered=default_ordered,
             default_strict=default_strict,
             default_append_missing_tail=default_append_missing_tail,
+            dialogs=self,
         )
 
     # ------------------------------------------------------------------

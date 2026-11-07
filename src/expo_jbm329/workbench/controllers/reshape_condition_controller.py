@@ -80,6 +80,7 @@ class ReshapeConditionController:
             parent=parent,
             columns=columns,
             initial=state.group,
+            dialogs=self._dialogs,
         )
         closed = False
         jobs: dict[ConditionValuePicker, str] = {}

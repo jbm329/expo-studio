@@ -189,72 +189,86 @@
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="219" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="242" />
         <source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Analisi avanzata — {dataset} ({rows} righe × {columns} colonne)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="284" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="310" />
         <source>Analysis</source>
         <translation>Analisi</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="297" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="323" />
         <source>Reports(0)</source>
         <translation>Report(0)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="796" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="593" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="590" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="822" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="619" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
         <source>Add to report</source>
         <translation>Aggiungi al report</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="598" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="642" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="624" />
         <source>Replace report result</source>
         <translation>Sostituisci il risultato nel report</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="618" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="644" />
         <source>Update report result</source>
         <translation>Aggiorna il risultato nel report</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="621" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="647" />
         <source>Remove from report</source>
         <translation>Rimuovi dal report</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Replace in report</source>
         <translation>Sostituisci nel report</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Update result</source>
         <translation>Aggiorna risultato</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="757" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="783" />
         <source>Reports({count})</source>
         <translation>Report({count})</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="762" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="788" />
         <source>Result</source>
         <translation>Risultato</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="776" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="802" />
         <source>Configuration</source>
         <translation>Configurazione</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="793" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="819" />
         <source>Export</source>
         <translation>Esporta</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="863" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="864" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../services/analysis/presentation.py" line="654" />
@@ -1387,34 +1401,48 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>CategoryConversion</name>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="38" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="41" />
         <source>Category order:</source>
         <translation>Ordine delle categorie:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="39" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="42" />
         <source>Alphabetically</source>
         <translation>In ordine alfabetico</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="40" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="43" />
         <source>By frequency</source>
         <translation>Per frequenza</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="41" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="44" />
         <source>Preserve existing order</source>
         <translation>Mantieni l'ordine esistente</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="42" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="45" />
         <source>Categories should be ordered</source>
         <translation>Le categorie devono essere ordinate</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/conversion.py" line="43" />
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="46" />
         <source>Strict mode (unknown values → NA)</source>
         <translation>Modalità rigorosa (valori sconosciuti → NA)</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="47" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/conversion.py" line="48" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
 </context><context>
     <name>CategoryRename</name>
@@ -1431,44 +1459,58 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>CategorySetOrder</name>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="39" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="42" />
         <source>Order categories (drag and drop):</source>
         <translation>Ordina le categorie (trascinare e rilasciare):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="40" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="43" />
         <source>Up</source>
         <translation>Su</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="41" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="44" />
         <source>Down</source>
         <translation>Giù</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="42" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="45" />
         <source>Sort alphabetically</source>
         <translation>Ordina alfabeticamente</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="43" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="46" />
         <source>Restore original order</source>
         <translation>Ripristina l'ordine originale</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="44" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="47" />
         <source>Ordered category</source>
         <translation>Categoria ordinata</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="45" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="48" />
         <source>Strict mode (unknown values → NA)</source>
         <translation>Modalità rigorosa (valori sconosciuti → NA)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/service/categories/order.py" line="46" />
+        <location filename="../../gui/dialogs/service/categories/order.py" line="49" />
         <source>Add missing values last</source>
         <translation>Aggiungi i valori mancanti alla fine</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/order.py" line="50" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/categories/order.py" line="51" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
 </context><context>
     <name>ChiSquareConfigWidget</name>
@@ -2189,88 +2231,116 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>ConcatController</name>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="41" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
         <source>concatenate datasets</source>
         <translation>concatena i set di dati</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="42" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
         <source>Concatenating datasets: {left} + {right}</source>
         <translation>Concatenazione dei set di dati: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
         <source>Concatenated datasets: {left} + {right}</source>
         <translation>Set di dati concatenati: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
         <source>Concatenation cancelled</source>
         <translation>Concatenazione annullata</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
         <source>Concatenated data</source>
         <translation>Dati concatenati</translation>
     </message>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="90" />
         <source>Concatenate datasets</source>
         <translation>Concatena set di dati</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="94" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="102" />
         <source>First dataset</source>
         <translation>Primo set di dati</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="121" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="105" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="113" />
         <source>Dataset:</source>
         <translation>Set di dati:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="122" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="106" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="114" />
         <source>Columns:</source>
         <translation>Colonne:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="111" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="119" />
         <source>Second dataset</source>
         <translation>Secondo set di dati</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="180" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="181" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
 </context><context>
     <name>ConditionDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="160" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="174" />
         <source>Build condition</source>
         <translation>Crea condizione</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="169" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="183" />
         <source>This text was edited manually. Apply will replace it. Cancel keeps the original text.</source>
         <translation>Questo testo è stato modificato manualmente. Applica lo sostituirà. Annulla conserva il testo originale.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="175" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="189" />
         <source>Ambiguous column names are unavailable. Rename them before building conditions.</source>
         <translation>I nomi di colonna ambigui non sono disponibili. Rinominali prima di creare condizioni.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="196" />
         <source>Drag a handle onto a rule to create an AND group. Drop onto a group to add to it; use row edges to reorder.</source>
         <translation>Trascina una maniglia su una regola per creare un gruppo AND. Rilasciala su un gruppo per aggiungerla; usa i bordi delle righe per riordinare.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="209" />
         <source>Apply</source>
         <translation>Applica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="291" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="248" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="249" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="330" />
         <source>Complete every rule before applying.</source>
         <translation>Completa tutte le regole prima di applicare.</translation>
     </message>
@@ -2343,7 +2413,7 @@ Consultare i log per ulteriori informazioni.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Valore tra apici non terminato. Controlla se un apice singolo manca o ? fuori posto in un punto precedente della condizione. Scrivi '' per un apostrofo.</translation>
+        <translation>Valore tra apici non terminato. Controlla se un apice singolo manca o è fuori posto in un punto precedente della condizione. Scrivi '' per un apostrofo.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2378,7 +2448,7 @@ Consultare i log per ulteriori informazioni.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>? previsto AND, OR o una parentesi di chiusura ).</translation>
+        <translation>È previsto AND, OR o una parentesi di chiusura ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2402,11 +2472,11 @@ Consultare i log per ulteriori informazioni.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">? previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
+        <translation type="vanished">È previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">? previsto True, False o un valore tra apici singoli.</translation>
+        <translation type="vanished">È previsto True, False o un valore tra apici singoli.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -2423,77 +2493,77 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>ConditionRuleWidget</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="50" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="54" />
         <source>Select column</source>
         <translation>Seleziona colonna</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="62" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="66" />
         <source>Ambiguous column name. Rename this column first.</source>
         <translation>Nome di colonna ambiguo. Rinomina prima questa colonna.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="64" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
         <source>Column</source>
         <translation>Colonna</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="67" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
         <source>Equal to</source>
         <translation>Uguale a</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
         <source>Not equal to</source>
         <translation>Diverso da</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="69" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
         <source>In</source>
         <translation>In</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="70" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
         <source>Not in</source>
         <translation>Non in</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="71" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
         <source>Greater than</source>
         <translation>Maggiore di</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="72" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
         <source>Greater than or equal to</source>
         <translation>Maggiore o uguale a</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="73" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="77" />
         <source>Less than</source>
         <translation>Minore di</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="78" />
         <source>Less than or equal to</source>
         <translation>Minore o uguale a</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="79" />
         <source>Is missing</source>
         <translation>È mancante</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="76" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
         <source>Is not missing</source>
         <translation>Non è mancante</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="80" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="84" />
         <source>Operator</source>
         <translation>Operatore</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/reshape/condition_dialog.py" line="86" />
         <source>Remove rule</source>
         <translation>Rimuovi regola</translation>
     </message>
@@ -2605,240 +2675,254 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>ConnectionEditor</name>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="160" />
+        <location filename="../../app/settings/connection_editor.py" line="163" />
         <source>Database connections</source>
         <translation>Connessioni al database</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="184" />
+        <location filename="../../app/settings/connection_editor.py" line="187" />
         <source>SQL Server</source>
         <translation>SQL Server</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="185" />
+        <location filename="../../app/settings/connection_editor.py" line="188" />
         <source>PostgreSQL</source>
         <translation>PostgreSQL</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="186" />
+        <location filename="../../app/settings/connection_editor.py" line="189" />
         <source>MySQL / MariaDB</source>
         <translation>MySQL / MariaDB</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="187" />
+        <location filename="../../app/settings/connection_editor.py" line="190" />
         <source>Oracle</source>
         <translation>Oracle</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="188" />
+        <location filename="../../app/settings/connection_editor.py" line="191" />
         <source>SQLite (file-based)</source>
         <translation>SQLite (basato su file)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="189" />
+        <location filename="../../app/settings/connection_editor.py" line="192" />
         <source>DuckDB (file-based)</source>
         <translation>DuckDB (basato su file)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="190" />
+        <location filename="../../app/settings/connection_editor.py" line="193" />
         <source>Other</source>
         <translation>Altro</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="216" />
+        <location filename="../../app/settings/connection_editor.py" line="219" />
         <source>(No ODBC-drivers found)</source>
         <translation>(Nessun driver ODBC trovato)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="221" />
+        <location filename="../../app/settings/connection_editor.py" line="224" />
         <source>Use selected driver</source>
         <translation>Usa il driver selezionato</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="233" />
+        <location filename="../../app/settings/connection_editor.py" line="236" />
         <source>Browse…</source>
         <translation>Sfoglia…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="237" />
+        <location filename="../../app/settings/connection_editor.py" line="240" />
         <source>Trusted Connection</source>
         <translation>Connessione attendibile</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="251" />
+        <location filename="../../app/settings/connection_editor.py" line="254" />
         <source>Database:</source>
         <translation>Database:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="252" />
+        <location filename="../../app/settings/connection_editor.py" line="255" />
         <source>Protocol:</source>
         <translation>Protocollo:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="254" />
+        <location filename="../../app/settings/connection_editor.py" line="257" />
         <source>System ODBC:</source>
         <translation>ODBC di sistema:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="256" />
+        <location filename="../../app/settings/connection_editor.py" line="259" />
         <source>ODBC driver:</source>
         <translation>Driver ODBC:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="258" />
+        <location filename="../../app/settings/connection_editor.py" line="261" />
         <source>Server:</source>
         <translation>Server:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="259" />
+        <location filename="../../app/settings/connection_editor.py" line="262" />
         <source>Port:</source>
         <translation>Porta:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="260" />
+        <location filename="../../app/settings/connection_editor.py" line="263" />
         <source>Database / File:</source>
         <translation>Database / File:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="263" />
+        <location filename="../../app/settings/connection_editor.py" line="266" />
         <source>User:</source>
         <translation>Utente:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="264" />
+        <location filename="../../app/settings/connection_editor.py" line="267" />
         <source>Password:</source>
         <translation>Password:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="265" />
+        <location filename="../../app/settings/connection_editor.py" line="268" />
         <source>Trusted Connection:</source>
         <translation>Connessione attendibile:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="267" />
+        <location filename="../../app/settings/connection_editor.py" line="270" />
         <source>DSN (optional):</source>
         <translation>DSN (facoltativo):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="268" />
+        <location filename="../../app/settings/connection_editor.py" line="271" />
         <source>Extra (JSON):</source>
         <translation>Opzioni aggiuntive (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="271" />
+        <location filename="../../app/settings/connection_editor.py" line="274" />
         <source>Add</source>
         <translation>Aggiungi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="272" />
+        <location filename="../../app/settings/connection_editor.py" line="275" />
         <source>Test connection</source>
         <translation>Verifica connessione</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="705" />
-        <location filename="../../app/settings/connection_editor.py" line="273" />
+        <location filename="../../app/settings/connection_editor.py" line="731" />
+        <location filename="../../app/settings/connection_editor.py" line="276" />
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="274" />
+        <location filename="../../app/settings/connection_editor.py" line="277" />
         <source>Save</source>
         <translation>Salva</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="275" />
+        <location filename="../../app/settings/connection_editor.py" line="278" />
         <source>Close</source>
         <translation>Chiudi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="291" />
+        <location filename="../../app/settings/connection_editor.py" line="294" />
         <source>Connections:</source>
         <translation>Connessioni:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="484" />
+        <location filename="../../app/settings/connection_editor.py" line="326" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/connection_editor.py" line="327" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/connection_editor.py" line="510" />
         <source>Select DuckDB database file</source>
         <translation>Selezionare un file di database DuckDB</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="485" />
+        <location filename="../../app/settings/connection_editor.py" line="511" />
         <source>DuckDB files (*.duckdb *.ddb *.db);;All files (*.*)</source>
         <translation>File DuckDB (*.duckdb *.ddb *.db);;Tutti i file (*.*)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="487" />
+        <location filename="../../app/settings/connection_editor.py" line="513" />
         <source>Select SQLite database file</source>
         <translation>Seleziona il file del database SQLite</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="488" />
+        <location filename="../../app/settings/connection_editor.py" line="514" />
         <source>SQLite files (*.db *.sqlite *.sqlite3);;All files (*.*)</source>
         <translation>File SQLite (*.db *.sqlite *.sqlite3);;Tutti i file (*.*)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="792" />
-        <location filename="../../app/settings/connection_editor.py" line="649" />
+        <location filename="../../app/settings/connection_editor.py" line="818" />
+        <location filename="../../app/settings/connection_editor.py" line="675" />
         <source>Connection error</source>
         <translation>Errore di connessione</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="662" />
+        <location filename="../../app/settings/connection_editor.py" line="688" />
         <source>New connection</source>
         <translation>Nuova connessione</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="663" />
+        <location filename="../../app/settings/connection_editor.py" line="689" />
         <source>Name:</source>
         <translation>Nome:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="753" />
-        <location filename="../../app/settings/connection_editor.py" line="672" />
+        <location filename="../../app/settings/connection_editor.py" line="779" />
+        <location filename="../../app/settings/connection_editor.py" line="698" />
         <source>Failure</source>
         <translation>Errore</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="672" />
+        <location filename="../../app/settings/connection_editor.py" line="698" />
         <source>There is already a connection with that name.</source>
         <translation>Esiste già una connessione con questo nome.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="706" />
+        <location filename="../../app/settings/connection_editor.py" line="732" />
         <source>Do you want to delete the connection '{name}'?</source>
         <translation>Eliminare la connessione '{name}'?</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="742" />
+        <location filename="../../app/settings/connection_editor.py" line="768" />
         <source>Saved</source>
         <translation>Salvato</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="742" />
+        <location filename="../../app/settings/connection_editor.py" line="768" />
         <source>Changes saved successfully.</source>
         <translation>Modifiche salvate correttamente.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="753" />
+        <location filename="../../app/settings/connection_editor.py" line="779" />
         <source>No connection selected.</source>
         <translation>Nessuna connessione selezionata.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="781" />
+        <location filename="../../app/settings/connection_editor.py" line="807" />
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="781" />
+        <location filename="../../app/settings/connection_editor.py" line="807" />
         <source>Connection succeeded!</source>
         <translation>Connessione riuscita.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="784" />
+        <location filename="../../app/settings/connection_editor.py" line="810" />
         <source>Unknown error.</source>
         <translation>Errore sconosciuto.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/connection_editor.py" line="793" />
+        <location filename="../../app/settings/connection_editor.py" line="819" />
         <source>Could not connect.
 
 {error}</source>
@@ -3767,28 +3851,42 @@ Consultare i log per ulteriori informazioni.</translation>
 </context><context>
     <name>DerivedColumnDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="62" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="70" />
         <source>Derived column</source>
         <translation>Colonna derivata</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="91" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="102" />
         <source>New column name</source>
         <translation>Nome della nuova colonna</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="92" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="103" />
         <source>Column name:</source>
         <translation>Nome della colonna:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="105" />
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="103" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="116" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="114" />
         <source>f(x):</source>
         <translation>f(x):</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="177" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="178" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/derived_column/derived_column_dialog.py" line="207" />
         <source>Enter column name and formula.</source>
         <translation>Inserire il nome della colonna e la formula.</translation>
     </message>
@@ -4149,25 +4247,25 @@ Continuare?</translation>
 </context><context>
     <name>ExpoStudio</name>
     <message>
-        <location filename="../../app/expo_studio.py" line="528" />
+        <location filename="../../app/expo_studio.py" line="529" />
         <location filename="../../app/expo_studio.py" line="117" />
         <source>Expo studio</source>
         <translation>Expo Studio</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="531" />
+        <location filename="../../app/expo_studio.py" line="532" />
         <location filename="../../app/expo_studio.py" line="174" />
         <source>Database connections</source>
         <translation>Connessioni al database</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="532" />
+        <location filename="../../app/expo_studio.py" line="533" />
         <location filename="../../app/expo_studio.py" line="197" />
         <source>Files</source>
         <translation>File</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="533" />
+        <location filename="../../app/expo_studio.py" line="534" />
         <location filename="../../app/expo_studio.py" line="217" />
         <source>REST connections</source>
         <translation>Connessioni REST</translation>
@@ -4183,12 +4281,12 @@ Continuare?</translation>
         <translation>Impostazioni ricaricate.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="504" />
+        <location filename="../../app/expo_studio.py" line="505" />
         <source>Unable to open link</source>
         <translation>Impossibile aprire il collegamento</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="505" />
+        <location filename="../../app/expo_studio.py" line="506" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -4197,22 +4295,22 @@ Continuare?</translation>
 {url}</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="573" />
+        <location filename="../../app/expo_studio.py" line="574" />
         <source>No active jobs to cancel.</source>
         <translation>Nessuna attività in corso da annullare.</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="589" />
+        <location filename="../../app/expo_studio.py" line="590" />
         <source>Cancelling active jobs…</source>
         <translation>Annullamento delle attività in corso…</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="622" />
+        <location filename="../../app/expo_studio.py" line="623" />
         <source>Confirm exit</source>
         <translation>Conferma uscita</translation>
     </message>
     <message>
-        <location filename="../../app/expo_studio.py" line="623" />
+        <location filename="../../app/expo_studio.py" line="624" />
         <source>Do you want to quit the application?</source>
         <translation>Uscire dall'applicazione?</translation>
     </message>
@@ -5471,184 +5569,226 @@ Salvato in:
 </context><context>
     <name>JoinDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="99" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="108" />
         <source>Join datasets</source>
         <translation>Unisci set di dati</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="137" />
         <source>Left dataset</source>
         <translation>Set di dati sinistro</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="138" />
         <source>Right dataset</source>
         <translation>Set di dati destro</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="164" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="173" />
         <source>Join type</source>
         <translation>Tipo di join</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="185" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="194" />
         <source>Preview</source>
         <translation>Anteprima</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="186" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="195" />
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="187" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="196" />
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="228" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="240" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="241" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="260" />
         <source>Select all</source>
         <translation>Seleziona tutto</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="231" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="263" />
         <source>Dataset:</source>
         <translation>Set di dati:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="232" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="264" />
         <source>Key:</source>
         <translation>Chiave:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="233" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="265" />
         <source>Columns to include:</source>
         <translation>Colonne da includere:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="341" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="373" />
         <source>Incompatible types</source>
         <translation>Tipi incompatibili</translation>
     </message>
 </context><context>
     <name>JoinPreviewDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="51" />
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="60" />
         <source>Join preview</source>
         <translation>Anteprima della join</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="96" />
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="114" />
         <source>Close</source>
         <translation>Chiudi</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="138" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_preview_dialog.py" line="139" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
     </message>
 </context><context>
     <name>LogConfigEditor</name>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="108" />
+        <location filename="../../app/settings/log_config_editor.py" line="111" />
         <source>Log settings</source>
         <translation>Impostazioni del log</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="167" />
+        <location filename="../../app/settings/log_config_editor.py" line="170" />
         <source>Log file:</source>
         <translation>File di log:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="172" />
+        <location filename="../../app/settings/log_config_editor.py" line="175" />
         <source>Root log level:</source>
         <translation>Livello di log principale:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="177" />
+        <location filename="../../app/settings/log_config_editor.py" line="180" />
         <source>Third party log level:</source>
         <translation>Livello di log di terze parti:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="198" />
+        <location filename="../../app/settings/log_config_editor.py" line="201" />
         <source>File</source>
         <translation>File</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="266" />
-        <location filename="../../app/settings/log_config_editor.py" line="234" />
-        <location filename="../../app/settings/log_config_editor.py" line="201" />
+        <location filename="../../app/settings/log_config_editor.py" line="269" />
+        <location filename="../../app/settings/log_config_editor.py" line="237" />
+        <location filename="../../app/settings/log_config_editor.py" line="204" />
         <source>Activate</source>
         <translation>Attiva</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="284" />
-        <location filename="../../app/settings/log_config_editor.py" line="239" />
-        <location filename="../../app/settings/log_config_editor.py" line="206" />
+        <location filename="../../app/settings/log_config_editor.py" line="287" />
+        <location filename="../../app/settings/log_config_editor.py" line="242" />
+        <location filename="../../app/settings/log_config_editor.py" line="209" />
         <source>Level:</source>
         <translation>Livello:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="243" />
-        <location filename="../../app/settings/log_config_editor.py" line="210" />
+        <location filename="../../app/settings/log_config_editor.py" line="246" />
+        <location filename="../../app/settings/log_config_editor.py" line="213" />
         <source>Formatting:</source>
         <translation>Formato:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="215" />
+        <location filename="../../app/settings/log_config_editor.py" line="218" />
         <source>Max size (bytes):</source>
         <translation>Dimensione massima (byte):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="219" />
+        <location filename="../../app/settings/log_config_editor.py" line="222" />
         <source>Backup:</source>
         <translation>Backup:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="231" />
+        <location filename="../../app/settings/log_config_editor.py" line="234" />
         <source>Console</source>
         <translation>Console</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="258" />
+        <location filename="../../app/settings/log_config_editor.py" line="261" />
         <source>Namespace loggers</source>
         <translation>Logger degli spazi dei nomi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="409" />
-        <location filename="../../app/settings/log_config_editor.py" line="302" />
+        <location filename="../../app/settings/log_config_editor.py" line="435" />
+        <location filename="../../app/settings/log_config_editor.py" line="318" />
         <source>Reset defaults</source>
         <translation>Ripristina valori predefiniti</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="304" />
+        <location filename="../../app/settings/log_config_editor.py" line="320" />
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="306" />
+        <location filename="../../app/settings/log_config_editor.py" line="322" />
         <source>Save</source>
         <translation>Salva</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="410" />
+        <location filename="../../app/settings/log_config_editor.py" line="338" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="339" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="436" />
         <source>Log configuration has been reset to default values.</source>
         <translation>La configurazione del log è stata ripristinata ai valori predefiniti.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="475" />
+        <location filename="../../app/settings/log_config_editor.py" line="501" />
         <source>Failure</source>
         <translation>Errore</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="476" />
+        <location filename="../../app/settings/log_config_editor.py" line="502" />
         <source>Could not save log configuration:
 {error}</source>
         <translation>Impossibile salvare la configurazione del log:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="481" />
+        <location filename="../../app/settings/log_config_editor.py" line="507" />
         <source>Log configuration saved</source>
         <translation>Configurazione del log salvata</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="481" />
+        <location filename="../../app/settings/log_config_editor.py" line="507" />
         <source>Log configuration has been saved.</source>
         <translation>La configurazione del log è stata salvata.</translation>
     </message>
@@ -5942,7 +6082,7 @@ Salvato in:
         <translation>Riga</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1338" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1339" />
         <location filename="../../services/analysis/report.py" line="2381" />
         <location filename="../../services/analysis/report.py" line="1591" />
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="206" />
@@ -6182,7 +6322,7 @@ Salvato in:
         <translation>Nessuna dispersione</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1340" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
         <location filename="../../services/analysis/report.py" line="2384" />
         <location filename="../../services/analysis/report.py" line="1594" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="335" />
@@ -6190,7 +6330,7 @@ Salvato in:
         <translation>Distanza oltre il limite</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
         <location filename="../../services/analysis/report.py" line="2385" />
         <location filename="../../services/analysis/report.py" line="1595" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="337" />
@@ -6198,7 +6338,7 @@ Salvato in:
         <translation>z</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1343" />
         <location filename="../../services/analysis/report.py" line="2386" />
         <location filename="../../services/analysis/report.py" line="1596" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="339" />
@@ -6970,6 +7110,11 @@ Salvato in:
         <location filename="../../gui/dialogs/service/common/localization.py" line="12" />
         <source>Close</source>
         <translation>Chiudi</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/service/common/localization.py" line="13" />
+        <source>Help</source>
+        <translation>Aiuto</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/service/prompts/choice.py" line="31" />
@@ -7974,151 +8119,165 @@ Suggerimento: {error_hint}</translation>
 </context><context>
     <name>ReshapeDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="95" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="102" />
         <source>Reshape — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Rimodella — {dataset} ({rows} righe × {columns} colonne)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="106" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="113" />
         <source>Preview uses the full dataset. Apply creates a new result dataset.</source>
         <translation>L'anteprima utilizza l'intero dataset. Applica crea un nuovo dataset di risultato.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="112" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="119" />
         <source>Dimensions</source>
         <translation>Dimensioni</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="116" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="123" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="122" />
         <source>Search dimensions</source>
         <translation>Cerca dimensioni</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="142" />
         <source>Metrics</source>
         <translation>Metriche</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="138" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="145" />
         <source>SUM, AVG and MEDIAN accept integer and floating-point columns only. MIN and MAX also accept datetime columns. COUNT and COUNT DISTINCT accept any column. Changing the function clears an incompatible source selection.</source>
         <translation>SUM, AVG e MEDIAN accettano solo colonne di numeri interi e a virgola mobile. MIN e MAX accettano anche colonne di data e ora. COUNT e COUNT DISTINCT accettano qualsiasi colonna. Cambiare funzione azzera una selezione della colonna di origine incompatibile.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="154" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="161" />
         <source>Metric name</source>
         <translation>Nome della metrica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="246" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="155" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="276" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="162" />
         <source>Function</source>
         <translation>Funzione</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="156" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="163" />
         <source>Source column</source>
         <translation>Colonna di origine</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="157" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="164" />
         <source>Condition (optional)</source>
         <translation>Condizione (facoltativa)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="172" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="179" />
         <source>Add metric</source>
         <translation>Aggiungi metrica</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="180" />
         <source>Remove selected metrics</source>
         <translation>Rimuovi metriche selezionate</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="189" />
         <source>Preview (5 rows)</source>
         <translation>Anteprima (5 righe)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="186" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="193" />
         <source>Configure metrics and press Preview to calculate up to five output rows.</source>
         <translation>Configura le misure e premi Anteprima per calcolare fino a cinque righe di output.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="201" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="208" />
         <source>Preview</source>
         <translation>Anteprima</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="298" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="256" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="257" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="328" />
         <source>Preview is out of date. Press Preview to recalculate.</source>
         <translation>L'anteprima non è aggiornata. Premi Anteprima per ricalcolare.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="366" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="396" />
         <source>Calculating preview...</source>
         <translation>Calcolo dell'anteprima...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="379" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="409" />
         <source>Showing {shown} of {total} output rows.</source>
         <translation>Visualizzazione di {shown} righe di output su {total}.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="394" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="424" />
         <source>Complete every metric and correct condition errors before previewing.</source>
         <translation>Completa ogni misura e correggi gli errori delle condizioni prima dell'anteprima.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="455" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="397" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="485" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="427" />
         <source>Output column names must be unique across dimensions and metrics.</source>
         <translation>I nomi delle colonne di output devono essere univoci tra dimensioni e misure.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="398" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="428" />
         <source>A condition value cannot be interpreted for column '{name}'.</source>
         <translation>Un valore della condizione non può essere interpretato per la colonna '{name}'.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="399" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="429" />
         <source>Cannot compare or aggregate the selected data for '{name}'. Check its values and types.</source>
         <translation>Impossibile confrontare o aggregare i dati selezionati per '{name}'. Controlla i valori e i tipi.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="448" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="478" />
         <source>Correct condition errors before applying.</source>
         <translation>Correggi gli errori delle condizioni prima di applicare.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="457" />
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="450" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="487" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="480" />
         <source>Select an ordering column for every FIRST/LAST metric.</source>
         <translation>Seleziona una colonna di ordinamento per ogni metrica FIRST/LAST.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="452" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="482" />
         <source>Apply creates a new result dataset.</source>
         <translation>Applica crea un nuovo dataset di risultato.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="459" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="489" />
         <source>Calculate up to five output rows from the full dataset.</source>
         <translation>Calcola fino a cinque righe di output dall'intero dataset.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="483" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="513" />
         <source>Select column</source>
         <translation>Seleziona colonna</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="516" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="546" />
         <source>FIRST/LAST accept any value column. Order by a numeric or datetime column: FIRST selects the lowest/earliest, LAST the highest/latest. Conditions filter rows before ordering. Missing ordering values are excluded; selected missing values are kept. Ties use source row order.</source>
         <translation>FIRST/LAST accettano qualsiasi colonna di valori. Ordina per una colonna numerica o di data/ora: FIRST seleziona il valore più basso/meno recente, LAST il più alto/più recente. Le condizioni filtrano le righe prima dell'ordinamento. I valori di ordinamento mancanti sono esclusi; i valori mancanti selezionati vengono mantenuti. A parità di valori si usa l'ordine delle righe di origine.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="523" />
+        <location filename="../../gui/dialogs/workflows/reshape/reshape_dialog.py" line="553" />
         <source>FIRST/LAST require a numeric or datetime ordering column. This dataset has none. Convert an ordering column's datatype before reshaping, or choose another function.</source>
         <translation>FIRST/LAST richiedono una colonna di ordinamento numerica o di data/ora. Questo dataset non ne contiene alcuna. Converti il tipo di dati di una colonna di ordinamento prima di rimodellare i dati, oppure scegli un'altra funzione.</translation>
     </message>
@@ -8270,180 +8429,194 @@ Suggerimento: {error_hint}</translation>
 </context><context>
     <name>RestConnectionEditor</name>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="143" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="146" />
         <source>REST API connections</source>
         <translation>Connessioni API REST</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="165" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="168" />
         <source>SCB query builder…</source>
         <translation>Generatore di query SCB…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="223" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="226" />
         <source>Wizards</source>
         <translation>Procedure guidate</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="227" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
         <source>General</source>
         <translation>Generale</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="228" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="231" />
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="229" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
         <source>Method:</source>
         <translation>Metodo:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
         <source>Response path:</source>
         <translation>Percorso della risposta:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
         <source>Request</source>
         <translation>Richiesta</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="236" />
         <source>JSON body:</source>
         <translation>Corpo JSON:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="234" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
         <source>Headers (JSON):</source>
         <translation>Intestazioni (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="238" />
         <source>Query params (JSON):</source>
         <translation>Parametri di query (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
         <source>Authentication</source>
         <translation>Autenticazione</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="243" />
         <source>Pagination</source>
         <translation>Paginazione</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="247" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
         <source>Add</source>
         <translation>Aggiungi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="248" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
         <source>Test</source>
         <translation>Test</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="995" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="253" />
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="254" />
         <source>Save</source>
         <translation>Salva</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="252" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="255" />
         <source>Close</source>
         <translation>Chiudi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="270" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="273" />
         <source>Connections:</source>
         <translation>Connessioni:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="763" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="497" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="321" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="322" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="789" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="523" />
         <source>JSON body</source>
         <translation>Corpo JSON</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="828" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="522" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="854" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="548" />
         <source>Page-number pagination requires a page parameter name</source>
         <translation>La paginazione per numero di pagina richiede il nome di un parametro di pagina</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="832" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="772" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="528" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="858" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="554" />
         <source>Start page</source>
         <translation>Pagina iniziale</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="833" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="773" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="538" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="859" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="799" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="564" />
         <source>Page size</source>
         <translation>Dimensione della pagina</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="834" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="774" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="544" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="860" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="800" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="570" />
         <source>Max pages</source>
         <translation>Pagine massime</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="812" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="553" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="838" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="579" />
         <source>Headers</source>
         <translation>Intestazioni</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="813" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="560" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="839" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="586" />
         <source>Query params</source>
         <translation>Parametri di query</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="621" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="647" />
         <source>{field} must contain valid JSON.</source>
         <translation>{field} deve contenere JSON valido.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="624" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="650" />
         <source>{field} must be a JSON object.</source>
         <translation>{field} deve essere un oggetto JSON.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="741" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="728" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="767" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="754" />
         <source>{field} must be an integer</source>
         <translation>{field} deve essere un numero intero</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="743" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="730" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="769" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="756" />
         <source>{field} must be &gt;= 1</source>
         <translation>{field} deve essere &gt;= 1</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="779" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="805" />
         <source>Validation request</source>
         <translation>Richiesta di convalida</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="791" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="817" />
         <source>POST requests require a valid JSON body</source>
         <translation>Le richieste POST richiedono un corpo JSON valido</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="824" />
         <source>Invalid response path.
 Use dot-separated keys or numeric indices.
 Examples:
@@ -8460,37 +8633,37 @@ Esempi:
   results.0.values</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="873" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="899" />
         <source>New REST connection</source>
         <translation>Nuova connessione REST</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="874" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="900" />
         <source>Name:</source>
         <translation>Nome:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="884" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
         <source>Failure</source>
         <translation>Errore</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="885" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="911" />
         <source>A REST connection with that name already exists.</source>
         <translation>Esiste già una connessione REST con questo nome.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="936" />
         <source>Test request</source>
         <translation>Richiesta di test</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="938" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="964" />
         <source>Invalid response path</source>
         <translation>Percorso della risposta non valido</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="939" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="965" />
         <source>The response path could not be applied to the API response.
 
 {error}</source>
@@ -8499,12 +8672,12 @@ Esempi:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="948" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="974" />
         <source>none</source>
         <translation>nessuno</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="955" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="981" />
         <source>API test successful.
 
 Returned {rows} rows and {cols} columns.
@@ -8517,27 +8690,27 @@ Colonne: {columns}.
 Tempo: {sec:.2f}s{sample}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="966" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="992" />
         <source>Test successful</source>
         <translation>Test riuscito</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="982" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1008" />
         <source>Test failed</source>
         <translation>Test non riuscito</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="996" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
         <source>Do you want to delete '{name}'?</source>
         <translation>Eliminare '{name}'?</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1047" />
         <source>Saved</source>
         <translation>Salvato</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1048" />
         <source>REST connection saved successfully.</source>
         <translation>Connessione REST salvata correttamente.</translation>
     </message>
@@ -10201,129 +10374,143 @@ Tempo: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ScbBrowserDialog</name>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="52" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="56" />
         <source>SCB query builder</source>
         <translation>Generatore di query SCB</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="58" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="62" />
         <source>Table:</source>
         <translation>Tabella:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="61" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="65" />
         <source>Search table...</source>
         <translation>Cerca tabella...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="75" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="79" />
         <source>Language:</source>
         <translation>Lingua:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="79" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="83" />
         <source>Swedish</source>
         <translation>Svedese</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="80" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="84" />
         <source>English</source>
         <translation>Inglese</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="382" />
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="241" />
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="83" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="409" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="268" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="87" />
         <source>No table selected</source>
         <translation>Nessuna tabella selezionata</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="99" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="103" />
         <source>Selected cells: 0 / {0}</source>
         <translation>Celle selezionate: 0 / {0}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="105" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="109" />
         <source>Select all</source>
         <translation>Seleziona tutto</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="107" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="111" />
         <source>Clear</source>
         <translation>Cancella</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="110" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="114" />
         <source>Apply to REST connection</source>
         <translation>Applica alla connessione REST</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="112" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="116" />
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="145" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="161" />
         <source>Variables</source>
         <translation>Variabili</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="147" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="163" />
         <source>Variable values</source>
         <translation>Valori delle variabili</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="188" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="202" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="203" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="215" />
         <source>SCB browser error</source>
         <translation>Errore del browser SCB</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="223" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="250" />
         <source>No matching tables found</source>
         <translation>Nessuna tabella corrispondente trovata</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="259" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="286" />
         <source>Selected cells: {0} / {1}</source>
         <translation>Celle selezionate: {0} / {1}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="264" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="291" />
         <source>This selection exceeds the SCB limit.</source>
         <translation>Questa selezione supera il limite SCB.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="293" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="320" />
         <source>SCB metadata error</source>
         <translation>Errore nei metadati SCB</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="383" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="410" />
         <source>Please select an SCB table first.</source>
         <translation>Selezionare prima una tabella SCB.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="391" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="418" />
         <source>No metadata loaded</source>
         <translation>Nessun metadato caricato</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="392" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="419" />
         <source>Please load a table before applying it.</source>
         <translation>Caricare una tabella prima di applicarla.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="406" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="433" />
         <source>No values selected</source>
         <translation>Nessun valore selezionato</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="407" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="434" />
         <source>Select at least one value before applying the query.</source>
         <translation>Selezionare almeno un valore prima di applicare la query.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="436" />
+        <location filename="../../gui/dialogs/rest/scb_browser_dialog.py" line="463" />
         <source>SCB query error</source>
         <translation>Errore nella query SCB</translation>
     </message>
@@ -10391,190 +10578,204 @@ Tempo: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>SettingsEditor</name>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="97" />
+        <location filename="../../app/settings/settings_editor.py" line="100" />
         <source>Settings</source>
         <translation>Impostazioni</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="139" />
+        <location filename="../../app/settings/settings_editor.py" line="142" />
         <source>Basic settings</source>
         <translation>Impostazioni di base</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="145" />
+        <location filename="../../app/settings/settings_editor.py" line="148" />
         <source>Language:</source>
         <translation>Lingua:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="158" />
+        <location filename="../../app/settings/settings_editor.py" line="161" />
         <source>GUI theme:</source>
         <translation>Tema dell'interfaccia:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="168" />
+        <location filename="../../app/settings/settings_editor.py" line="171" />
         <source>Highlighter theme:</source>
         <translation>Tema dell'evidenziazione:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="181" />
+        <location filename="../../app/settings/settings_editor.py" line="184" />
         <source>Select directory…</source>
         <translation>Seleziona cartella…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="185" />
+        <location filename="../../app/settings/settings_editor.py" line="188" />
         <source>Documents directory:</source>
         <translation>Cartella Documenti:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="191" />
+        <location filename="../../app/settings/settings_editor.py" line="194" />
         <source>Max undo steps/tab:</source>
         <translation>Numero massimo di passaggi di annullamento per scheda:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="203" />
+        <location filename="../../app/settings/settings_editor.py" line="206" />
         <source>Max undo size (MB):</source>
         <translation>Dimensione massima dell'annullamento (MB):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="224" />
+        <location filename="../../app/settings/settings_editor.py" line="227" />
         <source>CSV settings</source>
         <translation>Impostazioni CSV</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="230" />
+        <location filename="../../app/settings/settings_editor.py" line="233" />
         <source>Read bit size (rows):</source>
         <translation>Dimensione del blocco di lettura (righe):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="235" />
+        <location filename="../../app/settings/settings_editor.py" line="238" />
         <source>Write bit size (rows):</source>
         <translation>Dimensione del blocco di scrittura (righe):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="239" />
+        <location filename="../../app/settings/settings_editor.py" line="242" />
         <source>Standard encoding:</source>
         <translation>Codifica predefinita:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="241" />
+        <location filename="../../app/settings/settings_editor.py" line="244" />
         <source>Identify delimiter automatically</source>
         <translation>Rileva automaticamente il delimitatore</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="243" />
+        <location filename="../../app/settings/settings_editor.py" line="246" />
         <source>When this is on the reader tries to guess the delimiter, ex. ',' ';' '\t' '|'.</source>
         <translation>Se attivata, la procedura di lettura prova a rilevare il delimitatore, ad es. ',' ';' '\t' '|'.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="249" />
+        <location filename="../../app/settings/settings_editor.py" line="252" />
         <source>Automatic</source>
         <translation>Automatico</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="255" />
+        <location filename="../../app/settings/settings_editor.py" line="258" />
         <source>Standard delimiter used when sniff is disabled or as fallback on failure.</source>
         <translation>Delimitatore predefinito usato quando il rilevamento è disattivato o, in caso di errore, come alternativa.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="258" />
+        <location filename="../../app/settings/settings_editor.py" line="261" />
         <source>Standard delimiter:</source>
         <translation>Delimitatore predefinito:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="264" />
+        <location filename="../../app/settings/settings_editor.py" line="267" />
         <source>Excel settings</source>
         <translation>Impostazioni Excel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="270" />
+        <location filename="../../app/settings/settings_editor.py" line="273" />
         <source>Read/write bit size (rows):</source>
         <translation>Dimensione del blocco di lettura/scrittura (righe):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="275" />
+        <location filename="../../app/settings/settings_editor.py" line="278" />
         <source>Max rows per sheet:</source>
         <translation>Numero massimo di righe per foglio:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="277" />
+        <location filename="../../app/settings/settings_editor.py" line="280" />
         <source>Excel streaming</source>
         <translation>Elaborazione in streaming di Excel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="293" />
+        <location filename="../../app/settings/settings_editor.py" line="296" />
         <source>Schema cache</source>
         <translation>Cache dello schema</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="299" />
+        <location filename="../../app/settings/settings_editor.py" line="302" />
         <source>Max objects preload:</source>
         <translation>Numero massimo di oggetti da precaricare:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="304" />
+        <location filename="../../app/settings/settings_editor.py" line="307" />
         <source>Batch size:</source>
         <translation>Dimensione del batch:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="309" />
+        <location filename="../../app/settings/settings_editor.py" line="312" />
         <source>TTL (seconds):</source>
         <translation>TTL (secondi):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="316" />
+        <location filename="../../app/settings/settings_editor.py" line="319" />
         <source>SQL editor</source>
         <translation>Editor SQL</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="322" />
+        <location filename="../../app/settings/settings_editor.py" line="325" />
         <source>Row limit for generated SELECT (0 = no limit):</source>
         <translation>Limite di righe per SELECT generata (0 = nessun limite):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="481" />
-        <location filename="../../app/settings/settings_editor.py" line="334" />
+        <location filename="../../app/settings/settings_editor.py" line="507" />
+        <location filename="../../app/settings/settings_editor.py" line="350" />
         <source>Reset defaults</source>
         <translation>Ripristina valori predefiniti</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="336" />
+        <location filename="../../app/settings/settings_editor.py" line="352" />
         <source>Cancel</source>
         <translation>Annulla</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="338" />
+        <location filename="../../app/settings/settings_editor.py" line="354" />
         <source>Save</source>
         <translation>Salva</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="481" />
+        <location filename="../../app/settings/settings_editor.py" line="370" />
+        <source>Unable to open link</source>
+        <translation>Impossibile aprire il collegamento</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/settings_editor.py" line="371" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Impossibile aprire il manuale utente.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/settings_editor.py" line="507" />
         <source>Settings have been reset to default values.</source>
         <translation>Le impostazioni sono state ripristinate ai valori predefiniti.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="490" />
+        <location filename="../../app/settings/settings_editor.py" line="516" />
         <source>Select documents root (Expo)</source>
         <translation>Seleziona la cartella radice Documenti (Expo)</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="571" />
+        <location filename="../../app/settings/settings_editor.py" line="597" />
         <source>Failure</source>
         <translation>Errore</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="572" />
+        <location filename="../../app/settings/settings_editor.py" line="598" />
         <source>Could not save settings:
 {error}</source>
         <translation>Impossibile salvare le impostazioni:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="576" />
+        <location filename="../../app/settings/settings_editor.py" line="602" />
         <source>Saved settings</source>
         <translation>Impostazioni salvate</translation>
     </message>
     <message>
-        <location filename="../../app/settings/settings_editor.py" line="576" />
+        <location filename="../../app/settings/settings_editor.py" line="602" />
         <source>Settings have been saved.</source>
         <translation>Le impostazioni sono state salvate.</translation>
     </message>

@@ -10,6 +10,7 @@ TR_CANCEL = QT_TRANSLATE_NOOP("QtDialogService", "Cancel")
 TR_YES = QT_TRANSLATE_NOOP("QtDialogService", "Yes")
 TR_NO = QT_TRANSLATE_NOOP("QtDialogService", "No")
 TR_CLOSE = QT_TRANSLATE_NOOP("QtDialogService", "Close")
+TR_HELP = QT_TRANSLATE_NOOP("QtDialogService", "Help")
 
 
 def _tr(text: str) -> str:
@@ -29,6 +30,7 @@ def localize_dialog_buttons(buttons: QDialogButtonBox) -> None:
         QDialogButtonBox.StandardButton.Yes: TR_YES,
         QDialogButtonBox.StandardButton.No: TR_NO,
         QDialogButtonBox.StandardButton.Close: TR_CLOSE,
+        QDialogButtonBox.StandardButton.Help: TR_HELP,
     }
     for btn, text in mapping.items():
         b = buttons.button(btn)

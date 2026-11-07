@@ -34,8 +34,8 @@ Individual guides are also available in the navigation.
   filter rows before analysis or export.
 - [Transform data](transform-data/index.md) — create calculated columns and
   summary datasets, or combine datasets.
-- [Analyze data](analyze-data/index.md) — inspect a dataset, explore patterns
-  and choose statistical analyses.
+- [Analyze data](analyze-data/index.md) — inspect a dataset or individual
+  column properties, explore patterns and choose statistical analyses.
 - [Export data](export-and-report/index.md) — save datasets, analysis results
   and HTML reports.
 - [Settings](settings/index.md) — configure application preferences, logging,

@@ -4,6 +4,11 @@ Select **Tools → Settings…** in the [workbench window](../workbench/index.md
 to open the Settings dialog. For other configuration topics, see the
 [Settings overview](index.md).
 
+Select **Help** at the bottom left of the dialog or press **F1** to open this
+General settings page in your default browser. Help does not save your edits
+or close the dialog. If the browser cannot be opened, a warning includes the
+manual URL.
+
 ![Settings dialog with Basic settings, CSV settings, Excel settings, Schema cache and SQL editor groups, plus Reset defaults, Cancel and Save buttons.](../assets/settings/settings.png)
 
 *The Settings dialog. The directory and values shown are examples from this

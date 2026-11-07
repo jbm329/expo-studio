@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtWidgets import QDialog, QWidget
 
+from expo_jbm329.services.data_operations.joins import JoinMetadata
 from expo_jbm329.workbench.controllers.join_controller import JoinController
 
 
@@ -110,6 +111,40 @@ def test_open_join_dialog_runs_join(controller):
     assert async_ops.calls
     assert results.pending
     assert results.bind_calls == [("pending-join", "job-1")]
+
+
+def test_open_join_dialog_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, _, _, _ = controller
+    dialogs = MagicMock()
+    ctrl._dialogs = dialogs
+    factory = MagicMock(return_value=MagicMock(exec=MagicMock(return_value=QDialog.DialogCode.Rejected)))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinDialog", factory)
+
+    ctrl.open_join_dialog()
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+
+
+def test_join_preview_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, _, _, _ = controller
+    dialogs = MagicMock()
+    ctrl._dialogs = dialogs
+    ctrl._async_ops = MagicMock()
+    dialog = MagicMock()
+    dialog.build_result.return_value = MagicMock(left_tab_title="left", right_tab_title="right")
+    monkeypatch.setattr(JoinController, "_precheck_join", lambda *args, **kwargs: 1)
+    factory = MagicMock()
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinPreviewDialog", factory)
+
+    ctrl._on_preview(dialog)
+    data = pd.DataFrame({"id": [1], "join_status": ["both"]})
+    metadata = JoinMetadata(1.0, 0.0, 0.0, "one-to-one", 1)
+    ctrl._async_ops.run_with_overlay.call_args.kwargs["on_result"]((data, metadata))
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+    assert factory.call_args.kwargs["parent"] is dialog
+    assert factory.call_args.kwargs["df"] is data
+    factory.return_value.exec.assert_called_once_with()
 
 
 def test_join_result_updates_pending_tab(controller):

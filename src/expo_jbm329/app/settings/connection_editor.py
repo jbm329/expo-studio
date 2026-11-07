@@ -14,12 +14,13 @@ import uuid
 from typing import TYPE_CHECKING, override
 
 import pyodbc
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIcon, QShowEvent
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut, QShowEvent
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -31,10 +32,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings.config_store import read_connections, write_connections
 from expo_jbm329.app.settings.json_types import JsonObject, is_json_object, string_value
 from expo_jbm329.db.base import close_connection, execute_sql_safe, validate_duckdb_connection
 from expo_jbm329.db.core.errors import TR_INVALID_CONFIG_DUCKDB, TR_INVALID_CONFIG_HINT_DUCKDB
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import OpenFileRequest, QtFileDialogService
 from expo_jbm329.utils.i18n_utils import translate
@@ -290,6 +293,19 @@ class ConnectionEditor(QDialog):
         left = QVBoxLayout()
         left.addWidget(QLabel(self.tr("Connections:")))
         left.addWidget(self.list_widget)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Database connections help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        left.addWidget(help_buttons, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         right = QVBoxLayout()
         right.addLayout(form)
@@ -300,6 +316,16 @@ class ConnectionEditor(QDialog):
         main_layout.addLayout(right, 2)
 
         self.setLayout(main_layout)
+
+    def _open_help(self) -> None:
+        """Open database connection guidance without saving or testing a connection."""
+        url = HelpTopic.DATABASE_CONNECTIONS.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     # ----------------------------------------------------------------------
     # Update icon

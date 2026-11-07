@@ -4,18 +4,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QDialog,
     QDialogButtonBox,
     QFormLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QVBoxLayout,
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
 from expo_jbm329.gui.dialogs.workflows.derived_column.month_labels import capture_month_labels
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
@@ -32,6 +36,7 @@ if TYPE_CHECKING:
 
     import pandas as pd
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.services.data_operations.derived_column.derived_column_parser import FormulaValidationResult
 
 
@@ -44,6 +49,7 @@ class DerivedColumnDialog(QDialog):
         df: pd.DataFrame,
         validate_callback: Callable[[str, str], tuple[FormulaValidationResult, str]],
         parent: QWidget | None = None,
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize dialog.
 
@@ -51,8 +57,10 @@ class DerivedColumnDialog(QDialog):
             df: Current DataFrame.
             validate_callback: Callback returning structured validation and a localized message.
             parent: Optional parent widget.
+            dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
         self._columns = expression_columns(list(df.columns), list(df.dtypes))
         self._validate_callback = validate_callback
@@ -64,6 +72,9 @@ class DerivedColumnDialog(QDialog):
 
         self._build_ui()
         self._connect_signals()
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
         self._update_validation()
         apply_window_hints_strict(self, min_width=500, fixed_size=True)
 
@@ -122,8 +133,21 @@ class DerivedColumnDialog(QDialog):
         self._buttons = QDialogButtonBox(parent=self)
         self._ok_button = self._buttons.addButton(QDialogButtonBox.StandardButton.Ok)
         self._buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
-        layout.addWidget(self._buttons)
         localize_dialog_buttons(self._buttons)
+
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Derived column help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        button_row = QHBoxLayout()
+        button_row.addWidget(help_buttons)
+        button_row.addStretch(1)
+        button_row.addWidget(self._buttons)
+        layout.addLayout(button_row)
 
         # Disable OK initially
         if self._ok_button is not None:
@@ -143,6 +167,16 @@ class DerivedColumnDialog(QDialog):
     # ==============================================================
     # Event handlers
     # ==============================================================
+
+    def _open_help(self) -> None:
+        """Open derived-column guidance without applying or changing the formula."""
+        url = HelpTopic.DERIVED_COLUMNS.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     def _on_accept(self) -> None:
         self._update_validation()

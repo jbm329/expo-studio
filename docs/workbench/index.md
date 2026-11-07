@@ -35,7 +35,11 @@ Use the links below for details on the task behind each command:
 | **Edit** | Editor actions such as clearing SQL text. |
 | **Tools** | [Settings](../settings/index.md), including [general settings](../settings/general-settings.md), [log settings](../settings/log-settings.md), [database connections](../settings/database-connections.md) and [REST API connections](../settings/rest-api-connections.md). |
 | **External tools** | [Data profiling reports](../export-and-report/analysis-results-and-reports.md#data-profiling-reports). |
-| **Help** | Application information. |
+| **Help** | Open this manual with **User manual**, or view application information with **About**. |
+
+Choose **Help → User manual** or press **F1** in the workbench to open the
+manual's home page in your default browser. If the browser cannot be opened,
+Expo Studio shows a warning with the manual URL.
 
 ## Change application settings {#settings}
 

@@ -36,6 +36,7 @@ nav = [
     { "Analyze data" = [
         { "Overview" = "analyze-data/index.md" },
         { "Dataset Overview" = "analyze-data/overview.md" },
+        { "Column properties" = "analyze-data/overview/#column-properties" },
         { "Statistics" = "analyze-data/statistics.md" },
         { "Hypothesis Tests" = "analyze-data/hypothesis-tests.md" },
         { "Correlation" = "analyze-data/correlation.md" },

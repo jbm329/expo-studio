@@ -25,6 +25,9 @@ rows, not a full dataset export; see
 
 ## Build an HTML analysis report
 
+While **Reports** is selected in Advanced analysis, **Help** or **F1** opens
+this guide without changing the report.
+
 Add a successfully calculated result to a report, then choose which parts to
 include:
 

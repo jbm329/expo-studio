@@ -15,6 +15,7 @@ import pandas as pd
 from PyQt6.QtCore import QT_TR_NOOP, QObject
 from PyQt6.QtWidgets import QDialog, QWidget
 
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
     ConcatDialog,
     ConcatDialogResult,
@@ -25,6 +26,7 @@ from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.workbench.controllers.async_operation_controller import (
         AsyncOperationController,
     )
@@ -55,6 +57,7 @@ class ConcatController:
     __slots__ = (
         "__weakref__",
         "_async_ops",
+        "_dialogs",
         "_get_active_title",
         "_get_df",
         "_list_tab_titles",
@@ -75,6 +78,7 @@ class ConcatController:
         get_df_for_tab: Callable[[str], pd.DataFrame],
         set_status: Callable[[str, int | None], None],
         logger: logging.Logger | None = None,
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the controller.
 
@@ -87,6 +91,7 @@ class ConcatController:
             get_df_for_tab: Returns the DataFrame for a given tab title.
             set_status: Sets the status text in the status bar.
             logger: Optional logger instance.
+            dialogs: Service for dialogs, defaulting to QtDialogService.
         """
         self._parent = parent_widget
         self._async_ops = async_ops
@@ -96,6 +101,7 @@ class ConcatController:
         self._get_df = get_df_for_tab
         self._set_status = set_status
         self._logger = logger or logging.getLogger("applogger.ui")
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
     # ------------------------------------------------------------------
     # Public API
@@ -122,6 +128,7 @@ class ConcatController:
             right_tab_titles=right_tabs,
             left_columns=left_cols,
             right_columns_map=right_cols_map,
+            dialogs=self._dialogs,
         )
 
         if dlg.exec() == QDialog.DialogCode.Accepted:

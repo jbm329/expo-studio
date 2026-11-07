@@ -11,12 +11,13 @@ import contextlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QStandardItemModel
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut, QStandardItemModel
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -30,10 +31,15 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 @dataclass
@@ -83,6 +89,7 @@ class JoinDialog(QDialog):
         get_columns_for_tab: dict[str, Sequence[str]],
         suggested_keys: list[str] | None = None,
         joinable_map: dict[tuple[str, str, str], set[str]],
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the join dialog.
 
@@ -93,8 +100,10 @@ class JoinDialog(QDialog):
             get_columns_for_tab: A mapping of tab titles to their column names.
             suggested_keys: A list of suggested join keys, if any.
             joinable_map: A mapping of join key combinations to joinability.
+            dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
 
         self.setWindowTitle(self.tr("Join datasets"))
 
@@ -189,12 +198,25 @@ class JoinDialog(QDialog):
         self.btn_ok.clicked.connect(self.accept)
         self.btn_cancel.clicked.connect(self.reject)
 
-        btn_row.addWidget(self.btn_preview)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Join help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        btn_row.addWidget(help_buttons)
         btn_row.addStretch(1)
+        btn_row.addWidget(self.btn_preview)
         btn_row.addWidget(self.btn_ok)
         btn_row.addWidget(self.btn_cancel)
 
         root.addLayout(btn_row)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         apply_window_hints_strict(self, min_width=625, fixed_size=True)
 
@@ -208,6 +230,16 @@ class JoinDialog(QDialog):
 
         # On change
         self._on_left_key_changed(self._left.cb_key.currentText())
+
+    def _open_help(self) -> None:
+        """Open join guidance without previewing or applying the configuration."""
+        url = HelpTopic.JOIN_DATASETS.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     # ---------------------------------------------------------
     # Create panels

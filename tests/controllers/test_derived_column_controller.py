@@ -83,6 +83,19 @@ def test_create_derived_column_runs_async(controller, monkeypatch):
     assert async_ops.last_kwargs["view"] is view
 
 
+def test_create_derived_column_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, async_ops, dialogs, apply, source, view = controller
+    factory = MagicMock()
+    factory.return_value.exec.return_value = QDialog.DialogCode.Rejected
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.derived_column_controller.DerivedColumnDialog", factory)
+
+    ctrl.create_derived_column(view, source, 0)
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+    assert not async_ops.calls
+    apply.assert_not_called()
+
+
 def test_apply_result_calls_originating_view(controller):
     ctrl, _, _, apply_to_view, _, view = controller
     result = pd.DataFrame({"n": [1]})

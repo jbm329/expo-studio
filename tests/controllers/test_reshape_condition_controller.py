@@ -51,6 +51,23 @@ def test_builder_captures_dtype_and_applies_unquoted_numeric_literal(monkeypatch
     assert editor.restorable_group() is not None
 
 
+def test_builder_receives_shared_dialog_service(monkeypatch: pytest.MonkeyPatch) -> None:
+    parent = QWidget()
+    editor = ConditionEditor(parent)
+    source = pd.DataFrame({"a": ["x"]})
+    dialogs = MagicMock(spec=DialogService)
+    monkeypatch.setattr(module.ConditionDialog, "exec", lambda self: QDialog.DialogCode.Rejected)
+    factory = MagicMock(wraps=module.ConditionDialog)
+    monkeypatch.setattr(module, "ConditionDialog", factory)
+    async_ops = MagicMock()
+
+    module.ReshapeConditionController(async_ops, MagicMock(), dialogs=dialogs).open_dialog(parent, editor, source)
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+    assert editor.text.text() == ""
+    async_ops.run_operation.assert_not_called()
+
+
 def test_out_of_order_jobs_search_close_and_cancellation(monkeypatch, caplog) -> None:
     caplog.set_level(logging.DEBUG, logger="applogger.service")
     parent = QWidget()

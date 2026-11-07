@@ -11,6 +11,7 @@ the analysis guide for it.
 | Task | Guide |
 |---|---|
 | Inspect dataset structure, missingness, duplicates and sample rows | [Dataset Overview](overview.md) |
+| Inspect one column's properties and distribution from its result header | [Column properties](overview.md#column-properties) |
 | Summarize numeric columns and eligible category frequencies | [Statistics](statistics.md) |
 | Compare groups, categorical associations or repeated measurements | [Hypothesis Tests](hypothesis-tests.md) |
 | Measure pairwise relationships among numeric columns | [Correlation](correlation.md) |
@@ -22,9 +23,19 @@ the analysis guide for it.
 
 ## Use Advanced analysis {#open-advanced-analysis}
 
+Column properties is a separate result-header workflow; it does not require
+opening Advanced analysis.
+
 Select the ready result tab you want to analyze, then choose **Analyze data** on
 the toolbar. The dialog title identifies the source dataset. The selected
 source remains fixed while you switch between analysis sections.
+
+Select **Help** at the bottom left or press **F1** to open the guide for the
+currently selected analysis. In **Hypothesis Tests**, Help opens the section
+for the selected test, even before you select **Apply**. In **Reports**, it
+opens the analysis exports and reports guide. **Export**, **Add to report**
+and **Close** remain on the right. Help does not change configuration or run
+an analysis. If the browser cannot be opened, a warning includes the manual URL.
 
 Overview and Statistics calculate when opened. The other sections have
 configuration controls; choose the inputs and select **Apply** to calculate.
