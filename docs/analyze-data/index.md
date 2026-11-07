@@ -11,6 +11,7 @@ the analysis guide for it.
 | Task | Guide |
 |---|---|
 | Inspect dataset structure, missingness, duplicates and sample rows | [Dataset Overview](overview.md) |
+| Inspect one column's properties and distribution from its result header | [Column properties](overview.md#column-properties) |
 | Summarize numeric columns and eligible category frequencies | [Statistics](statistics.md) |
 | Compare groups, categorical associations or repeated measurements | [Hypothesis Tests](hypothesis-tests.md) |
 | Measure pairwise relationships among numeric columns | [Correlation](correlation.md) |
@@ -21,6 +22,9 @@ the analysis guide for it.
 | Explore the temporal patterns in a dated numeric series | [Time Series](time-series.md) |
 
 ## Use Advanced analysis {#open-advanced-analysis}
+
+Column properties is a separate result-header workflow; it does not require
+opening Advanced analysis.
 
 Select the ready result tab you want to analyze, then choose **Analyze data** on
 the toolbar. The dialog title identifies the source dataset. The selected
