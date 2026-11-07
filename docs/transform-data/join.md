@@ -12,6 +12,11 @@ select any two datasets that are open as result tabs. They can come from
 different sources, such as local files, REST API results, or queries run
 through different database connections.
 
+In the Join datasets dialog, select **Help** at the bottom left or press **F1**
+to open this guide. **Preview**, **OK** and **Cancel** are grouped on the right.
+Help leaves your selections unchanged and does not preview or run the join.
+If the browser cannot be opened, a warning includes the manual URL.
+
 ## Create your first join {#create-your-first-join}
 
 Suppose the first dataset contains orders:

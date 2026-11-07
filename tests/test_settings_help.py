@@ -25,6 +25,7 @@ from expo_jbm329.gui.dialogs.rest import scb_browser_dialog
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
 from expo_jbm329.services.rest.scb.browser import ScbTableMetadata, ScbTableSummary, ScbVariable, ScbVariableValue
 from expo_jbm329.workbench.controllers.menu_controller import MenuController
 
@@ -32,7 +33,9 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 HELP_LABELS = {"en": "Help", "sv": "Hjälp", "de": "Hilfe", "fr": "Aide", "it": "Aiuto", "es": "Ayuda", "pl": "Pomoc"}
-type SettingsHelpDialog = SettingsEditor | LogConfigEditor | ConnectionEditor | RestConnectionEditor | ScbBrowserDialog
+type SettingsHelpDialog = (
+    SettingsEditor | LogConfigEditor | ConnectionEditor | RestConnectionEditor | ScbBrowserDialog | JoinDialog
+)
 
 
 @pytest.fixture(autouse=True)
@@ -83,8 +86,9 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.DATABASE_CONNECTIONS,
         HelpTopic.REST_API_CONNECTIONS,
         HelpTopic.SCB_QUERY_BUILDER,
+        HelpTopic.JOIN_DATASETS,
     ],
-    ids=["general", "log", "database", "rest", "scb"],
+    ids=["general", "log", "database", "rest", "scb", "join"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -93,6 +97,15 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.JOIN_DATASETS:
+        return JoinDialog(
+            parent,
+            dialogs=dialogs,
+            all_tab_titles=["Left", "Right"],
+            left_initial="Left",
+            get_columns_for_tab={"Left": ["id", "value"], "Right": ["id", "value"]},
+            joinable_map={("Left", "id", "Right"): {"id"}, ("Right", "id", "Left"): {"id"}},
+        )
     if topic is HelpTopic.SCB_QUERY_BUILDER:
         return ScbBrowserDialog(parent=parent, dialogs=dialogs)
     if topic is HelpTopic.REST_API_CONNECTIONS:
@@ -124,6 +137,8 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = dialog.url_edit
     elif isinstance(dialog, ScbBrowserDialog):
         focus_widget = dialog.value_list
+    elif isinstance(dialog, JoinDialog):
+        focus_widget = dialog.rb_left
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -155,6 +170,9 @@ def test_settings_help_button_and_f1_preserve_edits(
     monkeypatch.setattr(rest_connection_editor, "fetch_json", fetch)
     dialogs = MagicMock(spec=DialogService)
     changes = MagicMock()
+    preview = MagicMock()
+    join_before = None
+    persisted = None
     dialog = _dialog_for_topic(help_topic, dialogs)
     if isinstance(dialog, SettingsEditor):
         persisted = load_settings()
@@ -164,6 +182,10 @@ def test_settings_help_button_and_f1_preserve_edits(
         dialog.spin_file_backup.setValue(37)
     elif isinstance(dialog, (RestConnectionEditor, ScbBrowserDialog)):
         persisted = read_rest_connections()
+    elif isinstance(dialog, JoinDialog):
+        dialog.rb_left.setChecked(True)
+        join_before = dialog.build_result()
+        dialog.btn_preview.clicked.connect(preview)
     else:
         persisted = read_connections()
     try:
@@ -195,6 +217,9 @@ def test_settings_help_button_and_f1_preserve_edits(
             help_top = help_button.mapTo(dialog, help_button.rect().topLeft())
             assert help_top.y() > dialog.selection_counter.y() + dialog.selection_counter.height()
             assert help_top.x() < dialog.apply_button.x()
+        elif isinstance(dialog, JoinDialog):
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            assert help_left < dialog.btn_preview.x() < dialog.btn_ok.x() < dialog.btn_cancel.x()
         else:
             action_buttons = [
                 button
@@ -228,6 +253,9 @@ def test_settings_help_button_and_f1_preserve_edits(
                 assert item.checkState() == Qt.CheckState.Checked
             assert read_rest_connections() == persisted
             assert dialog.variable_list.height() == dialog.value_list.height()
+        elif isinstance(dialog, JoinDialog):
+            assert dialog.build_result() == join_before
+            preview.assert_not_called()
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted

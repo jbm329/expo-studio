@@ -112,6 +112,18 @@ def test_open_join_dialog_runs_join(controller):
     assert results.bind_calls == [("pending-join", "job-1")]
 
 
+def test_open_join_dialog_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, _, _, _ = controller
+    dialogs = MagicMock()
+    ctrl._dialogs = dialogs
+    factory = MagicMock(return_value=MagicMock(exec=MagicMock(return_value=QDialog.DialogCode.Rejected)))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinDialog", factory)
+
+    ctrl.open_join_dialog()
+
+    assert factory.call_args.kwargs["dialogs"] is dialogs
+
+
 def test_join_result_updates_pending_tab(controller):
     ctrl, async_ops, results, status = controller
     ctrl.open_join_dialog()

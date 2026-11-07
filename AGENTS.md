@@ -116,6 +116,7 @@ documentation automation or rerun a release solely to retry documentation.
 The Help menu opens the manual home page. General Settings, Log settings,
 Database connections and REST API connections have a Help button and contextual
 F1 link. The SCB query builder also links to its manual section through Help/F1.
+The Join datasets dialog provides Help/F1 for its guide.
 Register manual destinations in
 `app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 

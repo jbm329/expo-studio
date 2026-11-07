@@ -173,6 +173,7 @@ class JoinController:
             left_initial=left_tab,
             get_columns_for_tab=columns_map,
             joinable_map=joinable_map,
+            dialogs=self._dialogs,
         )
 
         # Optional: connect preview

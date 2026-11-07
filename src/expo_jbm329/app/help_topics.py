@@ -19,6 +19,7 @@ class HelpTopic(StrEnum):
     DATABASE_CONNECTIONS = "settings/database-connections/"
     REST_API_CONNECTIONS = "settings/rest-api-connections/"
     SCB_QUERY_BUILDER = "settings/rest-api-connections/#scb-query-builder"
+    JOIN_DATASETS = "transform-data/join/"
 
     @property
     def url(self) -> str:
