@@ -11,7 +11,8 @@ from PyQt6.QtWidgets import QApplication, QDialogButtonBox, QMainWindow, QPushBu
 
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings import settings_editor
-from expo_jbm329.app.settings.config_store import load_settings, read_log_config
+from expo_jbm329.app.settings.config_store import load_settings, read_connections, read_log_config
+from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
 from expo_jbm329.app.settings.settings_editor import SettingsEditor
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
@@ -45,7 +46,10 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
     )
 
 
-@pytest.fixture(params=[HelpTopic.GENERAL_SETTINGS, HelpTopic.LOG_SETTINGS], ids=["general", "log"])
+@pytest.fixture(
+    params=[HelpTopic.GENERAL_SETTINGS, HelpTopic.LOG_SETTINGS, HelpTopic.DATABASE_CONNECTIONS],
+    ids=["general", "log", "database"],
+)
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
     assert isinstance(topic, HelpTopic)
@@ -54,14 +58,16 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 def _dialog_for_topic(
     topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None
-) -> SettingsEditor | LogConfigEditor:
+) -> SettingsEditor | LogConfigEditor | ConnectionEditor:
+    if topic is HelpTopic.DATABASE_CONNECTIONS:
+        return ConnectionEditor(parent=parent, dialogs=dialogs)
     if topic is HelpTopic.LOG_SETTINGS:
         return LogConfigEditor(parent=parent, dialogs=dialogs)
     assert topic is HelpTopic.GENERAL_SETTINGS
     return _settings_dialog(dialogs, parent)
 
 
-def _help_button(dialog: SettingsEditor | LogConfigEditor) -> QPushButton:
+def _help_button(dialog: SettingsEditor | LogConfigEditor | ConnectionEditor) -> QPushButton:
     boxes = dialog.findChildren(QDialogButtonBox)
     assert len(boxes) == 1
     button = boxes[0].button(QDialogButtonBox.StandardButton.Help)
@@ -70,8 +76,13 @@ def _help_button(dialog: SettingsEditor | LogConfigEditor) -> QPushButton:
     return button
 
 
-def _press_f1(app: QApplication, dialog: SettingsEditor | LogConfigEditor) -> None:
-    focus_widget = dialog.txt_documents_dir if isinstance(dialog, SettingsEditor) else dialog.cb_logger_level
+def _press_f1(app: QApplication, dialog: SettingsEditor | LogConfigEditor | ConnectionEditor) -> None:
+    if isinstance(dialog, SettingsEditor):
+        focus_widget = dialog.txt_documents_dir
+    elif isinstance(dialog, LogConfigEditor):
+        focus_widget = dialog.cb_logger_level
+    else:
+        focus_widget = dialog.list_widget
     focus_widget.setFocus()
     app.processEvents()
     for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
@@ -98,28 +109,43 @@ def test_settings_help_button_and_f1_preserve_edits(
 
     monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
     dialogs = MagicMock(spec=DialogService)
+    changes = MagicMock()
     dialog = _dialog_for_topic(help_topic, dialogs)
-    persisted = load_settings() if isinstance(dialog, SettingsEditor) else read_log_config()
     if isinstance(dialog, SettingsEditor):
+        persisted = load_settings()
         dialog.spin_undo_limit.setValue(37)
-    else:
+    elif isinstance(dialog, LogConfigEditor):
+        persisted = read_log_config()
         dialog.spin_file_backup.setValue(37)
+    else:
+        persisted = read_connections()
     try:
         dialog.show()
         dialog.activateWindow()
         qt_app.processEvents()
+        if isinstance(dialog, ConnectionEditor):
+            dialog.db_type_combo.setCurrentIndex(dialog.db_type_combo.findData("postgresql"))
+            dialog.server_edit.setText("unsaved.example")
+            dialog.connections_changed.connect(changes)
         help_button = _help_button(dialog)
         assert help_button.text() == HELP_LABELS[help_language]
         assert not help_button.autoDefault()
         assert not help_button.isDefault()
-        action_buttons = [
-            button
-            for button in dialog.findChildren(QPushButton)
-            if button.text() in {dialog.tr("Reset defaults"), dialog.tr("Cancel"), dialog.tr("Save")}
-        ]
-        assert len(action_buttons) == 3
-        help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
-        assert all(button.mapTo(dialog, button.rect().topLeft()).x() > help_left for button in action_buttons)
+        if isinstance(dialog, ConnectionEditor):
+            list_bottom = dialog.list_widget.mapTo(dialog, dialog.list_widget.rect().bottomLeft())
+            help_top = help_button.mapTo(dialog, help_button.rect().topLeft())
+            assert help_top.y() > list_bottom.y()
+            assert help_top.x() == list_bottom.x()
+            assert help_top.x() < dialog.btn_add.mapTo(dialog, dialog.btn_add.rect().topLeft()).x()
+        else:
+            action_buttons = [
+                button
+                for button in dialog.findChildren(QPushButton)
+                if button.text() in {dialog.tr("Reset defaults"), dialog.tr("Cancel"), dialog.tr("Save")}
+            ]
+            assert len(action_buttons) == 3
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            assert all(button.mapTo(dialog, button.rect().topLeft()).x() > help_left for button in action_buttons)
         help_button.click()
         assert urls == [help_topic.url]
         _press_f1(qt_app, dialog)
@@ -128,9 +154,13 @@ def test_settings_help_button_and_f1_preserve_edits(
         if isinstance(dialog, SettingsEditor):
             assert dialog.spin_undo_limit.value() == 37
             assert load_settings() == persisted
-        else:
+        elif isinstance(dialog, LogConfigEditor):
             assert dialog.spin_file_backup.value() == 37
             assert read_log_config() == persisted
+        else:
+            assert dialog.server_edit.text() == "unsaved.example"
+            assert read_connections() == persisted
+            changes.assert_not_called()
         dialogs.info.assert_not_called()
         dialogs.critical.assert_not_called()
         if opened:

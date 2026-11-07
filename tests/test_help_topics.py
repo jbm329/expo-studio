@@ -94,6 +94,7 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
         (HelpTopic.WORKBENCH_LAYOUT, "https://jbm329.github.io/expo-studio/workbench/#window-layout"),
         (HelpTopic.GENERAL_SETTINGS, "https://jbm329.github.io/expo-studio/settings/general-settings/"),
         (HelpTopic.LOG_SETTINGS, "https://jbm329.github.io/expo-studio/settings/log-settings/"),
+        (HelpTopic.DATABASE_CONNECTIONS, "https://jbm329.github.io/expo-studio/settings/database-connections/"),
     ],
 )
 def test_help_topic_url(topic: HelpTopic, expected: str) -> None:
