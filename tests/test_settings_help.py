@@ -10,10 +10,16 @@ from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication, QDialogButtonBox, QMainWindow, QPushButton
 
 from expo_jbm329.app.help_topics import HelpTopic
-from expo_jbm329.app.settings import settings_editor
-from expo_jbm329.app.settings.config_store import load_settings, read_connections, read_log_config
+from expo_jbm329.app.settings import rest_connection_editor, settings_editor
+from expo_jbm329.app.settings.config_store import (
+    load_settings,
+    read_connections,
+    read_log_config,
+    read_rest_connections,
+)
 from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
+from expo_jbm329.app.settings.rest_connection_editor import RestConnectionEditor
 from expo_jbm329.app.settings.settings_editor import SettingsEditor
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
@@ -23,6 +29,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 HELP_LABELS = {"en": "Help", "sv": "Hjälp", "de": "Hilfe", "fr": "Aide", "it": "Aiuto", "es": "Ayuda", "pl": "Pomoc"}
+type SettingsHelpDialog = SettingsEditor | LogConfigEditor | ConnectionEditor | RestConnectionEditor
 
 
 @pytest.fixture(params=list(HELP_LABELS))
@@ -47,8 +54,13 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
 
 
 @pytest.fixture(
-    params=[HelpTopic.GENERAL_SETTINGS, HelpTopic.LOG_SETTINGS, HelpTopic.DATABASE_CONNECTIONS],
-    ids=["general", "log", "database"],
+    params=[
+        HelpTopic.GENERAL_SETTINGS,
+        HelpTopic.LOG_SETTINGS,
+        HelpTopic.DATABASE_CONNECTIONS,
+        HelpTopic.REST_API_CONNECTIONS,
+    ],
+    ids=["general", "log", "database", "rest"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -56,9 +68,9 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     return topic
 
 
-def _dialog_for_topic(
-    topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None
-) -> SettingsEditor | LogConfigEditor | ConnectionEditor:
+def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.REST_API_CONNECTIONS:
+        return RestConnectionEditor(parent=parent, dialogs=dialogs)
     if topic is HelpTopic.DATABASE_CONNECTIONS:
         return ConnectionEditor(parent=parent, dialogs=dialogs)
     if topic is HelpTopic.LOG_SETTINGS:
@@ -67,7 +79,7 @@ def _dialog_for_topic(
     return _settings_dialog(dialogs, parent)
 
 
-def _help_button(dialog: SettingsEditor | LogConfigEditor | ConnectionEditor) -> QPushButton:
+def _help_button(dialog: SettingsHelpDialog) -> QPushButton:
     boxes = dialog.findChildren(QDialogButtonBox)
     assert len(boxes) == 1
     button = boxes[0].button(QDialogButtonBox.StandardButton.Help)
@@ -76,11 +88,13 @@ def _help_button(dialog: SettingsEditor | LogConfigEditor | ConnectionEditor) ->
     return button
 
 
-def _press_f1(app: QApplication, dialog: SettingsEditor | LogConfigEditor | ConnectionEditor) -> None:
+def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
     if isinstance(dialog, SettingsEditor):
         focus_widget = dialog.txt_documents_dir
     elif isinstance(dialog, LogConfigEditor):
         focus_widget = dialog.cb_logger_level
+    elif isinstance(dialog, RestConnectionEditor):
+        focus_widget = dialog.url_edit
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -108,6 +122,8 @@ def test_settings_help_button_and_f1_preserve_edits(
         return opened
 
     monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
+    fetch = MagicMock()
+    monkeypatch.setattr(rest_connection_editor, "fetch_json", fetch)
     dialogs = MagicMock(spec=DialogService)
     changes = MagicMock()
     dialog = _dialog_for_topic(help_topic, dialogs)
@@ -117,6 +133,8 @@ def test_settings_help_button_and_f1_preserve_edits(
     elif isinstance(dialog, LogConfigEditor):
         persisted = read_log_config()
         dialog.spin_file_backup.setValue(37)
+    elif isinstance(dialog, RestConnectionEditor):
+        persisted = read_rest_connections()
     else:
         persisted = read_connections()
     try:
@@ -127,11 +145,14 @@ def test_settings_help_button_and_f1_preserve_edits(
             dialog.db_type_combo.setCurrentIndex(dialog.db_type_combo.findData("postgresql"))
             dialog.server_edit.setText("unsaved.example")
             dialog.connections_changed.connect(changes)
+        elif isinstance(dialog, RestConnectionEditor):
+            dialog.url_edit.setText("https://unsaved.example/api")
+            dialog.connections_changed.connect(changes)
         help_button = _help_button(dialog)
         assert help_button.text() == HELP_LABELS[help_language]
         assert not help_button.autoDefault()
         assert not help_button.isDefault()
-        if isinstance(dialog, ConnectionEditor):
+        if isinstance(dialog, (ConnectionEditor, RestConnectionEditor)):
             list_bottom = dialog.list_widget.mapTo(dialog, dialog.list_widget.rect().bottomLeft())
             help_top = help_button.mapTo(dialog, help_button.rect().topLeft())
             assert help_top.y() > list_bottom.y()
@@ -157,12 +178,17 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, LogConfigEditor):
             assert dialog.spin_file_backup.value() == 37
             assert read_log_config() == persisted
+        elif isinstance(dialog, RestConnectionEditor):
+            assert dialog.url_edit.text() == "https://unsaved.example/api"
+            assert read_rest_connections() == persisted
+            changes.assert_not_called()
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
             changes.assert_not_called()
         dialogs.info.assert_not_called()
         dialogs.critical.assert_not_called()
+        fetch.assert_not_called()
         if opened:
             dialogs.warn.assert_not_called()
         else:

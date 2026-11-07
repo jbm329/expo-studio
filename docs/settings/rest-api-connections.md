@@ -5,6 +5,11 @@ to manage named requests to REST APIs. Configure the endpoint and request
 options here, then load the response as a result dataset from the workbench's
 **REST connections** panel.
 
+Select **Help** below the **Connections** list or press **F1** to open this
+REST API connections page in your default browser. Help does not save or send
+the request and leaves your edits and the dialog open. If the browser cannot
+be opened, a warning includes the manual URL.
+
 For other configuration topics, see the [Settings overview](index.md).
 
 The editor supports **GET** and **POST** requests returning JSON. It is not a

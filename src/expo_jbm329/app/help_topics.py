@@ -17,6 +17,7 @@ class HelpTopic(StrEnum):
     GENERAL_SETTINGS = "settings/general-settings/"
     LOG_SETTINGS = "settings/log-settings/"
     DATABASE_CONNECTIONS = "settings/database-connections/"
+    REST_API_CONNECTIONS = "settings/rest-api-connections/"
 
     @property
     def url(self) -> str:

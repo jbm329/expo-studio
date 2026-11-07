@@ -8303,180 +8303,194 @@ Wskazówka: {error_hint}</translation>
 </context><context>
     <name>RestConnectionEditor</name>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="143" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="146" />
         <source>REST API connections</source>
         <translation>Połączenia z interfejsami REST API</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="165" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="168" />
         <source>SCB query builder…</source>
         <translation>Kreator zapytań SCB…</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="223" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="226" />
         <source>Wizards</source>
         <translation>Kreatory</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="227" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
         <source>General</source>
         <translation>Ogólne</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="228" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="231" />
         <source>URL:</source>
         <translation>URL:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="229" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
         <source>Method:</source>
         <translation>Metoda:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="230" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
         <source>Response path:</source>
         <translation>Ścieżka odpowiedzi:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="232" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
         <source>Request</source>
         <translation>Żądanie</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="233" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="236" />
         <source>JSON body:</source>
         <translation>Treść JSON:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="234" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
         <source>Headers (JSON):</source>
         <translation>Nagłówki (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="235" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="238" />
         <source>Query params (JSON):</source>
         <translation>Parametry zapytania (JSON):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="237" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
         <source>Authentication</source>
         <translation>Uwierzytelnianie</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="240" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="243" />
         <source>Pagination</source>
         <translation>Paginacja</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="247" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
         <source>Add</source>
         <translation>Dodaj</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="248" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
         <source>Test</source>
         <translation>Testuj</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="995" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="250" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="253" />
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="251" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="254" />
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="252" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="255" />
         <source>Close</source>
         <translation>Zamknij</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="270" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="273" />
         <source>Connections:</source>
         <translation>Połączenia:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="763" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="497" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="321" />
+        <source>Unable to open link</source>
+        <translation>Nie można otworzyć łącza</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="322" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Nie można otworzyć podręcznika użytkownika.
+
+{url}</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/rest_connection_editor.py" line="789" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="523" />
         <source>JSON body</source>
         <translation>Treść JSON</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="828" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="522" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="854" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="548" />
         <source>Page-number pagination requires a page parameter name</source>
         <translation>Paginacja numerowana stronami wymaga nazwy parametru strony</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="832" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="772" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="528" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="858" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="554" />
         <source>Start page</source>
         <translation>Pierwsza strona</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="833" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="773" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="538" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="859" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="799" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="564" />
         <source>Page size</source>
         <translation>Rozmiar strony</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="834" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="774" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="544" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="860" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="800" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="570" />
         <source>Max pages</source>
         <translation>Maksymalna liczba stron</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="812" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="553" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="838" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="579" />
         <source>Headers</source>
         <translation>Nagłówki</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="813" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="560" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="839" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="586" />
         <source>Query params</source>
         <translation>Parametry zapytania</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="621" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="647" />
         <source>{field} must contain valid JSON.</source>
         <translation>{field} musi zawierać prawidłowy JSON.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="624" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="650" />
         <source>{field} must be a JSON object.</source>
         <translation>{field} musi być obiektem JSON.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="741" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="728" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="767" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="754" />
         <source>{field} must be an integer</source>
         <translation>{field} musi być liczbą całkowitą</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="743" />
-        <location filename="../../app/settings/rest_connection_editor.py" line="730" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="769" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="756" />
         <source>{field} must be &gt;= 1</source>
         <translation>{field} musi być większe lub równe 1</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="779" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="805" />
         <source>Validation request</source>
         <translation>Żądanie walidacyjne</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="791" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="817" />
         <source>POST requests require a valid JSON body</source>
         <translation>Żądania POST wymagają prawidłowej treści JSON</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="798" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="824" />
         <source>Invalid response path.
 Use dot-separated keys or numeric indices.
 Examples:
@@ -8493,37 +8507,37 @@ Przykłady:
   results.0.values</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="873" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="899" />
         <source>New REST connection</source>
         <translation>Nowe połączenie REST</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="874" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="900" />
         <source>Name:</source>
         <translation>Nazwa:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="884" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
         <source>Failure</source>
         <translation>Błąd</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="885" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="911" />
         <source>A REST connection with that name already exists.</source>
         <translation>Połączenie REST o tej nazwie już istnieje.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="910" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="936" />
         <source>Test request</source>
         <translation>Testuj żądanie</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="938" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="964" />
         <source>Invalid response path</source>
         <translation>Nieprawidłowa ścieżka odpowiedzi</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="939" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="965" />
         <source>The response path could not be applied to the API response.
 
 {error}</source>
@@ -8532,12 +8546,12 @@ Przykłady:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="948" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="974" />
         <source>none</source>
         <translation>brak</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="955" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="981" />
         <source>API test successful.
 
 Returned {rows} rows and {cols} columns.
@@ -8550,27 +8564,27 @@ Kolumny: {columns}.
 Czas: {sec:.2f}s{sample}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="966" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="992" />
         <source>Test successful</source>
         <translation>Test zakończył się pomyślnie</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="982" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1008" />
         <source>Test failed</source>
         <translation>Test zakończył się niepowodzeniem</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="996" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
         <source>Do you want to delete '{name}'?</source>
         <translation>Czy chcesz usunąć „{name}”?</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1021" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1047" />
         <source>Saved</source>
         <translation>Zapisano</translation>
     </message>
     <message>
-        <location filename="../../app/settings/rest_connection_editor.py" line="1022" />
+        <location filename="../../app/settings/rest_connection_editor.py" line="1048" />
         <source>REST connection saved successfully.</source>
         <translation>Pomyślnie zapisano połączenie REST.</translation>
     </message>

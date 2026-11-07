@@ -5,12 +5,13 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Literal, override
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QIcon, QShowEvent, QTextCursor
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut, QShowEvent, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -24,6 +25,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings.config_store import (
     read_rest_connections,
     write_rest_connections,
@@ -36,6 +38,7 @@ from expo_jbm329.app.settings.json_types import (
     string_value,
 )
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.widgets.rest.auth_widget import RestAuthWidget
 from expo_jbm329.gui.widgets.rest.pagination_widget import RestPaginationWidget
@@ -269,6 +272,19 @@ class RestConnectionEditor(QDialog):
         left = QVBoxLayout()
         left.addWidget(QLabel(self.tr("Connections:")))
         left.addWidget(self.list_widget)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "REST API connections help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        left.addWidget(help_buttons, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         form_container = QWidget()
         form_layout = QVBoxLayout()
@@ -295,6 +311,16 @@ class RestConnectionEditor(QDialog):
         main.addLayout(right, 2)
 
         self.setLayout(main)
+
+    def _open_help(self) -> None:
+        """Open REST API guidance without saving or sending the edited request."""
+        url = HelpTopic.REST_API_CONNECTIONS.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
         self.on_auth_changed()
         self.on_oauth2_grant_changed()
