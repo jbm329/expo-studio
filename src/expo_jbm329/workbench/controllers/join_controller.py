@@ -446,6 +446,7 @@ class JoinController:
                 parent=dlg,
                 df=preview_df,
                 metadata=metadata,
+                dialogs=self._dialogs,
             )
             preview_dialog.exec()
 

@@ -92,6 +92,7 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
     [
         (HelpTopic.HOME, "https://jbm329.github.io/expo-studio/"),
         (HelpTopic.JOIN_DATASETS, "https://jbm329.github.io/expo-studio/transform-data/join/"),
+        (HelpTopic.JOIN_PREVIEW, "https://jbm329.github.io/expo-studio/transform-data/join/#preview"),
         (HelpTopic.WORKBENCH_LAYOUT, "https://jbm329.github.io/expo-studio/workbench/#window-layout"),
         (HelpTopic.GENERAL_SETTINGS, "https://jbm329.github.io/expo-studio/settings/general-settings/"),
         (HelpTopic.LOG_SETTINGS, "https://jbm329.github.io/expo-studio/settings/log-settings/"),

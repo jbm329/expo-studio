@@ -20,6 +20,7 @@ class HelpTopic(StrEnum):
     REST_API_CONNECTIONS = "settings/rest-api-connections/"
     SCB_QUERY_BUILDER = "settings/rest-api-connections/#scb-query-builder"
     JOIN_DATASETS = "transform-data/join/"
+    JOIN_PREVIEW = "transform-data/join/#preview"
 
     @property
     def url(self) -> str:

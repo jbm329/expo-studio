@@ -105,6 +105,10 @@ Rename columns before joining if those suffixes would be unclear.
 Select **Preview** to review sample result rows and join metadata before
 creating the result:
 
+In the preview dialog, select **Help** at the bottom left or press **F1** to
+open this section. **Close** stays on the right. Help leaves the preview and
+join configuration unchanged.
+
 ![Join preview showing sample rows, match percentages, cardinality, and the
 estimated number of rows](../assets/transform-data/join_preview.png)
 

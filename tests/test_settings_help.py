@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt, QTranslator, QUrl
 from PyQt6.QtGui import QKeyEvent
@@ -26,6 +27,8 @@ from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
+from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPreviewDialog
+from expo_jbm329.services.data_operations.joins import JoinMetadata
 from expo_jbm329.services.rest.scb.browser import ScbTableMetadata, ScbTableSummary, ScbVariable, ScbVariableValue
 from expo_jbm329.workbench.controllers.menu_controller import MenuController
 
@@ -34,7 +37,13 @@ if TYPE_CHECKING:
 
 HELP_LABELS = {"en": "Help", "sv": "Hjälp", "de": "Hilfe", "fr": "Aide", "it": "Aiuto", "es": "Ayuda", "pl": "Pomoc"}
 type SettingsHelpDialog = (
-    SettingsEditor | LogConfigEditor | ConnectionEditor | RestConnectionEditor | ScbBrowserDialog | JoinDialog
+    SettingsEditor
+    | LogConfigEditor
+    | ConnectionEditor
+    | RestConnectionEditor
+    | ScbBrowserDialog
+    | JoinDialog
+    | JoinPreviewDialog
 )
 
 
@@ -87,8 +96,9 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.REST_API_CONNECTIONS,
         HelpTopic.SCB_QUERY_BUILDER,
         HelpTopic.JOIN_DATASETS,
+        HelpTopic.JOIN_PREVIEW,
     ],
-    ids=["general", "log", "database", "rest", "scb", "join"],
+    ids=["general", "log", "database", "rest", "scb", "join", "join-preview"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -97,6 +107,13 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.JOIN_PREVIEW:
+        return JoinPreviewDialog(
+            parent,
+            dialogs=dialogs,
+            df=pd.DataFrame({"id": [1, 2], "join_status": ["both", "left_only"]}),
+            metadata=JoinMetadata(0.5, 0.5, 0.0, "one-to-one", 2),
+        )
     if topic is HelpTopic.JOIN_DATASETS:
         return JoinDialog(
             parent,
@@ -139,6 +156,8 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = dialog.value_list
     elif isinstance(dialog, JoinDialog):
         focus_widget = dialog.rb_left
+    elif isinstance(dialog, JoinPreviewDialog):
+        focus_widget = _help_button(dialog)
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -186,6 +205,8 @@ def test_settings_help_button_and_f1_preserve_edits(
         dialog.rb_left.setChecked(True)
         join_before = dialog.build_result()
         dialog.btn_preview.clicked.connect(preview)
+    elif isinstance(dialog, JoinPreviewDialog):
+        persisted = load_settings()
     else:
         persisted = read_connections()
     try:
@@ -220,6 +241,12 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, JoinDialog):
             help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
             assert help_left < dialog.btn_preview.x() < dialog.btn_ok.x() < dialog.btn_cancel.x()
+        elif isinstance(dialog, JoinPreviewDialog):
+            close_buttons = [
+                button for button in dialog.findChildren(QPushButton) if button.text() == dialog.tr("Close")
+            ]
+            assert len(close_buttons) == 1
+            assert help_button.mapTo(dialog, help_button.rect().topLeft()).x() < close_buttons[0].x()
         else:
             action_buttons = [
                 button
@@ -256,6 +283,13 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, JoinDialog):
             assert dialog.build_result() == join_before
             preview.assert_not_called()
+        elif isinstance(dialog, JoinPreviewDialog):
+            assert dialog.model.rowCount() == 2
+            assert dialog.model.columnCount() == 2
+            assert dialog.analysis.pb_match.value() == 50
+            assert dialog.analysis.pb_left.value() == 50
+            assert dialog.analysis.pb_right.value() == 0
+            assert load_settings() == persisted
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -396,6 +430,35 @@ def test_scb_f1_uses_builder_topic_then_rest_topic_after_closing(
         dialog.close()
         _press_f1(qt_app, parent)
         assert urls == [HelpTopic.SCB_QUERY_BUILDER.url, HelpTopic.REST_API_CONNECTIONS.url]
+    finally:
+        dialog.close()
+        parent.close()
+
+
+def test_join_preview_f1_returns_to_join_topic_after_closing(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str
+) -> None:
+    urls: list[str] = []
+
+    def open_url(url: QUrl) -> bool:
+        urls.append(url.toString())
+        return True
+
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
+    dialogs = MagicMock(spec=DialogService)
+    parent = _dialog_for_topic(HelpTopic.JOIN_DATASETS, dialogs)
+    assert isinstance(parent, JoinDialog)
+    data = pd.DataFrame({"id": [1]})
+    dialog = JoinPreviewDialog(parent, df=data, metadata=JoinMetadata(1.0, 0.0, 0.0, "one-to-one", 1), dialogs=dialogs)
+    try:
+        parent.show()
+        dialog.show()
+        _press_f1(qt_app, dialog)
+        assert urls == [HelpTopic.JOIN_PREVIEW.url]
+        assert list(data.columns) == ["id"]
+        dialog.close()
+        _press_f1(qt_app, parent)
+        assert urls == [HelpTopic.JOIN_PREVIEW.url, HelpTopic.JOIN_DATASETS.url]
     finally:
         dialog.close()
         parent.close()
