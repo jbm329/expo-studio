@@ -24,6 +24,7 @@ class HelpTopic(StrEnum):
     CONCATENATE_DATASETS = "transform-data/concatenate/"
     DERIVED_COLUMNS = "transform-data/derived-columns/"
     RESHAPE = "transform-data/reshape/"
+    RESHAPE_CONDITION_BUILDER = "transform-data/reshape/#condition-builder"
 
     @property
     def url(self) -> str:

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from PyQt6.QtCore import QEvent, Qt, QTranslator, QUrl
+from PyQt6.QtCore import QEvent, Qt, QTimer, QTranslator, QUrl
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLabel, QLineEdit, QMainWindow, QPushButton
 
@@ -31,6 +31,7 @@ from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog impo
 from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
 from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPreviewDialog
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import ConditionDialog
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
@@ -39,6 +40,15 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_service 
     validate_derived_column_spec,
 )
 from expo_jbm329.services.data_operations.joins import JoinMetadata
+from expo_jbm329.services.data_operations.reshape_condition_values import ValuePage
+from expo_jbm329.services.data_operations.reshape_conditions import (
+    ConditionColumn,
+    ConditionGroup,
+    ConditionMatch,
+    ConditionOperator,
+    ConditionRule,
+    ConditionValue,
+)
 from expo_jbm329.services.data_operations.reshape_preview import ReshapePreview
 from expo_jbm329.services.rest.scb.browser import ScbTableMetadata, ScbTableSummary, ScbVariable, ScbVariableValue
 from expo_jbm329.utils.dataset_ref import DatasetRef
@@ -61,6 +71,7 @@ type SettingsHelpDialog = (
     | ConcatDialog
     | DerivedColumnDialog
     | ReshapeDialog
+    | ConditionDialog
 )
 
 
@@ -117,8 +128,21 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.CONCATENATE_DATASETS,
         HelpTopic.DERIVED_COLUMNS,
         HelpTopic.RESHAPE,
+        HelpTopic.RESHAPE_CONDITION_BUILDER,
     ],
-    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat", "derived", "reshape"],
+    ids=[
+        "general",
+        "log",
+        "database",
+        "rest",
+        "scb",
+        "join",
+        "join-preview",
+        "concat",
+        "derived",
+        "reshape",
+        "condition",
+    ],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -127,6 +151,14 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.RESHAPE_CONDITION_BUILDER:
+        column = ConditionColumn(0, "Product", True)
+        return ConditionDialog(
+            parent=parent,
+            dialogs=dialogs,
+            columns=[column],
+            initial=ConditionGroup((ConditionRule(column, ConditionOperator.IS_NULL),)),
+        )
     if topic is HelpTopic.RESHAPE:
         return ReshapeDialog(
             parent=parent,
@@ -229,6 +261,8 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         condition = dialog.metrics.cellWidget(0, 3)
         assert isinstance(condition, ConditionEditor)
         focus_widget = condition.text
+    elif isinstance(dialog, ConditionDialog):
+        focus_widget = dialog.rules[0].column
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -266,6 +300,7 @@ def test_settings_help_button_and_f1_preserve_edits(
     concat_before = None
     reshape_before = None
     reshape_revision = None
+    condition_before = None
     persisted = None
     dialog = _dialog_for_topic(help_topic, dialogs)
     if isinstance(dialog, SettingsEditor):
@@ -295,6 +330,10 @@ def test_settings_help_button_and_f1_preserve_edits(
         reshape_revision = dialog.revision
         dialog.preview_requested.connect(preview)
         dialog.configuration_changed.connect(changes)
+    elif isinstance(dialog, ConditionDialog):
+        condition_before = dialog.build_group()
+        dialog.page_requested.connect(preview)
+        dialog.request_invalidated.connect(changes)
     else:
         persisted = read_connections()
     try:
@@ -335,6 +374,9 @@ def test_settings_help_button_and_f1_preserve_edits(
             ok_left = dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft()).x()
             assert help_left < preview_left < ok_left
             assert preview_left - help_left > dialog.width() // 2
+        elif isinstance(dialog, ConditionDialog):
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            assert help_left < dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft()).x()
         elif isinstance(dialog, JoinPreviewDialog):
             close_buttons = [
                 button for button in dialog.findChildren(QPushButton) if button.text() == dialog.tr("Close")
@@ -408,6 +450,12 @@ def test_settings_help_button_and_f1_preserve_edits(
             assert dialog.apply_button.isEnabled()
             preview.assert_not_called()
             changes.assert_not_called()
+        elif isinstance(dialog, ConditionDialog):
+            assert dialog.build_group() == condition_before
+            assert dialog.applied_group is None
+            assert dialog.apply_button.isEnabled()
+            preview.assert_not_called()
+            changes.assert_not_called()
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -431,6 +479,94 @@ def test_settings_help_button_and_f1_preserve_edits(
                 )
     finally:
         dialog.close()
+
+
+@pytest.mark.parametrize("loading", [False, True])
+def test_condition_help_preserves_rules_values_and_requests(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, loading: bool
+) -> None:
+    opener = MagicMock(return_value=True)
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", opener)
+    column = ConditionColumn(0, "Product", True)
+    selected = ConditionValue("string", "A")
+    group = ConditionGroup((
+        ConditionGroup((ConditionRule(column, ConditionOperator.IN, (selected,)),), ConditionMatch.ANY),
+        ConditionRule(column, ConditionOperator.IS_NOT_NULL),
+    ))
+    dialog = ConditionDialog(parent=None, columns=[column], initial=group, dialogs=MagicMock(spec=DialogService))
+    requests = MagicMock()
+    invalidations = MagicMock()
+    accepted = MagicMock()
+    try:
+        dialog.show()
+        picker = dialog.rules[0].picker
+        for timer in dialog.findChildren(QTimer):
+            timer.stop()
+        if not loading:
+            picker.receive_page(ValuePage((selected, ConditionValue("string", "B")), False))
+        qt_app.processEvents()
+        generation = picker.generation
+        feedback = dialog.validation.text()
+        dialog.page_requested.connect(requests)
+        dialog.request_invalidated.connect(invalidations)
+        dialog.accepted.connect(accepted)
+
+        _help_button(dialog).click()
+        _press_f1(qt_app, dialog)
+
+        assert opener.call_count == 2
+        assert picker.selected_values() == (selected,)
+        assert picker.generation == generation
+        assert picker.loading == loading
+        assert dialog.validation.text() == feedback
+        assert dialog.apply_button.isEnabled() == (not loading)
+        assert dialog.applied_group is None
+        requests.assert_not_called()
+        invalidations.assert_not_called()
+        accepted.assert_not_called()
+        if not loading:
+            assert dialog.build_group() == group
+            dialog.apply_button.click()
+            assert dialog.applied_group == group
+            accepted.assert_called_once()
+        else:
+            cancel = next(
+                button
+                for box in dialog.findChildren(QDialogButtonBox)
+                if (button := box.button(QDialogButtonBox.StandardButton.Cancel)) is not None
+            )
+            cancel.click()
+            assert not dialog.isVisible()
+            assert dialog.applied_group is None
+    finally:
+        dialog.close()
+
+
+def test_condition_f1_returns_to_reshape_after_closing(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str
+) -> None:
+    urls: list[str] = []
+
+    def open_url(url: QUrl) -> bool:
+        urls.append(url.toString())
+        return True
+
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
+    dialogs = MagicMock(spec=DialogService)
+    parent = _dialog_for_topic(HelpTopic.RESHAPE, dialogs)
+    assert isinstance(parent, ReshapeDialog)
+    dialog = ConditionDialog(parent=parent, columns=[ConditionColumn(0, "Product", True)], dialogs=dialogs)
+    try:
+        parent.show()
+        dialog.show()
+        _press_f1(qt_app, dialog)
+        assert urls == [HelpTopic.RESHAPE_CONDITION_BUILDER.url]
+        dialog.close()
+        _press_f1(qt_app, parent)
+        assert urls == [HelpTopic.RESHAPE_CONDITION_BUILDER.url, HelpTopic.RESHAPE.url]
+    finally:
+        dialog.close()
+        parent.close()
 
 
 def _configure_reshape(dialog: ReshapeDialog) -> None:

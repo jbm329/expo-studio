@@ -191,6 +191,11 @@ applied before aggregation, not to the aggregated total.
 
 ### Build a condition visually {#condition-builder}
 
+In **Build condition**, select **Help** at the bottom left or press **F1** to
+open this section. **Apply** and **Cancel** remain on the right. Help preserves
+your rules, groups and selected values without applying the condition.
+If the browser cannot be opened, a warning includes the manual URL.
+
 1. Complete the metric name, function and source selection.
 2. Select the **...** button beside its condition field to open
    **Build condition**.

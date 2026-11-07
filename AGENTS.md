@@ -121,6 +121,7 @@ to the preview section.
 Concatenate datasets also provides Help/F1 for its guide.
 The Derived column dialog provides Help/F1 for the Derived columns guide.
 The Reshape dialog provides Help/F1 for its guide.
+Build condition provides Help/F1 for the Reshape guide's visual condition builder.
 Register manual destinations in
 `app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 

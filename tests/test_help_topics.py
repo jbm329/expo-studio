@@ -96,6 +96,10 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
         (HelpTopic.CONCATENATE_DATASETS, "https://jbm329.github.io/expo-studio/transform-data/concatenate/"),
         (HelpTopic.DERIVED_COLUMNS, "https://jbm329.github.io/expo-studio/transform-data/derived-columns/"),
         (HelpTopic.RESHAPE, "https://jbm329.github.io/expo-studio/transform-data/reshape/"),
+        (
+            HelpTopic.RESHAPE_CONDITION_BUILDER,
+            "https://jbm329.github.io/expo-studio/transform-data/reshape/#condition-builder",
+        ),
         (HelpTopic.WORKBENCH_LAYOUT, "https://jbm329.github.io/expo-studio/workbench/#window-layout"),
         (HelpTopic.GENERAL_SETTINGS, "https://jbm329.github.io/expo-studio/settings/general-settings/"),
         (HelpTopic.LOG_SETTINGS, "https://jbm329.github.io/expo-studio/settings/log-settings/"),

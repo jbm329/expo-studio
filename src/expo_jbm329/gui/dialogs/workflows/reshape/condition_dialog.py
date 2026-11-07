@@ -5,8 +5,8 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QStandardItemModel
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut, QStandardItemModel
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -18,7 +18,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_tree_widget import ConditionTreeWidget
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_value_picker import ConditionValuePicker
 from expo_jbm329.services.data_operations.reshape_condition_tree import ConditionNode
@@ -34,6 +36,8 @@ from expo_jbm329.services.data_operations.reshape_conditions import (
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
 class ConditionRuleWidget(QWidget):
@@ -150,13 +154,23 @@ class ConditionDialog(QDialog):
     def __init__(
         self,
         *,
-        parent: QWidget,
+        parent: QWidget | None,
         columns: Sequence[ConditionColumn],
         initial: ConditionGroup | None = None,
         replaces_manual_text: bool = False,
+        dialogs: DialogService | None = None,
     ) -> None:
-        """Initialize the builder from metadata and optional applied state."""
+        """Initialize the builder from metadata and optional applied state.
+
+        Args:
+            parent: Parent widget.
+            columns: Available source-column metadata.
+            initial: Previously applied condition group.
+            replaces_manual_text: Whether Apply replaces manually edited text.
+            dialogs: Service for displaying warnings, defaulting to QtDialogService.
+        """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self.setWindowTitle(self.tr("Build condition"))
         self.resize(750, 500)
         self._columns = tuple(columns)
@@ -197,7 +211,22 @@ class ConditionDialog(QDialog):
         localize_dialog_buttons(buttons)
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
-        root.addWidget(buttons)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Condition builder help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        button_row = QHBoxLayout()
+        button_row.addWidget(help_buttons)
+        button_row.addStretch(1)
+        button_row.addWidget(buttons)
+        root.addLayout(button_row)
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
         self.tree.add_requested.connect(self._add_to_group)
         self.tree.changed.connect(self._validate)
         self.finished.connect(self._invalidate_all)
@@ -209,6 +238,16 @@ class ConditionDialog(QDialog):
         else:
             self.add_rule()
         self._validate()
+
+    def _open_help(self) -> None:
+        """Open visual-builder guidance without applying or changing conditions."""
+        url = HelpTopic.RESHAPE_CONDITION_BUILDER.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     def _add_to_group(self, candidate: object) -> None:
         if not isinstance(candidate, ConditionNode):
