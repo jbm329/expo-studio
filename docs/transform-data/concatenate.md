@@ -9,6 +9,11 @@ use a [join](join.md) instead.
 Concatenate is a code-free workbench operation. It combines two datasets that
 are open as result tabs, even when they came from different sources.
 
+In the Concatenate datasets dialog, select **Help** at the bottom left or
+press **F1** to open this guide. **OK** and **Cancel** remain on the right.
+Help leaves your dataset selections unchanged and does not run concatenation.
+If the browser cannot be opened, a warning includes the manual URL.
+
 ## Append one dataset to another {#append-datasets}
 
 Suppose one dataset contains rock tracks and another contains jazz tracks:

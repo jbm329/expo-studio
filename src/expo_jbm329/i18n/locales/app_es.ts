@@ -2189,58 +2189,72 @@ Consulte los registros para obtener más información.</translation>
 </context><context>
     <name>ConcatController</name>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="41" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
         <source>concatenate datasets</source>
         <translation>concatenar conjuntos de datos</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="42" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
         <source>Concatenating datasets: {left} + {right}</source>
         <translation>Concatenando conjuntos de datos: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
         <source>Concatenated datasets: {left} + {right}</source>
         <translation>Conjuntos de datos concatenados: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
         <source>Concatenation cancelled</source>
         <translation>Concatenación cancelada</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
         <source>Concatenated data</source>
         <translation>Datos concatenados</translation>
     </message>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="90" />
         <source>Concatenate datasets</source>
         <translation>Concatenar conjuntos de datos</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="94" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="102" />
         <source>First dataset</source>
         <translation>Primer conjunto de datos</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="121" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="105" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="113" />
         <source>Dataset:</source>
         <translation>Conjunto de datos:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="122" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="106" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="130" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="114" />
         <source>Columns:</source>
         <translation>Columnas:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="111" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="119" />
         <source>Second dataset</source>
         <translation>Segundo conjunto de datos</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="180" />
+        <source>Unable to open link</source>
+        <translation>No se puede abrir el enlace</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="181" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>No se pudo abrir el manual de usuario.
+
+{url}</translation>
     </message>
 </context><context>
     <name>ConditionDialog</name>

@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt, QTranslator, QUrl
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QApplication, QDialogButtonBox, QMainWindow, QPushButton
+from PyQt6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QMainWindow, QPushButton
 
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings import rest_connection_editor, settings_editor
@@ -26,6 +26,7 @@ from expo_jbm329.gui.dialogs.rest import scb_browser_dialog
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import ConcatDialog
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
 from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPreviewDialog
 from expo_jbm329.services.data_operations.joins import JoinMetadata
@@ -44,6 +45,7 @@ type SettingsHelpDialog = (
     | ScbBrowserDialog
     | JoinDialog
     | JoinPreviewDialog
+    | ConcatDialog
 )
 
 
@@ -97,8 +99,9 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.SCB_QUERY_BUILDER,
         HelpTopic.JOIN_DATASETS,
         HelpTopic.JOIN_PREVIEW,
+        HelpTopic.CONCATENATE_DATASETS,
     ],
-    ids=["general", "log", "database", "rest", "scb", "join", "join-preview"],
+    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -107,6 +110,15 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.CONCATENATE_DATASETS:
+        return ConcatDialog(
+            parent=parent,
+            dialogs=dialogs,
+            left_tab_title="Left",
+            right_tab_titles=["Right", "Other"],
+            left_columns=["id", "value"],
+            right_columns_map={"Right": ["id", "value"], "Other": ["id", "extra"]},
+        )
     if topic is HelpTopic.JOIN_PREVIEW:
         return JoinPreviewDialog(
             parent,
@@ -137,6 +149,7 @@ def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow 
 
 def _help_button(dialog: SettingsHelpDialog) -> QPushButton:
     boxes = dialog.findChildren(QDialogButtonBox)
+    boxes = [box for box in boxes if box.button(QDialogButtonBox.StandardButton.Help) is not None]
     assert len(boxes) == 1
     button = boxes[0].button(QDialogButtonBox.StandardButton.Help)
     assert button is not None
@@ -158,6 +171,8 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = dialog.rb_left
     elif isinstance(dialog, JoinPreviewDialog):
         focus_widget = _help_button(dialog)
+    elif isinstance(dialog, ConcatDialog):
+        focus_widget = dialog.cb_right_dataset
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -191,6 +206,7 @@ def test_settings_help_button_and_f1_preserve_edits(
     changes = MagicMock()
     preview = MagicMock()
     join_before = None
+    concat_before = None
     persisted = None
     dialog = _dialog_for_topic(help_topic, dialogs)
     if isinstance(dialog, SettingsEditor):
@@ -207,6 +223,9 @@ def test_settings_help_button_and_f1_preserve_edits(
         dialog.btn_preview.clicked.connect(preview)
     elif isinstance(dialog, JoinPreviewDialog):
         persisted = load_settings()
+    elif isinstance(dialog, ConcatDialog):
+        dialog.cb_right_dataset.setCurrentText("Other")
+        concat_before = dialog.build_result()
     else:
         persisted = read_connections()
     try:
@@ -247,6 +266,13 @@ def test_settings_help_button_and_f1_preserve_edits(
             ]
             assert len(close_buttons) == 1
             assert help_button.mapTo(dialog, help_button.rect().topLeft()).x() < close_buttons[0].x()
+        elif isinstance(dialog, ConcatDialog):
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            for box in dialog.findChildren(QDialogButtonBox):
+                for standard in (QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel):
+                    button = box.button(standard)
+                    if button is not None:
+                        assert help_left < button.mapTo(dialog, button.rect().topLeft()).x()
         else:
             action_buttons = [
                 button
@@ -290,6 +316,9 @@ def test_settings_help_button_and_f1_preserve_edits(
             assert dialog.analysis.pb_left.value() == 50
             assert dialog.analysis.pb_right.value() == 0
             assert load_settings() == persisted
+        elif isinstance(dialog, ConcatDialog):
+            assert dialog.build_result() == concat_before
+            assert dialog.right_columns_list.count() == 2
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -311,6 +340,33 @@ def test_settings_help_button_and_f1_preserve_edits(
                 assert dialog.tr("The user manual could not be opened.\n\n{url}") != (
                     "The user manual could not be opened.\n\n{url}"
                 )
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize(
+    ("standard", "expected"),
+    [
+        (QDialogButtonBox.StandardButton.Ok, QDialog.DialogCode.Accepted),
+        (QDialogButtonBox.StandardButton.Cancel, QDialog.DialogCode.Rejected),
+    ],
+)
+def test_concat_action_buttons_preserve_dialog_result(
+    qt_app: QApplication, standard: QDialogButtonBox.StandardButton, expected: QDialog.DialogCode
+) -> None:
+    dialogs = MagicMock(spec=DialogService)
+    dialog = _dialog_for_topic(HelpTopic.CONCATENATE_DATASETS, dialogs)
+    try:
+        dialog.show()
+        qt_app.processEvents()
+        buttons = [
+            button for box in dialog.findChildren(QDialogButtonBox) if (button := box.button(standard)) is not None
+        ]
+        assert len(buttons) == 1
+        buttons[0].click()
+        assert dialog.result() == expected
+        assert not dialog.isVisible()
+        dialogs.warn.assert_not_called()
     finally:
         dialog.close()
 
