@@ -31,12 +31,17 @@ from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog impo
 from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
 from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPreviewDialog
+from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
+from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
+from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
     validate_derived_column_spec,
 )
 from expo_jbm329.services.data_operations.joins import JoinMetadata
+from expo_jbm329.services.data_operations.reshape_preview import ReshapePreview
 from expo_jbm329.services.rest.scb.browser import ScbTableMetadata, ScbTableSummary, ScbVariable, ScbVariableValue
+from expo_jbm329.utils.dataset_ref import DatasetRef
 from expo_jbm329.workbench.controllers.menu_controller import MenuController
 
 if TYPE_CHECKING:
@@ -55,6 +60,7 @@ type SettingsHelpDialog = (
     | JoinPreviewDialog
     | ConcatDialog
     | DerivedColumnDialog
+    | ReshapeDialog
 )
 
 
@@ -110,8 +116,9 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.JOIN_PREVIEW,
         HelpTopic.CONCATENATE_DATASETS,
         HelpTopic.DERIVED_COLUMNS,
+        HelpTopic.RESHAPE,
     ],
-    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat", "derived"],
+    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat", "derived", "reshape"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -120,6 +127,16 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.RESHAPE:
+        return ReshapeDialog(
+            parent=parent,
+            dialogs=dialogs,
+            source_dataset=DatasetRef("source", "Sales", 2, 2),
+            source_columns=["Region", "Amount"],
+            source_dtypes=["string", "int64"],
+            numeric_column_positions=[1],
+            datetime_column_positions=[],
+        )
     if topic is HelpTopic.DERIVED_COLUMNS:
         frame = pd.DataFrame({"Price": [12.5, 8.0], "Quantity": [2, 3]})
 
@@ -208,6 +225,10 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = dialog.cb_right_dataset
     elif isinstance(dialog, DerivedColumnDialog):
         _, focus_widget = _derived_inputs(dialog)
+    elif isinstance(dialog, ReshapeDialog):
+        condition = dialog.metrics.cellWidget(0, 3)
+        assert isinstance(condition, ConditionEditor)
+        focus_widget = condition.text
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -243,6 +264,8 @@ def test_settings_help_button_and_f1_preserve_edits(
     preview = MagicMock()
     join_before = None
     concat_before = None
+    reshape_before = None
+    reshape_revision = None
     persisted = None
     dialog = _dialog_for_topic(help_topic, dialogs)
     if isinstance(dialog, SettingsEditor):
@@ -266,6 +289,12 @@ def test_settings_help_button_and_f1_preserve_edits(
         name, editor = _derived_inputs(dialog)
         name.setText("Line total")
         editor.setPlainText("[Price] * [Quantity]")
+    elif isinstance(dialog, ReshapeDialog):
+        _configure_reshape(dialog)
+        reshape_before = dialog.capture_request()
+        reshape_revision = dialog.revision
+        dialog.preview_requested.connect(preview)
+        dialog.configuration_changed.connect(changes)
     else:
         persisted = read_connections()
     try:
@@ -300,6 +329,12 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, JoinDialog):
             help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
             assert help_left < dialog.btn_preview.x() < dialog.btn_ok.x() < dialog.btn_cancel.x()
+        elif isinstance(dialog, ReshapeDialog):
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            preview_left = dialog.preview_button.x()
+            ok_left = dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft()).x()
+            assert help_left < preview_left < ok_left
+            assert preview_left - help_left > dialog.width() // 2
         elif isinstance(dialog, JoinPreviewDialog):
             close_buttons = [
                 button for button in dialog.findChildren(QPushButton) if button.text() == dialog.tr("Close")
@@ -365,6 +400,14 @@ def test_settings_help_button_and_f1_preserve_edits(
             assert editor.toPlainText() == "[Price] * [Quantity]"
             assert _derived_action_button(dialog, QDialogButtonBox.StandardButton.Ok).isEnabled()
             assert dialog.get_result() is None
+        elif isinstance(dialog, ReshapeDialog):
+            assert dialog.capture_request() == reshape_before
+            assert dialog.revision == reshape_revision
+            assert dialog.applied_request is None
+            assert dialog.preview_button.isEnabled()
+            assert dialog.apply_button.isEnabled()
+            preview.assert_not_called()
+            changes.assert_not_called()
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -386,6 +429,86 @@ def test_settings_help_button_and_f1_preserve_edits(
                 assert dialog.tr("The user manual could not be opened.\n\n{url}") != (
                     "The user manual could not be opened.\n\n{url}"
                 )
+    finally:
+        dialog.close()
+
+
+def _configure_reshape(dialog: ReshapeDialog) -> None:
+    dimension = dialog.dimensions.item(0)
+    assert dimension is not None
+    dimension.setCheckState(Qt.CheckState.Checked)
+    source = dialog.metrics.cellWidget(0, 2)
+    assert isinstance(source, MetricSourceCell)
+    source.value.setCurrentIndex(source.value.findData(1))
+    name = dialog.metrics.item(0, 0)
+    assert name is not None
+    name.setText("Total amount")
+    condition = dialog.metrics.cellWidget(0, 3)
+    assert isinstance(condition, ConditionEditor)
+    condition.text.setText("[Amount] > 0")
+    condition.validate_now()
+
+
+@pytest.mark.parametrize("state", ["empty", "preview", "busy"])
+def test_reshape_help_preserves_preview_and_dispatch(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, state: str
+) -> None:
+    opener = MagicMock(return_value=True)
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", opener)
+    dialog = _dialog_for_topic(HelpTopic.RESHAPE, MagicMock(spec=DialogService))
+    assert isinstance(dialog, ReshapeDialog)
+    preview = MagicMock()
+    changes = MagicMock()
+    accepted = MagicMock()
+    try:
+        dialog.show()
+        _configure_reshape(dialog)
+        request = dialog.capture_request()
+        if state == "preview":
+            dialog.show_preview(ReshapePreview(request, pd.DataFrame({"Region": ["North"], "Total amount": [150]}), 1))
+        elif state == "busy":
+            dialog.set_preview_busy(True)
+        qt_app.processEvents()
+        revision = dialog.revision
+        model = dialog.preview_model
+        text = dialog.preview_placeholder.text()
+        table_visible = dialog.preview_table.isVisible()
+        enabled = dialog.preview_button.isEnabled()
+        dialog.preview_requested.connect(preview)
+        dialog.configuration_changed.connect(changes)
+        dialog.accepted.connect(accepted)
+
+        _help_button(dialog).click()
+        _press_f1(qt_app, dialog)
+
+        assert opener.call_count == 2
+        assert dialog.capture_request() == request
+        assert dialog.revision == revision
+        assert dialog.preview_model is model
+        assert dialog.preview_placeholder.text() == text
+        assert dialog.preview_table.isVisible() == table_visible
+        assert dialog.preview_button.isEnabled() == enabled
+        assert dialog.apply_button.isEnabled() == enabled
+        assert dialog.applied_request is None
+        preview.assert_not_called()
+        changes.assert_not_called()
+        accepted.assert_not_called()
+        if state != "busy":
+            dialog.preview_button.click()
+            preview.assert_called_once_with(request)
+            dialog.apply_button.click()
+            assert dialog.applied_request == request
+            accepted.assert_called_once()
+        else:
+            cancel_buttons = [
+                button
+                for box in dialog.findChildren(QDialogButtonBox)
+                if (button := box.button(QDialogButtonBox.StandardButton.Cancel)) is not None
+            ]
+            assert len(cancel_buttons) == 1
+            cancel_buttons[0].click()
+            assert not dialog.isVisible()
+            assert dialog.applied_request is None
     finally:
         dialog.close()
 

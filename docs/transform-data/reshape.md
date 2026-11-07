@@ -8,6 +8,12 @@ Reshape creates a **new result dataset** and leaves the source dataset unchanged
 This workflow groups and aggregates rows; it does not provide general
 pivot/unpivot or wide-to-long controls.
 
+In the Reshape dialog, select **Help** at the bottom left or press **F1** to
+open this guide. **Preview**, **OK** and **Cancel** are grouped on the right.
+Help leaves your dimensions, metrics and preview unchanged and does not
+calculate or apply the configuration. If the browser cannot be opened, a
+warning includes the manual URL.
+
 ## Create your first summary {#create-your-first-summary}
 
 Start with this dataset. **Amount** must be a numeric column.

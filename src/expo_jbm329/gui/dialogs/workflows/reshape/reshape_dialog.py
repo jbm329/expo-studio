@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -25,7 +26,9 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.dimension_delegate import COLUMN_NAME_ROLE, DTYPE_ROLE, DimensionDelegate
 from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
@@ -46,6 +49,7 @@ from expo_jbm329.utils.models import DataFrameModel
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 
@@ -65,6 +69,7 @@ class ReshapeDialog(QDialog):
         source_dtypes: Sequence[str],
         numeric_column_positions: Sequence[int],
         datetime_column_positions: Sequence[int],
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize configuration controls and the preview panel.
 
@@ -75,8 +80,10 @@ class ReshapeDialog(QDialog):
             source_dtypes: Storage dtype labels in the same positional order.
             numeric_column_positions: Positions with integer or floating-point dtypes.
             datetime_column_positions: Positions with datetime dtypes.
+            dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._revision = 0
         self._preview_busy = False
         self._has_preview = False
@@ -201,8 +208,6 @@ class ReshapeDialog(QDialog):
         self.preview_button = QPushButton(self.tr("Preview"), self)
         self.preview_button.setAutoDefault(False)
         self.preview_button.clicked.connect(self._request_preview)
-        button_row.addWidget(self.preview_button)
-        button_row.addStretch(1)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel, self)
         ok_button = buttons.button(QDialogButtonBox.StandardButton.Ok)
         if ok_button is None:
@@ -215,8 +220,23 @@ class ReshapeDialog(QDialog):
         self.apply_button.clicked.connect(self._apply)
         localize_dialog_buttons(buttons)
         buttons.rejected.connect(self.reject)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Reshape help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        button_row.addWidget(help_buttons)
+        button_row.addStretch(1)
+        button_row.addWidget(self.preview_button)
         button_row.addWidget(buttons)
         root.addLayout(button_row)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         self.add_metric_button.clicked.connect(self._add_metric)
         self.remove_metric_button.clicked.connect(self._remove_selected_metrics)
@@ -226,6 +246,16 @@ class ReshapeDialog(QDialog):
         self.dimensions.itemChanged.connect(self._configuration_changed)
         self._add_metric()
         self._update_remove_button()
+
+    def _open_help(self) -> None:
+        """Open Reshape guidance without changing configuration or requesting work."""
+        url = HelpTopic.RESHAPE.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     def _filter_dimensions(self, text: str) -> None:
         search = text.casefold()

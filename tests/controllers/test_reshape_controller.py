@@ -35,7 +35,8 @@ def test_open_captures_only_active_dataset_metadata_without_mutation(monkeypatch
     dialog_class = MagicMock()
     monkeypatch.setattr(module, "ReshapeDialog", dialog_class)
     parent = QWidget()
-    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock())
+    dialogs = MagicMock(spec=DialogService)
+    controller = module.ReshapeController(parent_widget=parent, results=results, async_ops=MagicMock(), dialogs=dialogs)
 
     controller.open_reshape_dialog()
 
@@ -46,6 +47,7 @@ def test_open_captures_only_active_dataset_metadata_without_mutation(monkeypatch
         source_dtypes=["int64", "int64", "int64"],
         numeric_column_positions=(0, 1, 2),
         datetime_column_positions=(),
+        dialogs=dialogs,
     )
     dialog_class.return_value.exec.assert_called_once_with()
     pd.testing.assert_frame_equal(dataframe, original)

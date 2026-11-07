@@ -105,6 +105,7 @@ class ReshapeController:
             source_dtypes=[str(dtype) for dtype in record.df.dtypes],
             numeric_column_positions=get_numeric_column_positions(record.df),
             datetime_column_positions=get_datetime_column_positions(record.df),
+            dialogs=self._dialogs,
         )
 
         def open_condition(candidate: object) -> None:

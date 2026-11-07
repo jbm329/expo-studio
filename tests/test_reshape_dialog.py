@@ -152,11 +152,21 @@ def test_button_labels_and_alignment_match_join(qt_app) -> None:
     dialog.show()
     qt_app.processEvents()
     preview = dialog.preview_button.mapTo(dialog, dialog.preview_button.rect().topLeft())
+    help_boxes = [
+        box
+        for box in dialog.findChildren(QDialogButtonBox)
+        if box.button(QDialogButtonBox.StandardButton.Help) is not None
+    ]
+    assert len(help_boxes) == 1
+    help_button = help_boxes[0].button(QDialogButtonBox.StandardButton.Help)
+    assert help_button is not None
+    help_position = help_button.mapTo(dialog, help_button.rect().topLeft())
     ok = dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft())
     cancel = cancel_button.mapTo(dialog, cancel_button.rect().topLeft())
-    assert preview.x() < ok.x() < cancel.x()
+    assert help_position.x() < preview.x() < ok.x() < cancel.x()
     assert preview.y() == ok.y() == cancel.y()
-    assert ok.x() - preview.x() > dialog.width() // 2
+    assert preview.x() - help_position.x() > dialog.width() // 2
+    assert ok.x() - preview.x() < dialog.preview_button.width() * 2
     dialog.close()
 
 
@@ -334,10 +344,11 @@ def test_reshape_catalog_entries_are_complete_and_preserve_placeholders(language
                     "{name}",
                     "{shown}",
                     "{total}",
+                    "{url}",
                 ):
                     assert source.count(placeholder) == translation.text.count(placeholder)
             checked += 1
-    assert checked == 109
+    assert checked == 111
 
 
 def test_dimension_search_preserves_checks_order_and_identity():

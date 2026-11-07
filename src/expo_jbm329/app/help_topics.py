@@ -23,6 +23,7 @@ class HelpTopic(StrEnum):
     JOIN_PREVIEW = "transform-data/join/#preview"
     CONCATENATE_DATASETS = "transform-data/concatenate/"
     DERIVED_COLUMNS = "transform-data/derived-columns/"
+    RESHAPE = "transform-data/reshape/"
 
     @property
     def url(self) -> str:
