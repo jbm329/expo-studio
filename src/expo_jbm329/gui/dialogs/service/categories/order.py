@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QT_TRANSLATE_NOOP
+from PyQt6.QtCore import QT_TRANSLATE_NOOP, Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -19,17 +20,19 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import (
     localize_dialog_buttons,
 )
 from expo_jbm329.gui.dialogs.service.common.window_hints import (
     apply_dialog_window_hints,
 )
-from expo_jbm329.utils.i18n_utils import translate
+from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
 if TYPE_CHECKING:
     from expo_jbm329.gui.dialogs.service.dialog_service import (
         CategoryOrderResult,
+        DialogService,
     )
 
 
@@ -44,6 +47,8 @@ TR_RESTORE_ORDER = QT_TRANSLATE_NOOP("CategorySetOrder", "Restore original order
 TR_ORDERED_CATEGORY = QT_TRANSLATE_NOOP("CategorySetOrder", "Ordered category")
 TR_STRICT_MODE = QT_TRANSLATE_NOOP("CategorySetOrder", "Strict mode (unknown values → NA)")
 TR_ADD_MISSING_LAST = QT_TRANSLATE_NOOP("CategorySetOrder", "Add missing values last")
+TR_UNABLE_TO_OPEN_LINK = QT_TRANSLATE_NOOP("CategorySetOrder", "Unable to open link")
+TR_MANUAL_OPEN_FAILED = QT_TRANSLATE_NOOP("CategorySetOrder", "The user manual could not be opened.\n\n{url}")
 
 
 def _tr(text: str) -> str:
@@ -62,8 +67,22 @@ def prompt_category_set_order(
     default_ordered: bool,
     default_strict: bool,
     default_append_missing_tail: bool,
+    dialogs: DialogService,
 ) -> CategoryOrderResult:
-    """Prompt the user to set an explicit order for categories."""
+    """Prompt the user to set an explicit order for categories.
+
+    Args:
+        parent: Parent widget.
+        title: Translated dialog title.
+        default_order_list: Initial category list.
+        default_ordered: Initial ordered-category flag.
+        default_strict: Initial strict-mode flag.
+        default_append_missing_tail: Initial flag for appending absent labels.
+        dialogs: Service for displaying browser-opening warnings.
+
+    Returns:
+        Selected options on OK, or unchanged defaults on Cancel.
+    """
     dlg = QDialog(parent)
     dlg.setWindowTitle(title)
     root = QVBoxLayout(dlg)
@@ -168,7 +187,32 @@ def prompt_category_set_order(
     localize_dialog_buttons(buttons)
     buttons.accepted.connect(dlg.accept)
     buttons.rejected.connect(dlg.reject)
-    root.addWidget(buttons)
+
+    def open_help() -> None:
+        url = HelpTopic.ORDER_CATEGORIES.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            dialogs.warn(
+                dlg,
+                _tr(TR_UNABLE_TO_OPEN_LINK),
+                translate_fmt("CategorySetOrder", TR_MANUAL_OPEN_FAILED, url=url),
+            )
+
+    help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, dlg)
+    localize_dialog_buttons(help_buttons)
+    help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+    if help_button is None:
+        message = "Category order help button has not been created."
+        raise RuntimeError(message)
+    help_button.setAutoDefault(False)
+    help_buttons.helpRequested.connect(open_help)
+    button_row = QHBoxLayout()
+    button_row.addWidget(help_buttons)
+    button_row.addStretch(1)
+    button_row.addWidget(buttons)
+    root.addLayout(button_row)
+    help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), dlg)
+    help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+    help_shortcut.activated.connect(open_help)
 
     apply_dialog_window_hints(dlg, min_width=540)
 

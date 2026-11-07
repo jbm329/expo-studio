@@ -466,6 +466,7 @@ class QtDialogService(DialogService):
             default_ordered=default_ordered,
             default_strict=default_strict,
             default_append_missing_tail=default_append_missing_tail,
+            dialogs=self,
         )
 
     # ------------------------------------------------------------------

@@ -148,6 +148,11 @@ After a merge, review the category order and set it again if needed.
 
 ### Set category order {#set-category-order}
 
+In **Order categories**, select **Help** at the bottom left or press **F1**
+to open this section. **OK** and **Cancel** remain on the right. Help preserves
+your category sequence and options without applying them. If the browser
+cannot be opened, a warning includes the manual URL.
+
 To rank priorities as **Low → Medium → High** rather than alphabetically:
 
 1. Right-click the categorical column header and select

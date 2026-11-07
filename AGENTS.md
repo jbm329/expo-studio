@@ -125,6 +125,7 @@ Build condition provides Help/F1 for the Reshape guide's visual condition builde
 Advanced analysis provides selection-aware Help/F1 for analysis guides,
 Hypothesis Tests sections and the reports guide.
 Convert to categories provides Help/F1 for its conversion section in Clean values.
+Order categories provides Help/F1 for the Set category order section.
 Register manual destinations in
 `app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 

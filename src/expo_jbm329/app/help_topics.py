@@ -40,6 +40,7 @@ class HelpTopic(StrEnum):
     ANALYSIS_TIME_SERIES = "analyze-data/time-series/"
     ANALYSIS_REPORTS = "export-and-report/analysis-results-and-reports/"
     CONVERT_TO_CATEGORIES = "prepare-data/clean-values/#convert-to-category"
+    ORDER_CATEGORIES = "prepare-data/clean-values/#set-category-order"
 
     @property
     def url(self) -> str:

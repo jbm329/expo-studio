@@ -39,7 +39,7 @@ from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
 from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.rest import scb_browser_dialog
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
-from expo_jbm329.gui.dialogs.service.categories import conversion
+from expo_jbm329.gui.dialogs.service.categories import conversion, order
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -757,6 +757,124 @@ def test_category_conversion_help_preserves_options_and_modal_result(
             if accepted
             else {"order": "alpha", "ordered": False, "strict": False, "ok": False}
         )
+        qt_app.processEvents()
+        qt_app.setActiveWindow(parent)
+        for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            qt_app.sendEvent(parent, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+        homepage.assert_called_once_with(False)
+    finally:
+        parent.close()
+
+
+@pytest.mark.parametrize("opened", [True, False])
+@pytest.mark.parametrize("accepted", [True, False])
+def test_category_order_help_preserves_sequence_options_and_result(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str, opened: bool, accepted: bool
+) -> None:
+    opener = MagicMock(return_value=opened)
+    monkeypatch.setattr(order.QDesktopServices, "openUrl", opener)
+    service = QtDialogService()
+    warning = MagicMock()
+    monkeypatch.setattr(service, "warn", warning)
+    parent = QMainWindow()
+    homepage = MagicMock()
+    action = QAction(parent)
+    action.setShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents))
+    action.triggered.connect(homepage)
+    parent.addAction(action)
+    original = ["Medium", "Low", "High"]
+
+    def execute(dialog: QDialog) -> int:
+        dialog.show()
+        qt_app.processEvents()
+        boxes = dialog.findChildren(QDialogButtonBox)
+        help_button = next(
+            button for box in boxes if (button := box.button(QDialogButtonBox.StandardButton.Help)) is not None
+        )
+        ok = next(button for box in boxes if (button := box.button(QDialogButtonBox.StandardButton.Ok)) is not None)
+        cancel = next(
+            button for box in boxes if (button := box.button(QDialogButtonBox.StandardButton.Cancel)) is not None
+        )
+        assert help_button.text() == HELP_LABELS[help_language]
+        assert not help_button.autoDefault()
+        assert not help_button.isDefault()
+        help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+        assert help_left < ok.mapTo(dialog, ok.rect().topLeft()).x()
+        assert help_left < cancel.mapTo(dialog, cancel.rect().topLeft()).x()
+        values = dialog.findChild(QListWidget)
+        assert values is not None
+        helpers = {button.text(): button for button in dialog.findChildren(QPushButton)}
+        values.setCurrentRow(0)
+        helpers[order.translate("CategorySetOrder", order.TR_DOWN)].click()
+        helpers[order.translate("CategorySetOrder", order.TR_SORT_ALPHABETICALLY)].click()
+        helpers[order.translate("CategorySetOrder", order.TR_RESTORE_ORDER)].click()
+        assert [item.text() for item in values.findItems("*", Qt.MatchFlag.MatchWildcard)] == original
+        values.setCurrentRow(2)
+        helpers[order.translate("CategorySetOrder", order.TR_UP)].click()
+        expected = ["Medium", "High", "Low"]
+        checks = dialog.findChildren(QCheckBox)
+        assert len(checks) == 3
+        assert [check.isChecked() for check in checks] == [True, False, True]
+        for check in checks:
+            check.toggle()
+        finished = MagicMock()
+        dialog.finished.connect(finished)
+
+        help_button.click()
+        qt_app.processEvents()
+        qt_app.setActiveWindow(dialog)
+        values.setFocus()
+        for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            qt_app.sendEvent(values, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+
+        assert opener.call_count == 2
+        assert all(call.args[0].toString() == HelpTopic.ORDER_CATEGORIES.url for call in opener.call_args_list)
+        assert [item.text() for item in values.findItems("*", Qt.MatchFlag.MatchWildcard)] == expected
+        assert values.currentRow() == 1
+        assert [check.isChecked() for check in checks] == [False, True, False]
+        assert dialog.isVisible()
+        finished.assert_not_called()
+        homepage.assert_not_called()
+        if opened:
+            warning.assert_not_called()
+        else:
+            assert warning.call_count == 2
+            warning.assert_called_with(
+                dialog,
+                order.translate("CategorySetOrder", order.TR_UNABLE_TO_OPEN_LINK),
+                order.translate_fmt(
+                    "CategorySetOrder", order.TR_MANUAL_OPEN_FAILED, url=HelpTopic.ORDER_CATEGORIES.url
+                ),
+            )
+            if help_language != "en":
+                assert warning.call_args.args[1] != "Unable to open link"
+        (ok if accepted else cancel).click()
+        finished.assert_called_once()
+        return dialog.result()
+
+    monkeypatch.setattr(QDialog, "exec", execute)
+    try:
+        parent.show()
+        result = service.prompt_category_set_order(
+            parent,
+            title="Order categories",
+            default_order_list=original,
+            default_ordered=True,
+            default_strict=False,
+            default_append_missing_tail=True,
+        )
+        assert result == (
+            {
+                "order_list": ["Medium", "High", "Low"],
+                "ordered": False,
+                "strict": True,
+                "append_missing_tail": False,
+                "ok": True,
+            }
+            if accepted
+            else {"order_list": original, "ordered": True, "strict": False, "append_missing_tail": True, "ok": False}
+        )
+        assert original == ["Medium", "Low", "High"]
         qt_app.processEvents()
         qt_app.setActiveWindow(parent)
         for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):

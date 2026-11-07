@@ -92,6 +92,10 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
     [
         (HelpTopic.HOME, "https://jbm329.github.io/expo-studio/"),
         (
+            HelpTopic.ORDER_CATEGORIES,
+            "https://jbm329.github.io/expo-studio/prepare-data/clean-values/#set-category-order",
+        ),
+        (
             HelpTopic.CONVERT_TO_CATEGORIES,
             "https://jbm329.github.io/expo-studio/prepare-data/clean-values/#convert-to-category",
         ),
