@@ -5,10 +5,12 @@ from __future__ import annotations
 from math import prod
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
@@ -22,6 +24,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 from expo_jbm329.services.rest.scb.browser import (
@@ -120,10 +124,22 @@ class ScbBrowserDialog(QDialog):
 
         button_row = QHBoxLayout()
         button_row.setSpacing(8)
-        button_row.addLayout(status_column)
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "SCB query builder help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        button_row.addWidget(help_buttons)
         button_row.addStretch(1)
         button_row.addWidget(self.apply_button)
         button_row.addWidget(self.cancel_button)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         main = QVBoxLayout(self)
 
@@ -163,7 +179,8 @@ class ScbBrowserDialog(QDialog):
         body.addLayout(value_side, 2)
         variable_labels.addLayout(variable_value_label, 2)
         main.addLayout(variable_labels)
-        main.addLayout(body)
+        main.addLayout(body, 1)
+        main.addLayout(status_column)
         main.addLayout(button_row)
 
         apply_window_hints_strict(self, min_width=900, fixed_size=True)
@@ -175,6 +192,16 @@ class ScbBrowserDialog(QDialog):
 
         self._refresh_selection_summary()
         self._load_tables()
+
+    def _open_help(self) -> None:
+        """Open SCB selection guidance without applying or changing the query."""
+        url = HelpTopic.SCB_QUERY_BUILDER.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     def _current_language(self) -> str:
         """Return the selected UI language for SCB requests."""

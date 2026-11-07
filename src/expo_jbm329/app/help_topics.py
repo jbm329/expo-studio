@@ -18,6 +18,7 @@ class HelpTopic(StrEnum):
     LOG_SETTINGS = "settings/log-settings/"
     DATABASE_CONNECTIONS = "settings/database-connections/"
     REST_API_CONNECTIONS = "settings/rest-api-connections/"
+    SCB_QUERY_BUILDER = "settings/rest-api-connections/#scb-query-builder"
 
     @property
     def url(self) -> str:

@@ -155,6 +155,11 @@ Statistics Sweden's statistical database. Instead of writing the endpoint and
 SCB parameter syntax by hand, browse tables and select variable values.
 Internet access is required to retrieve the table list and metadata.
 
+In the builder, select **Help** at the bottom left or press **F1** to open
+this section. The selected-cell counter and any limit warning are above the
+bottom buttons. Help leaves your selections unchanged and does not apply the
+query to the REST connection.
+
 ![SCB query builder showing English table search, a selected table, Variables and Variable values lists, checkboxes, the selected-cell counter and Apply to REST connection.](../assets/settings/scb_query_builder.png)
 
 *The builder displays labels from SCB metadata while generating parameters using

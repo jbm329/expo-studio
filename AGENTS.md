@@ -115,7 +115,8 @@ Pages settings without explicit approval. Do not create a release to test
 documentation automation or rerun a release solely to retry documentation.
 The Help menu opens the manual home page. General Settings, Log settings,
 Database connections and REST API connections have a Help button and contextual
-F1 link. Register manual destinations in
+F1 link. The SCB query builder also links to its manual section through Help/F1.
+Register manual destinations in
 `app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 
 Use `uv` from the repository root.
