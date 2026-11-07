@@ -481,6 +481,22 @@ def test_settings_help_button_and_f1_preserve_edits(
         dialog.close()
 
 
+def test_condition_default_width_preserves_nested_rules(qt_app: QApplication, help_language: str) -> None:
+    column = ConditionColumn(0, "Product", True)
+    group = ConditionGroup((
+        ConditionGroup((ConditionRule(column, ConditionOperator.IS_NULL),), ConditionMatch.ANY),
+        ConditionRule(column, ConditionOperator.IS_NOT_NULL),
+    ))
+    dialog = ConditionDialog(parent=None, columns=[column], initial=group)
+    try:
+        dialog.show()
+        qt_app.processEvents()
+        assert dialog.width() == 810
+        assert dialog.build_group() == group
+    finally:
+        dialog.close()
+
+
 @pytest.mark.parametrize("loading", [False, True])
 def test_condition_help_preserves_rules_values_and_requests(
     monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, loading: bool

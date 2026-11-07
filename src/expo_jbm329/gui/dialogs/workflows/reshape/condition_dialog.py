@@ -172,7 +172,7 @@ class ConditionDialog(QDialog):
         super().__init__(parent)
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self.setWindowTitle(self.tr("Build condition"))
-        self.resize(750, 500)
+        self.resize(810, 500)
         self._columns = tuple(columns)
         self.applied_group: ConditionGroup | None = None
         self.rules: list[ConditionRuleWidget] = []
