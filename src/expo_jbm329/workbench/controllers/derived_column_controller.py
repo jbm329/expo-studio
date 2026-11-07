@@ -181,6 +181,7 @@ class DerivedColumnController:
             df=df,
             validate_callback=partial(self._validate, df),
             parent=self._main_window,
+            dialogs=self._dialogs,
         )
 
         result = dialog.exec()

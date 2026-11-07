@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt, QTranslator, QUrl
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QMainWindow, QPushButton
+from PyQt6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLabel, QLineEdit, QMainWindow, QPushButton
 
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings import rest_connection_editor, settings_editor
@@ -27,14 +27,22 @@ from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import ConcatDialog
+from expo_jbm329.gui.dialogs.workflows.derived_column.derived_column_dialog import DerivedColumnDialog
+from expo_jbm329.gui.dialogs.workflows.derived_column.formula_editor import FormulaEditor
 from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog
 from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPreviewDialog
+from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
+    DerivedColumnSpec,
+    validate_derived_column_spec,
+)
 from expo_jbm329.services.data_operations.joins import JoinMetadata
 from expo_jbm329.services.rest.scb.browser import ScbTableMetadata, ScbTableSummary, ScbVariable, ScbVariableValue
 from expo_jbm329.workbench.controllers.menu_controller import MenuController
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from expo_jbm329.services.data_operations.derived_column.derived_column_parser import FormulaValidationResult
 
 HELP_LABELS = {"en": "Help", "sv": "Hjälp", "de": "Hilfe", "fr": "Aide", "it": "Aiuto", "es": "Ayuda", "pl": "Pomoc"}
 type SettingsHelpDialog = (
@@ -46,6 +54,7 @@ type SettingsHelpDialog = (
     | JoinDialog
     | JoinPreviewDialog
     | ConcatDialog
+    | DerivedColumnDialog
 )
 
 
@@ -100,8 +109,9 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.JOIN_DATASETS,
         HelpTopic.JOIN_PREVIEW,
         HelpTopic.CONCATENATE_DATASETS,
+        HelpTopic.DERIVED_COLUMNS,
     ],
-    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat"],
+    ids=["general", "log", "database", "rest", "scb", "join", "join-preview", "concat", "derived"],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
     topic = request.param
@@ -110,6 +120,14 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.DERIVED_COLUMNS:
+        frame = pd.DataFrame({"Price": [12.5, 8.0], "Quantity": [2, 3]})
+
+        def validate(name: str, formula: str) -> tuple[FormulaValidationResult, str]:
+            result = validate_derived_column_spec(frame, DerivedColumnSpec(name, formula))
+            return result, "Valid formula." if result.ok else "Invalid formula."
+
+        return DerivedColumnDialog(df=frame, validate_callback=validate, parent=parent, dialogs=dialogs)
     if topic is HelpTopic.CONCATENATE_DATASETS:
         return ConcatDialog(
             parent=parent,
@@ -157,7 +175,22 @@ def _help_button(dialog: SettingsHelpDialog) -> QPushButton:
     return button
 
 
+def _derived_inputs(dialog: DerivedColumnDialog) -> tuple[QLineEdit, FormulaEditor]:
+    name = dialog.findChild(QLineEdit)
+    editor = dialog.findChild(FormulaEditor)
+    assert name is not None
+    assert editor is not None
+    return name, editor
+
+
+def _derived_action_button(dialog: DerivedColumnDialog, standard: QDialogButtonBox.StandardButton) -> QPushButton:
+    buttons = [button for box in dialog.findChildren(QDialogButtonBox) if (button := box.button(standard)) is not None]
+    assert len(buttons) == 1
+    return buttons[0]
+
+
 def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
+    app.processEvents()
     app.setActiveWindow(dialog)
     if isinstance(dialog, SettingsEditor):
         focus_widget = dialog.txt_documents_dir
@@ -173,10 +206,13 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = _help_button(dialog)
     elif isinstance(dialog, ConcatDialog):
         focus_widget = dialog.cb_right_dataset
+    elif isinstance(dialog, DerivedColumnDialog):
+        _, focus_widget = _derived_inputs(dialog)
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
-    app.processEvents()
+    assert app.activeWindow() is dialog
+    assert app.focusWidget() is focus_widget
     for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
         app.sendEvent(focus_widget, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
 
@@ -226,6 +262,10 @@ def test_settings_help_button_and_f1_preserve_edits(
     elif isinstance(dialog, ConcatDialog):
         dialog.cb_right_dataset.setCurrentText("Other")
         concat_before = dialog.build_result()
+    elif isinstance(dialog, DerivedColumnDialog):
+        name, editor = _derived_inputs(dialog)
+        name.setText("Line total")
+        editor.setPlainText("[Price] * [Quantity]")
     else:
         persisted = read_connections()
     try:
@@ -266,7 +306,7 @@ def test_settings_help_button_and_f1_preserve_edits(
             ]
             assert len(close_buttons) == 1
             assert help_button.mapTo(dialog, help_button.rect().topLeft()).x() < close_buttons[0].x()
-        elif isinstance(dialog, ConcatDialog):
+        elif isinstance(dialog, (ConcatDialog, DerivedColumnDialog)):
             help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
             for box in dialog.findChildren(QDialogButtonBox):
                 for standard in (QDialogButtonBox.StandardButton.Ok, QDialogButtonBox.StandardButton.Cancel):
@@ -319,6 +359,12 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, ConcatDialog):
             assert dialog.build_result() == concat_before
             assert dialog.right_columns_list.count() == 2
+        elif isinstance(dialog, DerivedColumnDialog):
+            name, editor = _derived_inputs(dialog)
+            assert name.text() == "Line total"
+            assert editor.toPlainText() == "[Price] * [Quantity]"
+            assert _derived_action_button(dialog, QDialogButtonBox.StandardButton.Ok).isEnabled()
+            assert dialog.get_result() is None
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -340,6 +386,77 @@ def test_settings_help_button_and_f1_preserve_edits(
                 assert dialog.tr("The user manual could not be opened.\n\n{url}") != (
                     "The user manual could not be opened.\n\n{url}"
                 )
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize("formula", ["[Price] * [Quantity]", "[Price] *"])
+@pytest.mark.parametrize("opened", [True, False])
+def test_derived_help_preserves_validation_and_editor_state(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, formula: str, opened: bool
+) -> None:
+    opener = MagicMock(return_value=opened)
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", opener)
+    dialogs = MagicMock(spec=DialogService)
+    frame = pd.DataFrame({"Price": [12.5, 8.0], "Quantity": [2, 3]})
+    original = frame.copy(deep=True)
+
+    def validate_formula(name: str, text: str) -> tuple[FormulaValidationResult, str]:
+        result = validate_derived_column_spec(frame, DerivedColumnSpec(name, text))
+        return result, "Valid formula." if result.ok else "Invalid formula."
+
+    validate = MagicMock(wraps=validate_formula)
+    dialog = DerivedColumnDialog(df=frame, validate_callback=validate, dialogs=dialogs)
+    name, editor = _derived_inputs(dialog)
+    ok = _derived_action_button(dialog, QDialogButtonBox.StandardButton.Ok)
+    accepted = MagicMock()
+    rejected = MagicMock()
+    dialog.accepted.connect(accepted)
+    dialog.rejected.connect(rejected)
+    try:
+        dialog.show()
+        qt_app.setActiveWindow(dialog)
+        name.setText("Line total")
+        editor.setPlainText(formula)
+        cursor = editor.textCursor()
+        cursor.select(cursor.SelectionType.Document)
+        editor.setTextCursor(cursor)
+        feedback = [label.text() for label in dialog.findChildren(QLabel)]
+        diagnostics = [selection.cursor.selectedText() for selection in editor.extraSelections()]
+        enabled = ok.isEnabled()
+        assert enabled == (formula == "[Price] * [Quantity]")
+        validate.reset_mock()
+
+        _help_button(dialog).click()
+        _press_f1(qt_app, dialog)
+
+        assert opener.call_count == 2
+        assert name.text() == "Line total"
+        assert editor.toPlainText() == formula
+        assert editor.textCursor().selectedText() == cursor.selectedText()
+        assert [label.text() for label in dialog.findChildren(QLabel)] == feedback
+        assert [selection.cursor.selectedText() for selection in editor.extraSelections()] == diagnostics
+        assert ok.isEnabled() == enabled
+        assert dialog.get_result() is None
+        pd.testing.assert_frame_equal(frame, original)
+        validate.assert_not_called()
+        accepted.assert_not_called()
+        rejected.assert_not_called()
+
+        if enabled:
+            ok.click()
+            assert dialog.result() == QDialog.DialogCode.Accepted
+            spec = dialog.get_result()
+            assert spec is not None
+            assert spec.column_name == "Line total"
+            assert spec.formula == formula
+            accepted.assert_called_once()
+        else:
+            cancel = _derived_action_button(dialog, QDialogButtonBox.StandardButton.Cancel)
+            cancel.click()
+            assert dialog.result() == QDialog.DialogCode.Rejected
+            assert dialog.get_result() is None
+            rejected.assert_called_once()
     finally:
         dialog.close()
 

@@ -3,6 +3,12 @@
 Create a new column by calculating a value for each row in your dataset.
 Your formula can refer to other columns without changing their values.
 
+In the Derived column dialog, select **Help** at the bottom left or press
+**F1** to open this guide. **OK** and **Cancel** remain on the right.
+Help leaves your column name, formula and validation feedback unchanged and
+does not create a column. If the browser cannot be opened, a warning includes
+the manual URL.
+
 ## Create your first derived column {#create-your-first-derived-column}
 
 This example calculates a line total from a price and a quantity. Start with
