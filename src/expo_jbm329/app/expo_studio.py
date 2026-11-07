@@ -29,7 +29,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.app.app_services import AppServices
-from expo_jbm329.app.metadata import USER_MANUAL_URL
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings.config_store import load_settings
 from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
@@ -498,11 +498,12 @@ class ExpoStudio(QMainWindow):
 
     def _open_user_manual(self) -> None:
         """Open the online user manual in the default browser."""
-        if not QDesktopServices.openUrl(QUrl(USER_MANUAL_URL)):
+        url = HelpTopic.HOME.url
+        if not QDesktopServices.openUrl(QUrl(url)):
             self._require_dialogs().warn(
                 self,
                 self.tr("Unable to open link"),
-                self.tr("The user manual could not be opened.\n\n{url}").format(url=USER_MANUAL_URL),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
             )
 
     # ==================================================================
