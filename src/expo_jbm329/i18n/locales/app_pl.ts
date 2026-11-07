@@ -2413,7 +2413,7 @@ Więcej informacji można znaleźć w dziennikach.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Niezako?czona warto?? w apostrofach. Sprawd?, czy wcze?niej w warunku nie brakuje apostrofu lub czy nie jest on w niew?a?ciwym miejscu. Zapisz '' jako dos?owny apostrof.</translation>
+        <translation>Niezakończona wartość w apostrofach. Sprawdź, czy wcześniej w warunku nie brakuje apostrofu lub czy nie jest on w niewłaściwym miejscu. Zapisz '' jako dosłowny apostrof.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2438,7 +2438,7 @@ Więcej informacji można znaleźć w dziennikach.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="156" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
-        <translation>IN i NOT IN wymagaj? niepustej listy w nawiasach, rozdzielanej przecinkami.</translation>
+        <translation>IN i NOT IN wymagają niepustej listy w nawiasach, rozdzielanej przecinkami.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="157" />
@@ -2448,7 +2448,7 @@ Więcej informacji można znaleźć w dziennikach.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>Oczekiwano AND, OR lub nawiasu zamykaj?cego ).</translation>
+        <translation>Oczekiwano AND, OR lub nawiasu zamykającego ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2472,11 +2472,11 @@ Więcej informacji można znaleźć w dziennikach.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">Oczekiwano liczby lub warto?ci w apostrofach, na przyk?ad 18 lub '18'.</translation>
+        <translation type="vanished">Oczekiwano liczby lub wartości w apostrofach, na przykład 18 lub '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">Oczekiwano True, False lub warto?ci w apostrofach.</translation>
+        <translation type="vanished">Oczekiwano True, False lub wartości w apostrofach.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -4290,7 +4290,7 @@ Czy kontynuować?</translation>
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation>Nie mo?na otworzy? podr?cznika u?ytkownika.
+        <translation>Nie można otworzyć podręcznika użytkownika.
 
 {url}</translation>
     </message>
@@ -5897,7 +5897,7 @@ Zapisano w:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation>Podr?cznik u?ytkownika</translation>
+        <translation>Podręcznik użytkownika</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />

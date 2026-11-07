@@ -2413,7 +2413,7 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Nicht abgeschlossener Wert in Anf?hrungszeichen. Pr?fen Sie, ob weiter vorne in der Bedingung ein einfaches Anf?hrungszeichen fehlt oder falsch platziert ist. Schreiben Sie '' f?r einen Apostroph.</translation>
+        <translation>Nicht abgeschlossener Wert in Anführungszeichen. Prüfen Sie, ob weiter vorne in der Bedingung ein einfaches Anführungszeichen fehlt oder falsch platziert ist. Schreiben Sie '' für einen Apostroph.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2448,7 +2448,7 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>AND, OR oder eine schlie?ende Klammer ) wird erwartet.</translation>
+        <translation>AND, OR oder eine schließende Klammer ) wird erwartet.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2472,11 +2472,11 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">Eine Zahl oder ein Wert in einfachen Anf?hrungszeichen wird erwartet, zum Beispiel 18 oder '18'.</translation>
+        <translation type="vanished">Eine Zahl oder ein Wert in einfachen Anführungszeichen wird erwartet, zum Beispiel 18 oder '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">True, False oder ein Wert in einfachen Anf?hrungszeichen wird erwartet.</translation>
+        <translation type="vanished">True, False oder ein Wert in einfachen Anführungszeichen wird erwartet.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -4290,7 +4290,7 @@ Möchten Sie fortfahren?</translation>
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation>Das Benutzerhandbuch konnte nicht ge?ffnet werden.
+        <translation>Das Benutzerhandbuch konnte nicht geöffnet werden.
 
 {url}</translation>
     </message>

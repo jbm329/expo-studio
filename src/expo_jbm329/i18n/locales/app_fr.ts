@@ -2413,7 +2413,7 @@ Consultez les journaux pour plus d'informations.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Valeur entre apostrophes non termin?e. V?rifiez si une apostrophe manque ou est mal plac?e plus t?t dans la condition. ?crivez '' pour une apostrophe litt?rale.</translation>
+        <translation>Valeur entre apostrophes non terminée. Vérifiez si une apostrophe manque ou est mal placée plus tôt dans la condition. Écrivez '' pour une apostrophe littérale.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2438,7 +2438,7 @@ Consultez les journaux pour plus d'informations.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="156" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
-        <translation>IN et NOT IN exigent une liste non vide entre parenth?ses, s?par?e par des virgules.</translation>
+        <translation>IN et NOT IN exigent une liste non vide entre parenthèses, séparée par des virgules.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="157" />
@@ -2448,7 +2448,7 @@ Consultez les journaux pour plus d'informations.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>AND, OR ou une parenth?se fermante ) est attendu.</translation>
+        <translation>AND, OR ou une parenthèse fermante ) est attendu.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -4290,7 +4290,7 @@ Continuer ?</translation>
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation>Le manuel de l'utilisateur n'a pas pu ?tre ouvert.
+        <translation>Le manuel de l'utilisateur n'a pas pu être ouvert.
 
 {url}</translation>
     </message>

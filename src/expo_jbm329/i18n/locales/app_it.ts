@@ -2413,7 +2413,7 @@ Consultare i log per ulteriori informazioni.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Valore tra apici non terminato. Controlla se un apice singolo manca o ? fuori posto in un punto precedente della condizione. Scrivi '' per un apostrofo.</translation>
+        <translation>Valore tra apici non terminato. Controlla se un apice singolo manca o è fuori posto in un punto precedente della condizione. Scrivi '' per un apostrofo.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2448,7 +2448,7 @@ Consultare i log per ulteriori informazioni.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>? previsto AND, OR o una parentesi di chiusura ).</translation>
+        <translation>È previsto AND, OR o una parentesi di chiusura ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2472,11 +2472,11 @@ Consultare i log per ulteriori informazioni.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">? previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
+        <translation type="vanished">È previsto un numero o un valore tra apici singoli, ad esempio 18 o '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">? previsto True, False o un valore tra apici singoli.</translation>
+        <translation type="vanished">È previsto True, False o un valore tra apici singoli.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>

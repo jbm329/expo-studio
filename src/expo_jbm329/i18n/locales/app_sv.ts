@@ -2413,7 +2413,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Oavslutat citerat v?rde. Kontrollera om ett enkelt citattecken saknas eller ?r felplacerat tidigare i villkoret. Skriv '' f?r en apostrof.</translation>
+        <translation>Oavslutat citerat värde. Kontrollera om ett enkelt citattecken saknas eller är felplacerat tidigare i villkoret. Skriv '' för en apostrof.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2438,7 +2438,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="156" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
-        <translation>IN och NOT IN kr?ver en icke-tom, kommaseparerad lista inom parenteser.</translation>
+        <translation>IN och NOT IN kräver en icke-tom, kommaseparerad lista inom parenteser.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="157" />
@@ -2448,7 +2448,7 @@ Vänligen se loggfil för mer information.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>F?rv?ntade AND, OR eller en avslutande parentes ).</translation>
+        <translation>Förväntade AND, OR eller en avslutande parentes ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2472,11 +2472,11 @@ Vänligen se loggfil för mer information.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">F?rv?ntade ett tal eller ett v?rde inom enkla citattecken, till exempel 18 eller '18'.</translation>
+        <translation type="vanished">Förväntade ett tal eller ett värde inom enkla citattecken, till exempel 18 eller '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
-        <translation type="vanished">F?rv?ntade True, False eller ett v?rde inom enkla citattecken.</translation>
+        <translation type="vanished">Förväntade True, False eller ett värde inom enkla citattecken.</translation>
     </message>
     <message>
         <source>IN and NOT IN require a nonempty list such as ('value1', 'value2').</source>
@@ -4290,7 +4290,7 @@ Fortsätt?</translation>
         <source>The user manual could not be opened.
 
 {url}</source>
-        <translation>Anv?ndarhandboken kunde inte ?ppnas.
+        <translation>Användarhandboken kunde inte öppnas.
 
 {url}</translation>
     </message>
@@ -5897,7 +5897,7 @@ Sparad till:
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="56" />
         <source>User manual</source>
-        <translation>Anv?ndarhandbok</translation>
+        <translation>Användarhandbok</translation>
     </message>
     <message>
         <location filename="../../workbench/controllers/menu_controller.py" line="57" />

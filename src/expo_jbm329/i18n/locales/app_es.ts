@@ -2413,7 +2413,7 @@ Consulte los registros para obtener más información.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="144" />
         <source>Unterminated quoted value. Check for a missing or misplaced single quote earlier in the condition. Escape an apostrophe as ''.</source>
-        <translation>Valor entre comillas sin terminar. Comprueba si falta una comilla simple o est? mal colocada en una parte anterior de la condici?n. Escribe '' para un ap?strofo.</translation>
+        <translation>Valor entre comillas sin terminar. Comprueba si falta una comilla simple o está mal colocada en una parte anterior de la condición. Escribe '' para un apóstrofo.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="148" />
@@ -2438,7 +2438,7 @@ Consulte los registros para obtener más información.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="156" />
         <source>IN and NOT IN require a nonempty, comma-separated list in parentheses.</source>
-        <translation>IN y NOT IN requieren una lista no vac?a entre par?ntesis, separada por comas.</translation>
+        <translation>IN y NOT IN requieren una lista no vacía entre paréntesis, separada por comas.</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="157" />
@@ -2448,7 +2448,7 @@ Consulte los registros para obtener más información.</translation>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="158" />
         <source>Expected AND, OR or a closing parenthesis ).</source>
-        <translation>Se esperaba AND, OR o un par?ntesis de cierre ).</translation>
+        <translation>Se esperaba AND, OR o un paréntesis de cierre ).</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/reshape/condition_editor.py" line="159" />
@@ -2472,7 +2472,7 @@ Consulte los registros para obtener más información.</translation>
     </message>
     <message>
         <source>Expected a number or a single-quoted value, for example 18 or '18'.</source>
-        <translation type="vanished">Se esperaba un n?mero o un valor entre comillas simples, por ejemplo 18 o '18'.</translation>
+        <translation type="vanished">Se esperaba un número o un valor entre comillas simples, por ejemplo 18 o '18'.</translation>
     </message>
     <message>
         <source>Expected True, False or a single-quoted value.</source>
