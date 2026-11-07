@@ -26,6 +26,13 @@ Select the ready result tab you want to analyze, then choose **Analyze data** on
 the toolbar. The dialog title identifies the source dataset. The selected
 source remains fixed while you switch between analysis sections.
 
+Select **Help** at the bottom left or press **F1** to open the guide for the
+currently selected analysis. In **Hypothesis Tests**, Help opens the section
+for the selected test, even before you select **Apply**. In **Reports**, it
+opens the analysis exports and reports guide. **Export**, **Add to report**
+and **Close** remain on the right. Help does not change configuration or run
+an analysis. If the browser cannot be opened, a warning includes the manual URL.
+
 Overview and Statistics calculate when opened. The other sections have
 configuration controls; choose the inputs and select **Apply** to calculate.
 An edit to an applied configuration makes the displayed result out of date

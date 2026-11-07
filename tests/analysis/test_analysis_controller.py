@@ -1334,15 +1334,18 @@ def test_returning_from_reports_preserves_automatic_and_apply_first_behavior(mon
 def test_open_dialog_builds_dialog_with_the_active_source(dialog_factory):
     dataset = DatasetRef(tab_id="t1", title="Sheet1", row_count=10, column_count=3)
 
+    dialogs = Mock()
     ctrl = AnalysisController(
         results=DummyResults(datasets=[dataset], active_tab_id="t1"),
         async_ops=DummyAsyncOps(),
+        dialogs=dialogs,
     )
     _open_and_flush(ctrl, QWidget())
 
     assert len(dialog_factory) == 1
     dlg = dialog_factory[0]
     assert dlg.kwargs["source_dataset"] == dataset
+    assert dlg.kwargs["dialogs"] is dialogs
     assert dlg.exec_called
 
 

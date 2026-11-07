@@ -12,8 +12,8 @@ from __future__ import annotations
 from html import escape
 from typing import TYPE_CHECKING, Literal, override
 
-from PyQt6.QtCore import QEvent, QObject, Qt, pyqtSignal
-from PyQt6.QtGui import QHelpEvent
+from PyQt6.QtCore import QEvent, QObject, Qt, QUrl, pyqtSignal
+from PyQt6.QtGui import QDesktopServices, QHelpEvent, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -36,13 +36,16 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.analysis.analysis_export_dialog import AnalysisExportDialog
 from expo_jbm329.gui.dialogs.analysis.applied_configuration_header import AppliedConfigurationHeader
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.analysis.outliers_multivariate_config import MultivariateOutliersConfigWidget
 from expo_jbm329.gui.dialogs.analysis.report_notes_dialog import ReportNotesDialog
 from expo_jbm329.gui.dialogs.analysis.report_page import ReportPage
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
-from expo_jbm329.services.analysis.categories import AnalysisCategory
+from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
 from expo_jbm329.services.analysis.clustering_export import ClusteringExportRequest, ClusteringExportSnapshot
 from expo_jbm329.services.analysis.correlation_export import CorrelationExportRequest, CorrelationExportSnapshot
 from expo_jbm329.services.analysis.hypothesis_export import HypothesisExportRequest, HypothesisExportSnapshot
@@ -72,11 +75,28 @@ from expo_jbm329.utils.format_utils import fmt_int
 from expo_jbm329.utils.i18n_utils import translate
 
 if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
     from expo_jbm329.services.analysis.overview import DatasetOverviewResult
     from expo_jbm329.services.analysis.statistics import DescriptiveStatisticsResult
     from expo_jbm329.utils.dataset_ref import DatasetRef
 
 _CATEGORY_ROLE = Qt.ItemDataRole.UserRole
+_CATEGORY_HELP_TOPICS = {
+    AnalysisCategory.OVERVIEW: HelpTopic.ANALYSIS_OVERVIEW,
+    AnalysisCategory.STATISTICS: HelpTopic.ANALYSIS_STATISTICS,
+    AnalysisCategory.HYPOTHESIS_TESTS: HelpTopic.ANALYSIS_HYPOTHESIS_TESTS,
+    AnalysisCategory.CORRELATION: HelpTopic.ANALYSIS_CORRELATION,
+    AnalysisCategory.REGRESSION: HelpTopic.ANALYSIS_REGRESSION,
+    AnalysisCategory.OUTLIERS: HelpTopic.ANALYSIS_OUTLIERS,
+    AnalysisCategory.CLUSTERING: HelpTopic.ANALYSIS_CLUSTERING,
+    AnalysisCategory.PCA: HelpTopic.ANALYSIS_PCA,
+    AnalysisCategory.TIME_SERIES: HelpTopic.ANALYSIS_TIME_SERIES,
+}
+_HYPOTHESIS_HELP_TOPICS = {
+    HypothesisTest.GROUP_COMPARISON: HelpTopic.ANALYSIS_GROUP_COMPARISON,
+    HypothesisTest.CHI_SQUARE: HelpTopic.ANALYSIS_CHI_SQUARE,
+    HypothesisTest.PAIRED_COMPARISON: HelpTopic.ANALYSIS_PAIRED_COMPARISON,
+}
 
 
 def _report_component_translation_context(category: AnalysisCategory) -> str:
@@ -181,14 +201,17 @@ class AnalysisDialog(QDialog):
         *,
         parent: QWidget | None,
         source_dataset: DatasetRef,
+        dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the Advanced Analysis dialog.
 
         Args:
             parent: Parent widget.
             source_dataset: Ready dataset fixed for this analysis session.
+            dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
+        self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint, True)
         self.setWindowFlag(Qt.WindowType.WindowMinimizeButtonHint, False)
 
@@ -259,6 +282,9 @@ class AnalysisDialog(QDialog):
 
         self._connect_signals()
         self.category_changed.connect(self.invalidate_overview_export)
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
     @override
     def hasHeightForWidth(self) -> bool:
@@ -787,8 +813,8 @@ class AnalysisDialog(QDialog):
 
         return panel
 
-    def _build_button_box(self) -> QDialogButtonBox:
-        """Build shared analysis actions beside Close in the bottom button box."""
+    def _build_button_box(self) -> QWidget:
+        """Build left-side Help and shared analysis actions beside Close."""
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Close, self)
         self._export_button = QPushButton(self.tr("Export"), buttons)
         buttons.addButton(self._export_button, QDialogButtonBox.ButtonRole.ActionRole)
@@ -801,7 +827,42 @@ class AnalysisDialog(QDialog):
         self._report_action_button.setMinimumWidth(button_width)
         buttons.rejected.connect(self.reject)
         localize_dialog_buttons(buttons)
-        return buttons
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Advanced analysis help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        footer = QWidget(self)
+        layout = QHBoxLayout(footer)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(help_buttons)
+        layout.addStretch(1)
+        layout.addWidget(buttons)
+        return footer
+
+    def _open_help(self) -> None:
+        """Open guidance for the current selection, independent of applied results."""
+        category = self.selected_category()
+        if self._category_list.currentItem() is self._report_item:
+            topic = HelpTopic.ANALYSIS_REPORTS
+        elif category is None:
+            topic = HelpTopic.ADVANCED_ANALYSIS
+        elif category is AnalysisCategory.HYPOTHESIS_TESTS and isinstance(
+            self._config_widget, HypothesisTestsConfigWidget
+        ):
+            topic = _HYPOTHESIS_HELP_TOPICS[self._config_widget.selected_test()]
+        else:
+            topic = _CATEGORY_HELP_TOPICS[category]
+        url = topic.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     def _connect_signals(self) -> None:
         """Wire internal widget signals to this dialog's public signals."""

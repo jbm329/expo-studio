@@ -25,6 +25,20 @@ class HelpTopic(StrEnum):
     DERIVED_COLUMNS = "transform-data/derived-columns/"
     RESHAPE = "transform-data/reshape/"
     RESHAPE_CONDITION_BUILDER = "transform-data/reshape/#condition-builder"
+    ADVANCED_ANALYSIS = "analyze-data/"
+    ANALYSIS_OVERVIEW = "analyze-data/overview/"
+    ANALYSIS_STATISTICS = "analyze-data/statistics/"
+    ANALYSIS_HYPOTHESIS_TESTS = "analyze-data/hypothesis-tests/"
+    ANALYSIS_GROUP_COMPARISON = "analyze-data/hypothesis-tests/#group-comparison"
+    ANALYSIS_CHI_SQUARE = "analyze-data/hypothesis-tests/#chi-square"
+    ANALYSIS_PAIRED_COMPARISON = "analyze-data/hypothesis-tests/#paired-comparison"
+    ANALYSIS_CORRELATION = "analyze-data/correlation/"
+    ANALYSIS_REGRESSION = "analyze-data/regression/"
+    ANALYSIS_OUTLIERS = "analyze-data/outliers/"
+    ANALYSIS_CLUSTERING = "analyze-data/clustering/"
+    ANALYSIS_PCA = "analyze-data/pca/"
+    ANALYSIS_TIME_SERIES = "analyze-data/time-series/"
+    ANALYSIS_REPORTS = "export-and-report/analysis-results-and-reports/"
 
     @property
     def url(self) -> str:

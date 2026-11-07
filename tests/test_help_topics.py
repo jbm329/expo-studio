@@ -91,6 +91,32 @@ def test_every_help_topic_exists_in_docs(topic: HelpTopic) -> None:
     ("topic", "expected"),
     [
         (HelpTopic.HOME, "https://jbm329.github.io/expo-studio/"),
+        (HelpTopic.ADVANCED_ANALYSIS, "https://jbm329.github.io/expo-studio/analyze-data/"),
+        (HelpTopic.ANALYSIS_OVERVIEW, "https://jbm329.github.io/expo-studio/analyze-data/overview/"),
+        (HelpTopic.ANALYSIS_STATISTICS, "https://jbm329.github.io/expo-studio/analyze-data/statistics/"),
+        (HelpTopic.ANALYSIS_HYPOTHESIS_TESTS, "https://jbm329.github.io/expo-studio/analyze-data/hypothesis-tests/"),
+        (
+            HelpTopic.ANALYSIS_GROUP_COMPARISON,
+            "https://jbm329.github.io/expo-studio/analyze-data/hypothesis-tests/#group-comparison",
+        ),
+        (
+            HelpTopic.ANALYSIS_CHI_SQUARE,
+            "https://jbm329.github.io/expo-studio/analyze-data/hypothesis-tests/#chi-square",
+        ),
+        (
+            HelpTopic.ANALYSIS_PAIRED_COMPARISON,
+            "https://jbm329.github.io/expo-studio/analyze-data/hypothesis-tests/#paired-comparison",
+        ),
+        (HelpTopic.ANALYSIS_CORRELATION, "https://jbm329.github.io/expo-studio/analyze-data/correlation/"),
+        (HelpTopic.ANALYSIS_REGRESSION, "https://jbm329.github.io/expo-studio/analyze-data/regression/"),
+        (HelpTopic.ANALYSIS_OUTLIERS, "https://jbm329.github.io/expo-studio/analyze-data/outliers/"),
+        (HelpTopic.ANALYSIS_CLUSTERING, "https://jbm329.github.io/expo-studio/analyze-data/clustering/"),
+        (HelpTopic.ANALYSIS_PCA, "https://jbm329.github.io/expo-studio/analyze-data/pca/"),
+        (HelpTopic.ANALYSIS_TIME_SERIES, "https://jbm329.github.io/expo-studio/analyze-data/time-series/"),
+        (
+            HelpTopic.ANALYSIS_REPORTS,
+            "https://jbm329.github.io/expo-studio/export-and-report/analysis-results-and-reports/",
+        ),
         (HelpTopic.JOIN_DATASETS, "https://jbm329.github.io/expo-studio/transform-data/join/"),
         (HelpTopic.JOIN_PREVIEW, "https://jbm329.github.io/expo-studio/transform-data/join/#preview"),
         (HelpTopic.CONCATENATE_DATASETS, "https://jbm329.github.io/expo-studio/transform-data/concatenate/"),

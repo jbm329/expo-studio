@@ -8,7 +8,18 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import QEvent, Qt, QTimer, QTranslator, QUrl
 from PyQt6.QtGui import QKeyEvent
-from PyQt6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLabel, QLineEdit, QMainWindow, QPushButton
+from PyQt6.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QMainWindow,
+    QPlainTextEdit,
+    QPushButton,
+)
 
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings import rest_connection_editor, settings_editor
@@ -22,6 +33,8 @@ from expo_jbm329.app.settings.connection_editor import ConnectionEditor
 from expo_jbm329.app.settings.log_config_editor import LogConfigEditor
 from expo_jbm329.app.settings.rest_connection_editor import RestConnectionEditor
 from expo_jbm329.app.settings.settings_editor import SettingsEditor
+from expo_jbm329.gui.dialogs.analysis.analysis_dialog import AnalysisDialog
+from expo_jbm329.gui.dialogs.analysis.hypothesis_tests_config import HypothesisTestsConfigWidget
 from expo_jbm329.gui.dialogs.rest import scb_browser_dialog
 from expo_jbm329.gui.dialogs.rest.scb_browser_dialog import ScbBrowserDialog
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
@@ -35,6 +48,10 @@ from expo_jbm329.gui.dialogs.workflows.reshape.condition_dialog import Condition
 from expo_jbm329.gui.dialogs.workflows.reshape.condition_editor import ConditionEditor
 from expo_jbm329.gui.dialogs.workflows.reshape.metric_source_cell import MetricSourceCell
 from expo_jbm329.gui.dialogs.workflows.reshape.reshape_dialog import ReshapeDialog
+from expo_jbm329.services.analysis.categories import AnalysisCategory, HypothesisTest
+from expo_jbm329.services.analysis.chi_square import initialize_chi_square
+from expo_jbm329.services.analysis.group_comparison import initialize_group_comparison
+from expo_jbm329.services.analysis.paired_comparison import initialize_paired_comparison
 from expo_jbm329.services.data_operations.derived_column.derived_column_service import (
     DerivedColumnSpec,
     validate_derived_column_spec,
@@ -72,6 +89,7 @@ type SettingsHelpDialog = (
     | DerivedColumnDialog
     | ReshapeDialog
     | ConditionDialog
+    | AnalysisDialog
 )
 
 
@@ -129,6 +147,7 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         HelpTopic.DERIVED_COLUMNS,
         HelpTopic.RESHAPE,
         HelpTopic.RESHAPE_CONDITION_BUILDER,
+        HelpTopic.ANALYSIS_OVERVIEW,
     ],
     ids=[
         "general",
@@ -142,6 +161,7 @@ def _settings_dialog(dialogs: MagicMock, parent: QMainWindow | None = None) -> S
         "derived",
         "reshape",
         "condition",
+        "analysis",
     ],
 )
 def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
@@ -151,6 +171,8 @@ def help_topic(request: pytest.FixtureRequest) -> HelpTopic:
 
 
 def _dialog_for_topic(topic: HelpTopic, dialogs: MagicMock, parent: QMainWindow | None = None) -> SettingsHelpDialog:
+    if topic is HelpTopic.ANALYSIS_OVERVIEW:
+        return AnalysisDialog(parent=parent, source_dataset=DatasetRef("source", "Sales", 2, 2), dialogs=dialogs)
     if topic is HelpTopic.RESHAPE_CONDITION_BUILDER:
         column = ConditionColumn(0, "Product", True)
         return ConditionDialog(
@@ -263,6 +285,9 @@ def _press_f1(app: QApplication, dialog: SettingsHelpDialog) -> None:
         focus_widget = condition.text
     elif isinstance(dialog, ConditionDialog):
         focus_widget = dialog.rules[0].column
+    elif isinstance(dialog, AnalysisDialog):
+        focus_widget = dialog.findChild(QListWidget)
+        assert focus_widget is not None
     else:
         focus_widget = dialog.list_widget
     focus_widget.setFocus()
@@ -334,6 +359,8 @@ def test_settings_help_button_and_f1_preserve_edits(
         condition_before = dialog.build_group()
         dialog.page_requested.connect(preview)
         dialog.request_invalidated.connect(changes)
+    elif isinstance(dialog, AnalysisDialog):
+        dialog.category_changed.connect(changes)
     else:
         persisted = read_connections()
     try:
@@ -377,6 +404,14 @@ def test_settings_help_button_and_f1_preserve_edits(
         elif isinstance(dialog, ConditionDialog):
             help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
             assert help_left < dialog.apply_button.mapTo(dialog, dialog.apply_button.rect().topLeft()).x()
+        elif isinstance(dialog, AnalysisDialog):
+            help_left = help_button.mapTo(dialog, help_button.rect().topLeft()).x()
+            close = next(
+                button
+                for box in dialog.findChildren(QDialogButtonBox)
+                if (button := box.button(QDialogButtonBox.StandardButton.Close)) is not None
+            )
+            assert help_left < close.mapTo(dialog, close.rect().topLeft()).x()
         elif isinstance(dialog, JoinPreviewDialog):
             close_buttons = [
                 button for button in dialog.findChildren(QPushButton) if button.text() == dialog.tr("Close")
@@ -456,6 +491,10 @@ def test_settings_help_button_and_f1_preserve_edits(
             assert dialog.apply_button.isEnabled()
             preview.assert_not_called()
             changes.assert_not_called()
+        elif isinstance(dialog, AnalysisDialog):
+            assert dialog.selected_category() is AnalysisCategory.OVERVIEW
+            assert dialog.source_tab_id() == "source"
+            changes.assert_not_called()
         else:
             assert dialog.server_edit.text() == "unsaved.example"
             assert read_connections() == persisted
@@ -477,6 +516,138 @@ def test_settings_help_button_and_f1_preserve_edits(
                 assert dialog.tr("The user manual could not be opened.\n\n{url}") != (
                     "The user manual could not be opened.\n\n{url}"
                 )
+    finally:
+        dialog.close()
+
+
+@pytest.mark.parametrize("opened", [True, False])
+def test_analysis_help_follows_pending_selection_and_reports(
+    monkeypatch: pytest.MonkeyPatch, qt_app: QApplication, help_language: str, opened: bool
+) -> None:
+    urls: list[str] = []
+
+    def open_url(url: QUrl) -> bool:
+        urls.append(url.toString())
+        return opened
+
+    monkeypatch.setattr(settings_editor.QDesktopServices, "openUrl", open_url)
+    dialogs = MagicMock(spec=DialogService)
+    dialog = AnalysisDialog(parent=None, source_dataset=DatasetRef("source", "Source", 3, 3), dialogs=dialogs)
+    content = QLabel("Captured analysis result", dialog)
+    dialog.set_content_widget(content)
+    requests = MagicMock()
+    for signal in (
+        dialog.overview_export_requested,
+        dialog.statistics_export_requested,
+        dialog.hypothesis_export_requested,
+        dialog.correlation_export_requested,
+        dialog.regression_export_requested,
+        dialog.outliers_export_requested,
+        dialog.clustering_export_requested,
+        dialog.pca_export_requested,
+        dialog.time_series_export_requested,
+        dialog.report_preview_requested,
+        dialog.report_save_requested,
+    ):
+        signal.connect(requests)
+    frame = pd.DataFrame({"group": ["A", "B", "A"], "value": [1, 2, 3], "other": [2, 4, 6]})
+    config = HypothesisTestsConfigWidget(
+        initialize_group_comparison(frame), initialize_chi_square(frame), initialize_paired_comparison(frame), dialog
+    )
+    categories = {
+        AnalysisCategory.OVERVIEW: HelpTopic.ANALYSIS_OVERVIEW,
+        AnalysisCategory.STATISTICS: HelpTopic.ANALYSIS_STATISTICS,
+        AnalysisCategory.HYPOTHESIS_TESTS: HelpTopic.ANALYSIS_HYPOTHESIS_TESTS,
+        AnalysisCategory.CORRELATION: HelpTopic.ANALYSIS_CORRELATION,
+        AnalysisCategory.REGRESSION: HelpTopic.ANALYSIS_REGRESSION,
+        AnalysisCategory.OUTLIERS: HelpTopic.ANALYSIS_OUTLIERS,
+        AnalysisCategory.CLUSTERING: HelpTopic.ANALYSIS_CLUSTERING,
+        AnalysisCategory.PCA: HelpTopic.ANALYSIS_PCA,
+        AnalysisCategory.TIME_SERIES: HelpTopic.ANALYSIS_TIME_SERIES,
+    }
+    tests = {
+        HypothesisTest.GROUP_COMPARISON: HelpTopic.ANALYSIS_GROUP_COMPARISON,
+        HypothesisTest.CHI_SQUARE: HelpTopic.ANALYSIS_CHI_SQUARE,
+        HypothesisTest.PAIRED_COMPARISON: HelpTopic.ANALYSIS_PAIRED_COMPARISON,
+    }
+    assert set(categories) == set(AnalysisCategory)
+    assert set(tests) == set(HypothesisTest)
+    changes = MagicMock()
+    dialog.category_changed.connect(changes)
+    try:
+        dialog.show()
+        button = _help_button(dialog)
+        for category, topic in categories.items():
+            dialog.select_category(category)
+            changes.reset_mock()
+            button.click()
+            _press_f1(qt_app, dialog)
+            assert urls[-2:] == [topic.url] * 2
+            assert dialog.selected_category() is category
+            assert dialog.content_widget() is content
+            changes.assert_not_called()
+        dialog.select_category(AnalysisCategory.HYPOTHESIS_TESTS)
+        dialog.set_config_widget(config)
+        combo = next(
+            combo
+            for combo in config.findChildren(QComboBox)
+            if combo.findData(HypothesisTest.GROUP_COMPARISON.value) >= 0
+        )
+        for test, topic in tests.items():
+            combo.setCurrentIndex(combo.findData(test.value))
+            before = config.current_configuration()
+            changes.reset_mock()
+            button.click()
+            qt_app.processEvents()
+            qt_app.setActiveWindow(dialog)
+            combo.setFocus()
+            for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+                qt_app.sendEvent(combo, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+            assert urls[-2:] == [topic.url] * 2
+            assert config.current_configuration() == before
+            assert config.applied_configuration() is None
+            changes.assert_not_called()
+        dialog.select_category(AnalysisCategory.REGRESSION)
+        button.click()
+        assert urls[-1] == HelpTopic.ANALYSIS_REGRESSION.url
+        dialog.select_reports()
+        page = dialog.report_page()
+        title = page.findChild(QLineEdit)
+        description = page.findChild(QPlainTextEdit)
+        assert title is not None
+        assert description is not None
+        title.setText("Unsaved report title")
+        description.setPlainText("Unsaved report description")
+        report = dialog.report_document()
+        button.click()
+        qt_app.processEvents()
+        qt_app.setActiveWindow(dialog)
+        title.setFocus()
+        for event_type in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+            qt_app.sendEvent(title, QKeyEvent(event_type, Qt.Key.Key_F1, Qt.KeyboardModifier.NoModifier))
+        assert urls[-2:] == [HelpTopic.ANALYSIS_REPORTS.url] * 2
+        assert dialog.report_page() is page
+        assert dialog.report_document() is report
+        assert page.report_title() == "Unsaved report title"
+        assert page.report_description() == "Unsaved report description"
+        assert dialog.content_widget() is content
+        assert dialog.config_widget() is config
+        requests.assert_not_called()
+        assert dialog.isVisible()
+        selector = dialog.findChild(QListWidget)
+        assert selector is not None
+        selector.setCurrentRow(-1)
+        button.click()
+        assert urls[-1] == HelpTopic.ADVANCED_ANALYSIS.url
+        if opened:
+            dialogs.warn.assert_not_called()
+        else:
+            assert dialogs.warn.call_count == len(urls)
+            dialogs.warn.assert_called_with(
+                dialog,
+                dialog.tr("Unable to open link"),
+                dialog.tr("The user manual could not be opened.\n\n{url}").format(url=HelpTopic.ADVANCED_ANALYSIS.url),
+            )
     finally:
         dialog.close()
 

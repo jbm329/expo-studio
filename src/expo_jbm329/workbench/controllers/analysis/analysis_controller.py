@@ -788,6 +788,7 @@ class AnalysisController:
         dialog = AnalysisDialog(
             parent=parent,
             source_dataset=source_dataset,
+            dialogs=self._dialogs,
         )
         self._connect_report_preview(dialog)
         if self._export_controller is not None:

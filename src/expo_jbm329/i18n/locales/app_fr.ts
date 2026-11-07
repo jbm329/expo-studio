@@ -189,72 +189,86 @@
 </context><context>
     <name>AnalysisDialog</name>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="219" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="242" />
         <source>Advanced analysis — {dataset} ({rows} rows × {columns} columns)</source>
         <translation>Analyse avancée — {dataset} ({rows} lignes × {columns} colonnes)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="284" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="310" />
         <source>Analysis</source>
         <translation>Analyse</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="297" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="323" />
         <source>Reports(0)</source>
         <translation>Rapports(0)</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="796" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="593" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="590" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="822" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="619" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
         <source>Add to report</source>
         <translation>Ajouter au rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="616" />
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="598" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="642" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="624" />
         <source>Replace report result</source>
         <translation>Remplacer le résultat du rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="618" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="644" />
         <source>Update report result</source>
         <translation>Mettre à jour le résultat du rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="621" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="647" />
         <source>Remove from report</source>
         <translation>Retirer du rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Replace in report</source>
         <translation>Remplacer dans le rapport</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="708" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="734" />
         <source>Update result</source>
         <translation>Mettre à jour le résultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="757" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="783" />
         <source>Reports({count})</source>
         <translation>Rapports({count})</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="762" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="788" />
         <source>Result</source>
         <translation>Résultat</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="776" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="802" />
         <source>Configuration</source>
         <translation>Configuration</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="793" />
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="819" />
         <source>Export</source>
         <translation>Exporter</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="863" />
+        <source>Unable to open link</source>
+        <translation>Impossible d'ouvrir le lien</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/analysis/analysis_dialog.py" line="864" />
+        <source>The user manual could not be opened.
+
+{url}</source>
+        <translation>Le manuel de l'utilisateur n'a pas pu être ouvert.
+
+{url}</translation>
     </message>
     <message>
         <location filename="../../services/analysis/presentation.py" line="654" />
@@ -6040,7 +6054,7 @@ Enregistré dans :
         <translation>Ligne</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1338" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1339" />
         <location filename="../../services/analysis/report.py" line="2381" />
         <location filename="../../services/analysis/report.py" line="1591" />
         <location filename="../../gui/dialogs/analysis/outliers_multivariate_view.py" line="206" />
@@ -6280,7 +6294,7 @@ Enregistré dans :
         <translation>Aucune dispersion</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1340" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
         <location filename="../../services/analysis/report.py" line="2384" />
         <location filename="../../services/analysis/report.py" line="1594" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="335" />
@@ -6288,7 +6302,7 @@ Enregistré dans :
         <translation>Distance au-delà de la borne</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1341" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
         <location filename="../../services/analysis/report.py" line="2385" />
         <location filename="../../services/analysis/report.py" line="1595" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="337" />
@@ -6296,7 +6310,7 @@ Enregistré dans :
         <translation>z</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1342" />
+        <location filename="../../workbench/controllers/analysis/analysis_controller.py" line="1343" />
         <location filename="../../services/analysis/report.py" line="2386" />
         <location filename="../../services/analysis/report.py" line="1596" />
         <location filename="../../gui/dialogs/analysis/outliers_view.py" line="339" />
