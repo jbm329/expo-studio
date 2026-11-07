@@ -113,7 +113,9 @@ release eligibility, source-progress checks, and shared publication concurrency.
 Do not publish, rerun publication jobs, delete deployment records, or change
 Pages settings without explicit approval. Do not create a release to test
 documentation automation or rerun a release solely to retry documentation.
-In-app help links are not implemented yet.
+The Help menu opens the manual home page. The general Settings dialog has a
+Help button and contextual F1 link. Register manual destinations in
+`app/help_topics.py`; its pytest contract checks pages and explicit anchors.
 
 Use `uv` from the repository root.
 

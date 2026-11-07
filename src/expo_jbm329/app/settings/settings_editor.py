@@ -13,12 +13,13 @@ from __future__ import annotations
 import contextlib
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -30,12 +31,14 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.app.settings.config_store import (
     DEFAULT_SETTINGS,
     load_settings,
     save_settings,
 )
 from expo_jbm329.app.settings.json_types import JsonObject, bool_value, int_value, object_or_empty, string_value
+from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.dialogs.workflows.file.file_dialog_service import (
     DirectoryRequest,
@@ -329,7 +332,20 @@ class SettingsEditor(QDialog):
         # ACTION BUTTONS
         # ================================================================
         row = QHBoxLayout()
+        help_buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Help, self)
+        localize_dialog_buttons(help_buttons)
+        help_button = help_buttons.button(QDialogButtonBox.StandardButton.Help)
+        if help_button is None:
+            message = "Settings help button has not been created."
+            raise RuntimeError(message)
+        help_button.setAutoDefault(False)
+        help_buttons.helpRequested.connect(self._open_help)
+        row.addWidget(help_buttons)
         row.addStretch(1)
+
+        self._help_shortcut = QShortcut(QKeySequence(QKeySequence.StandardKey.HelpContents), self)
+        self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        self._help_shortcut.activated.connect(self._open_help)
 
         btn_reset = QPushButton(self.tr("Reset defaults"), self)
         btn_reset.clicked.connect(self._reset_defaults)
@@ -344,6 +360,16 @@ class SettingsEditor(QDialog):
         row.addWidget(btn_save)
 
         main_layout.addLayout(row)
+
+    def _open_help(self) -> None:
+        """Open general settings guidance without changing the edited settings."""
+        url = HelpTopic.GENERAL_SETTINGS.url
+        if not QDesktopServices.openUrl(QUrl(url)):
+            self._dialogs.warn(
+                self,
+                self.tr("Unable to open link"),
+                self.tr("The user manual could not be opened.\n\n{url}").format(url=url),
+            )
 
     # -------------------------------------------------------------------------
     # Populate UI
