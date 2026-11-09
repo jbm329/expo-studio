@@ -18,9 +18,10 @@ from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
+    QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -65,8 +66,8 @@ class ConcatDialog(QDialog):
     Attributes:
         cb_left_dataset: Dropdown for the left dataset.
         cb_right_dataset: Dropdown for the right dataset.
-        left_columns_list: List widget showing columns of the left dataset.
-        right_columns_list: List widget showing columns of the right dataset.
+        left_columns_table: Read-only column/type table for the first dataset.
+        right_columns_table: Read-only column/type table for the second dataset.
     """
 
     def __init__(
@@ -122,11 +123,11 @@ class ConcatDialog(QDialog):
         self.cb_left_dataset.addItems([left_tab_title])
         self.cb_left_dataset.setCurrentText(left_tab_title)
 
-        self.left_columns_list = QListWidget()
-        self.left_columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self.left_columns_table = self._create_columns_table()
 
         left_layout.addRow(self.tr("Dataset:"), self.cb_left_dataset)
-        left_layout.addRow(QLabel(self.tr("Columns:")), self.left_columns_list)
+        left_layout.addRow(QLabel(self.tr("Columns:")))
+        left_layout.addRow(self.left_columns_table)
 
         # ======================================================
         # RIGHT PANEL
@@ -138,11 +139,11 @@ class ConcatDialog(QDialog):
         self.cb_right_dataset.addItems(list(self._right_tabs))
         self.cb_right_dataset.currentTextChanged.connect(self._on_right_dataset_changed)
 
-        self.right_columns_list = QListWidget()
-        self.right_columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        self.right_columns_table = self._create_columns_table()
 
         right_layout.addRow(self.tr("Dataset:"), self.cb_right_dataset)
-        right_layout.addRow(QLabel(self.tr("Columns:")), self.right_columns_list)
+        right_layout.addRow(QLabel(self.tr("Columns:")))
+        right_layout.addRow(self.right_columns_table)
 
         # ======================================================
         # Grid Left + Right
@@ -180,7 +181,9 @@ class ConcatDialog(QDialog):
         self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._help_shortcut.activated.connect(self._open_help)
 
-        apply_window_hints_strict(self, min_width=520, fixed_size=True)
+        apply_window_hints_strict(self, min_width=850)
+        self.setMinimumWidth(650)
+        self.setSizeGripEnabled(True)
 
         # Initial population
         self._populate_left_columns()
@@ -199,20 +202,43 @@ class ConcatDialog(QDialog):
     # ---------------------------------------------------------
     # Populate
     # ---------------------------------------------------------
+    def _create_columns_table(self) -> QTableWidget:
+        table = QTableWidget(0, 2, self)
+        table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type")])
+        table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        horizontal_header = table.horizontalHeader()
+        vertical_header = table.verticalHeader()
+        if horizontal_header is None or vertical_header is None:
+            message = "Concatenation column table headers have not been created."
+            raise RuntimeError(message)
+        vertical_header.hide()
+        horizontal_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        horizontal_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        return table
+
+    @staticmethod
+    def _populate_columns_table(
+        table: QTableWidget,
+        columns: Sequence[str],
+        metadata: Mapping[str, FillColumn],
+    ) -> None:
+        table.setRowCount(len(columns))
+        for row, column in enumerate(columns):
+            column_metadata = metadata.get(column)
+            dtype = column_metadata.dtype if column_metadata is not None else "-"
+            for position, text in enumerate((column, dtype)):
+                item = QTableWidgetItem(text)
+                item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                item.setToolTip(text)
+                table.setItem(row, position, item)
+
     def _populate_left_columns(self) -> None:
-        self.left_columns_list.clear()
-        for col in self._left_cols:
-            item = QListWidgetItem(col)
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)  # read-only
-            self.left_columns_list.addItem(item)
+        self._populate_columns_table(self.left_columns_table, self._left_cols, self._left_column_metadata)
 
     def _populate_right_columns(self, tab: str) -> None:
         cols = self._right_cols_map.get(tab, [])
-        self.right_columns_list.clear()
-        for col in cols:
-            item = QListWidgetItem(col)
-            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
-            self.right_columns_list.addItem(item)
+        self._populate_columns_table(self.right_columns_table, cols, self._right_column_metadata.get(tab, {}))
 
     def _on_right_dataset_changed(self, tab: str) -> None:
         self._populate_right_columns(tab)

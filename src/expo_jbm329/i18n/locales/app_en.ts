@@ -2219,69 +2219,79 @@ Please see logs for more information.</source>
 </context><context>
     <name>ConcatController</name>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
         <source>concatenate datasets</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
         <source>Concatenating datasets: {left} + {right}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
         <source>Concatenated datasets: {left} + {right}</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
         <source>Concatenation cancelled</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="48" />
         <source>Concatenated data</source>
         <translation type="unfinished" />
     </message>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="90" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="100" />
         <source>Concatenate datasets</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="102" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="118" />
         <source>First dataset</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="113" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="144" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="128" />
         <source>Dataset:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="130" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="114" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="145" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
         <source>Columns:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="119" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="135" />
         <source>Second dataset</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="180" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="198" />
         <source>Unable to open link</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="181" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="199" />
         <source>The user manual could not be opened.
 
 {url}</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <source>Column</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <source>Type</source>
         <translation type="unfinished" />
     </message>
 </context><context>
@@ -5687,32 +5697,32 @@ Saved to:
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="105" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="103" />
         <source>Date/time picker:</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="110" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="108" />
         <source>Enter a number without grouping separators. Decimal separator: {separator}.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="113" />
         <source>Use the column's local time, or enter an ISO date/time with an explicit offset.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="117" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
         <source>Text defaults require text-only source values. This is checked when the join runs.</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="158" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
         <source>Invalid default value</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="160" />
         <source>The value is not valid for {column} ({dtype}). Check its type, range, precision and timezone.</source>
         <translation type="unfinished" />
     </message>

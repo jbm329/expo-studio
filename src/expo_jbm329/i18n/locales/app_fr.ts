@@ -2231,72 +2231,82 @@ Consultez les journaux pour plus d'informations.</translation>
 </context><context>
     <name>ConcatController</name>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="43" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
         <source>concatenate datasets</source>
         <translation>concaténer les jeux de données</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="44" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
         <source>Concatenating datasets: {left} + {right}</source>
         <translation>Concaténation des jeux de données : {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="45" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
         <source>Concatenated datasets: {left} + {right}</source>
         <translation>Jeux de données concaténés : {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="46" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
         <source>Concatenation cancelled</source>
         <translation>Concaténation annulée</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/concat_controller.py" line="47" />
+        <location filename="../../workbench/controllers/concat_controller.py" line="48" />
         <source>Concatenated data</source>
         <translation>Données concaténées</translation>
     </message>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="90" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="100" />
         <source>Concatenate datasets</source>
         <translation>Concaténer les jeux de données</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="102" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="118" />
         <source>First dataset</source>
         <translation>Premier jeu de données</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="113" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="144" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="128" />
         <source>Dataset:</source>
         <translation>Jeu de données :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="130" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="114" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="145" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
         <source>Columns:</source>
         <translation>Colonnes :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="119" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="135" />
         <source>Second dataset</source>
         <translation>Deuxième jeu de données</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="180" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="198" />
         <source>Unable to open link</source>
         <translation>Impossible d'ouvrir le lien</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="181" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="199" />
         <source>The user manual could not be opened.
 
 {url}</source>
         <translation>Le manuel de l'utilisateur n'a pas pu être ouvert.
 
 {url}</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <source>Column</source>
+        <translation>Colonne</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <source>Type</source>
+        <translation>Type</translation>
     </message>
 </context><context>
     <name>ConditionDialog</name>
@@ -5792,32 +5802,32 @@ Enregistré dans :
         <translation>Valeur :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="105" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="103" />
         <source>Date/time picker:</source>
         <translation>Sélecteur de date/heure :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="110" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="108" />
         <source>Enter a number without grouping separators. Decimal separator: {separator}.</source>
         <translation>Saisissez un nombre sans séparateurs de groupement. Séparateur décimal : {separator}.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="113" />
         <source>Use the column's local time, or enter an ISO date/time with an explicit offset.</source>
         <translation>Utilisez l'heure locale de la colonne ou saisissez une date/heure ISO avec un décalage explicite.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="117" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
         <source>Text defaults require text-only source values. This is checked when the join runs.</source>
         <translation>Les valeurs par défaut textuelles exigent des valeurs source uniquement textuelles. Cela est vérifié lors de la jointure.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="158" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
         <source>Invalid default value</source>
         <translation>Valeur par défaut non valide</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="160" />
         <source>The value is not valid for {column} ({dtype}). Check its type, range, precision and timezone.</source>
         <translation>La valeur n'est pas valide pour {column} ({dtype}). Vérifiez son type, sa plage, sa précision et son fuseau horaire.</translation>
     </message>

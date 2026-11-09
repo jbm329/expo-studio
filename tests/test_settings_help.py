@@ -474,7 +474,7 @@ def test_settings_help_button_and_f1_preserve_edits(
             assert load_settings() == persisted
         elif isinstance(dialog, ConcatDialog):
             assert dialog.build_result() == concat_before
-            assert dialog.right_columns_list.count() == 2
+            assert dialog.right_columns_table.rowCount() == 2
         elif isinstance(dialog, DerivedColumnDialog):
             name, editor = _derived_inputs(dialog)
             assert name.text() == "Line total"

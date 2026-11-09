@@ -39,11 +39,9 @@ To append the jazz rows to the rock dataset:
    result tab and select **Concatenate…**.
 3. In **Second dataset**, choose the dataset to append. The first dataset is
    the active result tab; its columns and the second dataset's columns are
-   shown for reference.
+   shown for reference in read-only **Column** / **Type** tables. Resize the
+   dialog to give the tables more room; all columns remain included.
 4. Select **OK** to create the concatenated result.
-
-![Concatenate datasets dialog showing Rock tracks as the first dataset and
-Jazz tracks as the second dataset](../assets/transform-data/concatenate.png)
 
 The result is a new tab named **Concatenated data**. The first dataset's rows
 come first, followed by the second dataset's rows:
