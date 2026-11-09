@@ -8,7 +8,7 @@ columns to include, and the join type.
 from __future__ import annotations
 
 import contextlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
 from PyQt6.QtCore import Qt, QUrl
@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_operations.joins import UnmatchedFill
 
 
 @dataclass
@@ -54,6 +55,8 @@ class JoinDialogResult:
         left_selected_columns: List of columns to include from the left dataset.
         right_selected_columns: List of columns to include from the right dataset.
         join_type: The type of join (inner, left, right, outer).
+        left_fill: Unmatched-row defaults keyed by left source column name.
+        right_fill: Unmatched-row defaults keyed by right source column name.
     """
 
     left_tab_title: str
@@ -63,6 +66,8 @@ class JoinDialogResult:
     left_selected_columns: list[str]
     right_selected_columns: list[str]
     join_type: Literal["inner", "left", "right", "outer"]
+    left_fill: dict[str, UnmatchedFill] = field(default_factory=dict)
+    right_fill: dict[str, UnmatchedFill] = field(default_factory=dict)
 
 
 @dataclass

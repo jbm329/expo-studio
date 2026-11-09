@@ -547,6 +547,10 @@ class JoinController:
             right_on=cfg.right_on,
             how=cfg.join_type,
             suffixes=(left_suffix, right_suffix),
+            left_columns=cfg.left_selected_columns,
+            right_columns=cfg.right_selected_columns,
+            left_fill=cfg.left_fill,
+            right_fill=cfg.right_fill,
         )
 
         df = join_dataframes(req)
