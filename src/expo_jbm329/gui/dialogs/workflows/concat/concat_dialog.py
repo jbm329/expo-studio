@@ -46,8 +46,10 @@ class ConcatDialogResult:
         left_tab_title: The title of the base dataset tab.
         right_tab_title: The title of the dataset tab to append.
         remove_duplicates: Whether to remove duplicate rows (reserved for future).
-        left_fill: Defaults for columns owned only by the first dataset.
-        right_fill: Defaults for columns owned only by the second dataset.
+        left_fill: Defaults for columns selected only in the first dataset.
+        right_fill: Defaults for columns selected only in the second dataset.
+        left_columns: Included first-dataset columns, or None for all.
+        right_columns: Included second-dataset columns, or None for all.
     """
 
     left_tab_title: str
@@ -55,6 +57,8 @@ class ConcatDialogResult:
     remove_duplicates: bool
     left_fill: dict[str, ColumnFill] = field(default_factory=dict)
     right_fill: dict[str, ColumnFill] = field(default_factory=dict)
+    left_columns: Sequence[str] | None = None
+    right_columns: Sequence[str] | None = None
 
 
 class ConcatDialog(QDialog):

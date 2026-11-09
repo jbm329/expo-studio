@@ -197,6 +197,8 @@ class ConcatController:
                     remove_duplicates=cfg.remove_duplicates,
                     left_fill=cfg.left_fill,
                     right_fill=cfg.right_fill,
+                    left_columns=cfg.left_columns,
+                    right_columns=cfg.right_columns,
                 )
             )
 

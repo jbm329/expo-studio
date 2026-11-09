@@ -95,6 +95,7 @@ columns before concatenating datasets with different layouts.
 | Problem | What to check |
 |---|---|
 | Concatenate does not open | Keep at least two result datasets open. The active dataset is the first; another open dataset is required as the second. |
+| Concatenate reports that an output column is required | At least one input dataset must contain a column. Inputs with no rows are supported when an input still defines columns. |
 | Values appear under separate columns | Column names must match exactly to be combined. Rename columns before concatenating if they represent the same information. |
 | Some output cells are missing | One input dataset does not have a column with that name. This is expected when the inputs have different columns. |
 | Duplicate rows remain | Concatenate preserves all input rows. Remove duplicates in a separate preparation step if needed. |

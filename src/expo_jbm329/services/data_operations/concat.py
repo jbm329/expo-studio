@@ -27,10 +27,14 @@ class ConcatRequest:
         right: The second dataframe.
         remove_duplicates: If True, behaves like SQL UNION (deduplicates).
             If False (default), behaves like SQL UNION ALL.
-        left_fill: Defaults keyed by columns owned only by the first dataset.
+        left_fill: Defaults keyed by columns selected only in the first dataset.
             Values populate second-dataset rows, never existing source NULLs.
-        right_fill: Defaults keyed by columns owned only by the second dataset.
+        right_fill: Defaults keyed by columns selected only in the second dataset.
             Values populate first-dataset rows, never existing source NULLs.
+        left_columns: Included first-dataset columns, or None for all. Source
+            order is retained regardless of selection order.
+        right_columns: Included second-dataset columns, or None for all.
+            Excluded columns do not supply values, but every source row remains.
     """
 
     left: pd.DataFrame
@@ -38,6 +42,26 @@ class ConcatRequest:
     remove_duplicates: bool = False
     left_fill: Mapping[str, ColumnFill] = field(default_factory=dict)
     right_fill: Mapping[str, ColumnFill] = field(default_factory=dict)
+    left_columns: Sequence[str] | None = None
+    right_columns: Sequence[str] | None = None
+
+
+def _select_columns(frame: pd.DataFrame, columns: Sequence[str] | None) -> pd.DataFrame:
+    """Project a source schema in source order without dropping its rows."""
+    if columns is None:
+        return frame
+    if not frame.columns.is_unique:
+        message = "Concatenation column selection requires unique column names."
+        raise ValueError(message)
+    selected = set(columns)
+    if len(selected) != len(columns):
+        message = "Concatenation column selection must not contain duplicate names."
+        raise ValueError(message)
+    unknown = selected.difference(frame.columns)
+    if unknown:
+        message = f"Unknown columns in concatenation selection: {sorted(unknown)!r}."
+        raise ValueError(message)
+    return frame.loc[:, frame.columns.isin(selected)]
 
 
 def _validate_fills(
@@ -86,6 +110,8 @@ def concat_dataframes(req: ConcatRequest) -> pd.DataFrame:
 
     Rules:
         * Name-based column union (Pandas default).
+        * Optional per-source column selection preserves source column order.
+          A column selected on only one side is absent for the other side's rows.
         * Missing columns filled with missing values.
         * One-sided NumPy integers and booleans use matching nullable dtypes
           for NULL defaults and retain their original dtype for non-NULL defaults.
@@ -108,11 +134,15 @@ def concat_dataframes(req: ConcatRequest) -> pd.DataFrame:
         The concatenated dataframe.
 
     Raises:
-        ValueError: If defaults are invalid or column-specific preparation is
-            ambiguous because of duplicate column names.
+        ValueError: If selections or defaults are invalid, no output columns
+            remain, or column-specific preparation is ambiguous because of
+            duplicate column names.
     """
-    left = req.left
-    right = req.right
+    left = _select_columns(req.left, req.left_columns)
+    right = _select_columns(req.right, req.right_columns)
+    if len(left.columns) == 0 and len(right.columns) == 0:
+        message = "Concatenation requires at least one selected output column."
+        raise ValueError(message)
 
     if not left.columns.equals(right.columns) or req.left_fill or req.right_fill:
         if not left.columns.is_unique or not right.columns.is_unique:

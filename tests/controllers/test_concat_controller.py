@@ -147,6 +147,8 @@ def test_result_default_mappings_are_independent() -> None:
     assert first.right_fill == {}
     assert second.left_fill == {}
     assert second.right_fill == {}
+    assert first.left_columns is None
+    assert first.right_columns is None
 
 
 def test_dialog_metadata_is_optional_and_copied(qt_app) -> None:
@@ -311,3 +313,61 @@ def test_worker_lookup_error_propagates_and_finished_cleans_pending(controller) 
         kwargs["work"]()
     kwargs["on_finished"]()
     assert results.remove_calls == ["pending-1"]
+
+
+@pytest.mark.parametrize("source_first", [False, True])
+def test_real_worker_forwards_selection_before_applying_defaults(
+    controller, monkeypatch: pytest.MonkeyPatch, source_first: bool
+) -> None:
+    ctrl, async_ops, results, _ = controller
+    source = pd.DataFrame({"value": pd.Series([None, 2**62 + 1], dtype="Int64"), "drop": [1, 2]})
+    other = pd.DataFrame({"value": [3, 4], "drop": [5, 6]})
+    frames = {"left": source if source_first else other, "right": other if source_first else source}
+    ctrl._get_df = frames.__getitem__
+    cfg = ConcatDialogResult(
+        "left",
+        "right",
+        False,
+        left_columns=["value"] if source_first else [],
+        right_columns=[] if source_first else ["value"],
+        left_fill={"value": ColumnFill(0)} if source_first else {},
+        right_fill={} if source_first else {"value": ColumnFill(0)},
+    )
+    factory = MagicMock(return_value=DummyDialog(result=cfg))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.concat_controller.ConcatDialog", factory)
+    service = MagicMock(wraps=concat_dataframes)
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.concat_controller.concat_dataframes", service)
+    ctrl.open_concat_dialog()
+    kwargs = async_ops.last_kwargs
+    result = kwargs["work"]()
+    request = service.call_args.args[0]
+    assert request.left_columns == cfg.left_columns
+    assert request.right_columns == cfg.right_columns
+    expected = [None, 2**62 + 1, 0, 0] if source_first else [0, 0, None, 2**62 + 1]
+    pd.testing.assert_frame_equal(result, pd.DataFrame({"value": pd.Series(expected, dtype="Int64")}))
+    kwargs["on_result"](result)
+    kwargs["on_finished"]()
+    assert results.remove_calls == []
+    pd.testing.assert_frame_equal(results.fulfill_calls[0][1], result)
+
+
+@pytest.mark.parametrize(
+    "left_columns,right_columns,message",
+    [
+        (["unknown"], None, "Unknown columns"),
+        ([], [], "at least one selected output column"),
+    ],
+)
+def test_worker_selection_errors_propagate_and_cleanup_pending(
+    controller, left_columns: list[str], right_columns: list[str] | None, message: str
+) -> None:
+    ctrl, async_ops, results, status = controller
+    ctrl._run_concat(ConcatDialogResult("left", "right", False, left_columns=left_columns, right_columns=right_columns))
+    kwargs = async_ops.last_kwargs
+    with pytest.raises(ValueError, match=message):
+        kwargs["work"]()
+    assert kwargs["suppress_error_dialog"] is False
+    kwargs["on_finished"]()
+    assert results.remove_calls == ["pending-1"]
+    assert results.fulfill_calls == []
+    status.assert_not_called()
