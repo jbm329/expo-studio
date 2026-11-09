@@ -6,7 +6,7 @@ datasets (tabs) in the workbench.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt, QUrl
@@ -31,9 +31,10 @@ from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
+    from expo_jbm329.services.data_operations.column_defaults import ColumnFill, FillColumn
 
 
 @dataclass
@@ -44,11 +45,15 @@ class ConcatDialogResult:
         left_tab_title: The title of the base dataset tab.
         right_tab_title: The title of the dataset tab to append.
         remove_duplicates: Whether to remove duplicate rows (reserved for future).
+        left_fill: Defaults for columns owned only by the first dataset.
+        right_fill: Defaults for columns owned only by the second dataset.
     """
 
     left_tab_title: str
     right_tab_title: str
     remove_duplicates: bool
+    left_fill: dict[str, ColumnFill] = field(default_factory=dict)
+    right_fill: dict[str, ColumnFill] = field(default_factory=dict)
 
 
 class ConcatDialog(QDialog):
@@ -73,6 +78,8 @@ class ConcatDialog(QDialog):
         left_columns: Sequence[str],
         right_columns_map: dict[str, Sequence[str]],
         dialogs: DialogService | None = None,
+        left_column_metadata: Mapping[str, FillColumn] | None = None,
+        right_column_metadata: Mapping[str, Mapping[str, FillColumn]] | None = None,
     ) -> None:
         """Initialize the concatenation dialog.
 
@@ -83,6 +90,8 @@ class ConcatDialog(QDialog):
             left_columns: A sequence of column names for the left tab.
             right_columns_map: A mapping of tab titles to their column names.
             dialogs: Service for displaying warnings, defaulting to QtDialogService.
+            left_column_metadata: Optional dtype-only metadata for first-dataset columns.
+            right_column_metadata: Optional metadata keyed by second-dataset title and column.
         """
         super().__init__(parent)
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
@@ -93,6 +102,12 @@ class ConcatDialog(QDialog):
         self._right_tabs = list(right_tab_titles)
         self._left_cols = list(left_columns)
         self._right_cols_map = right_columns_map
+        self._left_column_metadata = dict(left_column_metadata) if left_column_metadata is not None else {}
+        self._right_column_metadata = (
+            {title: dict(columns) for title, columns in right_column_metadata.items()}
+            if right_column_metadata is not None
+            else {}
+        )
 
         root = QVBoxLayout(self)
 

@@ -20,6 +20,7 @@ from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import (
     ConcatDialog,
     ConcatDialogResult,
 )
+from expo_jbm329.services.data_operations.column_defaults import describe_fill_column
 from expo_jbm329.services.data_operations.concat import ConcatRequest, concat_dataframes
 from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
@@ -120,7 +121,17 @@ class ConcatController:
         left_df = self._get_df(left_tab)
         left_cols = list(left_df.columns)
 
-        right_cols_map: dict[str, Sequence[str]] = {tab: list(self._get_df(tab).columns) for tab in right_tabs}
+        right_frames = {tab: self._get_df(tab) for tab in right_tabs}
+        right_cols_map: dict[str, Sequence[str]] = {tab: list(frame.columns) for tab, frame in right_frames.items()}
+        left_metadata = (
+            {column: describe_fill_column(left_df[column]) for column in left_cols} if left_df.columns.is_unique else {}
+        )
+        right_metadata = {
+            tab: {column: describe_fill_column(frame[column]) for column in frame.columns}
+            if frame.columns.is_unique
+            else {}
+            for tab, frame in right_frames.items()
+        }
 
         dlg = ConcatDialog(
             parent=self._parent,
@@ -129,6 +140,8 @@ class ConcatController:
             left_columns=left_cols,
             right_columns_map=right_cols_map,
             dialogs=self._dialogs,
+            left_column_metadata=left_metadata,
+            right_column_metadata=right_metadata,
         )
 
         if dlg.exec() == QDialog.DialogCode.Accepted:
@@ -182,6 +195,8 @@ class ConcatController:
                     left=left_df,
                     right=right_df,
                     remove_duplicates=cfg.remove_duplicates,
+                    left_fill=cfg.left_fill,
+                    right_fill=cfg.right_fill,
                 )
             )
 
