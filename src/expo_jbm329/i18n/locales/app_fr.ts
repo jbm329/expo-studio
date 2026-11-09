@@ -5762,74 +5762,76 @@ Enregistré dans :
 </context><context>
     <name>JoinFillValueDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="66" />
-        <source>If no match</source>
-        <translation>Sans correspondance</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="68" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="72" />
         <source>Column: {column} ({dtype})</source>
         <translation>Colonne : {column} ({dtype})</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="74" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="81" />
         <source>NULL</source>
         <translation>NULL</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="79" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="86" />
         <source>True</source>
         <translation>Vrai</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="80" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="87" />
         <source>False</source>
         <translation>Faux</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="82" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="89" />
         <source>Custom value...</source>
         <translation>Valeur personnalisée...</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="83" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="90" />
         <source>Default:</source>
         <translation>Valeur par défaut :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="90" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="97" />
         <source>Value:</source>
         <translation>Valeur :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="103" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="110" />
         <source>Date/time picker:</source>
         <translation>Sélecteur de date/heure :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="108" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="115" />
         <source>Enter a number without grouping separators. Decimal separator: {separator}.</source>
         <translation>Saisissez un nombre sans séparateurs de groupement. Séparateur décimal : {separator}.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="113" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="121" />
         <source>Use the column's local time, or enter an ISO date/time with an explicit offset.</source>
         <translation>Utilisez l'heure locale de la colonne ou saisissez une date/heure ISO avec un décalage explicite.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
-        <source>Text defaults require text-only source values. This is checked when the join runs.</source>
-        <translation>Les valeurs par défaut textuelles exigent des valeurs source uniquement textuelles. Cela est vérifié lors de la jointure.</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="171" />
         <source>Invalid default value</source>
         <translation>Valeur par défaut non valide</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="160" />
+        <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="172" />
         <source>The value is not valid for {column} ({dtype}). Check its type, range, precision and timezone.</source>
         <translation>La valeur n'est pas valide pour {column} ({dtype}). Vérifiez son type, sa plage, sa précision et son fuseau horaire.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="60" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="43" />
+        <source>If no match</source>
+        <translation>Sans correspondance</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="61" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="44" />
+        <source>Text defaults require text-only source values. This is checked when the join runs.</source>
+        <translation>Les valeurs par défaut textuelles exigent des valeurs source uniquement textuelles. Cela est vérifié lors de la jointure.</translation>
     </message>
 </context><context>
     <name>JoinPreviewDialog</name>
