@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
+import numpy as np
 import pandas as pd
 from pandas import CategoricalDtype
 from pandas.api.types import is_numeric_dtype, is_string_dtype
@@ -13,6 +14,19 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 JoinHow = Literal["inner", "left", "right", "outer"]
+
+_NULLABLE_INTEGER_DTYPES: dict[
+    str, Literal["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"]
+] = {
+    "int8": "Int8",
+    "int16": "Int16",
+    "int32": "Int32",
+    "int64": "Int64",
+    "uint8": "UInt8",
+    "uint16": "UInt16",
+    "uint32": "UInt32",
+    "uint64": "UInt64",
+}
 
 
 @dataclass(slots=True)
@@ -37,6 +51,10 @@ class JoinRequest:
         right_on: Column names to join on in the right dataframe.
         how: Join type: 'inner', 'left', 'right', 'outer'.
         suffixes: Suffixes for conflicting column names.
+        left_columns: Included left columns to prepare for missing values.
+            None prepares all columns. Join keys are always prepared.
+        right_columns: Included right columns to prepare for missing values.
+            None prepares all columns. This does not filter the merge output.
     """
 
     left: pd.DataFrame
@@ -45,6 +63,29 @@ class JoinRequest:
     right_on: Sequence[str]
     how: JoinHow = "inner"
     suffixes: tuple[str, str] = ("_left", "_right")
+    left_columns: Sequence[str] | None = None
+    right_columns: Sequence[str] | None = None
+
+
+def _prepare_nullable_columns(
+    frame: pd.DataFrame,
+    columns: Sequence[str] | None,
+    keys: Sequence[str],
+) -> pd.DataFrame:
+    """Prepare integer and boolean columns without mutating the source frame."""
+    included = set(frame.columns if columns is None else columns) | set(keys)
+    prepared = frame.copy(deep=False)
+    for column in frame.columns:
+        if column not in included:
+            continue
+        dtype = frame[column].dtype
+        if not isinstance(dtype, np.dtype):
+            continue
+        if dtype.kind == "b":
+            prepared[column] = frame[column].astype("boolean")
+        elif dtype.kind in {"i", "u"}:
+            prepared[column] = frame[column].astype(_NULLABLE_INTEGER_DTYPES[dtype.name])
+    return prepared
 
 
 def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:
@@ -59,13 +100,23 @@ def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:
     Note:
         * Keys are aligned 1:1 (left_on[i] corresponds to right_on[i]).
         * Multi-key joins are supported.
+        * Included integer and boolean columns on a side that can be missing
+          use nullable dtypes before merging, even when all rows match.
+        * Integer widths, signedness and existing extension dtypes are preserved.
     """
     if len(cfg.left_on) != len(cfg.right_on):
         msg = f"left_on and right_on must have same length (got {len(cfg.left_on)} vs {len(cfg.right_on)})"
         raise ValueError(msg)
 
-    return cfg.left.merge(
-        cfg.right,
+    left = cfg.left
+    right = cfg.right
+    if cfg.how in {"right", "outer"}:
+        left = _prepare_nullable_columns(left, cfg.left_columns, cfg.left_on)
+    if cfg.how in {"left", "outer"}:
+        right = _prepare_nullable_columns(right, cfg.right_columns, cfg.right_on)
+
+    return left.merge(
+        right,
         left_on=list(cfg.left_on),
         right_on=list(cfg.right_on),
         how=cfg.how,

@@ -79,6 +79,14 @@ In the example, a **Left join** keeps order `103` with missing customer
 details. A **Full (outer) join** also keeps customer `C3` with missing order
 details.
 
+Integer and boolean columns on the side that can be missing use nullable
+types: right-side columns for a left join, left-side columns for a right join,
+and both sides for a full join. For example, `int64` becomes `Int64` and `bool`
+becomes `boolean`, even when every row matches. This preserves integer
+precision without converting integers to floating-point values. Integer widths
+and signedness are preserved, and existing nullable types remain unchanged.
+Inner joins do not apply this conversion. Neither input dataset is modified.
+
 ## Select keys and output columns {#keys-and-columns}
 
 Choose one key column from each dataset. The values to match must have
