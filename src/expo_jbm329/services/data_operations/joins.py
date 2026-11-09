@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
@@ -25,6 +27,7 @@ if TYPE_CHECKING:
 
 JoinHow = Literal["inner", "left", "right", "outer"]
 JoinFillValue = int | float | bool | str | datetime | pd.Timestamp | None
+JoinFillKind = Literal["integer", "float", "boolean", "text", "datetime", "unsupported"]
 
 _NULLABLE_INTEGER_DTYPES: dict[
     str, Literal["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"]
@@ -56,6 +59,96 @@ class UnmatchedFill:
     """Default for a missing source row, with None representing NULL."""
 
     value: JoinFillValue = None
+
+
+@dataclass(frozen=True, slots=True)
+class JoinFillColumn:
+    """Row-independent metadata for editing a column's unmatched-row default.
+
+    Object columns offer text input; full source-content validation remains in
+    the join worker, avoiding dataframe scans while opening or editing the dialog.
+    """
+
+    name: str
+    dtype: str
+    kind: JoinFillKind
+
+
+def describe_join_fill_column(series: pd.Series) -> JoinFillColumn:
+    """Describe available editors from the dtype without scanning source values."""
+    dtype = series.dtype
+    kind: JoinFillKind
+    if isinstance(dtype, CategoricalDtype):
+        kind = "text"
+    elif isinstance(dtype, pd.SparseDtype):
+        kind = "unsupported"
+    elif is_bool_dtype(dtype):
+        kind = "boolean"
+    elif is_integer_dtype(dtype):
+        kind = "integer"
+    elif is_float_dtype(dtype):
+        kind = "float"
+    elif is_datetime64_any_dtype(dtype) and (isinstance(dtype, (np.dtype, pd.DatetimeTZDtype))):
+        kind = "datetime"
+    elif is_object_dtype(dtype) or is_string_dtype(dtype):
+        kind = "text"
+    else:
+        kind = "unsupported"
+    return JoinFillColumn(str(series.name), str(dtype), kind)
+
+
+def parse_join_fill(
+    column: JoinFillColumn,
+    text: str,
+    *,
+    decimal_point: str = ".",
+) -> UnmatchedFill:
+    """Parse custom input and validate its scalar type, range and datetime precision.
+
+    Args:
+        column: Source column editor metadata.
+        text: Custom input, with text-column whitespace preserved.
+        decimal_point: Numeric locale decimal separator; grouping is not accepted.
+
+    Returns:
+        A typed default suitable for the join request.
+
+    Raises:
+        ValueError: If input is invalid or the dtype supports NULL only.
+    """
+    value: JoinFillValue
+    message = f"Invalid unmatched-row default for column {column.name!r} ({column.dtype})."
+    match column.kind:
+        case "integer":
+            if re.fullmatch(r"[+-]?[0-9]+", text.strip()) is None:
+                raise ValueError(message)
+            value = int(text)
+        case "float":
+            if decimal_point != "." and "." in text:
+                raise ValueError(message)
+            numeric_text = text.strip().replace(decimal_point, ".")
+            if re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", numeric_text) is None:
+                raise ValueError(message)
+            value = float(numeric_text)
+            try:
+                exact = Decimal(numeric_text)
+            except InvalidOperation as error:
+                raise ValueError(message) from error
+            if value == 0.0 and exact != 0:
+                raise ValueError(message)
+        case "text":
+            value = text
+        case "datetime":
+            value = text.strip()
+        case _:
+            raise ValueError(message)
+    return validate_join_fill_column(column, UnmatchedFill(value))
+
+
+def validate_join_fill_column(column: JoinFillColumn, fill: UnmatchedFill) -> UnmatchedFill:
+    """Validate scalar input from editor metadata without scanning source data."""
+    schema = pd.Series([], name=column.name, dtype=column.dtype)
+    return UnmatchedFill(validate_join_fill(schema, fill))
 
 
 @dataclass(frozen=True)
@@ -135,6 +228,12 @@ def validate_join_fill(series: pd.Series, fill: UnmatchedFill) -> JoinFillValue:
         return None
     dtype = series.dtype
     message = f"Invalid unmatched-row default for column {series.name!r} ({dtype})."
+    if isinstance(dtype, CategoricalDtype) or is_object_dtype(dtype) or is_string_dtype(dtype):
+        if not isinstance(value, str):
+            raise ValueError(message)
+        if is_object_dtype(dtype) and not all(isinstance(item, str) for item in series.dropna()):
+            raise ValueError(message)
+        return value
     if is_bool_dtype(dtype):
         if not isinstance(value, bool):
             raise ValueError(message)
@@ -173,14 +272,6 @@ def validate_join_fill(series: pd.Series, fill: UnmatchedFill) -> JoinFillValue:
             return _normalize_datetime_fill(series, pd.Timestamp(value))
         except (ValueError, TypeError, OverflowError) as error:
             raise ValueError(message) from error
-    if isinstance(dtype, CategoricalDtype) or is_object_dtype(dtype) or is_string_dtype(dtype):
-        if not isinstance(value, str):
-            raise ValueError(message)
-        if isinstance(dtype, CategoricalDtype) or not is_object_dtype(dtype):
-            return value
-        if not all(isinstance(item, str) for item in series.dropna()):
-            raise ValueError(message)
-        return value
     raise ValueError(message)
 
 

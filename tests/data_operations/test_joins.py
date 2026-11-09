@@ -12,10 +12,105 @@ from expo_jbm329.services.data_operations.joins import (
     UnmatchedFill,
     concat_columns,
     concat_rows,
+    describe_join_fill_column,
     detect_join_keys,
     join_dataframes,
+    parse_join_fill,
     validate_join_fill,
 )
+
+
+@pytest.mark.parametrize(
+    "dtype,kind",
+    [
+        ("int64", "integer"),
+        ("UInt64", "integer"),
+        ("float64", "float"),
+        ("Float32", "float"),
+        ("bool", "boolean"),
+        ("boolean", "boolean"),
+        ("string", "text"),
+        ("object", "text"),
+        ("category", "text"),
+        ("datetime64[ns, UTC]", "datetime"),
+        ("timedelta64[ns]", "unsupported"),
+        ("period[M]", "unsupported"),
+        ("complex128", "unsupported"),
+        ("Sparse[int64, 0]", "unsupported"),
+    ],
+)
+def test_fill_editor_metadata_does_not_scan_source_values(
+    dtype: str, kind: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    series = pd.Series([], name="value", dtype=dtype)
+    monkeypatch.setattr(pd.Series, "dropna", lambda *args, **kwargs: pytest.fail("Metadata must not scan values"))
+    metadata = describe_join_fill_column(series)
+    assert metadata.name == "value"
+    assert metadata.dtype == dtype
+    assert metadata.kind == kind
+
+
+@pytest.mark.parametrize(
+    "dtype,text,decimal,value",
+    [
+        ("int64", " 4611686018427387905 ", ".", 2**62 + 1),
+        ("float64", "1,25", ",", 1.25),
+        ("float64", "1e-3", ".", 0.001),
+        ("string", "  text  ", ".", "  text  "),
+        ("object", "", ".", ""),
+    ],
+)
+def test_custom_fill_parser_preserves_types_and_precision(
+    dtype: str,
+    text: str,
+    decimal: str,
+    value: JoinFillValue,
+) -> None:
+    metadata = describe_join_fill_column(pd.Series([], name="value", dtype=dtype))
+    assert parse_join_fill(metadata, text, decimal_point=decimal) == UnmatchedFill(value)
+
+
+@pytest.mark.parametrize(
+    "dtype,text",
+    [
+        ("int64", "1.0"),
+        ("int64", "1e3"),
+        ("float64", "1,000"),
+        ("float64", "nan"),
+        ("float64", "1e999"),
+        ("float64", "1e-999"),
+        ("float64", "1e-999999999999999999999999"),
+        ("float64", ""),
+        ("timedelta64[ns]", "1 day"),
+    ],
+)
+def test_custom_fill_parser_rejects_invalid_or_ambiguous_numbers(dtype: str, text: str) -> None:
+    metadata = describe_join_fill_column(pd.Series([], name="value", dtype=dtype))
+    with pytest.raises(ValueError):
+        parse_join_fill(metadata, text)
+
+
+def test_custom_fill_parser_rejects_grouping_in_comma_decimal_locale() -> None:
+    metadata = describe_join_fill_column(pd.Series([], name="value", dtype="float64"))
+    with pytest.raises(ValueError):
+        parse_join_fill(metadata, "1.000", decimal_point=",")
+
+
+def test_boolean_category_uses_text_editor_and_retains_categories() -> None:
+    right = pd.DataFrame({"id": [2], "flag": pd.Series([True], dtype="category")})
+    assert describe_join_fill_column(right["flag"]).kind == "text"
+    result = join_dataframes(
+        JoinRequest(
+            pd.DataFrame({"id": [1, 2]}),
+            right,
+            ["id"],
+            ["id"],
+            how="left",
+            right_fill={"flag": UnmatchedFill("Unknown")},
+        )
+    )
+    assert result["flag"].cat.categories.tolist() == [True, "Unknown"]
+    assert result["flag"].tolist() == ["Unknown", True]
 
 
 @pytest.mark.parametrize("how,side", [("left", "right"), ("right", "left"), ("outer", "left"), ("outer", "right")])

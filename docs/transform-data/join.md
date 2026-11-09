@@ -87,6 +87,57 @@ precision without converting integers to floating-point values. Integer widths
 and signedness are preserved, and existing nullable types remain unchanged.
 Inner joins do not apply this conversion. Neither input dataset is modified.
 
+## Set defaults for unmatched rows {#unmatched-defaults}
+
+The **If no match** column controls values for rows where that column's source
+dataset has no matching row. Click a cell to open its value picker, or select the cell
+and press **Enter**, **Space** or **F2**. **NULL** is the default.
+
+| Source type | Available defaults |
+|---|---|
+| Integer | NULL, 0 or a custom integer within the column's range. |
+| Float | NULL, 0.0 or a custom finite number within the column's range. |
+| Boolean | NULL, True or False. |
+| String, text-like object or category | NULL or custom text, including empty text. |
+| Datetime | NULL or a custom date/time. |
+| Timedelta, period or unsupported type | NULL only. |
+
+Defaults are enabled for included non-key columns on the missing side:
+right-side columns for a left join, left-side columns for a right join, and both
+sides for a full join. Inner joins have no unmatched rows. Changing join type,
+key or column inclusion temporarily disables inapplicable defaults; their
+values are retained if you re-enable them. Changing datasets resets defaults.
+
+Defaults replace only values introduced because a source row is absent.
+Existing NULLs in matched rows are unchanged. For example, in the orders and
+customers example, use a left join and set the right-side **Region** default to
+`Unknown`. Order `103` then has `Unknown` as its region; a matched customer
+whose region was already NULL still has NULL. **join_status** is unchanged.
+
+Use **Numeric columns** or **Text columns** and **Set defaults...** to set
+defaults for all eligible columns of that type on one side. The value must be
+valid for every applicable column; otherwise no defaults are changed.
+Choose **NULL** in the picker to reset the applicable defaults.
+
+Custom numbers use the system numeric locale, independently of UI language.
+Enter numbers without grouping separators. Integer input accepts whole numbers,
+not decimals or scientific notation. Float input also accepts scientific notation.
+Text whitespace is preserved. A new categorical text default is added to the
+categories without changing existing category values or ordering.
+Object columns must contain only text or missing values to accept a text default;
+the join worker checks their contents and reports incompatible values.
+
+For datetimes, use the date/time picker or enter an ISO date/time. The picker
+uses the column's local wall time; explicit offsets in typed input identify an
+instant and are converted to the column's timezone. For timezone-naive columns,
+enter a value without an offset. Ambiguous or nonexistent local times, invalid
+dates, out-of-range values and precision finer than the column's resolution are
+rejected rather than silently adjusted.
+
+Integer and boolean source columns with a non-NULL default retain their
+original NumPy type after filling. Existing nullable source types and NULLs
+remain nullable. Preview and the final join use the same defaults.
+
 ## Select keys and output columns {#keys-and-columns}
 
 Choose one key column from each dataset. The values to match must have

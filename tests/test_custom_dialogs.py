@@ -125,7 +125,7 @@ def test_join_column_table_types_selection_and_resizing(parent_widget) -> None:
         },
     )
     table = dialog._left.columns_table
-    assert table.columnCount() == 2
+    assert table.columnCount() == 3
     assert table.item(0, 0).text() == "id"
     assert table.item(0, 1).text() == "Int64"
     assert table.item(1, 1).text() == "float64"

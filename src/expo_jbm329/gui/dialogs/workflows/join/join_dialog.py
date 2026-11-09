@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
-from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtCore import QLocale, QSignalBlocker, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut, QStandardItemModel
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -34,13 +34,25 @@ from PyQt6.QtWidgets import (
 from expo_jbm329.app.help_topics import HelpTopic
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
+from expo_jbm329.gui.dialogs.workflows.join.join_fill_delegate import (
+    FILL_COLUMN_ROLE,
+    FILL_VALUE_ROLE,
+    JoinFillDelegate,
+    JoinFillValueDialog,
+    display_join_fill,
+)
 from expo_jbm329.gui.gui_utils import apply_window_hints_strict
+from expo_jbm329.services.data_operations.joins import (
+    JoinFillColumn,
+    UnmatchedFill,
+    parse_join_fill,
+    validate_join_fill_column,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
-    from expo_jbm329.services.data_operations.joins import UnmatchedFill
 
 
 @dataclass
@@ -76,6 +88,8 @@ class _SideWidgets:
     cb_key: QComboBox
     columns_table: QTableWidget
     cb_select_all: QCheckBox
+    bulk_kind: QComboBox
+    btn_bulk: QPushButton
 
 
 class JoinDialog(QDialog):
@@ -95,6 +109,7 @@ class JoinDialog(QDialog):
         suggested_keys: list[str] | None = None,
         joinable_map: dict[tuple[str, str, str], set[str]],
         column_dtypes_for_tab: dict[str, dict[str, str]] | None = None,
+        fill_columns_for_tab: dict[str, dict[str, JoinFillColumn]] | None = None,
         dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the join dialog.
@@ -108,6 +123,7 @@ class JoinDialog(QDialog):
             joinable_map: A mapping of join key combinations to joinability.
             column_dtypes_for_tab: Source dtype labels by dataset and column.
                 Omitted metadata is displayed as a dash.
+            fill_columns_for_tab: Typed editor metadata, without source data.
             dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
@@ -122,6 +138,8 @@ class JoinDialog(QDialog):
         self._suggested_keys = suggested_keys or []
         self._joinable_map = joinable_map
         self._column_dtypes = column_dtypes_for_tab if column_dtypes_for_tab is not None else {}
+        self._fill_columns = fill_columns_for_tab if fill_columns_for_tab is not None else {}
+        self._numeric_locale = QLocale()
 
         # ======================================================
         # Widgets
@@ -157,12 +175,15 @@ class JoinDialog(QDialog):
 
         self._right.cb_dataset.currentTextChanged.connect(lambda: self._on_dataset_changed(self._right, self._left))
 
-        self._left.cb_key.currentTextChanged.connect(self._on_left_key_changed)
+        self._left.cb_key.currentTextChanged.connect(self._on_left_key_updated)
+        self._right.cb_key.currentTextChanged.connect(self._update_fill_controls)
 
         self._left.cb_select_all.clicked.connect(lambda: self._toggle_all(self._left))
         self._right.cb_select_all.clicked.connect(lambda: self._toggle_all(self._right))
         self._left.columns_table.itemChanged.connect(lambda: self._update_select_all(self._left))
         self._right.columns_table.itemChanged.connect(lambda: self._update_select_all(self._right))
+        self._left.btn_bulk.clicked.connect(lambda: self._set_bulk_defaults(self._left))
+        self._right.btn_bulk.clicked.connect(lambda: self._set_bulk_defaults(self._right))
 
         grid.addWidget(left_box, 0, 0)
         grid.addWidget(right_box, 0, 1)
@@ -197,6 +218,11 @@ class JoinDialog(QDialog):
         join_h.addWidget(self.rb_full)
 
         root.addWidget(join_box)
+        self.lbl_fill_hint = QLabel(self)
+        self.lbl_fill_hint.setWordWrap(True)
+        root.addWidget(self.lbl_fill_hint)
+        for radio in (self.rb_inner, self.rb_left, self.rb_right, self.rb_full):
+            radio.toggled.connect(self._update_fill_controls)
 
         # ======================================================
         # BUTTONS
@@ -229,7 +255,7 @@ class JoinDialog(QDialog):
         self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._help_shortcut.activated.connect(self._open_help)
 
-        apply_window_hints_strict(self, min_width=750)
+        apply_window_hints_strict(self, min_width=950)
         self.setMinimumWidth(750)
         self.setSizeGripEnabled(True)
 
@@ -243,6 +269,7 @@ class JoinDialog(QDialog):
 
         # On change
         self._on_left_key_changed(self._left.cb_key.currentText())
+        self._update_fill_controls()
 
     def _open_help(self) -> None:
         """Open join guidance without previewing or applying the configuration."""
@@ -267,9 +294,9 @@ class JoinDialog(QDialog):
 
         cb_key = QComboBox()
 
-        columns_table = QTableWidget(0, 2)
-        columns_table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type")])
-        columns_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        columns_table = QTableWidget(0, 3)
+        columns_table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type"), self.tr("If no match")])
+        columns_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         columns_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         vertical_header = columns_table.verticalHeader()
         horizontal_header = columns_table.horizontalHeader()
@@ -279,20 +306,35 @@ class JoinDialog(QDialog):
         vertical_header.hide()
         horizontal_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         horizontal_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        horizontal_header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        horizontal_header.resizeSection(2, 150)
+        columns_table.setItemDelegateForColumn(2, JoinFillDelegate(columns_table, self._dialogs))
 
         cb_select_all = QCheckBox(self.tr("Select all"))
         cb_select_all.setChecked(True)
 
         layout.addRow(self.tr("Dataset:"), cb_dataset)
         layout.addRow(self.tr("Key:"), cb_key)
-        layout.addRow(QLabel(self.tr("Columns to include:")), columns_table)
-        layout.addRow("", cb_select_all)
+        layout.addRow(QLabel(self.tr("Columns to include:")))
+        layout.addRow(columns_table)
+        layout.addRow(cb_select_all)
+        bulk_kind = QComboBox()
+        bulk_kind.addItem(self.tr("Numeric columns"), "numeric")
+        bulk_kind.addItem(self.tr("Text columns"), "text")
+        btn_bulk = QPushButton(self.tr("Set defaults..."))
+        btn_bulk.setAutoDefault(False)
+        bulk_row = QHBoxLayout()
+        bulk_row.addWidget(bulk_kind)
+        bulk_row.addWidget(btn_bulk)
+        layout.addRow(bulk_row)
 
         widgets = _SideWidgets(
             cb_dataset=cb_dataset,
             cb_key=cb_key,
             columns_table=columns_table,
             cb_select_all=cb_select_all,
+            bulk_kind=bulk_kind,
+            btn_bulk=btn_bulk,
         )
 
         return box, widgets
@@ -324,6 +366,12 @@ class JoinDialog(QDialog):
             dtype_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
             dtype_item.setToolTip(dtype_item.text())
             side.columns_table.setItem(row, 1, dtype_item)
+            fill_item = QTableWidgetItem(self.tr("NULL"))
+            fill_item.setData(FILL_VALUE_ROLE, UnmatchedFill())
+            column = self._fill_columns.get(tab, {}).get(col)
+            if column is not None:
+                fill_item.setData(FILL_COLUMN_ROLE, column)
+            side.columns_table.setItem(row, 2, fill_item)
 
         side.columns_table.blockSignals(False)
         self._update_select_all(side)
@@ -351,6 +399,125 @@ class JoinDialog(QDialog):
 
         # 5. Update enabled/disabled state in right key
         self._on_left_key_changed(self._left.cb_key.currentText())
+        self._update_fill_controls()
+
+    def _on_left_key_updated(self, column: str) -> None:
+        self._on_left_key_changed(column)
+        self._update_fill_controls()
+
+    def _side_can_be_missing(self, side: _SideWidgets) -> bool:
+        return self.rb_full.isChecked() or (
+            self.rb_right.isChecked() if side is self._left else self.rb_left.isChecked()
+        )
+
+    def _update_fill_controls(self) -> None:
+        """Enable defaults only for included non-key columns on a missing side."""
+        for side in (self._left, self._right):
+            can_be_missing = self._side_can_be_missing(side)
+            with QSignalBlocker(side.columns_table):
+                for row in range(side.columns_table.rowCount()):
+                    name_item = side.columns_table.item(row, 0)
+                    fill_item = side.columns_table.item(row, 2)
+                    if name_item is None or fill_item is None:
+                        continue
+                    column = fill_item.data(FILL_COLUMN_ROLE)
+                    eligible = (
+                        can_be_missing
+                        and name_item.checkState() == Qt.CheckState.Checked
+                        and name_item.text() != side.cb_key.currentText()
+                    )
+                    editable = eligible and isinstance(column, JoinFillColumn) and column.kind != "unsupported"
+                    flags = (
+                        Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+                        if editable
+                        else Qt.ItemFlag.NoItemFlags
+                    )
+                    if editable:
+                        flags |= Qt.ItemFlag.ItemIsEditable
+                    fill_item.setFlags(flags)
+                    fill = fill_item.data(FILL_VALUE_ROLE)
+                    if isinstance(fill, UnmatchedFill):
+                        text = display_join_fill(
+                            fill,
+                            self._numeric_locale,
+                            null=self.tr("NULL"),
+                            true=self.tr("True"),
+                            false=self.tr("False"),
+                        )
+                        fill_item.setText(text)
+                        fill_item.setToolTip(
+                            self.tr("Click to choose a default for unmatched rows.") + "\n" + text
+                            if editable
+                            else self.tr("Defaults are available only for included non-key columns on a missing side.")
+                        )
+            side.bulk_kind.setEnabled(can_be_missing)
+            side.btn_bulk.setEnabled(can_be_missing)
+        if self.rb_left.isChecked():
+            hint = self.tr("Right-side defaults apply to left rows without a match.")
+        elif self.rb_right.isChecked():
+            hint = self.tr("Left-side defaults apply to right rows without a match.")
+        elif self.rb_full.isChecked():
+            hint = self.tr("Each side's defaults apply when that side has no matching row.")
+        else:
+            hint = self.tr("Inner joins have no unmatched rows, so defaults do not apply.")
+        self.lbl_fill_hint.setText(
+            hint
+            + " "
+            + self.tr("Existing NULLs in matched rows are unchanged.")
+            + " "
+            + self.tr("Click an enabled If no match cell to choose a default.")
+        )
+
+    def _set_bulk_defaults(self, side: _SideWidgets) -> None:
+        """Validate all applicable columns before changing any bulk default."""
+        kinds = {"integer", "float"} if side.bulk_kind.currentData() == "numeric" else {"text"}
+        items: list[tuple[QTableWidgetItem, JoinFillColumn]] = []
+        for row in range(side.columns_table.rowCount()):
+            item = side.columns_table.item(row, 2)
+            if item is None or not item.flags() & Qt.ItemFlag.ItemIsEditable:
+                continue
+            column = item.data(FILL_COLUMN_ROLE)
+            if isinstance(column, JoinFillColumn) and column.kind in kinds:
+                items.append((item, column))
+        if not items:
+            self._dialogs.warn(
+                self, self.tr("No applicable columns"), self.tr("Select included non-key columns of this type first.")
+            )
+            return
+        editor = JoinFillValueDialog(
+            self, items[0][1], UnmatchedFill(), self._dialogs, numeric_locale=self._numeric_locale
+        )
+        editor.setWindowTitle(self.tr("Set defaults..."))
+        accepted = editor.exec() == QDialog.DialogCode.Accepted
+        custom = editor.choice.currentData() == "custom"
+        text = editor.custom_value.text()
+        fill = editor.fill
+        editor.deleteLater()
+        if not accepted:
+            return
+        try:
+            validated = [
+                (
+                    item,
+                    parse_join_fill(column, text, decimal_point=self._numeric_locale.decimalPoint())
+                    if custom
+                    else validate_join_fill_column(
+                        column, UnmatchedFill(0) if fill.value == 0 and column.kind in {"integer", "float"} else fill
+                    ),
+                )
+                for item, column in items
+            ]
+        except ValueError:
+            self._dialogs.warn(
+                self,
+                self.tr("Invalid default value"),
+                self.tr("The value is not valid for every selected column. No defaults were changed."),
+            )
+            return
+        with QSignalBlocker(side.columns_table):
+            for item, fill in validated:
+                item.setData(FILL_VALUE_ROLE, fill)
+        self._update_fill_controls()
 
     # noinspection PyMethodMayBeStatic
     def _set_combobox_item_enabled(self, cb: QComboBox, index: int, enabled: bool, tooltip: str = "") -> None:
@@ -472,6 +639,7 @@ class JoinDialog(QDialog):
 
         side.cb_select_all.setCheckState(state)
         side.cb_select_all.blockSignals(False)
+        self._update_fill_controls()
 
     # ---------------------------------------------------------
     # Extract result
@@ -515,7 +683,21 @@ class JoinDialog(QDialog):
             left_selected_columns=self._get_checked(self._left.columns_table),
             right_selected_columns=self._get_checked(self._right.columns_table),
             join_type=jt,
+            left_fill=self._get_fills(self._left),
+            right_fill=self._get_fills(self._right),
         )
+
+    def _get_fills(self, side: _SideWidgets) -> dict[str, UnmatchedFill]:
+        fills: dict[str, UnmatchedFill] = {}
+        for row in range(side.columns_table.rowCount()):
+            name = side.columns_table.item(row, 0)
+            item = side.columns_table.item(row, 2)
+            if name is None or item is None or not item.flags() & Qt.ItemFlag.ItemIsEditable:
+                continue
+            fill = item.data(FILL_VALUE_ROLE)
+            if isinstance(fill, UnmatchedFill) and fill.value is not None:
+                fills[name.text()] = fill
+        return fills
 
     # ---------------------------------------------------------
     # Autoselect join keys

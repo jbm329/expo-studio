@@ -5470,97 +5470,97 @@ Guardado en:
 </context><context>
     <name>JoinController</name>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="49" />
+        <location filename="../../workbench/controllers/join_controller.py" line="50" />
         <source>Large dataset detected</source>
         <translation>Se detectó un conjunto de datos grande</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="50" />
+        <location filename="../../workbench/controllers/join_controller.py" line="51" />
         <source>⚠ This join may produce a very large dataset (~{rows} rows)</source>
         <translation>⚠ Esta unión puede generar un conjunto de datos muy grande (~{rows} filas)</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="51" />
+        <location filename="../../workbench/controllers/join_controller.py" line="52" />
         <source>Do you want to continue?</source>
         <translation>¿Desea continuar?</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="52" />
+        <location filename="../../workbench/controllers/join_controller.py" line="53" />
         <source>Warning</source>
         <translation>Advertencia</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="53" />
+        <location filename="../../workbench/controllers/join_controller.py" line="54" />
         <source>Joining on float columns may lead to unpredictable results.</source>
         <translation>Unir columnas de coma flotante puede producir resultados impredecibles.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="54" />
+        <location filename="../../workbench/controllers/join_controller.py" line="55" />
         <source>Unsafe join</source>
         <translation>Unión no segura</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="55" />
+        <location filename="../../workbench/controllers/join_controller.py" line="56" />
         <source>Joining on float columns with many-to-many cardinality is unsafe and has been blocked.</source>
         <translation>Se ha bloqueado la unión de columnas de coma flotante con cardinalidad de muchos a muchos porque no es segura.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="58" />
+        <location filename="../../workbench/controllers/join_controller.py" line="59" />
         <source>Join blocked</source>
         <translation>Unión bloqueada</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="59" />
+        <location filename="../../workbench/controllers/join_controller.py" line="60" />
         <source>Estimated result too large.</source>
         <translation>El tamaño estimado del resultado es demasiado grande.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="61" />
+        <location filename="../../workbench/controllers/join_controller.py" line="62" />
         <source>join datasets</source>
         <translation>unir conjuntos de datos</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="62" />
+        <location filename="../../workbench/controllers/join_controller.py" line="63" />
         <source>Joining datasets: {left} + {right}</source>
         <translation>Uniendo conjuntos de datos: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="63" />
+        <location filename="../../workbench/controllers/join_controller.py" line="64" />
         <source>Join completed: {left} + {right}</source>
         <translation>Unión completada: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="65" />
+        <location filename="../../workbench/controllers/join_controller.py" line="66" />
         <source>preview join</source>
         <translation>vista previa de la unión</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="66" />
+        <location filename="../../workbench/controllers/join_controller.py" line="67" />
         <source>Generating join preview: {left} + {right}</source>
         <translation>Generando vista previa de la unión: {left} + {right}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="68" />
+        <location filename="../../workbench/controllers/join_controller.py" line="69" />
         <source>Joined data</source>
         <translation>Datos unidos</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="69" />
+        <location filename="../../workbench/controllers/join_controller.py" line="70" />
         <source>Join cancelled.</source>
         <translation>Unión cancelada.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="71" />
+        <location filename="../../workbench/controllers/join_controller.py" line="72" />
         <source>Join too large, operation aborted</source>
         <translation>Unión demasiado grande; se canceló la operación</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="72" />
+        <location filename="../../workbench/controllers/join_controller.py" line="73" />
         <source>Failure</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/join_controller.py" line="73" />
+        <location filename="../../workbench/controllers/join_controller.py" line="74" />
         <source>Could not complete join.
 {error}</source>
         <translation>No se pudo completar la unión.
@@ -5569,47 +5569,47 @@ Guardado en:
 </context><context>
     <name>JoinDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="116" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="132" />
         <source>Join datasets</source>
         <translation>Unir conjuntos de datos</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="146" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="164" />
         <source>Left dataset</source>
         <translation>Conjunto de datos izquierdo</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="147" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="165" />
         <source>Right dataset</source>
         <translation>Conjunto de datos derecho</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="184" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="205" />
         <source>Join type</source>
         <translation>Tipo de unión</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="205" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="231" />
         <source>Preview</source>
         <translation>Vista previa</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="206" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="232" />
         <source>OK</source>
         <translation>Aceptar</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="207" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="233" />
         <source>Cancel</source>
         <translation>Cancelar</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="253" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="280" />
         <source>Unable to open link</source>
         <translation>No se puede abrir el enlace</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="254" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="281" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -5618,39 +5618,208 @@ Guardado en:
 {url}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="271" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="298" />
         <source>Column</source>
         <translation>Columna</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="271" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="298" />
         <source>Type</source>
         <translation>Tipo</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="283" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="298" />
+        <source>If no match</source>
+        <translation>Sin coincidencia</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="313" />
         <source>Select all</source>
         <translation>Seleccionar todo</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="286" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="316" />
         <source>Dataset:</source>
         <translation>Conjunto de datos:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="287" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="317" />
         <source>Key:</source>
         <translation>Clave:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="288" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="318" />
         <source>Columns to include:</source>
         <translation>Columnas que incluir:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="397" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="322" />
+        <source>Numeric columns</source>
+        <translation>Columnas numéricas</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="323" />
+        <source>Text columns</source>
+        <translation>Columnas de texto</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="490" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="324" />
+        <source>Set defaults...</source>
+        <translation>Establecer valores predeterminados...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="443" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="369" />
+        <source>NULL</source>
+        <translation>NULL</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="444" />
+        <source>True</source>
+        <translation>Verdadero</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="445" />
+        <source>False</source>
+        <translation>Falso</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="449" />
+        <source>Click to choose a default for unmatched rows.</source>
+        <translation>Haga clic para elegir un valor predeterminado para las filas sin coincidencia.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="451" />
+        <source>Defaults are available only for included non-key columns on a missing side.</source>
+        <translation>Los valores predeterminados solo están disponibles para las columnas incluidas que no son claves en el lado sin coincidencia.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="456" />
+        <source>Right-side defaults apply to left rows without a match.</source>
+        <translation>Los valores predeterminados del lado derecho se aplican a las filas de la izquierda sin coincidencia.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="458" />
+        <source>Left-side defaults apply to right rows without a match.</source>
+        <translation>Los valores predeterminados del lado izquierdo se aplican a las filas de la derecha sin coincidencia.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="460" />
+        <source>Each side's defaults apply when that side has no matching row.</source>
+        <translation>Los valores predeterminados de cada lado se aplican cuando ese lado no tiene una fila coincidente.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="462" />
+        <source>Inner joins have no unmatched rows, so defaults do not apply.</source>
+        <translation>Las uniones internas no tienen filas sin coincidencia, por lo que no se aplican valores predeterminados.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="466" />
+        <source>Existing NULLs in matched rows are unchanged.</source>
+        <translation>Los valores NULL existentes en las filas coincidentes no se modifican.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="468" />
+        <source>Click an enabled If no match cell to choose a default.</source>
+        <translation>Haga clic en una celda habilitada de Sin coincidencia para elegir un valor predeterminado.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="484" />
+        <source>No applicable columns</source>
+        <translation>No hay columnas aplicables</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="484" />
+        <source>Select included non-key columns of this type first.</source>
+        <translation>Seleccione primero las columnas incluidas de este tipo que no sean claves.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="513" />
+        <source>Invalid default value</source>
+        <translation>Valor predeterminado no válido</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="514" />
+        <source>The value is not valid for every selected column. No defaults were changed.</source>
+        <translation>El valor no es válido para todas las columnas seleccionadas. No se modificó ningún valor predeterminado.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="564" />
         <source>Incompatible types</source>
         <translation>Tipos incompatibles</translation>
+    </message>
+</context><context>
+    <name>JoinFillValueDialog</name>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="66" />
+        <source>If no match</source>
+        <translation>Sin coincidencia</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="68" />
+        <source>Column: {column} ({dtype})</source>
+        <translation>Columna: {column} ({dtype})</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="74" />
+        <source>NULL</source>
+        <translation>NULL</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="79" />
+        <source>True</source>
+        <translation>Verdadero</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="80" />
+        <source>False</source>
+        <translation>Falso</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="82" />
+        <source>Custom value...</source>
+        <translation>Valor personalizado...</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="83" />
+        <source>Default:</source>
+        <translation>Valor predeterminado:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="90" />
+        <source>Value:</source>
+        <translation>Valor:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="105" />
+        <source>Date/time picker:</source>
+        <translation>Selector de fecha y hora:</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="110" />
+        <source>Enter a number without grouping separators. Decimal separator: {separator}.</source>
+        <translation>Introduzca un número sin separadores de agrupación. Separador decimal: {separator}.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="115" />
+        <source>Use the column's local time, or enter an ISO date/time with an explicit offset.</source>
+        <translation>Use la hora local de la columna o introduzca una fecha y hora ISO con un desplazamiento explícito.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="117" />
+        <source>Text defaults require text-only source values. This is checked when the join runs.</source>
+        <translation>Los valores predeterminados de texto requieren valores de origen exclusivamente textuales. Esto se comprueba al ejecutar la unión.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="158" />
+        <source>Invalid default value</source>
+        <translation>Valor predeterminado no válido</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="159" />
+        <source>The value is not valid for {column} ({dtype}). Check its type, range, precision and timezone.</source>
+        <translation>El valor no es válido para {column} ({dtype}). Compruebe su tipo, rango, precisión y zona horaria.</translation>
     </message>
 </context><context>
     <name>JoinPreviewDialog</name>

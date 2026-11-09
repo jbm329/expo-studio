@@ -24,6 +24,7 @@ from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPrevi
 from expo_jbm329.services.data_operations.joins import (
     JoinMetadata,
     JoinRequest,
+    describe_join_fill_column,
     join_dataframes,
 )
 from expo_jbm329.utils.i18n_utils import translate, translate_fmt
@@ -174,6 +175,9 @@ class JoinController:
             get_columns_for_tab=columns_map,
             joinable_map=joinable_map,
             column_dtypes_for_tab={tab: {col: str(df[col].dtype) for col in df.columns} for tab, df in dfs.items()},
+            fill_columns_for_tab={
+                tab: {col: describe_join_fill_column(df[col]) for col in df.columns} for tab, df in dfs.items()
+            },
             dialogs=self._dialogs,
         )
 
