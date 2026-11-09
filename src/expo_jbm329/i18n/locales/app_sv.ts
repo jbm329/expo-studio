@@ -5569,47 +5569,47 @@ Sparad till:
 </context><context>
     <name>JoinDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="108" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="116" />
         <source>Join datasets</source>
         <translation>Join dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="137" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="146" />
         <source>Left dataset</source>
         <translation>Vänster dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="138" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="147" />
         <source>Right dataset</source>
         <translation>Höger dataset</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="184" />
         <source>Join type</source>
         <translation>Jointyp</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="194" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="205" />
         <source>Preview</source>
         <translation>Förhandsgranska</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="195" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="206" />
         <source>OK</source>
         <translation>OK</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="196" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="207" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="240" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="253" />
         <source>Unable to open link</source>
         <translation>Det gick inte att öppna länken</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="241" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="254" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -5618,27 +5618,37 @@ Sparad till:
 {url}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="260" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="271" />
+        <source>Column</source>
+        <translation>Kolumn</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="271" />
+        <source>Type</source>
+        <translation>Typ</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="283" />
         <source>Select all</source>
         <translation>Välj alla</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="263" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="286" />
         <source>Dataset:</source>
         <translation>Dataset:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="264" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="287" />
         <source>Key:</source>
         <translation>Nyckel:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="265" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="288" />
         <source>Columns to include:</source>
         <translation>Kolumner att ta med:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="373" />
+        <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="397" />
         <source>Incompatible types</source>
         <translation>Inkompatibla datatyper</translation>
     </message>

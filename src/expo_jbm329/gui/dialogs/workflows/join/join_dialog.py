@@ -7,7 +7,6 @@ columns to include, and the join type.
 
 from __future__ import annotations
 
-import contextlib
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
@@ -22,11 +21,12 @@ from PyQt6.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QPushButton,
     QRadioButton,
+    QTableWidget,
+    QTableWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -74,7 +74,7 @@ class JoinDialogResult:
 class _SideWidgets:
     cb_dataset: QComboBox
     cb_key: QComboBox
-    columns_list: QListWidget
+    columns_table: QTableWidget
     cb_select_all: QCheckBox
 
 
@@ -94,6 +94,7 @@ class JoinDialog(QDialog):
         get_columns_for_tab: dict[str, Sequence[str]],
         suggested_keys: list[str] | None = None,
         joinable_map: dict[tuple[str, str, str], set[str]],
+        column_dtypes_for_tab: dict[str, dict[str, str]] | None = None,
         dialogs: DialogService | None = None,
     ) -> None:
         """Initialize the join dialog.
@@ -105,6 +106,8 @@ class JoinDialog(QDialog):
             get_columns_for_tab: A mapping of tab titles to their column names.
             suggested_keys: A list of suggested join keys, if any.
             joinable_map: A mapping of join key combinations to joinability.
+            column_dtypes_for_tab: Source dtype labels by dataset and column.
+                Omitted metadata is displayed as a dash.
             dialogs: Service for displaying warnings, defaulting to QtDialogService.
         """
         super().__init__(parent)
@@ -118,6 +121,7 @@ class JoinDialog(QDialog):
         self._left_initial = left_initial
         self._suggested_keys = suggested_keys or []
         self._joinable_map = joinable_map
+        self._column_dtypes = column_dtypes_for_tab if column_dtypes_for_tab is not None else {}
 
         # ======================================================
         # Widgets
@@ -157,6 +161,8 @@ class JoinDialog(QDialog):
 
         self._left.cb_select_all.clicked.connect(lambda: self._toggle_all(self._left))
         self._right.cb_select_all.clicked.connect(lambda: self._toggle_all(self._right))
+        self._left.columns_table.itemChanged.connect(lambda: self._update_select_all(self._left))
+        self._right.columns_table.itemChanged.connect(lambda: self._update_select_all(self._right))
 
         grid.addWidget(left_box, 0, 0)
         grid.addWidget(right_box, 0, 1)
@@ -223,7 +229,9 @@ class JoinDialog(QDialog):
         self._help_shortcut.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
         self._help_shortcut.activated.connect(self._open_help)
 
-        apply_window_hints_strict(self, min_width=625, fixed_size=True)
+        apply_window_hints_strict(self, min_width=750)
+        self.setMinimumWidth(750)
+        self.setSizeGripEnabled(True)
 
         # ======================================================
         # INITIAL POPULATION
@@ -259,21 +267,31 @@ class JoinDialog(QDialog):
 
         cb_key = QComboBox()
 
-        columns_list = QListWidget()
-        columns_list.setSelectionMode(QListWidget.SelectionMode.NoSelection)
+        columns_table = QTableWidget(0, 2)
+        columns_table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type")])
+        columns_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        columns_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        vertical_header = columns_table.verticalHeader()
+        horizontal_header = columns_table.horizontalHeader()
+        if vertical_header is None or horizontal_header is None:
+            message = "Join columns table headers have not been created."
+            raise RuntimeError(message)
+        vertical_header.hide()
+        horizontal_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        horizontal_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
 
         cb_select_all = QCheckBox(self.tr("Select all"))
         cb_select_all.setChecked(True)
 
         layout.addRow(self.tr("Dataset:"), cb_dataset)
         layout.addRow(self.tr("Key:"), cb_key)
-        layout.addRow(QLabel(self.tr("Columns to include:")), columns_list)
+        layout.addRow(QLabel(self.tr("Columns to include:")), columns_table)
         layout.addRow("", cb_select_all)
 
         widgets = _SideWidgets(
             cb_dataset=cb_dataset,
             cb_key=cb_key,
-            columns_list=columns_list,
+            columns_table=columns_table,
             cb_select_all=cb_select_all,
         )
 
@@ -292,21 +310,22 @@ class JoinDialog(QDialog):
         side.cb_key.addItems(cols)
         side.cb_key.blockSignals(False)
 
-        side.columns_list.blockSignals(True)
-        side.columns_list.clear()
+        side.columns_table.blockSignals(True)
+        side.columns_table.setRowCount(len(cols))
 
-        for col in cols:
-            item = QListWidgetItem(col)
-            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+        dtypes = self._column_dtypes.get(tab, {})
+        for row, col in enumerate(cols):
+            item = QTableWidgetItem(col)
+            item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsUserCheckable)
             item.setCheckState(Qt.CheckState.Checked)
-            side.columns_list.addItem(item)
+            item.setToolTip(col)
+            side.columns_table.setItem(row, 0, item)
+            dtype_item = QTableWidgetItem(dtypes.get(col, "-"))
+            dtype_item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+            dtype_item.setToolTip(dtype_item.text())
+            side.columns_table.setItem(row, 1, dtype_item)
 
-        side.columns_list.blockSignals(False)
-
-        with contextlib.suppress(Exception):
-            side.columns_list.itemChanged.disconnect()
-
-        side.columns_list.itemChanged.connect(lambda: self._update_select_all(side))
+        side.columns_table.blockSignals(False)
         self._update_select_all(side)
 
     # ---------------------------------------------------------
@@ -416,30 +435,30 @@ class JoinDialog(QDialog):
     # ---------------------------------------------------------
 
     def _toggle_all(self, side: _SideWidgets) -> None:
-        total = side.columns_list.count()
+        total = side.columns_table.rowCount()
         checked = sum(
             1
             for i in range(total)
-            if (item := side.columns_list.item(i)) and item.checkState() == Qt.CheckState.Checked
+            if (item := side.columns_table.item(i, 0)) is not None and item.checkState() == Qt.CheckState.Checked
         )
 
         new_state = Qt.CheckState.Unchecked if checked == total else Qt.CheckState.Checked
 
-        side.columns_list.blockSignals(True)
+        side.columns_table.blockSignals(True)
         for i in range(total):
-            if item := side.columns_list.item(i):
+            if (item := side.columns_table.item(i, 0)) is not None:
                 item.setCheckState(new_state)
-        side.columns_list.blockSignals(False)
+        side.columns_table.blockSignals(False)
 
         self._update_select_all(side)
 
     # noinspection PyMethodMayBeStatic
     def _update_select_all(self, side: _SideWidgets) -> None:
-        total = side.columns_list.count()
+        total = side.columns_table.rowCount()
         checked = sum(
             1
             for i in range(total)
-            if (item := side.columns_list.item(i)) and item.checkState() == Qt.CheckState.Checked
+            if (item := side.columns_table.item(i, 0)) is not None and item.checkState() == Qt.CheckState.Checked
         )
 
         side.cb_select_all.blockSignals(True)
@@ -458,10 +477,10 @@ class JoinDialog(QDialog):
     # Extract result
     # ---------------------------------------------------------
     # noinspection PyMethodMayBeStatic
-    def _get_checked(self, lw: QListWidget) -> list[str]:
+    def _get_checked(self, table: QTableWidget) -> list[str]:
         cols = []
-        for i in range(lw.count()):
-            item = lw.item(i)
+        for i in range(table.rowCount()):
+            item = table.item(i, 0)
             if item is not None and item.checkState() == Qt.CheckState.Checked:
                 cols.append(item.text())
         return cols
@@ -493,8 +512,8 @@ class JoinDialog(QDialog):
             # TODO: support multi-key joins (UI + DTO already supports it)
             left_on=[self._left.cb_key.currentText()],
             right_on=[self._right.cb_key.currentText()],
-            left_selected_columns=self._get_checked(self._left.columns_list),
-            right_selected_columns=self._get_checked(self._right.columns_list),
+            left_selected_columns=self._get_checked(self._left.columns_table),
+            right_selected_columns=self._get_checked(self._right.columns_table),
             join_type=jt,
         )
 

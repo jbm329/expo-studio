@@ -110,6 +110,7 @@ def test_open_join_dialog_injects_dialog_service(controller, monkeypatch: pytest
     ctrl.open_join_dialog()
 
     assert factory.call_args.kwargs["dialogs"] is dialogs
+    assert factory.call_args.kwargs["column_dtypes_for_tab"] == {"left": {"id": "int64"}, "right": {"id": "int64"}}
 
 
 def test_join_preview_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:

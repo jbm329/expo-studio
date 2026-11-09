@@ -173,6 +173,7 @@ class JoinController:
             left_initial=left_tab,
             get_columns_for_tab=columns_map,
             joinable_map=joinable_map,
+            column_dtypes_for_tab={tab: {col: str(df[col].dtype) for col in df.columns} for tab, df in dfs.items()},
             dialogs=self._dialogs,
         )
 

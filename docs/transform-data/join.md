@@ -99,8 +99,10 @@ meaning you intend. Confirm that the selected columns identify the same kind
 of entity in both datasets. A key may appear more than once, which can create
 more than one output row for a match.
 
-Use the checkboxes under **Columns to include** to choose non-key columns for
-the result. The selected key columns and **join_status** are retained
+Use the checkboxes in the **Columns to include** table to choose non-key columns
+for the result. The **Type** column shows each source column's data type.
+Resize the dialog to give the tables more room. The selected key columns and
+**join_status** are retained
 automatically. The status identifies whether a row matched both datasets
 (`both`), only the left (`left_only`), or only the right (`right_only`).
 
