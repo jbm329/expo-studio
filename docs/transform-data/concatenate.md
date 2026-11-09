@@ -63,6 +63,25 @@ column names remain separate even if they contain similar information.
 The word **Missing** in this guide's table represents an absent value, not
 literal text.
 
+## Column types and missing values {#column-types}
+
+When a column is present in only one dataset, integer and boolean columns use
+nullable types so the other dataset's rows can contain missing values.
+For example, `int64` becomes `Int64`, `uint64` becomes `UInt64`, and `bool`
+becomes `boolean`. Integer widths and signedness are preserved, avoiding
+floating-point conversion and rounding of large integer values.
+This schema-based rule also applies when the dataset lacking the column has
+no rows. Existing nullable types and source NULLs remain unchanged.
+
+For columns present in both datasets, the inputs' types are reconciled by
+pandas as before. This is separate from filling an absent column: combining
+integers with floats, or incompatible signed and unsigned integers, can still
+produce floats and lose precision. Check and intentionally convert shared
+columns to compatible types before concatenating when exact values matter.
+
+Different column layouts require unique column names. Rename duplicate
+columns before concatenating datasets with different layouts.
+
 ## What Concatenate does {#concatenate-behavior}
 
 - Every row from both datasets is retained, including duplicate rows.
