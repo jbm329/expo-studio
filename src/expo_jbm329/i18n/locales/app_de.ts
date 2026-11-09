@@ -2258,39 +2258,50 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
 </context><context>
     <name>ConcatDialog</name>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="100" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="107" />
         <source>Concatenate datasets</source>
         <translation>Datensätze verketten</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="118" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="125" />
         <source>First dataset</source>
         <translation>Erster Datensatz</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="144" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="128" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="155" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="134" />
+        <source>Select all</source>
+        <translation>Alle auswählen</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="160" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="139" />
         <source>Dataset:</source>
         <translation>Datensatz:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="145" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="129" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="161" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="140" />
         <source>Columns:</source>
         <translation>Spalten:</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="135" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="147" />
         <source>Second dataset</source>
         <translation>Zweiter Datensatz</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="198" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="173" />
+        <source>Only checked columns supply values. Unchecking a column on one side keeps that dataset's rows, but uses NULL for them if the column is included on the other side.</source>
+        <translation>Nur ausgewählte Spalten liefern Werte. Wenn Sie eine Spalte auf einer Seite abwählen, bleiben die Zeilen dieses Datensatzes erhalten, erhalten aber NULL, wenn die Spalte auf der anderen Seite enthalten ist.</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="228" />
         <source>Unable to open link</source>
         <translation>Link kann nicht geöffnet werden</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="199" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="229" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -2299,14 +2310,20 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
 {url}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="237" />
         <source>Column</source>
         <translation>Spalte</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="207" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="237" />
         <source>Type</source>
         <translation>Typ</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="309" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="270" />
+        <source>Rename duplicate columns to enable column selection.</source>
+        <translation>Benennen Sie Spalten mit doppelten Namen um, um die Spaltenauswahl zu aktivieren.</translation>
     </message>
 </context><context>
     <name>ConditionDialog</name>
@@ -5822,14 +5839,14 @@ Gespeichert unter:
         <translation>Der Wert ist für {column} ({dtype}) nicht gültig. Prüfen Sie Typ, Bereich, Genauigkeit und Zeitzone.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="60" />
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="43" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="61" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="44" />
         <source>If no match</source>
         <translation>Ohne Übereinstimmung</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="61" />
-        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="44" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="62" />
+        <location filename="../../gui/dialogs/workflows/join/join_fill_delegate.py" line="45" />
         <source>Text defaults require text-only source values. This is checked when the join runs.</source>
         <translation>Textstandardwerte erfordern reine Textwerte in der Quelle. Dies wird beim Ausführen des Joins geprüft.</translation>
     </message>

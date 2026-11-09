@@ -348,6 +348,8 @@ def test_settings_help_button_and_f1_preserve_edits(
         persisted = load_settings()
     elif isinstance(dialog, ConcatDialog):
         dialog.cb_right_dataset.setCurrentText("Other")
+        dialog.left_columns_table.item(0, 0).setCheckState(Qt.CheckState.Unchecked)
+        dialog.right_columns_table.item(0, 0).setCheckState(Qt.CheckState.Unchecked)
         concat_before = dialog.build_result()
     elif isinstance(dialog, DerivedColumnDialog):
         name, editor = _derived_inputs(dialog)

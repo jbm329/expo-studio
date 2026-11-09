@@ -39,9 +39,13 @@ To append the jazz rows to the rock dataset:
    result tab and select **Concatenate…**.
 3. In **Second dataset**, choose the dataset to append. The first dataset is
    the active result tab; its columns and the second dataset's columns are
-   shown for reference in read-only **Column** / **Type** tables. Resize the
-   dialog to give the tables more room; all columns remain included.
-4. Select **OK** to create the concatenated result.
+   shown in **Column** / **Type** tables. Resize the dialog to give them more room.
+4. Leave all columns checked, or uncheck columns you do not want that dataset
+   to supply. Each panel's **Select all** checks every column; selecting it again
+   clears the panel. A partially checked Select all means some columns are
+   included; selecting it includes all of them.
+5. Select **OK** to create the concatenated result. At least one column must
+   remain checked across the two panels.
 
 The result is a new tab named **Concatenated data**. The first dataset's rows
 come first, followed by the second dataset's rows:
@@ -61,9 +65,32 @@ column names remain separate even if they contain similar information.
 The word **Missing** in this guide's table represents an absent value, not
 literal text.
 
+## Choose included columns {#included-columns}
+
+All columns start checked. A column appears in the output if it is checked in
+either dataset. Output columns follow the first dataset's source order, followed
+by columns included only from the second dataset in its source order.
+
+Unchecking a column excludes that dataset's values, **not its rows**. If the
+same column is checked in the other dataset, the excluded side's rows contain
+missing values for that column. Existing NULLs in included source columns are
+unchanged. You can clear every column on one side while retaining its rows,
+provided at least one column is checked on the other side.
+
+For example, unchecking **Artist** only in Jazz tracks retains both jazz rows,
+but their Artist cells are missing; the rock rows still contain their artists.
+Unchecking Artist in both panels removes Artist from the output.
+
+Choosing a different **Second dataset** checks all its columns again and keeps
+your first-dataset selections. Help does not reset selections.
+
+Column selection requires unique column names within each dataset. If a
+dataset has duplicate names, its columns remain included and its inclusion
+controls are unavailable. Rename duplicate columns before choosing a subset.
+
 ## Column types and missing values {#column-types}
 
-When a column is present in only one dataset, integer and boolean columns use
+When a column is included from only one dataset, integer and boolean columns use
 nullable types so the other dataset's rows can contain missing values.
 For example, `int64` becomes `Int64`, `uint64` becomes `UInt64`, and `bool`
 becomes `boolean`. Integer widths and signedness are preserved, avoiding
@@ -71,7 +98,7 @@ floating-point conversion and rounding of large integer values.
 This schema-based rule also applies when the dataset lacking the column has
 no rows. Existing nullable types and source NULLs remain unchanged.
 
-For columns present in both datasets, the inputs' types are reconciled by
+For columns included from both datasets, the inputs' types are reconciled by
 pandas as before. This is separate from filling an absent column: combining
 integers with floats, or incompatible signed and unsigned integers, can still
 produce floats and lose precision. Check and intentionally convert shared
@@ -98,6 +125,8 @@ columns before concatenating datasets with different layouts.
 | Concatenate reports that an output column is required | At least one input dataset must contain a column. Inputs with no rows are supported when an input still defines columns. |
 | Values appear under separate columns | Column names must match exactly to be combined. Rename columns before concatenating if they represent the same information. |
 | Some output cells are missing | One input dataset does not have a column with that name. This is expected when the inputs have different columns. |
+| Values disappeared after unchecking a shared column | Unchecking excludes that dataset's values. Check the column in both panels to retain both datasets' values. |
+| OK is unavailable | Check at least one column in either panel. You can leave the other panel empty without dropping its rows. |
 | Duplicate rows remain | Concatenate preserves all input rows. Remove duplicates in a separate preparation step if needed. |
 | Rows appear in an unexpected order | The active dataset is first, and its rows precede the rows from the selected second dataset. |
 

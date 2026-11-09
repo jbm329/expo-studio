@@ -9,9 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtCore import QSignalBlocker, Qt, QUrl
 from PyQt6.QtGui import QDesktopServices, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDialog,
     QDialogButtonBox,
@@ -62,7 +63,7 @@ class ConcatDialogResult:
 
 
 class ConcatDialog(QDialog):
-    """Minimal concatenation dialog for datasets.
+    """Concatenation dialog with per-dataset column inclusion.
 
     Allows the user to select two datasets and view their columns before
     performing a concatenation operation.
@@ -70,8 +71,10 @@ class ConcatDialog(QDialog):
     Attributes:
         cb_left_dataset: Dropdown for the left dataset.
         cb_right_dataset: Dropdown for the right dataset.
-        left_columns_table: Read-only column/type table for the first dataset.
-        right_columns_table: Read-only column/type table for the second dataset.
+        left_columns_table: Checkable column/type table for the first dataset.
+        right_columns_table: Checkable column/type table for the second dataset.
+        left_select_all: Inclusion control for all first-dataset columns.
+        right_select_all: Inclusion control for all second-dataset columns.
     """
 
     def __init__(
@@ -128,9 +131,14 @@ class ConcatDialog(QDialog):
         self.cb_left_dataset.setCurrentText(left_tab_title)
 
         self.left_columns_table = self._create_columns_table()
+        self.left_select_all = QCheckBox(self.tr("Select all"), self)
+        self.left_select_all.setTristate(True)
+        self.left_select_all.clicked.connect(lambda: self._toggle_all(self.left_columns_table))
+        self.left_columns_table.itemChanged.connect(self._update_selection_controls)
 
         left_layout.addRow(self.tr("Dataset:"), self.cb_left_dataset)
         left_layout.addRow(QLabel(self.tr("Columns:")))
+        left_layout.addRow(self.left_select_all)
         left_layout.addRow(self.left_columns_table)
 
         # ======================================================
@@ -144,9 +152,14 @@ class ConcatDialog(QDialog):
         self.cb_right_dataset.currentTextChanged.connect(self._on_right_dataset_changed)
 
         self.right_columns_table = self._create_columns_table()
+        self.right_select_all = QCheckBox(self.tr("Select all"), self)
+        self.right_select_all.setTristate(True)
+        self.right_select_all.clicked.connect(lambda: self._toggle_all(self.right_columns_table))
+        self.right_columns_table.itemChanged.connect(self._update_selection_controls)
 
         right_layout.addRow(self.tr("Dataset:"), self.cb_right_dataset)
         right_layout.addRow(QLabel(self.tr("Columns:")))
+        right_layout.addRow(self.right_select_all)
         right_layout.addRow(self.right_columns_table)
 
         # ======================================================
@@ -156,6 +169,15 @@ class ConcatDialog(QDialog):
         row.addWidget(left_box)
         row.addWidget(right_box)
         root.addLayout(row)
+        selection_hint = QLabel(
+            self.tr(
+                "Only checked columns supply values. Unchecking a column on one side keeps that dataset's rows, "
+                "but uses NULL for them if the column is included on the other side."
+            ),
+            self,
+        )
+        selection_hint.setWordWrap(True)
+        root.addWidget(selection_hint)
 
         # ======================================================
         # BUTTONS
@@ -163,6 +185,11 @@ class ConcatDialog(QDialog):
         btns = QDialogButtonBox(parent=self)
         btns.addButton(QDialogButtonBox.StandardButton.Ok)
         btns.addButton(QDialogButtonBox.StandardButton.Cancel)
+        ok_button = btns.button(QDialogButtonBox.StandardButton.Ok)
+        if ok_button is None:
+            message = "Concatenate OK button has not been created."
+            raise RuntimeError(message)
+        self._ok_button = ok_button
 
         localize_dialog_buttons(btns)
         btns.accepted.connect(self.accept)
@@ -221,21 +248,71 @@ class ConcatDialog(QDialog):
         horizontal_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         return table
 
-    @staticmethod
     def _populate_columns_table(
+        self,
         table: QTableWidget,
         columns: Sequence[str],
         metadata: Mapping[str, FillColumn],
     ) -> None:
-        table.setRowCount(len(columns))
-        for row, column in enumerate(columns):
-            column_metadata = metadata.get(column)
-            dtype = column_metadata.dtype if column_metadata is not None else "-"
-            for position, text in enumerate((column, dtype)):
-                item = QTableWidgetItem(text)
-                item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-                item.setToolTip(text)
-                table.setItem(row, position, item)
+        unique = len(set(columns)) == len(columns)
+        with QSignalBlocker(table):
+            table.setRowCount(len(columns))
+            for row, column in enumerate(columns):
+                column_metadata = metadata.get(column)
+                dtype = column_metadata.dtype if column_metadata is not None else "-"
+                for position, text in enumerate((column, dtype)):
+                    item = QTableWidgetItem(text)
+                    item.setFlags(Qt.ItemFlag.ItemIsEnabled)
+                    item.setToolTip(text)
+                    if position == 0:
+                        if unique:
+                            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+                        else:
+                            item.setToolTip(self.tr("Rename duplicate columns to enable column selection."))
+                        item.setCheckState(Qt.CheckState.Checked)
+                    table.setItem(row, position, item)
+        self._update_selection_controls()
+
+    @staticmethod
+    def _checked_columns(table: QTableWidget) -> list[str]:
+        return [
+            item.text()
+            for row in range(table.rowCount())
+            if (item := table.item(row, 0)) is not None and item.checkState() == Qt.CheckState.Checked
+        ]
+
+    def _toggle_all(self, table: QTableWidget) -> None:
+        checked = len(self._checked_columns(table))
+        state = Qt.CheckState.Unchecked if checked == table.rowCount() else Qt.CheckState.Checked
+        with QSignalBlocker(table):
+            for row in range(table.rowCount()):
+                item = table.item(row, 0)
+                if item is not None:
+                    item.setCheckState(state)
+        self._update_selection_controls()
+
+    def _update_selection_controls(self) -> None:
+        included = 0
+        for table, select_all in (
+            (self.left_columns_table, self.left_select_all),
+            (self.right_columns_table, self.right_select_all),
+        ):
+            columns = self._checked_columns(table)
+            checked = len(columns)
+            included += checked
+            state = Qt.CheckState.Unchecked
+            if checked > 0:
+                state = Qt.CheckState.Checked if checked == table.rowCount() else Qt.CheckState.PartiallyChecked
+            with QSignalBlocker(select_all):
+                select_all.setCheckState(state)
+            unique = len(set(columns)) == len(columns)
+            select_all.setEnabled(table.rowCount() > 0 and unique)
+            select_all.setToolTip("" if unique else self.tr("Rename duplicate columns to enable column selection."))
+        self._ok_button.setEnabled(included > 0)
+
+    def _selected_columns(self, table: QTableWidget) -> list[str] | None:
+        columns = self._checked_columns(table)
+        return None if len(columns) == table.rowCount() else columns
 
     def _populate_left_columns(self) -> None:
         self._populate_columns_table(self.left_columns_table, self._left_cols, self._left_column_metadata)
@@ -260,4 +337,6 @@ class ConcatDialog(QDialog):
             left_tab_title=self.cb_left_dataset.currentText(),
             right_tab_title=self.cb_right_dataset.currentText(),
             remove_duplicates=False,  # MVP, will expand later
+            left_columns=self._selected_columns(self.left_columns_table),
+            right_columns=self._selected_columns(self.right_columns_table),
         )
