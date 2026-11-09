@@ -79,6 +79,104 @@ In the example, a **Left join** keeps order `103` with missing customer
 details. A **Full (outer) join** also keeps customer `C3` with missing order
 details.
 
+With the default **NULL** setting, included integer and boolean columns on the
+side that can be missing use nullable types: right-side columns for a left
+join, left-side columns for a right join, and both sides for a full join.
+For example, `int64` becomes `Int64` and `bool` becomes `boolean`, even when every
+row matches. This preserves integer precision without converting integers to
+floating-point values. Integer widths and signedness are preserved, and existing
+nullable types remain unchanged. Non-NULL defaults can retain the original
+non-nullable type, as described below. Inner joins do not apply this conversion.
+Neither input dataset is modified.
+
+## Set defaults for unmatched rows {#unmatched-defaults}
+
+The **If no match** column controls values for rows where that column's source
+dataset has no matching row. Click a cell to open its value picker, or select the cell
+and press **Enter**, **Space** or **F2**. **NULL** is the default.
+Choose a preset under **Default:**, or select **Custom value...** and enter a
+value under **Value:**. Confirm with **OK** to save the default; **Cancel**
+leaves the cell unchanged. To enter text, type the text itself without wrapping
+it in quotes. The table displays quotes to distinguish text from NULL.
+
+| Source type | Available defaults |
+|---|---|
+| Integer | NULL, 0 or a custom integer within the column's range. |
+| Float | NULL, 0.0 or a custom finite number within the column's range. |
+| Boolean | NULL, True or False. |
+| String, text-like object or category | NULL or custom text, including empty text. |
+| Datetime | NULL or a custom date/time. |
+| Timedelta, period or unsupported type | NULL only. |
+
+Defaults are enabled for included non-key columns on the missing side:
+right-side columns for a left join, left-side columns for a right join, and both
+sides for a full join. Inner joins have no unmatched rows. Changing join type,
+key or column inclusion temporarily disables inapplicable defaults; their
+values are retained if you re-enable them. Changing datasets resets defaults.
+
+Defaults replace only values introduced because a source row is absent.
+Existing NULLs in matched rows are unchanged. For example, in the orders and
+customers example, use a left join and set the right-side **Region** default to
+`Unknown`. Order `103` then has `Unknown` as its region; a matched customer
+whose region was already NULL still has NULL. **join_status** is unchanged:
+
+| Order ID | Customer ID | Region | join_status |
+|---|---|---|---|
+| 101 | C1 | North | both |
+| 102 | C2 | South | both |
+| 103 | C4 | Unknown | left_only |
+
+Use the same approach to set a custom integer, such as `0` for an unmatched
+quantity. Choose a default only when it has the intended meaning: zero means
+a known zero quantity, whereas NULL means no value is available.
+
+Use **Numeric columns** or **Text columns** and **Set defaults...** to set
+defaults for all eligible columns of that type on one side. The value must be
+valid for every applicable column; otherwise no defaults are changed.
+Choose **NULL** in the picker to reset the applicable defaults.
+
+Custom numbers use the system numeric locale, independently of UI language.
+Enter numbers without grouping separators. Integer input accepts whole numbers,
+not decimals or scientific notation. Float input also accepts scientific notation.
+Text whitespace is preserved. A new categorical text default is added to the
+categories without changing existing category values or ordering.
+Object columns must contain only text or missing values to accept a text default;
+the join worker checks their contents and reports incompatible values.
+
+For datetimes, use the date/time picker or enter an ISO date/time. The picker
+uses the column's local wall time; explicit offsets in typed input identify an
+instant and are converted to the column's timezone. For timezone-naive columns,
+enter a value without an offset. Ambiguous or nonexistent local times, invalid
+dates, out-of-range values and precision finer than the column's resolution are
+rejected rather than silently adjusted.
+
+Integer and boolean source columns with a non-NULL default retain their
+original NumPy type after filling. Existing nullable source types and NULLs
+remain nullable. Preview and the final join use the same defaults.
+
+## Performance and exporting {#performance-and-exporting}
+
+Nullable integer and boolean columns store a missing-value mask, adding about
+one byte per row to that column's value storage. For example, `int64` uses
+8 bytes per value and nullable `Int64` uses about 9 bytes including its mask.
+This is not a percentage increase for the whole dataset. Nullable booleans can
+use less memory than the object columns otherwise produced by unmatched joins.
+
+Preparing nullable columns and applying non-NULL defaults adds processing and
+temporary memory use. The cost depends on row count, selected columns and join
+shape; it is not guaranteed to be negligible, even when every row matches.
+Each custom default adds column-level work. **Preview** performs the join
+before selecting up to 100 rows, so it is not a low-cost substitute for a full
+join on a large dataset.
+
+Parquet, Feather and the app's pickle dataset format preserve nullable types,
+missing values and full-width integer values. CSV stores text rather than a
+dtype schema: exported integers retain their digits, but the application reading
+the CSV must interpret them as integers without first converting them to floats.
+Excel preserves blank cells and boolean values, but its numeric precision limit
+still applies to large integers. Use Parquet or Feather when exact large integer
+identifiers and nullable types must survive export and reloading.
+
 ## Select keys and output columns {#keys-and-columns}
 
 Choose one key column from each dataset. The values to match must have
@@ -91,8 +189,10 @@ meaning you intend. Confirm that the selected columns identify the same kind
 of entity in both datasets. A key may appear more than once, which can create
 more than one output row for a match.
 
-Use the checkboxes under **Columns to include** to choose non-key columns for
-the result. The selected key columns and **join_status** are retained
+Use the checkboxes in the **Columns to include** table to choose non-key columns
+for the result. The **Type** column shows each source column's data type.
+Resize the dialog to give the tables more room. The selected key columns and
+**join_status** are retained
 automatically. The status identifies whether a row matched both datasets
 (`both`), only the left (`left_only`), or only the right (`right_only`).
 
@@ -131,6 +231,9 @@ especially when the preview reports many-to-many cardinality.
 | The preview has few or no matches | Check that the selected columns represent the same identifier and that their values have compatible types and matching content. |
 | The result has more rows than either input | Check for repeated keys. Duplicate key values can produce multiple matching pairs. |
 | Values are missing after a join | An outer, left, or right join retains unmatched rows; inspect **join_status** to see which side had no match. |
+| An **If no match** cell is disabled | Choose a join type that can leave that side unmatched, include the column, and check that it is not a join key. |
+| A custom default is rejected | Check the source type, numeric range, locale decimal separator, and datetime timezone or resolution. Mixed non-text object columns accept NULL only. |
+| A matched row still contains NULL after setting a default | Defaults apply only when the source row is absent; they do not replace NULLs already present in matching source rows. |
 | A column name has a dataset suffix | Both datasets contain a selected column with that name. Rename the source columns or use the suffix to distinguish them. |
 | The preview estimate differs from the final row count | The preview row sample and estimated row count are not a complete calculation. Review the created result and its **join_status** values. |
 
