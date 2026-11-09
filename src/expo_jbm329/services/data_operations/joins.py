@@ -318,7 +318,7 @@ def _apply_side_fills(
         if has_missing:
             if isinstance(series.dtype, CategoricalDtype) and value not in series.cat.categories:
                 series = series.cat.add_categories([value])
-            series.loc[missing] = value
+            series = series.mask(missing, value)
         source_dtype = source[column].dtype
         if isinstance(source_dtype, np.dtype) and source_dtype.kind in {"i", "u", "b"}:
             series = series.astype(source_dtype)

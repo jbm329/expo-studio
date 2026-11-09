@@ -99,9 +99,7 @@ class JoinFillValueDialog(QDialog):
                 date = QDateTime.fromString(str(initial.value).replace(" ", "T", 1), Qt.DateFormat.ISODateWithMs)
                 if date.isValid():
                     self.calendar.setDateTime(date)
-            self.calendar.dateTimeChanged.connect(
-                lambda value: self.custom_value.setText(value.toString(self._calendar_format))
-            )
+            self.calendar.dateTimeChanged.connect(self._on_calendar_changed)
             form.addRow(self.tr("Date/time picker:"), self.calendar)
         root.addLayout(form)
         hint = QLabel(self)
@@ -130,6 +128,9 @@ class JoinFillValueDialog(QDialog):
         self.choice.currentIndexChanged.connect(self._update_custom_enabled)
         self._update_custom_enabled()
         self.setMinimumWidth(440)
+
+    def _on_calendar_changed(self, value: QDateTime) -> None:
+        self.custom_value.setText(value.toString(self._calendar_format))
 
     def _update_custom_enabled(self) -> None:
         custom = self.choice.currentData() == "custom"
