@@ -6,13 +6,292 @@ import pandas as pd
 import pytest
 
 from expo_jbm329.services.data_operations.joins import (
+    JoinFillValue,
     JoinHow,
     JoinRequest,
+    UnmatchedFill,
     concat_columns,
     concat_rows,
     detect_join_keys,
     join_dataframes,
+    validate_join_fill,
 )
+
+
+@pytest.mark.parametrize("how,side", [("left", "right"), ("right", "left"), ("outer", "left"), ("outer", "right")])
+def test_unmatched_defaults_follow_source_side(how: JoinHow, side: str) -> None:
+    """Overlapping columns receive defaults only when their source row is absent."""
+    left = pd.DataFrame({"id": [1, 2], "value": [2**62 + 1, 2**62 + 3], "flag": [True, False]})
+    right = pd.DataFrame({"id": [2, 3], "value": [2**62 + 5, 2**62 + 7], "flag": [False, True]})
+    originals = (left.copy(deep=True), right.copy(deep=True))
+    fills = {"value": UnmatchedFill(42), "flag": UnmatchedFill(False)}
+    request = JoinRequest(
+        left,
+        right,
+        ["id"],
+        ["id"],
+        how=how,
+        left_fill=fills if side == "left" else {},
+        right_fill=fills if side == "right" else {},
+        suffixes=("_orders", "_customers"),
+    )
+    result = join_dataframes(request)
+    suffix = "_orders" if side == "left" else "_customers"
+    missing = result["join_status"] == ("right_only" if side == "left" else "left_only")
+    assert result.loc[missing, f"value{suffix}"].tolist() == [42]
+    assert result.loc[missing, f"flag{suffix}"].tolist() == [False]
+    assert str(result[f"value{suffix}"].dtype) == "int64"
+    assert str(result[f"flag{suffix}"].dtype) == "bool"
+    source = left if side == "left" else right
+    assert (
+        result.loc[~missing, f"value{suffix}"].tolist()
+        == source.loc[source["id"].isin(result.loc[~missing, "id"]), "value"].tolist()
+    )
+    pd.testing.assert_frame_equal(left, originals[0])
+    pd.testing.assert_frame_equal(right, originals[1])
+
+
+@pytest.mark.parametrize("dtype,value", [("Int64", 0), ("boolean", True), ("Float64", 0.0), ("string", "unknown")])
+def test_defaults_preserve_nullable_source_nulls(dtype: str, value: JoinFillValue) -> None:
+    """Matched source NULLs remain NULL, even when an unmatched default is configured."""
+    left = pd.DataFrame({"id": [1, 2, 3]})
+    right = pd.DataFrame({"id": [2, 3], "value": pd.Series([None, value], dtype=dtype)})
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill(value)})
+    )
+    assert result.loc[0, "value"] == value
+    assert pd.isna(result.loc[1, "value"])
+    assert result["value"].dtype == right["value"].dtype
+
+
+@pytest.mark.parametrize("dtype", ["int8", "uint64", "bool"])
+def test_defaults_with_full_match_restore_original_numpy_dtype(dtype: str) -> None:
+    """A configured default controls the dtype even without unmatched rows."""
+    value = True if dtype == "bool" else 1
+    right = pd.DataFrame({"id": [1], "value": pd.Series([value], dtype=dtype)})
+    result = join_dataframes(
+        JoinRequest(right[["id"]], right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill(value)})
+    )
+    assert result["value"].dtype == right["value"].dtype
+
+
+def test_null_default_and_empty_text_are_distinct() -> None:
+    """Explicit NULL keeps missing values while empty text is a real default."""
+    left = pd.DataFrame({"id": [1, 2]})
+    right = pd.DataFrame({"id": [2], "null": ["x"], "empty": ["y"]})
+    result = join_dataframes(
+        JoinRequest(
+            left,
+            right,
+            ["id"],
+            ["id"],
+            how="left",
+            right_fill={"null": UnmatchedFill(), "empty": UnmatchedFill("")},
+        )
+    )
+    assert pd.isna(result.loc[0, "null"])
+    assert result.loc[0, "empty"] == ""
+
+
+def test_category_default_extends_categories_without_mutating_input() -> None:
+    """New text categories are appended, preserving ordering and genuine NULLs."""
+    left = pd.DataFrame({"id": [1, 2, 3]})
+    right = pd.DataFrame({
+        "id": [2, 3],
+        "value": pd.Series(pd.Categorical([None, "a"], categories=["a", "b"], ordered=True)),
+    })
+    original = right.copy(deep=True)
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill("unknown")})
+    )
+    assert result["value"].cat.categories.tolist() == ["a", "b", "unknown"]
+    assert result["value"].cat.ordered
+    assert pd.isna(result.loc[1, "value"])
+    pd.testing.assert_frame_equal(right, original)
+
+
+@pytest.mark.parametrize("unit", ["s", "ms", "us", "ns"])
+@pytest.mark.parametrize("timezone", [None, "Europe/Stockholm"])
+def test_datetime_defaults_preserve_resolution_timezone_and_source_nat(unit: str, timezone: str | None) -> None:
+    """Date defaults are normalized without changing dtype or matched NaT."""
+    left = pd.DataFrame({"id": [1, 2]})
+    dtype = f"datetime64[{unit}]" if timezone is None else f"datetime64[{unit}, {timezone}]"
+    right = pd.DataFrame({"id": [2], "value": pd.Series([pd.NaT], dtype=dtype)})
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill("2020-01-01 12:00:00")})
+    )
+    assert result["value"].dtype == right["value"].dtype
+    assert result.loc[0, "value"] == pd.Timestamp("2020-01-01 12:00:00", tz=timezone)
+    assert pd.isna(result.loc[1, "value"])
+
+
+@pytest.mark.parametrize(
+    "dtype,value",
+    [
+        ("int8", 128),
+        ("uint64", -1),
+        ("int64", 1.5),
+        ("int64", True),
+        ("bool", 1),
+        ("float32", 1e100),
+        ("float32", 1e-100),
+        ("float32[pyarrow]", 1e100),
+        ("float64", float("nan")),
+        ("float64", float("inf")),
+        ("float64", 10**400),
+        ("string", 0),
+        ("datetime64[ns]", "invalid"),
+        ("datetime64[ns]", "2500-01-01"),
+        ("datetime64[s]", "2020-01-01 00:00:00.001"),
+        ("datetime64[ns]", "2020-01-01T00:00:00Z"),
+        ("timedelta64[ns]", "1 day"),
+        ("period[M]", "2020-01"),
+        ("object", "text"),
+    ],
+)
+def test_invalid_defaults_are_rejected(dtype: str, value: JoinFillValue) -> None:
+    """Reject incompatible values instead of widening dtypes or rounding."""
+    series = pd.Series([1], dtype=dtype) if dtype in {"object", "category"} else pd.Series([], dtype=dtype)
+    with pytest.raises(ValueError, match="Invalid unmatched-row default"):
+        validate_join_fill(series, UnmatchedFill(value))
+
+
+@pytest.mark.parametrize(
+    "how,column,columns",
+    [
+        ("inner", "value", None),
+        ("right", "value", None),
+        ("left", "id", None),
+        ("left", "missing", None),
+        ("left", "value", []),
+    ],
+)
+def test_defaults_require_eligible_included_non_key_columns(
+    how: JoinHow,
+    column: str,
+    columns: list[str] | None,
+) -> None:
+    """Invalid side, key, missing or excluded column configurations fail explicitly."""
+    frame = pd.DataFrame({"id": [1], "value": [2]})
+    with pytest.raises(ValueError, match="not available"):
+        join_dataframes(
+            JoinRequest(
+                frame, frame, ["id"], ["id"], how=how, right_columns=columns, right_fill={column: UnmatchedFill(0)}
+            )
+        )
+
+
+@pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "float32[pyarrow]", "float64[pyarrow]"])
+def test_custom_float_preserves_dtype_and_matched_nan(dtype: str) -> None:
+    """Native and extension floating columns retain their dtype and source missing values."""
+    left = pd.DataFrame({"id": [1, 2]})
+    right = pd.DataFrame({"id": [2], "value": pd.Series([None], dtype=dtype)})
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill(0.125)})
+    )
+    assert result["value"].dtype == right["value"].dtype
+    assert result.loc[0, "value"] == 0.125
+    assert pd.isna(result.loc[1, "value"])
+
+
+@pytest.mark.parametrize("dtype,value", [("uint64", 2**64 - 1), ("int64", -(2**63)), ("bool", True)])
+def test_defaults_cover_integer_boundaries_and_true(dtype: str, value: JoinFillValue) -> None:
+    """Fill scalars retain the entire source integer range."""
+    left = pd.DataFrame({"id": [1]})
+    right = pd.DataFrame({"id": pd.Series([], dtype="int64"), "value": pd.Series([], dtype=dtype)})
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill(value)})
+    )
+    assert result["value"].dtype == right["value"].dtype
+    assert result.loc[0, "value"] == value
+
+
+@pytest.mark.parametrize("value", ["2020-03-29 02:30:00", "2020-10-25 02:30:00", "NaT"])
+def test_datetime_defaults_reject_dst_gaps_and_ambiguity(value: str) -> None:
+    """Invalid local wall times must not be silently shifted or resolved."""
+    series = pd.Series([], dtype="datetime64[ns, Europe/Stockholm]")
+    with pytest.raises(ValueError, match="Invalid unmatched-row default"):
+        validate_join_fill(series, UnmatchedFill(value))
+
+
+def test_datetime_default_converts_explicit_timezone() -> None:
+    """An explicit offset represents an instant, not a naive local wall time."""
+    series = pd.Series([], dtype="datetime64[ns, Europe/Stockholm]")
+    value = validate_join_fill(series, UnmatchedFill("2020-01-01T12:00:00Z"))
+    assert value == pd.Timestamp("2020-01-01T13:00:00", tz="Europe/Stockholm")
+
+
+def test_datetime_default_uses_source_resolution_bounds() -> None:
+    """Coarser datetime resolutions are not artificially restricted to nanosecond bounds."""
+    series = pd.Series([], dtype="datetime64[s]")
+    value = validate_join_fill(series, UnmatchedFill("2500-01-01"))
+    assert isinstance(value, pd.Timestamp)
+    assert value.unit == "s"
+    assert value == pd.Timestamp("2500-01-01")
+
+
+@pytest.mark.parametrize("dtype", ["period[M]", "timedelta64[ns]"])
+def test_unsupported_custom_default_types_allow_null(dtype: str) -> None:
+    """NULL remains supported for period and timedelta columns."""
+    series = pd.Series([], dtype=dtype)
+    assert validate_join_fill(series, UnmatchedFill()) is None
+
+
+def test_outer_join_applies_both_sides_without_changing_metadata() -> None:
+    """Independent defaults leave match status and existing source values intact."""
+    left = pd.DataFrame({"id": [1, 2], "text": ["a", "b"]})
+    right = pd.DataFrame({"other_id": [2, 3], "text": ["c", "d"]})
+    result = join_dataframes(
+        JoinRequest(
+            left,
+            right,
+            ["id"],
+            ["other_id"],
+            how="outer",
+            left_fill={"text": UnmatchedFill("no left")},
+            right_fill={"text": UnmatchedFill("no right")},
+        )
+    )
+    assert result["join_status"].tolist() == ["left_only", "both", "right_only"]
+    assert result["text_left"].tolist() == ["a", "b", "no left"]
+    assert result["text_right"].tolist() == ["no right", "c", "d"]
+    assert pd.isna(result.loc[0, "other_id"])
+    assert pd.isna(result.loc[2, "id"])
+
+
+def test_null_default_request_matches_omitted_defaults() -> None:
+    """Explicit NULL configuration remains backwards compatible."""
+    left = pd.DataFrame({"id": [1, 2]})
+    right = pd.DataFrame({"id": [2], "value": [3]})
+    expected = join_dataframes(JoinRequest(left, right, ["id"], ["id"], how="left"))
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill()})
+    )
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_numeric_category_accepts_explicit_text_default() -> None:
+    """An explicit text category preserves existing numeric category values."""
+    left = pd.DataFrame({"id": [1, 2]})
+    right = pd.DataFrame({"id": [2], "value": pd.Series([10], dtype="category")})
+    result = join_dataframes(
+        JoinRequest(left, right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill("unknown")})
+    )
+    assert result["value"].cat.categories.tolist() == [10, "unknown"]
+    assert result["value"].tolist() == ["unknown", 10]
+
+
+@pytest.mark.parametrize("empty", [False, True])
+def test_category_default_without_unmatched_rows_keeps_categories(empty: bool) -> None:
+    """A configured category default does not require or add an unused category."""
+    right = pd.DataFrame({"id": [1], "value": pd.Series(["a"], dtype="category")})
+    if empty:
+        right = right.iloc[:0]
+    result = join_dataframes(
+        JoinRequest(right[["id"]], right, ["id"], ["id"], how="left", right_fill={"value": UnmatchedFill("new")})
+    )
+    assert result["value"].cat.categories.tolist() == ["a"]
+    assert result["value"].tolist() == ([] if empty else ["a"])
 
 
 @pytest.mark.parametrize("how", ["inner", "left", "right", "outer"])
