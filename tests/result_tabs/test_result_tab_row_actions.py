@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QTableView, QTabWidget, QWidget
+from PyQt6.QtCore import Qt, QTranslator
+from PyQt6.QtWidgets import QMenu, QTableView, QTabWidget, QWidget
 
 from expo_jbm329.services.data_profile.profile_cache import ColumnProfileCache
 from expo_jbm329.utils.models import DataFrameModel
@@ -253,21 +254,7 @@ def manager_actions(qt_app):
     tab_id = manager.active_tab_id()
     view = manager.active_view()
 
-    def resolve(stable_id):
-        record = manager.tabs_by_id.get(stable_id)
-        if record is None or not record.is_ready or record.df is None:
-            return None
-        return record.view, record.df, record.title
-
-    controller = ResultTabRowActions(
-        parent=parent,
-        dialogs=dialogs,
-        logger=None,
-        async_ops=async_ops,
-        resolve_target=resolve,
-        apply_new_dataframe=manager._apply_new_dataframe_to_view,
-        set_status=status,
-    )
+    controller = manager._row_actions
     status.reset_mock()
     yield SimpleNamespace(
         controller=controller,
@@ -358,3 +345,157 @@ def test_real_manager_noop_preserves_existing_undo_and_index(manager_actions) ->
     assert env.manager.tabs_by_id[env.tab_id].df is unique
     assert env.manager._undo.stack_size(env.tab_id) == 1
     pd.testing.assert_frame_equal(env.manager._undo.pop_snapshot(env.tab_id), previous)
+
+
+def choose_removal(monkeypatch, env, during_menu=None, enabled=True):
+    def execute(menu, pos):
+        action = next(
+            action for action in menu.actions() if action.text() == env.manager._tr(env.manager.TR_REMOVE_DUPLICATES)
+        )
+        assert action.isEnabled() is enabled
+        if during_menu is not None:
+            during_menu()
+        return action if enabled else None
+
+    monkeypatch.setattr(QMenu, "exec", execute)
+    env.manager.on_tabbar_context_menu(env.tabs.tabBar().tabRect(0).center())
+
+
+@pytest.mark.parametrize("move", [False, True])
+def test_menu_uses_clicked_target_after_reorder_and_rename(manager_actions, monkeypatch, move: bool) -> None:
+    env = manager_actions
+    env.manager.display_dataframe(pd.DataFrame({"other": [9]}), title="Other")
+    active = env.manager.active_tab_id()
+
+    def change_tabs():
+        if move:
+            env.tabs.tabBar().moveTab(0, 1)
+        env.manager.tabs_by_id[env.tab_id].title = "Renamed sales"
+
+    choose_removal(monkeypatch, env, during_menu=change_tabs)
+    call = env.async_ops.run_dataframe_operation.call_args.kwargs
+    assert call["view"] is env.view
+    assert env.manager.active_tab_id() == active
+    call["apply_result"](call["work"]())
+    assert len(env.manager.tabs_by_id[env.tab_id].df) == 3
+    assert len(env.manager.tabs_by_id[active].df) == 1
+    env.status.assert_called_once_with('Removed 2 duplicate rows from dataset "Renamed sales".', 6000)
+
+
+def test_menu_target_closed_while_open_does_not_dispatch(manager_actions, monkeypatch) -> None:
+    env = manager_actions
+    choose_removal(monkeypatch, env, during_menu=lambda: env.manager.close_tab(0))
+    env.async_ops.run_dataframe_operation.assert_not_called()
+
+
+def test_menu_rechecks_ready_state_after_menu_closes(manager_actions, monkeypatch) -> None:
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabState
+
+    env = manager_actions
+    choose_removal(
+        monkeypatch,
+        env,
+        during_menu=lambda: setattr(env.manager.tabs_by_id[env.tab_id], "state", ResultTabState.PENDING),
+    )
+    env.async_ops.run_dataframe_operation.assert_not_called()
+
+
+@pytest.mark.parametrize("missing_data", [False, True])
+def test_menu_disabled_for_unready_tab(manager_actions, monkeypatch, missing_data: bool) -> None:
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabState
+
+    env = manager_actions
+    if missing_data:
+        env.manager.tabs_by_id[env.tab_id].df = None
+    else:
+        env.manager.tabs_by_id[env.tab_id].state = ResultTabState.PENDING
+    choose_removal(monkeypatch, env, enabled=False)
+    env.async_ops.run_dataframe_operation.assert_not_called()
+
+
+def test_menu_disabled_during_job_and_enabled_after_finish(manager_actions, monkeypatch) -> None:
+    env = manager_actions
+    choose_removal(monkeypatch, env)
+    call = env.async_ops.run_dataframe_operation.call_args.kwargs
+    choose_removal(monkeypatch, env, enabled=False)
+    env.async_ops.run_dataframe_operation.assert_called_once()
+    call["on_finished"]()
+    choose_removal(monkeypatch, env)
+    assert env.async_ops.run_dataframe_operation.call_count == 2
+
+
+def test_menu_empty_ready_dataset_reports_noop(manager_actions, monkeypatch) -> None:
+    env = manager_actions
+    empty = env.source.iloc[:0]
+    env.manager._apply_new_dataframe_to_view(env.view, empty, push_undo=False)
+    choose_removal(monkeypatch, env)
+    call = env.async_ops.run_dataframe_operation.call_args.kwargs
+    call["apply_result"](call["work"]())
+    assert env.manager.tabs_by_id[env.tab_id].df is empty
+    assert not env.manager._undo.has_undo(env.tab_id)
+    env.status.assert_called_once_with('No duplicate rows found in dataset "Sales".', 6000)
+
+
+@pytest.mark.parametrize("language", ["en", "sv", "de", "fr", "it", "es", "pl"])
+def test_compiled_menu_status_and_errors_use_selected_language(
+    manager_actions, monkeypatch, qt_app, language: str
+) -> None:
+    env = manager_actions
+    translator = QTranslator()
+    catalog = Path(__file__).resolve().parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.qm"
+    assert translator.load(str(catalog))
+    qt_app.installTranslator(translator)
+    try:
+        for context, source in (
+            ("ResultTabManager", env.manager.TR_REMOVE_DUPLICATES),
+            *[
+                ("ResultTabRowActions", source)
+                for source in (
+                    ResultTabRowActions.TR_OPERATION,
+                    ResultTabRowActions.TR_BUSY,
+                    ResultTabRowActions.TR_REMOVED,
+                    ResultTabRowActions.TR_UNCHANGED,
+                    ResultTabRowActions.TR_FAILURE,
+                    ResultTabRowActions.TR_COULD_NOT_PERFORM,
+                )
+            ],
+        ):
+            translated = translator.translate(context, source)
+            if language != "en":
+                assert translated and translated != source
+        choose_removal(monkeypatch, env)
+        call = env.async_ops.run_dataframe_operation.call_args.kwargs
+        busy = translator.translate("ResultTabRowActions", ResultTabRowActions.TR_BUSY) or ResultTabRowActions.TR_BUSY
+        assert call["busy_message"] == busy.format(dataset="Sales")
+        call["apply_result"](call["work"]())
+        success = (
+            translator.translate("ResultTabRowActions", ResultTabRowActions.TR_REMOVED)
+            or ResultTabRowActions.TR_REMOVED
+        )
+        env.status.assert_called_once_with(success.format(count=2, dataset="Sales"), 6000)
+        call["on_finished"]()
+        env.status.reset_mock()
+        choose_removal(monkeypatch, env)
+        call = env.async_ops.run_dataframe_operation.call_args.kwargs
+        call["apply_result"](call["work"]())
+        noop = (
+            translator.translate("ResultTabRowActions", ResultTabRowActions.TR_UNCHANGED)
+            or ResultTabRowActions.TR_UNCHANGED
+        )
+        env.status.assert_called_once_with(noop.format(dataset="Sales"), 6000)
+        call["on_error"]("worker failure")
+        failure = (
+            translator.translate("ResultTabRowActions", ResultTabRowActions.TR_COULD_NOT_PERFORM)
+            or ResultTabRowActions.TR_COULD_NOT_PERFORM
+        )
+        title = (
+            translator.translate("ResultTabRowActions", ResultTabRowActions.TR_FAILURE)
+            or ResultTabRowActions.TR_FAILURE
+        )
+        env.dialogs.critical.assert_called_once_with(
+            parent=env.tabs.parentWidget(),
+            title=title,
+            text=failure.format(error="worker failure"),
+        )
+    finally:
+        qt_app.removeTranslator(translator)

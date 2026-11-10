@@ -10508,161 +10508,200 @@ Tid: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ResultTabManager</name>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="174" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
         <source>Could not read column:
 {error}</source>
         <translation>Kunde inte läsa kolumnen:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
         <source>Could not load data: 
 {error}</source>
         <translation>Kunde inte ladda data: 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="178" />
         <source>Could not update data: 
 {error}</source>
         <translation>Kunde inte uppdatera data: 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="178" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="179" />
         <source>Could not perform the operation:
 {error}</source>
         <translation>Kunde inte utföra operationen:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="180" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
         <source>Not available</source>
         <translation>Ej tillgängling</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
         <source>No data available for this view</source>
         <translation>Ingen data finns tillgänglig för denna vy</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="183" />
         <source>Invalid column index: {column}</source>
         <translation>Ogiltigt kolumnindex: {column}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="183" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="184" />
         <source>Column not available anymore.</source>
         <translation>Kolumnen är inte tillgänglig längre.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="186" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
         <source>Undo</source>
         <translation>Ångra</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
         <source>Nothing to undo.</source>
         <translation>Det finns inget att ångra.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="189" />
         <source>Last action undone</source>
         <translation>Ångrade senaste åtgärden</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="189" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="190" />
         <source>Restoring previous state…</source>
         <translation>Återställer till föregående läge…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="192" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
         <source>Rename tab</source>
         <translation>Byt namn på flik</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
         <source>New name:</source>
         <translation>Nytt namn:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
         <source>Rename…</source>
         <translation>Byt namn…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
         <source>Close</source>
         <translation>Stäng</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
         <source>Close others</source>
         <translation>Stäng andra</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
         <source>Close all to the right</source>
         <translation>Stäng alla till höger</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
         <source>Close all</source>
         <translation>Stäng alla</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
         <source>Join…</source>
         <translation>Join…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
         <source>Concatenate…</source>
         <translation>Konkatenera…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="202" />
         <source>Reshape…</source>
         <translation>Omforma…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="204" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="203" />
+        <source>Remove duplicate rows</source>
+        <translation>Ta bort dubblettrader</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
         <source>Processing data…</source>
         <translation>Processar data…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
         <source>Updating table…</source>
         <translation>Uppdaterar tabell…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
         <source>Loading data…</source>
         <translation>Laddar data…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
         <source>Preparing dataset…</source>
         <translation>Förbereder dataset…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="210" />
         <source>pending…</source>
         <translation>pågår…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="211" />
         <source>Formatting cell values…</source>
         <translation>Formaterar värden i celler…</translation>
     </message>
     <message>
         <source>Derived column…</source>
         <translation type="vanished">Beräknad kolumn…</translation>
+    </message>
+</context><context>
+    <name>ResultTabRowActions</name>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="30" />
+        <source>remove duplicate rows</source>
+        <translation>ta bort dubblettrader</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="31" />
+        <source>Removing duplicate rows from dataset "{dataset}"</source>
+        <translation>Tar bort dubblettrader från datamängden "{dataset}"</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="32" />
+        <source>Removed {count} duplicate rows from dataset "{dataset}".</source>
+        <translation>Tog bort {count} dubblettrader från datamängden "{dataset}".</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="33" />
+        <source>No duplicate rows found in dataset "{dataset}".</source>
+        <translation>Inga dubblettrader hittades i datamängden "{dataset}".</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="34" />
+        <source>Failure</source>
+        <translation>Fel</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="35" />
+        <source>Could not perform the operation:
+{error}</source>
+        <translation>Kunde inte utföra operationen:
+{error}</translation>
     </message>
 </context><context>
     <name>ScbBrowserDialog</name>

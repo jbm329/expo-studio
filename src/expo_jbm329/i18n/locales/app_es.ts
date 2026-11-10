@@ -10508,161 +10508,200 @@ Tiempo: {sec:.2f}s{sample}</translation>
 </context><context>
     <name>ResultTabManager</name>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="174" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
         <source>Failure</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="175" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
         <source>Could not read column:
 {error}</source>
         <translation>No se pudo leer la columna:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="176" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
         <source>Could not load data: 
 {error}</source>
         <translation>No se pudieron cargar los datos: 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="177" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="178" />
         <source>Could not update data: 
 {error}</source>
         <translation>No se pudieron actualizar los datos: 
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="178" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="179" />
         <source>Could not perform the operation:
 {error}</source>
         <translation>No se pudo realizar la operación:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="180" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
         <source>Not available</source>
         <translation>No disponible</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="181" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
         <source>No data available for this view</source>
         <translation>No hay datos disponibles para esta vista</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="182" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="183" />
         <source>Invalid column index: {column}</source>
         <translation>Índice de columna no válido: {column}</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="183" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="184" />
         <source>Column not available anymore.</source>
         <translation>La columna ya no está disponible.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="186" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
         <source>Undo</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="187" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
         <source>Nothing to undo.</source>
         <translation>No hay nada que deshacer.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="188" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="189" />
         <source>Last action undone</source>
         <translation>Se deshizo la última acción</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="189" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="190" />
         <source>Restoring previous state…</source>
         <translation>Restaurando el estado anterior…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="192" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
         <source>Rename tab</source>
         <translation>Cambiar nombre de pestaña</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="193" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
         <source>New name:</source>
         <translation>Nombre nuevo:</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="194" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
         <source>Rename…</source>
         <translation>Cambiar nombre…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="195" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
         <source>Close</source>
         <translation>Cerrar</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="196" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
         <source>Close others</source>
         <translation>Cerrar las demás</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="197" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
         <source>Close all to the right</source>
         <translation>Cerrar todas las de la derecha</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="198" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
         <source>Close all</source>
         <translation>Cerrar todas</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="199" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
         <source>Join…</source>
         <translation>Unir…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="200" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
         <source>Concatenate…</source>
         <translation>Concatenar…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="201" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="202" />
         <source>Reshape…</source>
         <translation>Remodelar…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="204" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="203" />
+        <source>Remove duplicate rows</source>
+        <translation>Eliminar filas duplicadas</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
         <source>Processing data…</source>
         <translation>Procesando datos…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="205" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
         <source>Updating table…</source>
         <translation>Actualizando tabla…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="206" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
         <source>Loading data…</source>
         <translation>Cargando datos…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="207" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
         <source>Preparing dataset…</source>
         <translation>Preparando el conjunto de datos…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="208" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="210" />
         <source>pending…</source>
         <translation>pendiente…</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="209" />
+        <location filename="../../workbench/controllers/result_tabs/result_tab_manager.py" line="211" />
         <source>Formatting cell values…</source>
         <translation>Dando formato a los valores de las celdas…</translation>
     </message>
     <message>
         <source>Derived column…</source>
         <translation type="vanished">Columna derivada…</translation>
+    </message>
+</context><context>
+    <name>ResultTabRowActions</name>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="30" />
+        <source>remove duplicate rows</source>
+        <translation>eliminar filas duplicadas</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="31" />
+        <source>Removing duplicate rows from dataset "{dataset}"</source>
+        <translation>Eliminando filas duplicadas del conjunto de datos "{dataset}"</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="32" />
+        <source>Removed {count} duplicate rows from dataset "{dataset}".</source>
+        <translation>Se eliminaron {count} filas duplicadas del conjunto de datos "{dataset}".</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="33" />
+        <source>No duplicate rows found in dataset "{dataset}".</source>
+        <translation>No se encontraron filas duplicadas en el conjunto de datos "{dataset}".</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="34" />
+        <source>Failure</source>
+        <translation>Error</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/result_tabs/result_tab_row_actions.py" line="35" />
+        <source>Could not perform the operation:
+{error}</source>
+        <translation>No se pudo realizar la operación:
+{error}</translation>
     </message>
 </context><context>
     <name>ScbBrowserDialog</name>
