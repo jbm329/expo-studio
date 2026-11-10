@@ -178,6 +178,21 @@ def test_concat_headers_in_compiled_catalogs(
             assert translator.translate("ConcatDialog", "Select all")
         assert dialog.left_select_all.text() == expected
         assert dialog.right_select_all.text() == expected
+        for source, displayed in (
+            ("Exclude duplicate rows", dialog.exclude_duplicates.text()),
+            (
+                (
+                    "Remove duplicate rows throughout the combined result, keeping the first occurrence. "
+                    "Compare all output columns after column selection and defaults."
+                ),
+                dialog.exclude_duplicates.toolTip(),
+            ),
+        ):
+            translated = translator.translate("ConcatDialog", source)
+            if language != "en":
+                assert translated
+                assert translated != source
+            assert displayed == (translated or source)
         for source in (
             "Rename duplicate columns to enable column selection.",
             (
@@ -219,6 +234,33 @@ def selection_dialog(qt_app):
     )
     yield dialog
     dialog.close()
+
+
+def test_duplicate_option_defaults_off_and_preserves_settings_on_dataset_switch(selection_dialog) -> None:
+    dialog = selection_dialog
+    assert dialog.exclude_duplicates.text() == "Exclude duplicate rows"
+    assert not dialog.exclude_duplicates.isChecked()
+    assert dialog.build_result().remove_duplicates is False
+    dialog.left_columns_table.item(2, 0).setCheckState(Qt.CheckState.Unchecked)
+    before = dialog.build_result()
+
+    dialog.exclude_duplicates.click()
+
+    expected = ConcatDialogResult(
+        before.left_tab_title,
+        before.right_tab_title,
+        True,
+        left_fill=before.left_fill,
+        right_fill=before.right_fill,
+        left_columns=before.left_columns,
+        right_columns=before.right_columns,
+    )
+    assert dialog.build_result() == expected
+    dialog.cb_right_dataset.setCurrentText("third")
+    assert dialog.build_result().remove_duplicates is True
+    assert dialog.build_result().left_columns == before.left_columns
+    dialog.exclude_duplicates.click()
+    assert dialog.build_result().remove_duplicates is False
 
 
 @pytest.mark.parametrize("side", ["left", "right"])

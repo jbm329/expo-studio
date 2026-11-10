@@ -205,6 +205,7 @@ def test_explicit_selection_requires_unambiguous_source_schema(side: str) -> Non
 def test_deduplication_uses_selected_and_filled_values(remove_duplicates: bool) -> None:
     left = pd.DataFrame({"value": [0, 0], "drop": [1, 2]})
     right = pd.DataFrame({"value": [3, 4], "drop": [5, 6]})
+    originals = (left.copy(deep=True), right.copy(deep=True))
     result = concat_dataframes(
         ConcatRequest(
             left,
@@ -216,6 +217,24 @@ def test_deduplication_uses_selected_and_filled_values(remove_duplicates: bool) 
         )
     )
     pd.testing.assert_frame_equal(result, pd.DataFrame({"value": [0] if remove_duplicates else [0, 0, 0, 0]}))
+    pd.testing.assert_frame_equal(left, originals[0])
+    pd.testing.assert_frame_equal(right, originals[1])
+
+
+@pytest.mark.parametrize("default", [0, 1])
+def test_absent_default_can_create_or_prevent_duplicate_rows(default: int) -> None:
+    left = pd.DataFrame({"id": [1, 1], "value": [0, 0]})
+    right = pd.DataFrame({"id": [1, 1]})
+    originals = (left.copy(deep=True), right.copy(deep=True))
+
+    result = concat_dataframes(
+        ConcatRequest(left, right, remove_duplicates=True, left_fill={"value": ColumnFill(default)})
+    )
+
+    expected = pd.DataFrame({"id": [1] if default == 0 else [1, 1], "value": [0] if default == 0 else [0, 1]})
+    pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_frame_equal(left, originals[0])
+    pd.testing.assert_frame_equal(right, originals[1])
 
 
 @pytest.mark.parametrize("right_dtype,right_value", [("int64", 2**62 + 3), ("float64", 1.5), ("uint64", 2**64 - 1)])

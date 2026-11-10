@@ -6,8 +6,10 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QWidget
 
+from expo_jbm329.gui.dialogs.workflows.column_fill_editor import FILL_VALUE_ROLE
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import ConcatDialog, ConcatDialogResult
 from expo_jbm329.services.data_operations.column_defaults import ColumnFill, describe_fill_column
 from expo_jbm329.services.data_operations.concat import ConcatRequest, concat_dataframes
@@ -302,6 +304,78 @@ def test_worker_validation_error_propagates_and_finished_removes_pending(control
     assert results.remove_calls == ["pending-1"]
     assert results.fulfill_calls == []
     status.assert_not_called()
+
+
+@pytest.mark.parametrize("nested", [[1], {"key": 1}])
+def test_worker_deduplication_error_propagates_and_finished_removes_pending(controller, nested: object) -> None:
+    ctrl, async_ops, results, status = controller
+    frame = pd.DataFrame({"nested": [nested, nested], "other": [1, 1]})
+    original = frame.copy(deep=True)
+    ctrl._get_df = lambda title: frame
+    ctrl._run_concat(ConcatDialogResult("left", "right", True))
+    kwargs = async_ops.last_kwargs
+
+    with pytest.raises(TypeError, match="unhashable type"):
+        kwargs["work"]()
+
+    assert kwargs["suppress_error_dialog"] is False
+    kwargs["on_finished"]()
+    assert results.remove_calls == ["pending-1"]
+    assert results.fulfill_calls == []
+    status.assert_not_called()
+    pd.testing.assert_frame_equal(frame, original)
+
+
+@pytest.mark.parametrize("remove_duplicates", [False, True])
+@pytest.mark.parametrize("project_columns", [False, True])
+def test_real_dialog_option_reaches_worker_and_preserves_inputs(
+    controller, remove_duplicates: bool, project_columns: bool
+) -> None:
+    ctrl, async_ops, results, _ = controller
+    frames = {
+        "left": pd.DataFrame({
+            "id": pd.Series([2, None, 2, None], dtype="Int64"),
+            "value": [0, 0, 0, 0],
+        }),
+        "right": pd.DataFrame({
+            "id": pd.Series([None, 1, 1, 2], dtype="Int64"),
+            "value": [0, 0, 0, 0],
+        }),
+    }
+    originals = {name: frame.copy(deep=True) for name, frame in frames.items()}
+    ctrl._get_df = frames.__getitem__
+    metadata = {column: describe_fill_column(frames["left"][column]) for column in frames["left"]}
+    dialog = ConcatDialog(
+        parent=None,
+        left_tab_title="left",
+        right_tab_titles=["right"],
+        left_columns=list(frames["left"].columns),
+        right_columns_map={"right": list(frames["right"].columns)},
+        left_column_metadata=metadata,
+        right_column_metadata={"right": metadata},
+    )
+    try:
+        dialog.exclude_duplicates.setChecked(remove_duplicates)
+        if project_columns:
+            dialog.right_columns_table.item(1, 0).setCheckState(Qt.CheckState.Unchecked)
+            dialog.left_columns_table.item(1, 2).setData(FILL_VALUE_ROLE, ColumnFill(0))
+        cfg = dialog.build_result()
+        ctrl._run_concat(cfg)
+        kwargs = async_ops.last_kwargs
+
+        result = kwargs["work"]()
+
+        ids = [2, None, 1] if remove_duplicates else [2, None, 2, None, None, 1, 1, 2]
+        expected = pd.DataFrame({"id": pd.Series(ids, dtype="Int64"), "value": [0] * len(ids)})
+        pd.testing.assert_frame_equal(result, expected)
+        kwargs["on_result"](result)
+        kwargs["on_finished"]()
+        pd.testing.assert_frame_equal(results.fulfill_calls[0][1], expected)
+        assert results.remove_calls == []
+        for name, original in originals.items():
+            pd.testing.assert_frame_equal(frames[name], original)
+    finally:
+        dialog.close()
 
 
 def test_worker_lookup_error_propagates_and_finished_cleans_pending(controller) -> None:
