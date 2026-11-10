@@ -421,8 +421,8 @@ def test_invalid_arity_kind_and_indexes_fail_explicitly() -> None:
         checked_integer_arithmetic("+", pd.Series([1], index=[0]), pd.Series([2], index=[1]), kind=NumericKind.SIGNED)
 
 
-@pytest.mark.parametrize("formula", ["[A]+[B]", "[A]+1", "1+2", "IF(TRUE; [A]; 0)", "YEAR([When])"])
-def test_step_one_does_not_change_application_output(formula: str) -> None:
+@pytest.mark.parametrize("formula", ["IF(TRUE; [A]; 0)", "YEAR([When])"])
+def test_if_merge_and_date_parts_remain_floating_until_their_migration(formula: str) -> None:
     source = pd.DataFrame({
         "A": pd.Series([1, None], dtype="Int64"),
         "B": pd.Series([2, 3], dtype="Int64"),

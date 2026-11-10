@@ -3872,72 +3872,87 @@ Weitere Informationen finden Sie in den Protokollen.</translation>
         <translation>Die Funktion '{token}' an Position {position} erfordert eine Datetime-Spalte. Konvertieren Sie Textdaten vor der Verwendung.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="106" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="101" />
+        <source>Integer overflow at position {position}. An intermediate result is outside the {dtype} range.</source>
+        <translation>Ganzzahlüberlauf an Position {position}. Ein Zwischenergebnis liegt außerhalb des Wertebereichs von {dtype}.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="104" />
+        <source>Integer value at position {position} cannot be represented as {dtype}. Check signed and unsigned operands.</source>
+        <translation>Der Ganzzahlwert an Position {position} kann nicht als {dtype} dargestellt werden. Prüfen Sie vorzeichenbehaftete und vorzeichenlose Operanden.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="107" />
+        <source>Integer arithmetic at position {position} requires integer operands. Check the source column types.</source>
+        <translation>Die Ganzzahlarithmetik an Position {position} erfordert ganzzahlige Operanden. Prüfen Sie die Datentypen der Quellspalten.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="115" />
         <source>Column name is required.</source>
         <translation>Ein Spaltenname ist erforderlich.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="107" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="116" />
         <source>Column name cannot contain '[' or ']'.</source>
         <translation>Der Spaltenname darf weder „[“ noch „]“ enthalten.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="108" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="117" />
         <source>Column '{column}' already exists.</source>
         <translation>Spalte „{column}“ ist bereits vorhanden.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="109" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="118" />
         <source>Column '{column}' is not numeric.</source>
         <translation>Spalte „{column}“ ist nicht numerisch.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="110" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="119" />
         <source>Column '{column}' is not unique.</source>
         <translation>Spalte „{column}“ ist nicht eindeutig.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="111" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="120" />
         <source>Column '{column}' does not exist.</source>
         <translation>Spalte „{column}“ ist nicht vorhanden.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="112" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="121" />
         <source>Missing operand for operator '{operator}'.</source>
         <translation>Operand für Operator „{operator}“ fehlt.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="113" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="122" />
         <source>Unsupported token '{token}' in evaluation.</source>
         <translation>Nicht unterstütztes Token „{token}“ bei der Auswertung.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="114" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="123" />
         <source>Formula did not produce a valid result.</source>
         <translation>Die Formel hat kein gültiges Ergebnis geliefert.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="115" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="124" />
         <source>Error applying operator '{operator}'.</source>
         <translation>Fehler beim Anwenden des Operators „{operator}“.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="116" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="125" />
         <source>Unsupported operator '{operator}'.</source>
         <translation>Nicht unterstützter Operator „{operator}“.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="117" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="126" />
         <source>Unsupported output type '{dtype}'.</source>
         <translation>Nicht unterstützter Ausgabetyp „{dtype}“.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="118" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="127" />
         <source>Could not convert result to '{dtype}'.</source>
         <translation>Ergebnis konnte nicht in „{dtype}“ konvertiert werden.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="119" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="128" />
         <source>Failed to evaluate formula.</source>
         <translation>Formel konnte nicht ausgewertet werden.</translation>
     </message>

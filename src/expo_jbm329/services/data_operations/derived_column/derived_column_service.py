@@ -9,7 +9,7 @@ Supported features:
     - Operators: +, -, *, /
     - Parentheses
     - Nested IF(condition; then; else), typed comparisons and Boolean logic
-    - Nullable Float64 or StringDtype output inferred from compatible branches
+    - Nullable integer arithmetic, floating calculations and StringDtype output
     - SQL-style unknown conditions select the IF else branch
     - Datetime parts and calendar/ISO groups, preserving NaT and stored timezone
     - Explicit immutable month labels, defaulting to English for service callers
@@ -40,6 +40,16 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_expressi
     ParsedFormula,
     expression_columns,
     parse_expression_formula,
+)
+from expo_jbm329.services.data_operations.derived_column.derived_column_numeric import (
+    INTEGER_OPERATIONS,
+    NumericKind,
+    checked_integer_arithmetic,
+    common_numeric_kind,
+    numeric_kind_from_dtype,
+    numeric_literal_kind,
+    parse_numeric_literal,
+    prepare_integer_operand,
 )
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import (
     DerivedColumnFormulaError,
@@ -137,7 +147,7 @@ class DerivedColumnPreview:
 
 
 # Type alias for formula evaluation stack values.
-_Operand = pd.Series | float
+_Operand = pd.Series | int | float
 
 
 # =====================================================================
@@ -255,7 +265,7 @@ def create_derived_column(
         result_series = _normalize_result_series(
             result=result,
             index=df.index,
-            output_dtype="Float64",
+            output_dtype=spec.output_dtype,
             replace_inf_with_na=spec.replace_inf_with_na,
         )
 
@@ -328,54 +338,75 @@ def evaluate_rpn(
         rpn_tokens: Formula tokens in Reverse Polish Notation.
 
     Returns:
-        A pandas Series or scalar float.
+        A pandas Series or exact numeric scalar.
 
     Raises:
         DerivedColumnError: If evaluation fails.
+        DerivedColumnFormulaError: For invalid numeric values or integer overflow.
     """
-    stack: list[_Operand] = []
+    stack: list[tuple[_Operand, NumericKind, int | None]] = []
 
     for token in rpn_tokens:
-        if token.token_type == FormulaTokenType.NUMBER:
-            stack.append(float(token.value))
-            continue
+        try:
+            kind: NumericKind | None
+            if token.token_type == FormulaTokenType.NUMBER:
+                literal = parse_numeric_literal(token.value)
+                kind = numeric_literal_kind(literal)
+                if isinstance(literal, int):
+                    checked_integer_arithmetic("positive", literal, kind=kind)
+                stack.append((literal, kind, literal if isinstance(literal, int) else None))
+                continue
 
-        if token.token_type == FormulaTokenType.COLUMN:
-            stack.append(_numeric_series(df, token.value))
-            continue
+            if token.token_type == FormulaTokenType.COLUMN:
+                series = _numeric_series(df, token.value)
+                kind = numeric_kind_from_dtype(series.dtype)
+                if kind is None:
+                    code = "non_numeric_column"
+                    raise DerivedColumnError(code, context={"column": token.value})
+                if kind != NumericKind.FLOAT:
+                    series = prepare_integer_operand(series, kind)
+                stack.append((series, kind, None))
+                continue
 
-        if token.token_type == FormulaTokenType.OPERATOR:
-            if len(stack) < BINARY_OPERATOR_OPERAND_COUNT:
-                msg = "missing_operand_runtime"
-                raise DerivedColumnError(
-                    msg,
-                    context={"operator": token.value},
+            if token.token_type == FormulaTokenType.OPERATOR:
+                if len(stack) < BINARY_OPERATOR_OPERAND_COUNT:
+                    msg = "missing_operand_runtime"
+                    raise DerivedColumnError(msg, context={"operator": token.value})
+                right, right_kind, right_literal = stack.pop()
+                left, left_kind, left_literal = stack.pop()
+                kind = (
+                    NumericKind.FLOAT
+                    if token.value == "/"
+                    else common_numeric_kind(
+                        left_kind, right_kind, left_literal=left_literal, right_literal=right_literal
+                    )
                 )
-
-            right = stack.pop()
-            left = stack.pop()
-
-            stack.append(
-                _apply_operator(
+                if kind is None:
+                    code = "invalid_evaluation_result"
+                    raise DerivedColumnError(code)
+                result = _apply_operator(
                     left=left,
                     right=right,
                     operator=token.value,
                     index=df.index,
+                    kind=kind,
                 )
-            )
-            continue
+                stack.append((result, kind, None))
+                continue
 
-        msg = "unsupported_token_runtime"
-        raise DerivedColumnError(
-            msg,
-            context={"token": token.value},
-        )
+            msg = "unsupported_token_runtime"
+            raise DerivedColumnError(msg, context={"token": token.value})
+        except DerivedColumnFormulaError as error:
+            raise DerivedColumnFormulaError(
+                error.code,
+                context={**error.context, "position": token.position, "end": token.position + len(token.value)},
+            ) from error
 
     if len(stack) != 1:
         msg = "invalid_evaluation_result"
         raise DerivedColumnError(msg)
 
-    return stack[0]
+    return stack[0][0]
 
 
 # =====================================================================
@@ -384,7 +415,7 @@ def evaluate_rpn(
 
 
 def _compile_formula(df: pd.DataFrame, spec: DerivedColumnSpec) -> ParsedFormula | list[FormulaToken]:
-    """Keep legacy numeric evaluation stable and compile expanded syntax once."""
+    """Keep both existing grammars and compile expanded syntax once."""
     if spec.output_dtype not in {"auto", "Float64"}:
         code = "unsupported_output_dtype"
         raise DerivedColumnError(code, context={"dtype": spec.output_dtype})
@@ -513,6 +544,7 @@ def _apply_operator(
     right: _Operand,
     operator: str,
     index: pd.Index,
+    kind: NumericKind,
 ) -> _Operand:
     """Apply a binary arithmetic operator.
 
@@ -521,6 +553,7 @@ def _apply_operator(
         right: Right operand.
         operator: Operator string.
         index: DataFrame index used when scalar operations need expansion.
+        kind: Inferred numeric result kind, including literal promotion.
 
     Returns:
         A Series or scalar result.
@@ -528,6 +561,11 @@ def _apply_operator(
     Raises:
         DerivedColumnError: If the operator is unsupported.
     """
+    if kind != NumericKind.FLOAT and operator in {"+", "-", "*"}:
+        if isinstance(left, float) or isinstance(right, float):
+            code = "integer_operand_required"
+            raise DerivedColumnFormulaError(code)
+        return checked_integer_arithmetic(INTEGER_OPERATIONS[operator], left, right, kind=kind)
     try:
         if operator == "+":
             return left + right
@@ -541,6 +579,8 @@ def _apply_operator(
         if operator == "/":
             return _safe_divide(left=left, right=right, index=index)
 
+    except DerivedColumnFormulaError:
+        raise
     except (
         AttributeError,
         ConnectionError,
@@ -606,7 +646,7 @@ def _normalize_result_series(
     *,
     result: _Operand,
     index: pd.Index,
-    output_dtype: Literal["Float64"],
+    output_dtype: Literal["auto", "Float64"],
     replace_inf_with_na: bool,
 ) -> pd.Series:
     """Normalize formula result to a nullable numeric Series.
@@ -623,20 +663,27 @@ def _normalize_result_series(
     Raises:
         DerivedColumnError: If the result cannot be normalized.
     """
-    series = result.copy() if isinstance(result, pd.Series) else pd.Series(result, index=index)
+    if isinstance(result, pd.Series):
+        series = result
+    elif isinstance(result, int):
+        series = pd.Series(result, index=index, dtype=numeric_literal_kind(result).value)
+    else:
+        series = pd.Series(result, index=index, dtype="Float64")
 
     if not series.index.equals(index):
         series = series.reindex(index)
 
-    numeric_raw = pd.to_numeric(series, errors="coerce")
+    if output_dtype == "auto" and pd.api.types.is_integer_dtype(series.dtype):
+        kind = numeric_kind_from_dtype(series.dtype)
+        if kind is not None:
+            return prepare_integer_operand(series, kind)
 
-    numeric = numeric_raw
-
-    if replace_inf_with_na:
+    numeric = series
+    if replace_inf_with_na and not pd.api.types.is_integer_dtype(numeric.dtype):
         numeric = _replace_infinite_with_na(numeric)
 
     try:
-        if output_dtype == "Float64":
+        if output_dtype in {"auto", "Float64"}:
             return to_nullable_float_series(numeric, errors="coerce")
 
         msg = "unsupported_output_dtype"

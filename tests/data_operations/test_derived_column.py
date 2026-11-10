@@ -136,7 +136,7 @@ def test_create_derived_column_addition(numeric_df: pd.DataFrame) -> None:
     result = create_derived_column(numeric_df, spec)
 
     assert list(result.columns) == ["A", "B", "C", "Result"]
-    assert_series_equal(result["Result"], pd.Series([12.0, 24.0, 35.0], name="Result", dtype="Float64"))
+    assert_series_equal(result["Result"], pd.Series([12, 24, 35], name="Result", dtype="Int64"))
 
 
 @pytest.mark.parametrize("insertion_index", [0, 1, 2, 3, 4])
@@ -144,7 +144,7 @@ def test_create_derived_column_addition(numeric_df: pd.DataFrame) -> None:
 @pytest.mark.parametrize(
     ("formula", "source_column", "output_dtype"),
     [
-        ("[int_col] + 1", "int_col", "Float64"),
+        ("[int_col] + 1", "int_col", "Int64"),
         ("IF(TRUE; [string_col]; 'Other')", "string_col", "string"),
     ],
 )
@@ -205,7 +205,7 @@ def test_create_derived_column_overwrites_when_allowed(
     result = create_derived_column(numeric_df, spec, insertion_index=insertion_index)
 
     assert list(result.columns) == list(original.columns)
-    assert_series_equal(result["A"], pd.Series([12.0, 24.0, 35.0], name="A", dtype="Float64"))
+    assert_series_equal(result["A"], pd.Series([12, 24, 35], name="A", dtype="Int64"))
     assert_frame_equal(result.loc[:, ["B", "C"]], original.loc[:, ["B", "C"]])
     assert_frame_equal(numeric_df, original)
 

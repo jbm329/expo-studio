@@ -111,6 +111,33 @@ to control the order:
 | `[Price] + 2 * 3` | 16 |
 | `([Price] + 2) * 3` | 36 |
 
+### Numeric result types
+
+Adding, subtracting or multiplying integer columns and integer literals produces
+a nullable integer column, so missing values do not force floating-point output.
+For example, `[Quantity] + 1` stays integer when **Quantity** is an integer
+column. Narrow integers are widened before calculation.
+
+A floating-point operand or literal, such as `1.0` or `1e0`, produces a
+floating-point result. Division always produces a floating-point result, even
+when the current rows divide evenly. Floating-point columns are not converted
+to integers just because their current values are whole numbers.
+
+Integer-only intermediate results must fit their supported 64-bit range.
+If an operation overflows, the formula fails with an error instead of wrapping
+or silently converting to floating point. This also applies when a later
+operation would bring the final mathematical result back into range.
+
+Unsigned 64-bit calculations with compatible nonnegative integer literals keep
+unsigned output. Mixing signed columns with unsigned 64-bit values, or negating
+unsigned values, requires the operands to fit signed 64-bit storage first.
+Otherwise the formula reports a range error, even if cancellation could make
+the final result fit.
+
+Currently, numeric `IF` results and numeric date-part functions still return
+floating-point columns. This also applies to arithmetic using those results.
+Integer preservation for these results is a separate follow-up.
+
 ## Conditional results with IF {#conditional-results-with-if}
 
 Use `IF` to choose between two results for each row:

@@ -227,6 +227,9 @@ def test_worker_returns_formula_failure_for_localized_presentation(controller):
         "non_text_column",
         "expression_evaluation_failed",
         "datetime_operand_required",
+        "integer_overflow",
+        "integer_out_of_range",
+        "integer_operand_required",
     ],
 )
 def test_every_new_error_has_translatable_actionable_message(controller, code, widget_language):
@@ -239,6 +242,7 @@ def test_every_new_error_has_translatable_actionable_message(controller, code, w
             "token": "bad",
             "limit": 64,
             "column": "Age",
+            "dtype": "Int64",
         },
     )
     message = ctrl._format_error(error)
@@ -292,6 +296,9 @@ def test_new_errors_are_present_in_compiled_locales_with_matching_placeholders(l
         "TR_NON_TEXT_COLUMN",
         "TR_EXPRESSION_EVALUATION_FAILED",
         "TR_DATETIME_OPERAND_REQUIRED",
+        "TR_INTEGER_OVERFLOW",
+        "TR_INTEGER_OUT_OF_RANGE",
+        "TR_INTEGER_OPERAND_REQUIRED",
     ]
     for marker in markers:
         source = getattr(DerivedColumnController, marker)
@@ -300,6 +307,48 @@ def test_new_errors_are_present_in_compiled_locales_with_matching_placeholders(l
         assert {field for _, field, _, _ in Formatter().parse(source) if field} == {
             field for _, field, _, _ in Formatter().parse(translated) if field
         }
+
+
+@pytest.mark.parametrize(
+    ("formula", "code", "dtype"),
+    [
+        ("[Age]+1", "integer_overflow", "Int64"),
+        ("IF(TRUE; [Age]+1; 0)", "integer_overflow", "Int64"),
+        ("[Unsigned]+[Age]", "integer_out_of_range", "Int64"),
+    ],
+)
+def test_integer_errors_use_injected_dialog_service(
+    controller: tuple[DerivedColumnController, DummyAsyncOps, DummyDialogService, MagicMock, pd.DataFrame, QTableView],
+    formula: str,
+    code: str,
+    dtype: str,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ctrl, async_ops, dialogs, apply, _, view = controller
+    source = pd.DataFrame({
+        "Age": pd.Series([2**63 - 1], dtype="Int64"),
+        "Unsigned": pd.Series([2**64 - 1], dtype="UInt64"),
+    })
+    factory = MagicMock()
+    factory.return_value.exec.return_value = QDialog.DialogCode.Accepted
+    factory.return_value.get_result.return_value = DerivedColumnSpec("Result", formula)
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.derived_column_controller.DerivedColumnDialog", factory)
+    ctrl.create_derived_column(view, source, 0)
+    operation = async_ops.last_kwargs
+    result = operation["work"]()
+    assert result[:2] == (False, None)
+    error = result[2]
+    assert isinstance(error, DerivedColumnFormulaError)
+    assert error.code == code
+    assert error.context["dtype"] == dtype
+    operation["apply_result"](result)
+    apply.assert_not_called()
+    assert len(dialogs.critical_calls) == 1
+    message = dialogs.critical_calls[0][2]
+    assert dtype in message
+    assert "{" not in message and "}" not in message
+    assert code in caplog.text
 
 
 @pytest.mark.parametrize("column", [-1, 1])

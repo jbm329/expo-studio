@@ -15,6 +15,13 @@ if TYPE_CHECKING:
     from numpy.typing import NDArray
 
 IntegerOperation = Literal["+", "-", "*", "positive", "negative"]
+INTEGER_OPERATIONS: dict[str, IntegerOperation] = {
+    "+": "+",
+    "-": "-",
+    "*": "*",
+    "positive": "positive",
+    "negative": "negative",
+}
 _INT64_MIN = -(2**63)
 _INT64_MAX = 2**63 - 1
 _UINT64_MAX = 2**64 - 1

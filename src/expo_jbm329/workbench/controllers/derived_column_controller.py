@@ -98,6 +98,15 @@ class DerivedColumnController:
     TR_DATETIME_OPERAND_REQUIRED = QT_TR_NOOP(
         "Function '{token}' at position {position} requires a datetime column. Convert text dates before using it."
     )
+    TR_INTEGER_OVERFLOW = QT_TR_NOOP(
+        "Integer overflow at position {position}. An intermediate result is outside the {dtype} range."
+    )
+    TR_INTEGER_OUT_OF_RANGE = QT_TR_NOOP(
+        "Integer value at position {position} cannot be represented as {dtype}. Check signed and unsigned operands."
+    )
+    TR_INTEGER_OPERAND_REQUIRED = QT_TR_NOOP(
+        "Integer arithmetic at position {position} requires integer operands. Check the source column types."
+    )
 
     # ---------------------------
     # Service / runtime errors
@@ -370,6 +379,9 @@ class DerivedColumnController:
         ctx = getattr(exc, "context", {})
 
         expression_errors = {
+            "integer_overflow": self.TR_INTEGER_OVERFLOW,
+            "integer_out_of_range": self.TR_INTEGER_OUT_OF_RANGE,
+            "integer_operand_required": self.TR_INTEGER_OPERAND_REQUIRED,
             "datetime_operand_required": self.TR_DATETIME_OPERAND_REQUIRED,
             "unclosed_string_literal": self.TR_UNCLOSED_STRING,
             "invalid_number_literal": self.TR_INVALID_NUMBER,
@@ -394,6 +406,7 @@ class DerivedColumnController:
                 token=str(ctx.get("token", "")),
                 limit=str(ctx.get("limit", "")),
                 column=str(ctx.get("column", "")),
+                dtype=str(ctx.get("dtype", "")),
             )
 
         # ---------------------------
