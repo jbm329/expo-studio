@@ -50,14 +50,17 @@ To append the jazz rows to the rock dataset:
    a default in **If absent**. It applies to rows from the other dataset only.
    Below the table, you can also use **Numeric columns** or **Text columns**
    and **Set defaults…** to apply one value to all eligible columns of that type.
-6. Select **OK** to create the concatenated result. At least one column must
+6. Optionally check **Exclude duplicate rows** to keep only the first occurrence
+   of each identical output row across both datasets. It starts unchecked.
+7. Select **OK** to create the concatenated result. At least one column must
    remain checked across the two panels.
 
 ![Concatenate datasets dialog showing column inclusion checkboxes, types,
 If absent defaults, and controls below each column table](../assets/transform-data/concatenate.png)
 
 The result is a new tab named **Concatenated data**. The first dataset's rows
-come first, followed by the second dataset's rows:
+come first, followed by the second dataset's rows. With duplicate exclusion
+unchecked, the example produces:
 
 | Artist | Track | Album | Label |
 |---|---|---|---|
@@ -178,12 +181,43 @@ Quantity remains `Int64`. Leaving the default as NULL would instead produce
 it there, its source values are excluded and the first panel's default applies
 to those rows in exactly the same way.
 
+## Exclude duplicate rows {#exclude-duplicate-rows}
+
+Check **Exclude duplicate rows** to remove duplicates throughout the combined
+result, including duplicates already present within either input dataset.
+The first occurrence is kept, preserving the order of retained rows. Source
+indexes are not compared, and neither input dataset is modified.
+
+Rows are duplicates when all their final output values match under pandas'
+equality rules. Comparison happens after column selection, absent-column
+defaults and type reconciliation. Matching missing values can count as
+duplicates. For example, excluding a column that previously distinguished two
+rows can make them duplicates. A default for an absent column can also create
+or prevent a match. Values are not trimmed, case-normalized or converted to
+text for comparison.
+
+The checkbox stays checked when you choose a different second dataset within
+the dialog. Opening a new Concatenate dialog starts with it unchecked again.
+
+Some data, such as multi-column datasets containing list or dictionary cells,
+cannot be deduplicated by pandas. If duplicate removal fails, the operation
+reports an error and does not create a completed result. It does not silently
+retain duplicates or convert nested values to text. Leave the option unchecked
+to concatenate without duplicate removal.
+
 ## Performance, memory and exports {#performance-and-exports}
 
 Concatenation runs in the background, but constructing the combined dataset
 still takes time and memory. Nullable preparation and typed absent segments
 add work, especially with many one-sided columns. Identical column layouts
 without defaults retain the existing pandas concatenation path.
+
+Duplicate exclusion adds work proportional to the data being compared and
+requires extra temporary memory. The full combined dataset is constructed
+before duplicates are removed, even when the final result is much smaller.
+Wide datasets and long text values can increase the cost. The operation runs
+in the existing background job, but cancellation is checked before and after
+the service call, not inside pandas' concatenation or duplicate-removal work.
 
 A nullable integer's missing-value mask adds about one byte per output value:
 `int64` uses 8 bytes per value, while `Int64` uses about 9 bytes including its
@@ -210,11 +244,13 @@ must survive export and reloading.
 
 ## What Concatenate does {#concatenate-behavior}
 
-- Every row from both datasets is retained, including duplicate rows.
-- Rows from the first dataset precede rows from the second dataset.
+- By default, every row from both datasets is retained, including duplicates.
+  **Exclude duplicate rows** keeps only the first occurrence of each identical
+  final output row throughout the combined result.
+- Retained rows from the first dataset precede retained rows from the second.
 - Columns are matched by name; the dialog does not let you map, rename or
   reorder columns.
-- The dialog does not provide a preview or an option to remove duplicates.
+- The dialog does not provide a preview.
 - The input datasets are unchanged. The combined data is created in a new
   result tab.
 
@@ -231,7 +267,8 @@ must survive export and reloading.
 | An **If absent** cell is disabled | Include the column on only one side and check that its type supports defaults. Shared selected columns and unsupported types have no editable default. |
 | A custom default is rejected | Check the numeric range, decimal separator, and datetime timezone or resolution. A non-NULL object default requires text-only source values. |
 | A source NULL remains after setting a default | Defaults fill absent-column segments only; existing NULLs in included source columns are unchanged. |
-| Duplicate rows remain | Concatenate preserves all input rows. Remove duplicates in a separate preparation step if needed. |
+| Duplicate rows remain | Check **Exclude duplicate rows**. All final output columns must match, not just selected key values. |
+| Duplicate exclusion reports an unhashable-value error | Pandas cannot deduplicate some values, such as lists or dictionaries in multi-column data. Leave the option unchecked to concatenate without duplicate removal. |
 | Rows appear in an unexpected order | The active dataset is first, and its rows precede the rows from the selected second dataset. |
 
 For calculated columns, summaries or matching records, see

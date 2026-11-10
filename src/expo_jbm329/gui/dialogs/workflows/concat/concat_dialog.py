@@ -62,7 +62,7 @@ class ConcatDialogResult:
     Attributes:
         left_tab_title: The title of the base dataset tab.
         right_tab_title: The title of the dataset tab to append.
-        remove_duplicates: Whether to remove duplicate rows (reserved for future).
+        remove_duplicates: Whether to remove duplicate rows throughout the result.
         left_fill: Defaults for columns selected only in the first dataset.
         right_fill: Defaults for columns selected only in the second dataset.
         left_columns: Included first-dataset columns, or None for all.
@@ -87,6 +87,7 @@ class ConcatDialog(QDialog):
     Attributes:
         cb_left_dataset: Dropdown for the left dataset.
         cb_right_dataset: Dropdown for the right dataset.
+        exclude_duplicates: Optional whole-result duplicate-row removal.
         left_columns_table: Checkable column/type table for the first dataset.
         right_columns_table: Checkable column/type table for the second dataset.
         left_select_all: Inclusion control for all first-dataset columns.
@@ -215,6 +216,15 @@ class ConcatDialog(QDialog):
         )
         selection_hint.setWordWrap(True)
         root.addWidget(selection_hint)
+
+        self.exclude_duplicates = QCheckBox(self.tr("Exclude duplicate rows"), self)
+        self.exclude_duplicates.setToolTip(
+            self.tr(
+                "Remove duplicate rows throughout the combined result, keeping the first occurrence. "
+                "Compare all output columns after column selection and defaults."
+            )
+        )
+        root.addWidget(self.exclude_duplicates)
 
         # ======================================================
         # BUTTONS
@@ -516,7 +526,7 @@ class ConcatDialog(QDialog):
         return ConcatDialogResult(
             left_tab_title=self.cb_left_dataset.currentText(),
             right_tab_title=self.cb_right_dataset.currentText(),
-            remove_duplicates=False,  # MVP, will expand later
+            remove_duplicates=self.exclude_duplicates.isChecked(),
             left_columns=self._selected_columns(self.left_columns_table),
             right_columns=self._selected_columns(self.right_columns_table),
             left_fill=self._get_fills(self.left_columns_table, self.right_columns_table),
