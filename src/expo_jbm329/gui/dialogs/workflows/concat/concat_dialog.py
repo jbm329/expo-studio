@@ -163,9 +163,12 @@ class ConcatDialog(QDialog):
 
         left_layout.addRow(self.tr("Dataset:"), self.cb_left_dataset)
         left_layout.addRow(QLabel(self.tr("Columns:")))
-        left_layout.addRow(self.left_select_all)
-        left_layout.addRow(self.left_bulk_kind, self.left_bulk_button)
         left_layout.addRow(self.left_columns_table)
+        left_layout.addRow(self.left_select_all)
+        left_bulk_row = QHBoxLayout()
+        left_bulk_row.addWidget(self.left_bulk_kind)
+        left_bulk_row.addWidget(self.left_bulk_button)
+        left_layout.addRow(left_bulk_row)
 
         # ======================================================
         # RIGHT PANEL
@@ -189,9 +192,12 @@ class ConcatDialog(QDialog):
 
         right_layout.addRow(self.tr("Dataset:"), self.cb_right_dataset)
         right_layout.addRow(QLabel(self.tr("Columns:")))
-        right_layout.addRow(self.right_select_all)
-        right_layout.addRow(self.right_bulk_kind, self.right_bulk_button)
         right_layout.addRow(self.right_columns_table)
+        right_layout.addRow(self.right_select_all)
+        right_bulk_row = QHBoxLayout()
+        right_bulk_row.addWidget(self.right_bulk_kind)
+        right_bulk_row.addWidget(self.right_bulk_button)
+        right_layout.addRow(right_bulk_row)
 
         # ======================================================
         # Grid Left + Right

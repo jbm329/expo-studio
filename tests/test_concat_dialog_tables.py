@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt, QTranslator
 from PyQt6.QtTest import QTest
-from PyQt6.QtWidgets import QDialog, QHeaderView, QStyle, QStyleOptionViewItem, QTableWidget
+from PyQt6.QtWidgets import QDialog, QFormLayout, QHeaderView, QStyle, QStyleOptionViewItem, QTableWidget
 
 from expo_jbm329.gui.dialogs.workflows.concat.concat_dialog import ConcatDialog, ConcatDialogResult
 from expo_jbm329.services.data_operations.column_defaults import describe_fill_column
@@ -75,6 +75,33 @@ def test_concat_tables_preserve_order_types_and_dataset_switch(qt_app) -> None:
         dialog.resize(dialog.width() + 200, dialog.height() + 100)
         qt_app.processEvents()
         assert dialog.left_columns_table.width() > initial_width
+    finally:
+        dialog.close()
+
+
+def test_column_controls_are_below_the_table_like_join(qt_app) -> None:
+    dialog = ConcatDialog(
+        parent=None,
+        left_tab_title="first",
+        right_tab_titles=["second"],
+        left_columns=["left_only"],
+        right_columns_map={"second": ["right_only"]},
+    )
+    try:
+        for side in ("left", "right"):
+            table = getattr(dialog, f"{side}_columns_table")
+            select_all = getattr(dialog, f"{side}_select_all")
+            bulk_kind = getattr(dialog, f"{side}_bulk_kind")
+            bulk_button = getattr(dialog, f"{side}_bulk_button")
+            layout = table.parentWidget().layout()
+            assert isinstance(layout, QFormLayout)
+            table_row, _ = layout.getWidgetPosition(table)
+            select_all_row, _ = layout.getWidgetPosition(select_all)
+            assert table_row < select_all_row
+            bulk_row = layout.itemAt(select_all_row + 1, QFormLayout.ItemRole.FieldRole).layout()
+            assert bulk_row is not None
+            assert bulk_row.itemAt(0).widget() is bulk_kind
+            assert bulk_row.itemAt(1).widget() is bulk_button
     finally:
         dialog.close()
 
