@@ -522,14 +522,17 @@ class ResultTabManager:
 
         view: QTableView = widget
 
-        self._run_with_busy_overlay(
-            view,
-            lambda: self._apply_new_dataframe_to_view(
+        def _apply_data() -> None:
+            self._apply_new_dataframe_to_view(
                 view,
                 df,
                 invalidate_cache=invalidate_cache,
                 status=status,
-            ),
+            )
+
+        self._run_with_busy_overlay(
+            view,
+            _apply_data,
             message=message or self._tr(self.TR_UPDATING_TABLE),
         )
 
@@ -1988,7 +1991,7 @@ class ResultTabManager:
         invalidate_cache: bool = True,
         status: str | None = None,
         push_undo: bool = True,
-    ) -> None:
+    ) -> bool:
         """Replace the DataFrame in an existing result tab view.
 
         Args:
@@ -1997,6 +2000,10 @@ class ResultTabManager:
             invalidate_cache: Whether to invalidate the column profile cache.
             status: Optional status message to display after success.
             push_undo: Whether to push the previous DataFrame onto the undo stack.
+
+        Returns:
+            True if the DataFrame was applied, otherwise False. Handled update
+            errors are reported through the dialog service.
         """
         self._logger.debug(
             "ResultTabManager: applying new DataFrame to view (rows=%s, cols=%s, invalidate_cache=%s, push_undo=%s).",
@@ -2009,7 +2016,7 @@ class ResultTabManager:
         model = view.model()
         if not isinstance(model, DataFrameModel):
             self._logger.warning("ResultTabManager: apply ignored because view model was not a DataFrameModel.")
-            return
+            return False
 
         record = self._get_tab_record_for_view(view)
         tab_id = record.tab_id if record is not None else None
@@ -2093,7 +2100,7 @@ class ResultTabManager:
                 title=self._tr(self.TR_FAILURE),
                 text=self._tr_fmt(self.TR_COULD_NOT_UPDATE_DATA, error=str(e)),
             )
-            return
+            return False
 
         # Update internal record/state.
         if record is not None:
@@ -2122,6 +2129,7 @@ class ResultTabManager:
         self._notify_undo_state_changed()
         self._emit_toolbar_data_state()
         self._emit_toolbar_multi_dataset_state()
+        return True
 
     def _create_dataframe_model(
         self,
