@@ -13,6 +13,7 @@ from expo_jbm329.services.data_operations.column_defaults import (
     prepare_nullable_columns,
     validate_fill,
 )
+from expo_jbm329.services.data_operations.duplicates import remove_duplicate_rows
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -134,6 +135,8 @@ def concat_dataframes(req: ConcatRequest) -> pd.DataFrame:
         The concatenated dataframe.
 
     Raises:
+        TypeError: If duplicate removal is requested and pandas cannot
+            deduplicate the supplied values.
         ValueError: If selections or defaults are invalid, no output columns
             remain, or column-specific preparation is ambiguous because of
             duplicate column names.
@@ -165,7 +168,6 @@ def concat_dataframes(req: ConcatRequest) -> pd.DataFrame:
 
     # --- Optional deduplicate ---
     if req.remove_duplicates:
-        # Pandas drop_duplicates keeps first occurrence, similar to SQL UNION
-        result = result.drop_duplicates(ignore_index=True)
+        result = remove_duplicate_rows(result)
 
     return result

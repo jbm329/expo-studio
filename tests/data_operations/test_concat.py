@@ -39,6 +39,21 @@ def test_concat_dataframes_with_duplicates():
     assert list(result_union["id"]) == [1, 2, 3]
 
 
+@pytest.mark.parametrize("nested", [[1], {"key": 1}])
+def test_concat_propagates_deduplication_errors_only_when_requested(nested: object) -> None:
+    left = pd.DataFrame({"nested": [nested], "other": [1]})
+    right = left.copy(deep=True)
+    originals = (left.copy(deep=True), right.copy(deep=True))
+
+    result = concat_dataframes(ConcatRequest(left, right))
+    pd.testing.assert_frame_equal(result, pd.concat([left, right], ignore_index=True))
+    with pytest.raises(TypeError, match="unhashable type"):
+        concat_dataframes(ConcatRequest(left, right, remove_duplicates=True))
+
+    pd.testing.assert_frame_equal(left, originals[0])
+    pd.testing.assert_frame_equal(right, originals[1])
+
+
 def test_concat_dataframes_different_columns():
     """Test concatenation of dataframes with different columns."""
     df1 = pd.DataFrame({"id": [1], "name": ["Alice"]})
