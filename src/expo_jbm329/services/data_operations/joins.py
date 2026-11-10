@@ -2,45 +2,61 @@
 
 from __future__ import annotations
 
-import math
-import re
 from dataclasses import dataclass, field
-from datetime import datetime
-from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 from pandas import CategoricalDtype
 from pandas.api.types import (
-    is_bool_dtype,
-    is_datetime64_any_dtype,
-    is_float_dtype,
-    is_integer_dtype,
     is_numeric_dtype,
-    is_object_dtype,
     is_string_dtype,
+)
+
+from expo_jbm329.services.data_operations.column_defaults import (
+    ColumnFill as UnmatchedFill,
+)
+from expo_jbm329.services.data_operations.column_defaults import (
+    FillColumn as JoinFillColumn,
+)
+from expo_jbm329.services.data_operations.column_defaults import (
+    FillKind as JoinFillKind,
+)
+from expo_jbm329.services.data_operations.column_defaults import (
+    FillValue as JoinFillValue,
+)
+from expo_jbm329.services.data_operations.column_defaults import (
+    describe_fill_column as describe_join_fill_column,
+)
+from expo_jbm329.services.data_operations.column_defaults import (
+    parse_fill,
+    prepare_nullable_columns,
+    validate_fill,
+    validate_fill_column,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-JoinHow = Literal["inner", "left", "right", "outer"]
-JoinFillValue = int | float | bool | str | datetime | pd.Timestamp | None
-JoinFillKind = Literal["integer", "float", "boolean", "text", "datetime", "unsupported"]
+__all__ = [
+    "JoinFillColumn",
+    "JoinFillKind",
+    "JoinFillValue",
+    "JoinHow",
+    "JoinMetadata",
+    "JoinRequest",
+    "UnmatchedFill",
+    "concat_columns",
+    "concat_rows",
+    "describe_join_fill_column",
+    "detect_join_keys",
+    "join_dataframes",
+    "parse_join_fill",
+    "validate_join_fill",
+    "validate_join_fill_column",
+]
 
-_NULLABLE_INTEGER_DTYPES: dict[
-    str, Literal["Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"]
-] = {
-    "int8": "Int8",
-    "int16": "Int16",
-    "int32": "Int32",
-    "int64": "Int64",
-    "uint8": "UInt8",
-    "uint16": "UInt16",
-    "uint32": "UInt32",
-    "uint64": "UInt64",
-}
+JoinHow = Literal["inner", "left", "right", "outer"]
 
 
 @dataclass(slots=True)
@@ -52,49 +68,6 @@ class JoinMetadata:
     right_only: float
     cardinality: str
     estimated_rows: int
-
-
-@dataclass(frozen=True, slots=True)
-class UnmatchedFill:
-    """Default for a missing source row, with None representing NULL."""
-
-    value: JoinFillValue = None
-
-
-@dataclass(frozen=True, slots=True)
-class JoinFillColumn:
-    """Row-independent metadata for editing a column's unmatched-row default.
-
-    Object columns offer text input; full source-content validation remains in
-    the join worker, avoiding dataframe scans while opening or editing the dialog.
-    """
-
-    name: str
-    dtype: str
-    kind: JoinFillKind
-
-
-def describe_join_fill_column(series: pd.Series) -> JoinFillColumn:
-    """Describe available editors from the dtype without scanning source values."""
-    dtype = series.dtype
-    kind: JoinFillKind
-    if isinstance(dtype, CategoricalDtype):
-        kind = "text"
-    elif isinstance(dtype, pd.SparseDtype):
-        kind = "unsupported"
-    elif is_bool_dtype(dtype):
-        kind = "boolean"
-    elif is_integer_dtype(dtype):
-        kind = "integer"
-    elif is_float_dtype(dtype):
-        kind = "float"
-    elif is_datetime64_any_dtype(dtype) and (isinstance(dtype, (np.dtype, pd.DatetimeTZDtype))):
-        kind = "datetime"
-    elif is_object_dtype(dtype) or is_string_dtype(dtype):
-        kind = "text"
-    else:
-        kind = "unsupported"
-    return JoinFillColumn(str(series.name), str(dtype), kind)
 
 
 def parse_join_fill(
@@ -116,39 +89,20 @@ def parse_join_fill(
     Raises:
         ValueError: If input is invalid or the dtype supports NULL only.
     """
-    value: JoinFillValue
-    message = f"Invalid unmatched-row default for column {column.name!r} ({column.dtype})."
-    match column.kind:
-        case "integer":
-            if re.fullmatch(r"[+-]?[0-9]+", text.strip()) is None:
-                raise ValueError(message)
-            value = int(text)
-        case "float":
-            if decimal_point != "." and "." in text:
-                raise ValueError(message)
-            numeric_text = text.strip().replace(decimal_point, ".")
-            if re.fullmatch(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?", numeric_text) is None:
-                raise ValueError(message)
-            value = float(numeric_text)
-            try:
-                exact = Decimal(numeric_text)
-            except InvalidOperation as error:
-                raise ValueError(message) from error
-            if value == 0.0 and exact != 0:
-                raise ValueError(message)
-        case "text":
-            value = text
-        case "datetime":
-            value = text.strip()
-        case _:
-            raise ValueError(message)
-    return validate_join_fill_column(column, UnmatchedFill(value))
+    try:
+        return parse_fill(column, text, decimal_point=decimal_point)
+    except ValueError as error:
+        message = f"Invalid unmatched-row default for column {column.name!r} ({column.dtype})."
+        raise ValueError(message) from error
 
 
 def validate_join_fill_column(column: JoinFillColumn, fill: UnmatchedFill) -> UnmatchedFill:
     """Validate scalar input from editor metadata without scanning source data."""
-    schema = pd.Series([], name=column.name, dtype=column.dtype)
-    return UnmatchedFill(validate_join_fill(schema, fill))
+    try:
+        return validate_fill_column(column, fill)
+    except ValueError as error:
+        message = f"Invalid unmatched-row default for column {column.name!r} ({column.dtype})."
+        raise ValueError(message) from error
 
 
 @dataclass(frozen=True)
@@ -182,34 +136,6 @@ class JoinRequest:
     right_fill: Mapping[str, UnmatchedFill] = field(default_factory=dict)
 
 
-def _normalize_datetime_fill(series: pd.Series, timestamp: pd.Timestamp) -> pd.Timestamp:
-    """Reject missing, ambiguous and precision-losing datetime defaults."""
-    dtype = series.dtype
-    message = f"Invalid unmatched-row default for column {series.name!r} ({dtype})."
-    if pd.isna(timestamp):
-        raise ValueError(message)
-    resolution: str
-    if isinstance(dtype, pd.DatetimeTZDtype):
-        localized = (
-            timestamp.tz_localize(dtype.tz, ambiguous="NaT", nonexistent="NaT")
-            if timestamp.tz is None
-            else timestamp.tz_convert(dtype.tz)
-        )
-        if not isinstance(localized, pd.Timestamp):
-            raise TypeError(message)
-        timestamp = localized
-        resolution = dtype.unit
-    else:
-        if timestamp.tz is not None:
-            raise ValueError(message)
-        resolution = np.datetime_data(str(dtype))[0]
-    match resolution:
-        case "s" | "ms" | "us" | "ns" as unit:
-            return timestamp.as_unit(unit, round_ok=False)
-        case _:
-            raise ValueError(message)
-
-
 def validate_join_fill(series: pd.Series, fill: UnmatchedFill) -> JoinFillValue:
     """Validate and normalize an unmatched-row default for a source column.
 
@@ -223,56 +149,11 @@ def validate_join_fill(series: pd.Series, fill: UnmatchedFill) -> JoinFillValue:
     Raises:
         ValueError: If the default is incompatible, out of range, or loses precision.
     """
-    value = fill.value
-    if value is None:
-        return None
-    dtype = series.dtype
-    message = f"Invalid unmatched-row default for column {series.name!r} ({dtype})."
-    if isinstance(dtype, CategoricalDtype) or is_object_dtype(dtype) or is_string_dtype(dtype):
-        if not isinstance(value, str):
-            raise ValueError(message)
-        if is_object_dtype(dtype) and not all(isinstance(item, str) for item in series.dropna()):
-            raise ValueError(message)
-        return value
-    if is_bool_dtype(dtype):
-        if not isinstance(value, bool):
-            raise ValueError(message)
-        return value
-    if is_integer_dtype(dtype):
-        if not isinstance(value, int) or isinstance(value, bool):
-            raise ValueError(message)
-        bounds = np.iinfo(np.dtype(str(dtype).lower().replace("[pyarrow]", "")))
-        if not int(bounds.min) <= value <= int(bounds.max):
-            raise ValueError(message)
-        return value
-    if is_float_dtype(dtype):
-        if not isinstance(value, (int, float)) or isinstance(value, bool):
-            raise ValueError(message)
-        try:
-            normalized = float(value)
-        except OverflowError as error:
-            raise ValueError(message) from error
-        numpy_dtype = (
-            np.dtype(f"float{dtype.pyarrow_dtype.bit_width}")
-            if isinstance(dtype, pd.ArrowDtype)
-            else np.dtype(str(dtype).lower())
-        )
-        bounds_float = np.finfo(numpy_dtype)
-        if (
-            not math.isfinite(normalized)
-            or abs(normalized) > float(bounds_float.max)
-            or 0 < abs(normalized) < float(bounds_float.smallest_subnormal)
-        ):
-            raise ValueError(message)
-        return normalized
-    if is_datetime64_any_dtype(dtype):
-        if not isinstance(value, (str, datetime, pd.Timestamp)):
-            raise ValueError(message)
-        try:
-            return _normalize_datetime_fill(series, pd.Timestamp(value))
-        except (ValueError, TypeError, OverflowError) as error:
-            raise ValueError(message) from error
-    raise ValueError(message)
+    try:
+        return validate_fill(series, fill)
+    except ValueError as error:
+        message = f"Invalid unmatched-row default for column {series.name!r} ({series.dtype})."
+        raise ValueError(message) from error
 
 
 def _validate_side_fills(
@@ -332,18 +213,7 @@ def _prepare_nullable_columns(
 ) -> pd.DataFrame:
     """Prepare integer and boolean columns without mutating the source frame."""
     included = set(frame.columns if columns is None else columns) | set(keys)
-    prepared = frame.copy(deep=False)
-    for column in frame.columns:
-        if column not in included:
-            continue
-        dtype = frame[column].dtype
-        if not isinstance(dtype, np.dtype):
-            continue
-        if dtype.kind == "b":
-            prepared[column] = frame[column].astype("boolean")
-        elif dtype.kind in {"i", "u"}:
-            prepared[column] = frame[column].astype(_NULLABLE_INTEGER_DTYPES[dtype.name])
-    return prepared
+    return prepare_nullable_columns(frame, included)
 
 
 def join_dataframes(cfg: JoinRequest) -> pd.DataFrame:

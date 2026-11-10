@@ -33,11 +33,11 @@ def test_concat_dialog_initialization(parent_widget):
 
     assert dialog.cb_left_dataset.currentText() == "Left"
     assert dialog.cb_right_dataset.currentText() == "Right1"
-    assert dialog.left_columns_list.count() == 2
-    assert dialog.right_columns_list.count() == 1
+    assert dialog.left_columns_table.rowCount() == 2
+    assert dialog.right_columns_table.rowCount() == 1
 
     dialog.cb_right_dataset.setCurrentText("Right2")
-    assert dialog.right_columns_list.count() == 2
+    assert dialog.right_columns_table.rowCount() == 2
 
     result = dialog.build_result()
     assert isinstance(result, ConcatDialogResult)
