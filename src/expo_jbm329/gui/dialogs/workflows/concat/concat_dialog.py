@@ -399,9 +399,9 @@ class ConcatDialog(QDialog):
                         and isinstance(column, FillColumn)
                         and column.kind != "unsupported"
                     )
-                    flags = Qt.ItemFlag.ItemIsEnabled
+                    flags = Qt.ItemFlag.NoItemFlags
                     if eligible:
-                        flags |= Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
+                        flags = Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
                     fill_item.setFlags(flags)
                     fill = fill_item.data(FILL_VALUE_ROLE)
                     if not isinstance(fill, ColumnFill):

@@ -80,10 +80,14 @@ def test_default_cells_follow_effective_schema_and_supported_types(typed_default
     assert dialog.left_columns_table.columnCount() == 3
     assert dialog.left_columns_table.horizontalHeaderItem(2).text() == "If absent in other dataset"
     assert not _default_item(dialog, "left", "shared").flags() & Qt.ItemFlag.ItemIsEditable
+    assert not _default_item(dialog, "left", "shared").flags() & Qt.ItemFlag.ItemIsEnabled
     assert not _default_item(dialog, "left", "integer").flags() & Qt.ItemFlag.ItemIsEditable
+    assert not _default_item(dialog, "left", "integer").flags() & Qt.ItemFlag.ItemIsEnabled
     for column in ("float", "flag", "text", "category", "date", "object"):
         assert _default_item(dialog, "left", column).flags() & Qt.ItemFlag.ItemIsEditable
+        assert _default_item(dialog, "left", column).flags() & Qt.ItemFlag.ItemIsEnabled
     assert not _default_item(dialog, "left", "period").flags() & Qt.ItemFlag.ItemIsEditable
+    assert not _default_item(dialog, "left", "period").flags() & Qt.ItemFlag.ItemIsEnabled
     assert _default_item(dialog, "left", "period").text() == "NULL"
     assert dialog.left_bulk_button.isEnabled()
     assert _default_item(dialog, "right", "right_only").flags() & Qt.ItemFlag.ItemIsEditable
