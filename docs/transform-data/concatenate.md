@@ -53,6 +53,9 @@ To append the jazz rows to the rock dataset:
 6. Select **OK** to create the concatenated result. At least one column must
    remain checked across the two panels.
 
+![Concatenate datasets dialog showing column inclusion checkboxes, types,
+If absent defaults, and controls below each column table](../assets/transform-data/concatenate.png)
+
 The result is a new tab named **Concatenated data**. The first dataset's rows
 come first, followed by the second dataset's rows:
 
