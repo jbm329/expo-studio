@@ -39,12 +39,17 @@ To append the jazz rows to the rock dataset:
    result tab and select **Concatenate…**.
 3. In **Second dataset**, choose the dataset to append. The first dataset is
    the active result tab; its columns and the second dataset's columns are
-   shown in **Column** / **Type** tables. Resize the dialog to give them more room.
+   shown in **Column** / **Type** / **If absent in other dataset** tables.
+   Resize the dialog to give them more room.
 4. Leave all columns checked, or uncheck columns you do not want that dataset
    to supply. Each panel's **Select all** checks every column; selecting it again
    clears the panel. A partially checked Select all means some columns are
    included; selecting it includes all of them.
-5. Select **OK** to create the concatenated result. At least one column must
+5. For a selected column that is included on only one side, optionally choose
+   a default in **If absent in other dataset**. It applies to rows from the
+   other dataset only. You can also use **Numeric columns** or **Text columns**
+   and **Set defaults…** to apply one value to all eligible columns of that type.
+6. Select **OK** to create the concatenated result. At least one column must
    remain checked across the two panels.
 
 The result is a new tab named **Concatenated data**. The first dataset's rows
@@ -103,6 +108,42 @@ pandas as before. This is separate from filling an absent column: combining
 integers with floats, or incompatible signed and unsigned integers, can still
 produce floats and lose precision. Check and intentionally convert shared
 columns to compatible types before concatenating when exact values matter.
+
+### Set defaults for absent columns {#absent-column-defaults}
+
+The **If absent in other dataset** cell is enabled only when the column is
+checked in one panel and not checked in the other. A default fills generated
+values for the other dataset's rows; it never replaces NULLs already present
+in the column's source rows. A checked column in both panels has no default.
+Unchecking it on one side makes it absent there, so the selected side's default
+applies to those rows.
+
+Choose a cell to open its type-aware editor:
+
+| Column type | Available values |
+|---|---|
+| Integer | NULL, 0, or a custom integer within the column's range |
+| Float | NULL, 0.0, or a custom finite number within the column's range |
+| Boolean | NULL, True or False |
+| String, text-only object or category | NULL or custom text, including empty text |
+| Datetime | NULL or a custom date/time that preserves the column's timezone and precision |
+| Other types, such as period or timedelta | NULL only |
+
+Custom numbers use the app's decimal separator and do not accept grouping
+separators. Datetime input must be valid at the column's resolution; timezone
+offsets are required for timezone-aware values when appropriate. For object
+columns, text-only source values are checked when concatenation runs, not while
+the dialog is open.
+
+Each panel's **Numeric columns** or **Text columns** menu with **Set defaults…**
+sets a shared value for eligible numeric or text columns. The app validates the
+value for every target before changing any defaults. If a value does not fit
+all target types or ranges, none are changed. Boolean, datetime and
+NULL-only types are configured per column where supported.
+
+Changing the second dataset resets defaults in both panels to NULL, while
+retaining first-dataset column selections. Defaults are settings for the
+current dataset pair only.
 
 Different column layouts require unique column names. Rename duplicate
 columns before concatenating datasets with different layouts.

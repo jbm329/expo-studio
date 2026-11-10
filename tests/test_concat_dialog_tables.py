@@ -39,17 +39,26 @@ def test_concat_tables_preserve_order_types_and_dataset_switch(qt_app) -> None:
         for table in (dialog.left_columns_table, dialog.right_columns_table):
             assert table.editTriggers() == QTableWidget.EditTrigger.NoEditTriggers
             assert table.selectionMode() == QTableWidget.SelectionMode.NoSelection
-            assert table.columnCount() == 2
+            assert table.columnCount() == 3
             assert table.verticalHeader().isHidden()
             assert table.horizontalHeader().sectionResizeMode(0) == QHeaderView.ResizeMode.Stretch
+            assert table.horizontalHeaderItem(2).text() == "If absent in other dataset"
             for row in range(table.rowCount()):
-                for column in range(2):
+                for column in range(3):
                     item = table.item(row, column)
-                    assert not item.flags() & Qt.ItemFlag.ItemIsEditable
+                    if column == 2:
+                        assert bool(item.flags() & Qt.ItemFlag.ItemIsEditable) == (
+                            table is dialog.left_columns_table and row == 0
+                        )
+                    else:
+                        assert not item.flags() & Qt.ItemFlag.ItemIsEditable
                     assert bool(item.flags() & Qt.ItemFlag.ItemIsUserCheckable) == (column == 0)
                     if column == 0:
                         assert item.checkState() == Qt.CheckState.Checked
-                    assert item.toolTip() == item.text()
+                    if column < 2:
+                        assert item.toolTip() == item.text()
+                    else:
+                        assert item.text() == "NULL"
         dialog.cb_right_dataset.setCurrentText("third")
         assert dialog.right_columns_table.rowCount() == 2
         assert dialog.right_columns_table.item(0, 0).text() == "unknown"
@@ -133,6 +142,10 @@ def test_concat_headers_in_compiled_catalogs(qt_app, language: str, column_label
         for table in (dialog.left_columns_table, dialog.right_columns_table):
             assert table.horizontalHeaderItem(0).text() == column_label
             assert table.horizontalHeaderItem(1).text() == type_label
+            assert table.horizontalHeaderItem(2).text() == (
+                translator.translate("ConcatDialog", "If absent in other dataset") or "If absent in other dataset"
+            )
+            assert table.item(0, 2).text() == (translator.translate("JoinFillValueDialog", "NULL") or "NULL")
         expected = translator.translate("ConcatDialog", "Select all") or "Select all"
         if language != "en":
             assert translator.translate("ConcatDialog", "Select all")
@@ -147,6 +160,22 @@ def test_concat_headers_in_compiled_catalogs(qt_app, language: str, column_label
         ):
             if language != "en":
                 assert translator.translate("ConcatDialog", source)
+        if language != "en":
+            for source in (
+                "Text defaults require text-only source values. This is checked when concatenation runs.",
+                "Click to choose a default for rows from the other dataset.",
+            ):
+                assert translator.translate("ConcatDialog", source)
+            assert translator.translate("JoinFillValueDialog", "NULL")
+        if language != "en":
+            assert translator.translate("ConcatDialog", "Select included columns of this type first.")
+            assert translator.translate("JoinDialog", "Numeric columns")
+            assert translator.translate("JoinDialog", "Text columns")
+            assert translator.translate("JoinDialog", "Set defaults...")
+        if language != "en":
+            assert translator.translate(
+                "ConcatDialog", "Defaults apply only to selected columns absent from the other dataset."
+            )
     finally:
         dialog.close()
         qt_app.removeTranslator(translator)
@@ -258,12 +287,15 @@ def test_selection_dto_drives_real_concat_without_discarding_rows(selection_dial
 
 
 def test_duplicate_schema_remains_included_without_ambiguous_selection(qt_app) -> None:
+    metadata = {"a": describe_fill_column(pd.Series([], name="a", dtype="int64"))}
     dialog = ConcatDialog(
         parent=None,
         left_tab_title="first",
         right_tab_titles=["second"],
         left_columns=["a", "a"],
         right_columns_map={"second": ["a", "a"]},
+        left_column_metadata=metadata,
+        right_column_metadata={"second": metadata},
     )
     try:
         assert not dialog.left_select_all.isEnabled()
@@ -272,6 +304,7 @@ def test_duplicate_schema_remains_included_without_ambiguous_selection(qt_app) -
         for table in (dialog.left_columns_table, dialog.right_columns_table):
             assert not table.item(0, 0).flags() & Qt.ItemFlag.ItemIsUserCheckable
             assert "duplicate" in table.item(0, 0).toolTip()
+            assert not table.item(0, 2).flags() & Qt.ItemFlag.ItemIsEditable
         cfg = dialog.build_result()
         assert cfg.left_columns is None
         assert cfg.right_columns is None
