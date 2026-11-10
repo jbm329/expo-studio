@@ -2268,40 +2268,40 @@ Consultez les journaux pour plus d'informations.</translation>
         <translation>Premier jeu de données</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="182" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="185" />
         <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="156" />
         <source>Select all</source>
         <translation>Tout sélectionner</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="190" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="193" />
         <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="164" />
         <source>Dataset:</source>
         <translation>Jeu de données :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="191" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="194" />
         <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="165" />
         <source>Columns:</source>
         <translation>Colonnes :</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="173" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="176" />
         <source>Second dataset</source>
         <translation>Deuxième jeu de données</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="204" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="210" />
         <source>Only checked columns supply values. Unchecking a column on one side keeps that dataset's rows, but uses NULL for them if the column is included on the other side.</source>
         <translation>Seules les colonnes cochées fournissent des valeurs. Décocher une colonne d'un côté conserve les lignes de ce jeu de données, mais leur attribue NULL si la colonne est incluse de l'autre côté.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="260" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="266" />
         <source>Unable to open link</source>
         <translation>Impossible d'ouvrir le lien</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="261" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="267" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -2310,46 +2310,46 @@ Consultez les journaux pour plus d'informations.</translation>
 {url}</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="269" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="275" />
         <source>Column</source>
         <translation>Colonne</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="269" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="275" />
         <source>Type</source>
         <translation>Type</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="446" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="287" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="269" />
-        <source>If absent in other dataset</source>
-        <translation>Si absent de l'autre jeu de données</translation>
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="452" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="293" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="275" />
+        <source>If absent</source>
+        <translation>Si absent</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="447" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="288" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="453" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="294" />
         <source>Text defaults require text-only source values. This is checked when concatenation runs.</source>
         <translation>Les valeurs par défaut textuelles exigent des valeurs source uniquement textuelles. Ce contrôle est effectué lors de la concaténation.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="367" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="323" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="373" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="329" />
         <source>Rename duplicate columns to enable column selection.</source>
         <translation>Renommez les colonnes portant le même nom pour activer la sélection des colonnes.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="415" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="421" />
         <source>Click to choose a default for rows from the other dataset.</source>
         <translation>Cliquez pour choisir une valeur par défaut pour les lignes de l'autre jeu de données.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="418" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="424" />
         <source>Defaults apply only to selected columns absent from the other dataset.</source>
         <translation>Les valeurs par défaut s'appliquent uniquement aux colonnes sélectionnées absentes de l'autre jeu de données.</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="438" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="444" />
         <source>Select included columns of this type first.</source>
         <translation>Sélectionnez d'abord les colonnes incluses de ce type.</translation>
     </message>
@@ -5661,39 +5661,39 @@ Enregistré dans :
     <name>JoinDialog</name>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="322" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="297" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="303" />
         <source>Numeric columns</source>
         <translation>Colonnes numériques</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="323" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="298" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="304" />
         <source>Text columns</source>
         <translation>Colonnes de texte</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="490" />
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="324" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="452" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="299" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="458" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="305" />
         <source>Set defaults...</source>
         <translation>Définir les valeurs par défaut...</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="484" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="437" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="443" />
         <source>No applicable columns</source>
         <translation>Aucune colonne applicable</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="513" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="476" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="482" />
         <source>Invalid default value</source>
         <translation>Valeur par défaut non valide</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/workflows/join/join_dialog.py" line="514" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="477" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="483" />
         <source>The value is not valid for every selected column. No defaults were changed.</source>
         <translation>La valeur n'est pas valide pour toutes les colonnes sélectionnées. Aucune valeur par défaut n'a été modifiée.</translation>
     </message>
@@ -5855,20 +5855,20 @@ Enregistré dans :
         <translation>Colonne : {column} ({dtype})</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="408" />
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="315" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="414" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="321" />
         <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="81" />
         <source>NULL</source>
         <translation>NULL</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="409" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="415" />
         <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="86" />
         <source>True</source>
         <translation>Vrai</translation>
     </message>
     <message>
-        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="410" />
+        <location filename="../../gui/dialogs/workflows/concat/concat_dialog.py" line="416" />
         <location filename="../../gui/dialogs/workflows/column_fill_editor.py" line="87" />
         <source>False</source>
         <translation>Faux</translation>

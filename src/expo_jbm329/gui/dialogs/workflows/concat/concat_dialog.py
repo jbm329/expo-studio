@@ -272,7 +272,7 @@ class ConcatDialog(QDialog):
     # ---------------------------------------------------------
     def _create_columns_table(self) -> QTableWidget:
         table = QTableWidget(0, 3, self)
-        table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type"), self.tr("If absent in other dataset")])
+        table.setHorizontalHeaderLabels([self.tr("Column"), self.tr("Type"), self.tr("If absent")])
         table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
         table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         horizontal_header = table.horizontalHeader()
@@ -290,7 +290,7 @@ class ConcatDialog(QDialog):
             ColumnFillDelegate(
                 table,
                 self._dialogs,
-                title=self.tr("If absent in other dataset"),
+                title=self.tr("If absent"),
                 object_hint=self.tr(
                     "Text defaults require text-only source values. This is checked when concatenation runs."
                 ),
@@ -449,7 +449,7 @@ class ConcatDialog(QDialog):
             items[0][1],
             ColumnFill(),
             self._dialogs,
-            title=self.tr("If absent in other dataset"),
+            title=self.tr("If absent"),
             object_hint=self.tr(
                 "Text defaults require text-only source values. This is checked when concatenation runs."
             ),

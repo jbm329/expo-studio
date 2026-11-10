@@ -39,14 +39,14 @@ To append the jazz rows to the rock dataset:
    result tab and select **Concatenate…**.
 3. In **Second dataset**, choose the dataset to append. The first dataset is
    the active result tab; its columns and the second dataset's columns are
-   shown in **Column** / **Type** / **If absent in other dataset** tables.
+   shown in **Column** / **Type** / **If absent** tables.
    Resize the dialog to give them more room.
 4. Leave all columns checked, or uncheck columns you do not want that dataset
    to supply. Each panel's **Select all** checks every column; selecting it again
    clears the panel. A partially checked Select all means some columns are
    included; selecting it includes all of them.
 5. For a selected column that is included on only one side, optionally choose
-   a default in **If absent in other dataset**. It applies to rows from the
+   a default in **If absent**. It applies to rows from the
    other dataset only. You can also use **Numeric columns** or **Text columns**
    and **Set defaults…** to apply one value to all eligible columns of that type.
 6. Select **OK** to create the concatenated result. At least one column must
@@ -111,7 +111,7 @@ columns to compatible types before concatenating when exact values matter.
 
 ### Set defaults for absent columns {#absent-column-defaults}
 
-The **If absent in other dataset** cell is enabled only when the column is
+The **If absent** cell is enabled only when the column is
 checked in one panel and not checked in the other. A default fills generated
 values for the other dataset's rows; it never replaces NULLs already present
 in the column's source rows. A checked column in both panels has no default.

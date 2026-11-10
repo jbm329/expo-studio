@@ -42,7 +42,7 @@ def test_concat_tables_preserve_order_types_and_dataset_switch(qt_app) -> None:
             assert table.columnCount() == 3
             assert table.verticalHeader().isHidden()
             assert table.horizontalHeader().sectionResizeMode(0) == QHeaderView.ResizeMode.Stretch
-            assert table.horizontalHeaderItem(2).text() == "If absent in other dataset"
+            assert table.horizontalHeaderItem(2).text() == "If absent"
             for row in range(table.rowCount()):
                 for column in range(3):
                     item = table.item(row, column)
@@ -142,18 +142,20 @@ def test_concat_table_missing_metadata_and_wide_schema(qt_app, count: int) -> No
 
 
 @pytest.mark.parametrize(
-    "language,column_label,type_label",
+    "language,column_label,type_label,absent_label",
     [
-        ("en", "Column", "Type"),
-        ("sv", "Kolumn", "Typ"),
-        ("de", "Spalte", "Typ"),
-        ("fr", "Colonne", "Type"),
-        ("it", "Colonna", "Tipo"),
-        ("es", "Columna", "Tipo"),
-        ("pl", "Kolumna", "Typ"),
+        ("en", "Column", "Type", "If absent"),
+        ("sv", "Kolumn", "Typ", "Om saknas"),
+        ("de", "Spalte", "Typ", "Falls nicht vorhanden"),
+        ("fr", "Colonne", "Type", "Si absent"),
+        ("it", "Colonna", "Tipo", "Se assente"),
+        ("es", "Columna", "Tipo", "Si falta"),
+        ("pl", "Kolumna", "Typ", "Jeśli brak"),
     ],
 )
-def test_concat_headers_in_compiled_catalogs(qt_app, language: str, column_label: str, type_label: str) -> None:
+def test_concat_headers_in_compiled_catalogs(
+    qt_app, language: str, column_label: str, type_label: str, absent_label: str
+) -> None:
     translator = QTranslator()
     catalog = Path(__file__).resolve().parents[1] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language}.qm"
     assert translator.load(str(catalog))
@@ -169,9 +171,7 @@ def test_concat_headers_in_compiled_catalogs(qt_app, language: str, column_label
         for table in (dialog.left_columns_table, dialog.right_columns_table):
             assert table.horizontalHeaderItem(0).text() == column_label
             assert table.horizontalHeaderItem(1).text() == type_label
-            assert table.horizontalHeaderItem(2).text() == (
-                translator.translate("ConcatDialog", "If absent in other dataset") or "If absent in other dataset"
-            )
+            assert table.horizontalHeaderItem(2).text() == absent_label
             assert table.item(0, 2).text() == (translator.translate("JoinFillValueDialog", "NULL") or "NULL")
         expected = translator.translate("ConcatDialog", "Select all") or "Select all"
         if language != "en":

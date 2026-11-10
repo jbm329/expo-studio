@@ -78,7 +78,7 @@ def _mouse_release() -> QMouseEvent:
 def test_default_cells_follow_effective_schema_and_supported_types(typed_default_dialog: ConcatDialog) -> None:
     dialog = typed_default_dialog
     assert dialog.left_columns_table.columnCount() == 3
-    assert dialog.left_columns_table.horizontalHeaderItem(2).text() == "If absent in other dataset"
+    assert dialog.left_columns_table.horizontalHeaderItem(2).text() == "If absent"
     assert not _default_item(dialog, "left", "shared").flags() & Qt.ItemFlag.ItemIsEditable
     assert not _default_item(dialog, "left", "shared").flags() & Qt.ItemFlag.ItemIsEnabled
     assert not _default_item(dialog, "left", "integer").flags() & Qt.ItemFlag.ItemIsEditable
