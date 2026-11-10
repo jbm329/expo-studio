@@ -73,6 +73,7 @@ from expo_jbm329.workbench.controllers.result_tabs.result_tab_header_filter_acti
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_header_sort_actions import (
     ResultTabHeaderSortActions,
 )
+from expo_jbm329.workbench.controllers.result_tabs.result_tab_row_actions import ResultTabRowActions
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_undo_manager import (
     ResultTabUndoManager,
 )
@@ -199,6 +200,7 @@ class ResultTabManager:
     TR_JOIN = QT_TR_NOOP("Join…")
     TR_CONCATENATE = QT_TR_NOOP("Concatenate…")
     TR_RESHAPE = QT_TR_NOOP("Reshape…")
+    TR_REMOVE_DUPLICATES = QT_TR_NOOP("Remove duplicate rows")
 
     # Messages
     TR_PROCESSING_DATA = QT_TR_NOOP("Processing data…")
@@ -248,6 +250,7 @@ class ResultTabManager:
         "_parent",
         "_reshape_controller",
         "_result_counter",
+        "_row_actions",
         "_set_shape",
         "_set_status",
         "_tabs",
@@ -400,6 +403,15 @@ class ResultTabManager:
 
     def _init_other_controllers(self) -> None:
         """Initialize remaining controllers."""
+        self._row_actions = ResultTabRowActions(
+            parent=self._parent,
+            dialogs=self._dialogs,
+            logger=self._logger,
+            async_ops=self._async_ops,
+            resolve_target=self._resolve_row_action_target,
+            apply_new_dataframe=self._apply_new_dataframe_to_view,
+            set_status=self._set_status,
+        )
         self._cell_actions = ResultTabCellActions(
             parent=self._parent,
             dialogs=self._dialogs,
@@ -522,14 +534,17 @@ class ResultTabManager:
 
         view: QTableView = widget
 
-        self._run_with_busy_overlay(
-            view,
-            lambda: self._apply_new_dataframe_to_view(
+        def _apply_data() -> None:
+            self._apply_new_dataframe_to_view(
                 view,
                 df,
                 invalidate_cache=invalidate_cache,
                 status=status,
-            ),
+            )
+
+        self._run_with_busy_overlay(
+            view,
+            _apply_data,
             message=message or self._tr(self.TR_UPDATING_TABLE),
         )
 
@@ -1171,6 +1186,14 @@ class ResultTabManager:
         record = self._tabs_by_id.get(tab_id) if isinstance(tab_id, str) else None
         act_reshape.setEnabled(record is not None and record.is_ready and record.df is not None)
 
+        act_remove_duplicates = QAction(self._tr(self.TR_REMOVE_DUPLICATES), menu)
+        menu.addAction(act_remove_duplicates)
+        act_remove_duplicates.setEnabled(
+            isinstance(tab_id, str)
+            and self._resolve_row_action_target(tab_id) is not None
+            and not self._row_actions.is_running(tab_id)
+        )
+
         chosen = menu.exec(global_pos)
         if not chosen:
             return
@@ -1183,6 +1206,10 @@ class ResultTabManager:
             self._logger.debug("ResultTabManager: context menu target was removed.")
             return
         index = current_index
+
+        if chosen == act_remove_duplicates:
+            self._row_actions.remove_duplicates(tab_id)
+            return
 
         if chosen == act_reshape:
             if self._reshape_controller is None:
@@ -1980,6 +2007,15 @@ class ResultTabManager:
     # DATA APPLICATION / MODEL MANAGEMENT
     # ==============================================================
 
+    def _resolve_row_action_target(self, tab_id: str) -> tuple[QTableView, pd.DataFrame, str] | None:
+        """Resolve the current ready dataset for a stable row-action target."""
+        record = self._tabs_by_id.get(tab_id)
+        if record is None or not record.is_ready or record.df is None:
+            return None
+        if self._find_tab_index_by_id(tab_id) is None:
+            return None
+        return record.view, record.df, record.title
+
     def _apply_new_dataframe_to_view(
         self,
         view: QTableView,
@@ -1988,7 +2024,7 @@ class ResultTabManager:
         invalidate_cache: bool = True,
         status: str | None = None,
         push_undo: bool = True,
-    ) -> None:
+    ) -> bool:
         """Replace the DataFrame in an existing result tab view.
 
         Args:
@@ -1997,6 +2033,10 @@ class ResultTabManager:
             invalidate_cache: Whether to invalidate the column profile cache.
             status: Optional status message to display after success.
             push_undo: Whether to push the previous DataFrame onto the undo stack.
+
+        Returns:
+            True if the DataFrame was applied, otherwise False. Handled update
+            errors are reported through the dialog service.
         """
         self._logger.debug(
             "ResultTabManager: applying new DataFrame to view (rows=%s, cols=%s, invalidate_cache=%s, push_undo=%s).",
@@ -2009,7 +2049,7 @@ class ResultTabManager:
         model = view.model()
         if not isinstance(model, DataFrameModel):
             self._logger.warning("ResultTabManager: apply ignored because view model was not a DataFrameModel.")
-            return
+            return False
 
         record = self._get_tab_record_for_view(view)
         tab_id = record.tab_id if record is not None else None
@@ -2093,7 +2133,7 @@ class ResultTabManager:
                 title=self._tr(self.TR_FAILURE),
                 text=self._tr_fmt(self.TR_COULD_NOT_UPDATE_DATA, error=str(e)),
             )
-            return
+            return False
 
         # Update internal record/state.
         if record is not None:
@@ -2122,6 +2162,7 @@ class ResultTabManager:
         self._notify_undo_state_changed()
         self._emit_toolbar_data_state()
         self._emit_toolbar_multi_dataset_state()
+        return True
 
     def _create_dataframe_model(
         self,

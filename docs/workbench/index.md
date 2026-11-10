@@ -103,6 +103,11 @@ The lower area contains datasets loaded from files, database queries or REST
 requests, along with datasets produced by transformations. Select a ready
 result tab to work with its data.
 
+Right-click a ready result tab and select **Remove duplicate rows** to remove
+identical records from that dataset in the background. The status bar reports
+the result. This updates the existing tab and supports best-effort Undo; see
+[Remove duplicate rows](../prepare-data/filter-rows.md#remove-duplicate-rows).
+
 - [Prepare data](../prepare-data/index.md) to clean, filter or organize columns.
 - [Transform data](../transform-data/index.md) to create columns, reshape or
   combine datasets.

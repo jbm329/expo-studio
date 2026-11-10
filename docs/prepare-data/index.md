@@ -10,13 +10,15 @@ to find its step-by-step guide.
 | Sort rows, rename or remove columns, or change column order | [Organize columns](organize-columns.md) |
 | Clean text, replace a cell value, fill missing values or convert a data type | [Clean values](clean-values.md) |
 | Keep or remove rows based on column values | [Filter rows](filter-rows.md) |
+| Remove rows that match across all columns | [Remove duplicate rows](filter-rows.md#remove-duplicate-rows) |
 
 ## How preparation changes your dataset {#preparation-results}
 
 These actions change the data shown in the current result tab; they do not
 edit its source file or database, and they do not create a separate result tab.
 Select the ready result tab first. Right-click its column headers or cells to
-find the available actions.
+find column and cell actions. To remove identical rows, right-click the result
+tab itself and select **Remove duplicate rows**.
 
 Review the changed result before using it. Select **Undo** on the toolbar to
 reverse a recent change when an undo step is available. The retained history is
