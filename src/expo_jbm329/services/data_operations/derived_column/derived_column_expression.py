@@ -23,6 +23,13 @@ from typing import TYPE_CHECKING, NoReturn
 
 import pandas as pd
 
+from expo_jbm329.services.data_operations.derived_column.derived_column_numeric import (
+    NumericKind,
+    common_numeric_kind,
+    numeric_kind_from_dtype,
+    numeric_literal_kind,
+    parse_numeric_literal,
+)
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import (
     DerivedColumnFormulaError,
     FormulaValidationResult,
@@ -115,12 +122,17 @@ TIME_FUNCTION_TYPES = {
 
 @dataclass(frozen=True, slots=True)
 class ExpressionColumn:
-    """A source column's position, exact name, type, and name availability."""
+    """Source identity and compatibility, with optional numeric storage metadata.
+
+    Numeric kind is captured from schema only; it does not change validation's
+    distinction between numeric, text, Boolean and datetime expressions.
+    """
 
     position: int
     name: str
     value_type: ExpressionType
     available: bool = True
+    numeric_kind: NumericKind | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,6 +141,7 @@ class FormulaExpression:
 
     Literal values retain decoded text or numeric spelling. NULL has an empty
     value; column nodes retain their resolved positional source identity.
+    Numeric kind describes planned storage without evaluating any source rows.
     """
 
     operation: ExpressionOperation
@@ -138,6 +151,7 @@ class FormulaExpression:
     operands: tuple[FormulaExpression, ...] = ()
     value: str = ""
     column_position: int | None = None
+    numeric_kind: NumericKind | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -213,8 +227,49 @@ def expression_columns(labels: Sequence[object], dtypes: Sequence[object]) -> tu
         else:
             value_type = ExpressionType.UNSUPPORTED
         name = names[position]
-        columns.append(ExpressionColumn(position, name, value_type, counts[name] == 1 and isinstance(label, str)))
+        columns.append(
+            ExpressionColumn(
+                position,
+                name,
+                value_type,
+                counts[name] == 1 and isinstance(label, str),
+                numeric_kind_from_dtype(dtype),
+            )
+        )
     return tuple(columns)
+
+
+def _integer_literal_value(expression: FormulaExpression) -> int | None:
+    sign = 1
+    while expression.operation in {ExpressionOperation.POSITIVE, ExpressionOperation.NEGATIVE}:
+        if expression.operation == ExpressionOperation.NEGATIVE:
+            sign = -sign
+        expression = expression.operands[0]
+    if expression.operation == ExpressionOperation.LITERAL and expression.value_type == ExpressionType.NUMBER:
+        value = parse_numeric_literal(expression.value)
+        if isinstance(value, int):
+            return sign * value
+    return None
+
+
+def _numeric_result_kind(operation: ExpressionOperation, operands: tuple[FormulaExpression, ...]) -> NumericKind | None:
+    if operation == ExpressionOperation.DIVIDE:
+        return NumericKind.FLOAT
+    left = operands[0]
+    if operation in {ExpressionOperation.POSITIVE, ExpressionOperation.NEGATIVE}:
+        literal = _integer_literal_value(left)
+        if literal is not None:
+            return numeric_literal_kind(-literal if operation == ExpressionOperation.NEGATIVE else literal)
+        if operation == ExpressionOperation.NEGATIVE and left.numeric_kind == NumericKind.UNSIGNED:
+            return NumericKind.SIGNED
+        return left.numeric_kind
+    right = operands[1]
+    return common_numeric_kind(
+        left.numeric_kind,
+        right.numeric_kind,
+        left_literal=_integer_literal_value(left),
+        right_literal=_integer_literal_value(right),
+    )
 
 
 def _fail(code: str, token: _Token, **context: object) -> NoReturn:
@@ -325,7 +380,18 @@ class _Parser:
                 "TRUE": ExpressionType.BOOLEAN,
                 "FALSE": ExpressionType.BOOLEAN,
             }[token.value if token.kind == "word" else token.kind]
-            return FormulaExpression(ExpressionOperation.LITERAL, value_type, token.start, token.end, value=token.value)
+            return FormulaExpression(
+                ExpressionOperation.LITERAL,
+                value_type,
+                token.start,
+                token.end,
+                value=token.value,
+                numeric_kind=(
+                    numeric_literal_kind(parse_numeric_literal(token.value))
+                    if value_type == ExpressionType.NUMBER
+                    else None
+                ),
+            )
         if token.kind == "column":
             matches = self.columns.get(token.value, [])
             if not matches:
@@ -340,6 +406,7 @@ class _Parser:
                 token.end,
                 value=column.name,
                 column_position=column.position,
+                numeric_kind=column.numeric_kind,
             )
         if token.kind == "symbol" and token.value == "(":
             result = self.expression()
@@ -359,7 +426,16 @@ class _Parser:
             }[token.value]
             value_type = ExpressionType.BOOLEAN if token.value == "NOT" else ExpressionType.NUMBER
             self.check_type(operand, value_type, token)
-            return FormulaExpression(operation, value_type, token.start, operand.end, (operand,))
+            return FormulaExpression(
+                operation,
+                value_type,
+                token.start,
+                operand.end,
+                (operand,),
+                numeric_kind=_numeric_result_kind(operation, (operand,))
+                if value_type == ExpressionType.NUMBER
+                else None,
+            )
         _fail("expected_expression", token)
 
     def time_function(self, token: _Token) -> FormulaExpression:
@@ -370,7 +446,14 @@ class _Parser:
         end = self.current.end
         self.require(")")
         operation = ExpressionOperation(token.value)
-        return FormulaExpression(operation, TIME_FUNCTION_TYPES[operation], token.start, end, (operand,))
+        return FormulaExpression(
+            operation,
+            TIME_FUNCTION_TYPES[operation],
+            token.start,
+            end,
+            (operand,),
+            numeric_kind=NumericKind.SIGNED if TIME_FUNCTION_TYPES[operation] == ExpressionType.NUMBER else None,
+        )
 
     def conditional(self, token: _Token) -> FormulaExpression:
         self.require("(")
@@ -385,7 +468,18 @@ class _Parser:
         value_type = self.compatible_type((then, otherwise), token, code="incompatible_branch_types")
         if value_type not in {ExpressionType.TEXT, ExpressionType.NUMBER, ExpressionType.NULL}:
             _fail("invalid_result_type", token, dtype=value_type.value)
-        return FormulaExpression(ExpressionOperation.IF, value_type, token.start, end, (condition, then, otherwise))
+        return FormulaExpression(
+            ExpressionOperation.IF,
+            value_type,
+            token.start,
+            end,
+            (condition, then, otherwise),
+            numeric_kind=(
+                _numeric_result_kind(ExpressionOperation.IF, (then, otherwise))
+                if value_type == ExpressionType.NUMBER
+                else None
+            ),
+        )
 
     @staticmethod
     def check_type(expression: FormulaExpression, expected: ExpressionType, token: _Token) -> None:
@@ -452,7 +546,15 @@ class _Parser:
         else:
             self.compatible_type(operands, token)
             value_type = ExpressionType.BOOLEAN
-        return FormulaExpression(ExpressionOperation(operator), value_type, left.start, end, operands)
+        operation = ExpressionOperation(operator)
+        return FormulaExpression(
+            operation,
+            value_type,
+            left.start,
+            end,
+            operands,
+            numeric_kind=_numeric_result_kind(operation, operands) if value_type == ExpressionType.NUMBER else None,
+        )
 
     def membership_literal(self) -> FormulaExpression:
         token = self.current
@@ -475,6 +577,7 @@ class _Parser:
             token.start,
             literal.end,
             value=sign + literal.value,
+            numeric_kind=numeric_literal_kind(parse_numeric_literal(sign + literal.value)),
         )
 
 
