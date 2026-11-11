@@ -111,6 +111,10 @@ Switch formatting off to see ungrouped, unrounded numeric values.
 Formatting changes presentation only, not dataset values or data types.
 Boolean, text, category and object columns are not numerically formatted.
 
+The formatting switch applies across result tabs. Cell tooltips retain raw
+values. Date/timestamp presentation retains its existing behavior; the numeric
+formatting rules above do not introduce new date localization or time handling.
+
 Right-click a ready result tab and select **Remove duplicate rows** to remove
 identical records from that dataset in the background. The status bar reports
 the result. This updates the existing tab and supports best-effort Undo; see

@@ -2281,7 +2281,10 @@ class ResultTabManager:
                 parent=view,
             )
 
+            previous_delegate = view.itemDelegate()
             view.setItemDelegate(delegate)
+            if previous_delegate is not None and previous_delegate.parent() is view:
+                previous_delegate.deleteLater()
 
         except (
             AttributeError,
@@ -2294,11 +2297,16 @@ class ResultTabManager:
             RuntimeError,
             TypeError,
             ValueError,
-        ):
+        ) as error:
             self._logger.exception("ResultTabManager: failed to apply presentation delegate")
+            self._dialogs.critical(
+                parent=self._parent,
+                title=self._tr(self.TR_FAILURE),
+                text=self._tr_fmt(self.TR_COULD_NOT_UPDATE_DATA, error=str(error)),
+            )
 
     def handle_format_view_toggle(self, is_checked: bool) -> None:
-        """Handle toolbar toggle for enabling/disabling semantic formatting."""
+        """Apply the requested formatting state, including repeated requests."""
         self._formatting_enabled = is_checked
         self._logger.debug("ResultTabManger: formatting toggled (enabled=%s)", is_checked)
 
@@ -2306,11 +2314,9 @@ class ResultTabManager:
         if view is None:
             return
 
-        current_delegate = view.itemDelegate()
-
-        if isinstance(current_delegate, ResultTabColumnPresentationDelegate):
+        if not is_checked:
             self._clear_presentation_delegate(view)
-        elif is_checked:
+        else:
             active_record = self.current_df()
             if active_record is not None:
                 self._run_with_busy_overlay(
@@ -2346,8 +2352,13 @@ class ResultTabManager:
 
     def _clear_presentation_delegate(self, view: QTableView) -> None:
         try:
+            previous_delegate = view.itemDelegate()
+            if not isinstance(previous_delegate, ResultTabColumnPresentationDelegate):
+                return
             delegate = QStyledItemDelegate(view)
             view.setItemDelegate(delegate)
+            if previous_delegate.parent() is view:
+                previous_delegate.deleteLater()
         except (
             AttributeError,
             ConnectionError,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -18,6 +19,9 @@ from expo_jbm329.workbench.controllers.result_tabs.result_tab_column_presentatio
     ResultTabColumnPresentationDelegate,
 )
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 def test_delegate_leaves_unknown_column_unchanged() -> None:
@@ -152,3 +156,54 @@ def test_manager_uses_positional_dtypes_without_profiling_numeric_or_text_column
     delegate = view.itemDelegate()
     assert isinstance(delegate, ResultTabColumnPresentationDelegate)
     assert delegate._numeric_column_kinds == {0: "integer", 1: "float"}
+
+
+def test_repeated_toggle_preserves_numeric_formatting_and_previous_date_behavior(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(QLocale, "system", lambda: QLocale("en_US"))
+    parent = QWidget()
+    async_ops = MagicMock()
+    busy = MagicMock()
+
+    def run_busy(_view: object, fn: Callable[[], None], **_kwargs: object) -> None:
+        fn()
+
+    busy.run.side_effect = run_busy
+    manager = ResultTabManager(
+        parent_widget=parent,
+        tabs=QTabWidget(parent),
+        busy_overlay=busy,
+        async_ops=async_ops,
+        col_profile_cache=MagicMock(),
+        set_status=MagicMock(),
+        dialogs=MagicMock(),
+    )
+    df = pd.DataFrame({"number": [1234.0], "date": pd.to_datetime(["2026-01-02"])})
+    manager.display_dataframe(df, title="Source")
+    view = manager.active_view()
+    assert view is not None
+    model = view.model()
+    assert isinstance(model, DataFrameModel)
+    date_index = model.index(0, 1)
+    previous_date_display = DataFrameModel(df).data(date_index)
+    assert model.data(date_index) == previous_date_display
+    option = QStyleOptionViewItem()
+
+    for _ in range(2):
+        manager.handle_format_view_toggle(True)
+        delegate = view.itemDelegate()
+        assert isinstance(delegate, ResultTabColumnPresentationDelegate)
+        delegate.initStyleOption(option, model.index(0, 0))
+        assert option.text == "1,234.00"
+        delegate.initStyleOption(option, date_index)
+        assert option.text == "2026-01-02"
+
+    for _ in range(2):
+        manager.handle_format_view_toggle(False)
+        assert not isinstance(view.itemDelegate(), ResultTabColumnPresentationDelegate)
+        assert model.data(model.index(0, 0)) == "1234.0"
+        assert model.data(date_index) == previous_date_display
+
+    async_ops.run_operation.assert_not_called()
+    actual = manager.current_df()
+    assert actual is not None
+    pd.testing.assert_frame_equal(actual, df)
