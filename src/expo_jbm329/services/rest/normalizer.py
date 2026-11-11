@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_values
+from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_columns
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -81,11 +81,7 @@ def normalize_json_payloads_to_df(
     check_cancel()
     if raw.empty:
         return raw
-    return dataframe_from_raw_values(
-        list(raw.itertuples(index=False, name=None)),
-        list(raw.columns),
-        check_cancel=check_cancel,
-    )
+    return dataframe_from_raw_columns(raw, check_cancel=check_cancel)
 
 
 def _normalize_raw_payload(

@@ -33,33 +33,64 @@ def dataframe_from_raw_values(
     check_cancel()
     if not data or not header:
         return pd.DataFrame(data, columns=list(header))
-    columns: list[pd.Series] = []
-    for position in range(len(header)):
+    raw = pd.DataFrame(data, dtype=object)
+    raw.columns = pd.Index(list(header))
+    return dataframe_from_raw_columns(raw, check_cancel=check_cancel, coerce_float=coerce_float)
+
+
+def dataframe_from_raw_columns(
+    raw: pd.DataFrame,
+    *,
+    check_cancel: Callable[[], None],
+    coerce_float: bool = False,
+) -> pd.DataFrame:
+    """Finalize object-backed source columns without a row-tuple round trip.
+
+    Args:
+        raw: Object-backed source values before pandas numeric inference.
+            Labels (including duplicates) and index are preserved.
+        check_cancel: Source-specific check raising on cancellation.
+        coerce_float: Retain SQL records inference for Decimal/mixed values.
+
+    Returns:
+        A new frame with missing-only nullable integers/booleans.
+
+    Raises:
+        ValueError: If a column has already undergone non-object inference.
+    """
+    check_cancel()
+    if any(dtype != np.dtype(object) for dtype in raw.dtypes):
+        msg = "Raw dataframe columns must use object storage before inference."
+        raise ValueError(msg)
+    if raw.empty:
+        return raw.copy()
+    columns: dict[int, object] = {}
+    for position in range(len(raw.columns)):
         check_cancel()
-        values = [row[position] for row in data]
-        raw = pd.Series(values, dtype=object)
-        nonmissing = raw.dropna()
-        kind = pd.api.types.infer_dtype(nonmissing, skipna=True)
+        values = raw.iloc[:, position]
+        kind = pd.api.types.infer_dtype(values, skipna=True)
+        missing = values.isna()
         column: pd.Series
-        if raw.isna().any() and kind == "boolean":
-            column = raw.astype("boolean")
-        elif raw.isna().any() and kind == "integer":
+        if missing.any() and kind == "boolean":
+            column = values.astype("boolean")
+        elif missing.any() and kind == "integer":
+            nonmissing = values.loc[~missing]
             minimum = min(nonmissing)
             maximum = max(nonmissing)
             signed = np.iinfo(np.int64)
             unsigned = np.iinfo(np.uint64)
             if signed.min <= minimum and maximum <= signed.max:
-                column = raw.astype("Int64")
+                column = values.astype("Int64")
             elif minimum >= 0 and maximum <= unsigned.max:
-                column = raw.astype("UInt64")
+                column = values.astype("UInt64")
             else:
-                column = raw
-        elif coerce_float:
+                column = values
+        elif coerce_float and kind not in {"integer", "boolean", "floating", "string", "bytes", "empty"}:
             column = pd.DataFrame.from_records([(value,) for value in values], coerce_float=True).iloc[:, 0]
         else:
-            column = pd.Series(values)
-        columns.append(column)
+            column = values.infer_objects()
+        columns[position] = column.array
     check_cancel()
-    frame = pd.concat(columns, axis=1)
-    frame.columns = pd.Index(list(header))
+    frame = pd.DataFrame(columns, index=raw.index)
+    frame.columns = raw.columns.copy()
     return frame
