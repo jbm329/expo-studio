@@ -15,6 +15,16 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_expressi
 from expo_jbm329.services.data_operations.derived_column.derived_column_expression import (
     ExpressionOperation as Op,
 )
+from expo_jbm329.services.data_operations.derived_column.derived_column_numeric import (
+    INTEGER_OPERATIONS,
+    NumericKind,
+    checked_integer_arithmetic,
+    common_numeric_kind,
+    numeric_kind_from_dtype,
+    numeric_literal_kind,
+    parse_numeric_literal,
+    prepare_integer_operand,
+)
 from expo_jbm329.services.data_operations.derived_column.derived_column_parser import DerivedColumnFormulaError
 from expo_jbm329.services.data_operations.derived_column.derived_column_time import (
     DEFAULT_MONTH_LABELS,
@@ -39,7 +49,7 @@ def _literal(node: FormulaExpression) -> str | int | float | bool | None:
         case ExpressionType.NULL:
             return None
         case ExpressionType.NUMBER:
-            return float(node.value) if any(character in node.value.lower() for character in ".e") else int(node.value)
+            return parse_numeric_literal(node.value)
         case ExpressionType.BOOLEAN:
             return node.value == "TRUE"
         case _:
@@ -66,9 +76,13 @@ def _column(source: pd.DataFrame, node: FormulaExpression, rows: NDArray[np.intp
         # Categorical.astype can round integer categories through float when
         # missing codes exist. Decode into a nullable array directly instead.
         categories = pd.Series(series.cat.categories, dtype=dtype).array
-        return pd.Series(
+        series = pd.Series(
             categories.take(series.cat.codes.to_numpy(), allow_fill=True), index=series.index, name=series.name
         )
+    if node.value_type == ExpressionType.NUMBER:
+        kind = numeric_kind_from_dtype(series.dtype)
+        if kind is not None and kind != NumericKind.FLOAT:
+            return prepare_integer_operand(series, kind)
     return series
 
 
@@ -85,6 +99,19 @@ def _apply(node: FormulaExpression, values: list[pd.Series], month_labels: Month
         return extract_time_part(left, operation, month_labels)
     if operation in {Op.IS_NULL, Op.IS_NOT_NULL}:
         return left.isna() if operation == Op.IS_NULL else left.notna()
+    if operation in {Op.ADD, Op.SUBTRACT, Op.MULTIPLY, Op.POSITIVE, Op.NEGATIVE}:
+        kind = node.numeric_kind
+        if kind is None:
+            kind = common_numeric_kind(
+                numeric_kind_from_dtype(left.dtype),
+                numeric_kind_from_dtype(values[1].dtype) if len(values) > 1 else None,
+            )
+        if kind is not None and kind != NumericKind.FLOAT:
+            right_operand = None if operation in {Op.POSITIVE, Op.NEGATIVE} else values[1]
+            result = checked_integer_arithmetic(INTEGER_OPERATIONS[operation.value], left, right_operand, kind=kind)
+            if not isinstance(result, pd.Series):
+                raise _failure(node, "invalid_evaluation_result")
+            return result
     if operation in {Op.POSITIVE, Op.NEGATIVE}:
         return left if operation == Op.POSITIVE else -left
     if operation == Op.NOT:
@@ -155,12 +182,20 @@ def evaluate_expression(
             elif stage == "merge":
                 otherwise, then = results.pop(), results.pop()
                 condition, yes, no = selections.pop()
-                dtype: pd.StringDtype | Literal["Float64"] = (
-                    pd.StringDtype() if node.value_type == ExpressionType.TEXT else "Float64"
-                )
+                kind = node.numeric_kind
+                dtype: pd.StringDtype | Literal["Int64", "UInt64", "Float64"]
+                if node.value_type == ExpressionType.TEXT:
+                    dtype = pd.StringDtype()
+                else:
+                    dtype = kind.value if kind is not None else "Float64"
+                if kind is not None and kind != NumericKind.FLOAT:
+                    then = prepare_integer_operand(then, kind)
+                    otherwise = prepare_integer_operand(otherwise, kind)
+                else:
+                    then, otherwise = then.astype(dtype), otherwise.astype(dtype)
                 result = pd.Series(pd.NA, index=condition.index, dtype=dtype)
-                result.iloc[yes] = then.astype(dtype).array
-                result.iloc[no] = otherwise.astype(dtype).array
+                result.iloc[yes] = then.array
+                result.iloc[no] = otherwise.array
                 results.append(result)
             elif stage == "apply":
                 count = 1 if node.operation in {Op.IN, Op.NOT_IN} else len(node.operands)
@@ -175,17 +210,45 @@ def evaluate_expression(
                     literal_dtype = "boolean"
                 elif node.value_type == ExpressionType.NULL:
                     literal_dtype = "Float64"
-                results.append(pd.Series(_literal(node), index=pd.RangeIndex(len(selected)), dtype=literal_dtype))
+                literal = _literal(node)
+                if node.value_type == ExpressionType.NUMBER and isinstance(literal, int):
+                    kind = numeric_literal_kind(literal)
+                    literal_dtype = kind.value
+                    if len(selected) > 0:
+                        checked_integer_arithmetic("positive", literal, kind=kind)
+                results.append(
+                    pd.Series(
+                        literal if len(selected) > 0 else None, index=pd.RangeIndex(len(selected)), dtype=literal_dtype
+                    )
+                )
             elif node.operation == Op.COLUMN:
                 results.append(_column(source, node, selected))
             elif node.operation == Op.IF:
                 pending.extend(((node, selected, "condition"), (node.operands[0], selected, "visit")))
+            elif (
+                node.operation == Op.NEGATIVE
+                and node.operands[0].operation == Op.LITERAL
+                and node.operands[0].value_type == ExpressionType.NUMBER
+                and isinstance(literal := _literal(node.operands[0]), int)
+            ):
+                # Parse the sign with the magnitude so INT64_MIN needs no
+                # out-of-range signed positive intermediate.
+                kind = numeric_literal_kind(-literal)
+                if len(selected) > 0:
+                    checked_integer_arithmetic("negative", literal, kind=kind)
+                results.append(
+                    pd.Series(
+                        -literal if len(selected) > 0 else None, index=pd.RangeIndex(len(selected)), dtype=kind.value
+                    )
+                )
             else:
                 pending.append((node, selected, "apply"))
                 operands = node.operands[:1] if node.operation in {Op.IN, Op.NOT_IN} else node.operands
                 pending.extend((operand, selected, "visit") for operand in reversed(operands))
-        except DerivedColumnFormulaError:
-            raise
+        except DerivedColumnFormulaError as error:
+            if "position" in error.context:
+                raise
+            raise _failure(node, error.code, **error.context) from error
         except (TypeError, ValueError, OverflowError, ArithmeticError) as error:
             raise _failure(node, "expression_evaluation_failed", error=str(error)) from error
     result = results.pop()

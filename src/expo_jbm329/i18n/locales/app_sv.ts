@@ -3872,72 +3872,87 @@ Vänligen se loggfil för mer information.</translation>
         <translation>Funktionen '{token}' vid position {position} kräver en datetime-kolumn. Konvertera textdatum innan du använder den.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="106" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="101" />
+        <source>Integer overflow at position {position}. An intermediate result is outside the {dtype} range.</source>
+        <translation>Heltalsöverflöd vid position {position}. Ett mellanresultat ligger utanför intervallet för {dtype}.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="104" />
+        <source>Integer value at position {position} cannot be represented as {dtype}. Check signed and unsigned operands.</source>
+        <translation>Heltalsvärdet vid position {position} kan inte representeras som {dtype}. Kontrollera operander med och utan tecken.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="107" />
+        <source>Integer arithmetic at position {position} requires integer operands. Check the source column types.</source>
+        <translation>Heltalsberäkningen vid position {position} kräver heltalsoperander. Kontrollera källkolumnernas datatyper.</translation>
+    </message>
+    <message>
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="115" />
         <source>Column name is required.</source>
         <translation>Kolumnnamn krävs.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="107" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="116" />
         <source>Column name cannot contain '[' or ']'.</source>
         <translation>Kolumnnamn får inte innehålla '[' eller ']'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="108" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="117" />
         <source>Column '{column}' already exists.</source>
         <translation>Kolumn '{column}' finns redan.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="109" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="118" />
         <source>Column '{column}' is not numeric.</source>
         <translation>Kolumn '{column}' är inte numerisk.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="110" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="119" />
         <source>Column '{column}' is not unique.</source>
         <translation>Kolumn '{column}' är inte unik.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="111" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="120" />
         <source>Column '{column}' does not exist.</source>
         <translation>Kolumn '{column}' finns inte.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="112" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="121" />
         <source>Missing operand for operator '{operator}'.</source>
         <translation>Operand saknas för operatorn '{operator}'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="113" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="122" />
         <source>Unsupported token '{token}' in evaluation.</source>
         <translation>Otillåten symbol '{token}' vid beräkning.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="114" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="123" />
         <source>Formula did not produce a valid result.</source>
         <translation>Formeln gav inget giltigt resultat.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="115" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="124" />
         <source>Error applying operator '{operator}'.</source>
         <translation>Fel vid tillämpning av operatorn '{operator}'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="116" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="125" />
         <source>Unsupported operator '{operator}'.</source>
         <translation>Otillåten operator '{operator}'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="117" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="126" />
         <source>Unsupported output type '{dtype}'.</source>
         <translation>Utdataformat '{dtype}' stöds inte.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="118" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="127" />
         <source>Could not convert result to '{dtype}'.</source>
         <translation>Kunde inte konvertera resultatet till '{dtype}'.</translation>
     </message>
     <message>
-        <location filename="../../workbench/controllers/derived_column_controller.py" line="119" />
+        <location filename="../../workbench/controllers/derived_column_controller.py" line="128" />
         <source>Failed to evaluate formula.</source>
         <translation>Kunde inte beräkna formeln.</translation>
     </message>

@@ -87,30 +87,30 @@ def extract_time_part(values: pd.Series, operation: Op, labels: MonthLabels) -> 
         case Op.WEEK | Op.WEEK_NUMBER | Op.ISO_YEAR | Op.YEAR_WEEK:
             calendar = values.dt.isocalendar()
             if operation == Op.WEEK_NUMBER:
-                return pd.Series(calendar.week, dtype="Float64")
+                return pd.Series(calendar.week, dtype="Int64")
             if operation == Op.ISO_YEAR:
-                return pd.Series(calendar.year, dtype="Float64")
+                return pd.Series(calendar.year, dtype="Int64")
             week = "W" + _digits(calendar.week, 2)
             return _digits(calendar.year, 4) + "-" + week if operation == Op.YEAR_WEEK else week
         case Op.MONTH | Op.MONTH_SHORT:
             names = labels.full if operation == Op.MONTH else labels.short
             return pd.Series(values.dt.month.map(dict(enumerate(names, start=1))), dtype=pd.StringDtype())
         case Op.MONTH_NUMBER:
-            return pd.Series(values.dt.month, dtype="Float64")
+            return pd.Series(values.dt.month, dtype="Int64")
         case Op.YEAR:
-            return pd.Series(values.dt.year, dtype="Float64")
+            return pd.Series(values.dt.year, dtype="Int64")
         case Op.YEAR_MONTH:
             return _digits(values.dt.year, 4) + "-" + _digits(values.dt.month, 2)
         case Op.QUARTER | Op.QUARTER_NUMBER | Op.YEAR_QUARTER:
             quarter = values.dt.quarter
             if operation == Op.QUARTER_NUMBER:
-                return pd.Series(quarter, dtype="Float64")
+                return pd.Series(quarter, dtype="Int64")
             label = "Q" + _digits(quarter)
             return _digits(values.dt.year, 4) + "-" + label if operation == Op.YEAR_QUARTER else label
         case Op.TERTIAL | Op.TERTIAL_NUMBER | Op.YEAR_TERTIAL:
             tertial = (values.dt.month - 1) // 4 + 1
             if operation == Op.TERTIAL_NUMBER:
-                return pd.Series(tertial, dtype="Float64")
+                return pd.Series(tertial, dtype="Int64")
             label = "T" + _digits(tertial)
             return _digits(values.dt.year, 4) + "-" + label if operation == Op.YEAR_TERTIAL else label
         case _:
