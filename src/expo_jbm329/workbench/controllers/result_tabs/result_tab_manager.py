@@ -15,6 +15,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype, is_float_dtype, is_integer_dtype
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt, QThread
 from PyQt6.QtGui import QAction, QFontMetrics
 from PyQt6.QtWidgets import (
@@ -91,6 +92,7 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.derived_column_controller import DerivedColumnController
     from expo_jbm329.workbench.controllers.join_controller import JoinController
     from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_column_presentation_delegate import NumericColumnKind
 
 
 # ======================================================================
@@ -2261,18 +2263,28 @@ class ResultTabManager:
         """Attach or update the column presentation delegate for a view."""
         try:
             semantics_by_index: dict[int, SeriesSemantics] = {}
+            numeric_column_kinds: dict[int, NumericColumnKind] = {}
 
-            for i in range(df.shape[1]):
-                sem = self.get_series_semantics(view, i)
-                if sem is not None:
-                    semantics_by_index[i] = sem
+            for i, dtype in enumerate(df.dtypes):
+                if is_integer_dtype(dtype):
+                    numeric_column_kinds[i] = "integer"
+                elif is_float_dtype(dtype):
+                    numeric_column_kinds[i] = "float"
+                elif is_datetime64_any_dtype(dtype):
+                    sem = self.get_series_semantics(view, i)
+                    if sem is not None:
+                        semantics_by_index[i] = sem
 
             delegate = ResultTabColumnPresentationDelegate(
                 semantics_by_column_index=semantics_by_index,
+                numeric_column_kinds=numeric_column_kinds,
                 parent=view,
             )
 
+            previous_delegate = view.itemDelegate()
             view.setItemDelegate(delegate)
+            if previous_delegate is not None and previous_delegate.parent() is view:
+                previous_delegate.deleteLater()
 
         except (
             AttributeError,
@@ -2285,11 +2297,16 @@ class ResultTabManager:
             RuntimeError,
             TypeError,
             ValueError,
-        ):
+        ) as error:
             self._logger.exception("ResultTabManager: failed to apply presentation delegate")
+            self._dialogs.critical(
+                parent=self._parent,
+                title=self._tr(self.TR_FAILURE),
+                text=self._tr_fmt(self.TR_COULD_NOT_UPDATE_DATA, error=str(error)),
+            )
 
     def handle_format_view_toggle(self, is_checked: bool) -> None:
-        """Handle toolbar toggle for enabling/disabling semantic formatting."""
+        """Apply the requested formatting state, including repeated requests."""
         self._formatting_enabled = is_checked
         self._logger.debug("ResultTabManger: formatting toggled (enabled=%s)", is_checked)
 
@@ -2297,11 +2314,9 @@ class ResultTabManager:
         if view is None:
             return
 
-        current_delegate = view.itemDelegate()
-
-        if isinstance(current_delegate, ResultTabColumnPresentationDelegate):
+        if not is_checked:
             self._clear_presentation_delegate(view)
-        elif is_checked:
+        else:
             active_record = self.current_df()
             if active_record is not None:
                 self._run_with_busy_overlay(
@@ -2337,8 +2352,13 @@ class ResultTabManager:
 
     def _clear_presentation_delegate(self, view: QTableView) -> None:
         try:
+            previous_delegate = view.itemDelegate()
+            if not isinstance(previous_delegate, ResultTabColumnPresentationDelegate):
+                return
             delegate = QStyledItemDelegate(view)
             view.setItemDelegate(delegate)
+            if previous_delegate.parent() is view:
+                previous_delegate.deleteLater()
         except (
             AttributeError,
             ConnectionError,

@@ -195,6 +195,26 @@ def fmt_num(val: float | None, *, sig: int = 4) -> str:
     return formatted
 
 
+def fmt_float_fixed(val: float | None) -> str:
+    """Format a float with localized grouping and exactly two decimal places.
+
+    Uses the system numeric locale, independently of the UI language.
+    Missing values are blank; infinities use Qt's locale representation.
+
+    Args:
+        val: Floating-point value, or None.
+
+    Returns:
+        Localized fixed-decimal text, or empty text for a missing value.
+    """
+    if val is None or np.isnan(val):
+        return ""
+
+    locale = QLocale.system()
+    locale.setNumberOptions(locale.numberOptions() & ~QLocale.NumberOption.OmitGroupSeparator)
+    return locale.toString(float(val), "f", 2)
+
+
 # ---------------------------------------------------------------------
 #  P-value formatting
 # ---------------------------------------------------------------------

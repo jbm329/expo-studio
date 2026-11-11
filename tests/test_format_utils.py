@@ -3,13 +3,16 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 from PyQt6.QtCore import QLocale
+from pytest import MonkeyPatch
 
 from expo_jbm329.utils.format_utils import (
     fmt_bytes,
     fmt_category,
     fmt_cell,
     fmt_date,
+    fmt_float_fixed,
     fmt_int,
     fmt_num,
     fmt_p_value,
@@ -37,7 +40,7 @@ def test_fmt_bytes():
     assert "1,00 MB" in fmt_bytes(1024 * 1024) or "1.00 MB" in fmt_bytes(1024 * 1024)
 
 
-def test_fmt_path_size_for_missing_and_existing_file(tmp_path):
+def test_fmt_path_size_for_missing_and_existing_file(tmp_path: Path) -> None:
     missing = tmp_path / "missing.txt"
     assert fmt_path_size(missing) == ""
 
@@ -57,6 +60,78 @@ def test_fmt_num():
 
     result2 = fmt_num(123.456, sig=4)
     assert "123" in result2
+
+
+@pytest.mark.parametrize(
+    ("locale_name", "expected"),
+    [
+        ("en_US", "1,234.50"),
+        ("sv_SE", "1\u00a0234,50"),
+        ("de_DE", "1.234,50"),
+    ],
+)
+def test_fmt_float_fixed_localizes_grouping_and_decimals(
+    monkeypatch: MonkeyPatch, locale_name: str, expected: str
+) -> None:
+    monkeypatch.setattr(QLocale, "system", lambda: QLocale(locale_name))
+
+    assert fmt_float_fixed(1234.5) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (1234.0, "1,234.00"),
+        (-1234.5, "-1,234.50"),
+        (0.0, "0.00"),
+        (-0.0, "0.00"),
+        (0.00001, "0.00"),
+        (1.236, "1.24"),
+        (1e20, "100,000,000,000,000,000,000.00"),
+        (np.float32(1234.5), "1,234.50"),
+        (np.float64(1234.5), "1,234.50"),
+        (float("inf"), "inf"),
+        (float("-inf"), "-inf"),
+        (float("nan"), ""),
+        (None, ""),
+    ],
+)
+def test_fmt_float_fixed_values(monkeypatch: MonkeyPatch, value: float | None, expected: str) -> None:
+    monkeypatch.setattr(QLocale, "system", lambda: QLocale("en_US"))
+
+    assert fmt_float_fixed(value) == expected
+
+
+def test_fmt_float_fixed_enables_grouping_without_mutating_locale(monkeypatch: MonkeyPatch) -> None:
+    locale = QLocale("en_US")
+    locale.setNumberOptions(QLocale.NumberOption.OmitGroupSeparator)
+    # QLocale.system() returns a value copy, not a shared mutable locale.
+    monkeypatch.setattr(QLocale, "system", lambda: QLocale(locale))
+
+    assert fmt_float_fixed(1234.0) == "1,234.00"
+    assert locale.numberOptions() == QLocale.NumberOption.OmitGroupSeparator
+
+
+def test_fmt_float_fixed_groups_in_c_locale(monkeypatch: MonkeyPatch) -> None:
+    monkeypatch.setattr(QLocale, "system", QLocale.c)
+
+    assert fmt_float_fixed(1234.0) == "1,234.00"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (9007199254740993, "9,007,199,254,740,993"),
+        (-(2**63), "-9,223,372,036,854,775,808"),
+        (2**63 - 1, "9,223,372,036,854,775,807"),
+        (2**63, "9,223,372,036,854,775,808"),
+        (2**64 - 1, "18,446,744,073,709,551,615"),
+    ],
+)
+def test_fmt_int_preserves_full_integer_precision(monkeypatch: MonkeyPatch, value: int, expected: str) -> None:
+    monkeypatch.setattr(QLocale, "system", lambda: QLocale("en_US"))
+
+    assert fmt_int(value) == expected
 
 
 def test_fmt_p_value():
@@ -85,7 +160,7 @@ def test_fmt_int():
     assert any(s in result for s in ["1 234", "1\u00a0234", "1,234", "1.234"])
 
 
-def test_fmt_int_groups_when_qt_locale_omits_grouping(monkeypatch):
+def test_fmt_int_groups_when_qt_locale_omits_grouping(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr(QLocale, "system", QLocale.c)
 
     assert fmt_int(1234) == "1,234"
