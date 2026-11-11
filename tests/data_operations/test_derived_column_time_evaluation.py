@@ -21,16 +21,16 @@ from expo_jbm329.services.data_operations.derived_column.derived_column_time imp
 CASES = [
     ("TIME", ["14:33", "00:00", "23:59"], "string"),
     ("WEEK", ["W01", "W09", "W53"], "string"),
-    ("WEEK#", [1, 9, 53], "Float64"),
+    ("WEEK#", [1, 9, 53], "Int64"),
     ("MONTH", ["January", "February", "January"], "string"),
     ("MONTHSHORT", ["Jan", "Feb", "Jan"], "string"),
-    ("MONTH#", [1, 2, 1], "Float64"),
+    ("MONTH#", [1, 2, 1], "Int64"),
     ("TERTIAL", ["T1", "T1", "T1"], "string"),
-    ("TERTIAL#", [1, 1, 1], "Float64"),
+    ("TERTIAL#", [1, 1, 1], "Int64"),
     ("QUARTER", ["Q1", "Q1", "Q1"], "string"),
-    ("QUARTER#", [1, 1, 1], "Float64"),
-    ("YEAR", [2026, 2024, 2021], "Float64"),
-    ("ISOYEAR", [2026, 2024, 2020], "Float64"),
+    ("QUARTER#", [1, 1, 1], "Int64"),
+    ("YEAR", [2026, 2024, 2021], "Int64"),
+    ("ISOYEAR", [2026, 2024, 2020], "Int64"),
     ("YEARWEEK", ["2026-W01", "2024-W09", "2020-W53"], "string"),
     ("YEARMONTH", ["2026-01", "2024-02", "2021-01"], "string"),
     ("YEARQUARTER", ["2026-Q1", "2024-Q1", "2021-Q1"], "string"),
@@ -92,16 +92,16 @@ def test_every_month_quarter_and_tertial_boundary():
         ("TERTIAL#", [(month - 1) // 4 + 1 for month in range(1, 13) for _ in range(2)]),
     ):
         result = create_derived_column(source, DerivedColumnSpec("Result", f"{function}([When])"))["Result"]
-        assert_series_equal(result, pd.Series(expected, dtype="Float64", name="Result"))
+        assert_series_equal(result, pd.Series(expected, dtype="Int64", name="Result"))
 
 
 def test_iso_week_and_calendar_year_differ_at_both_sides_of_new_year():
     source = pd.DataFrame({"When": pd.to_datetime(["2019-12-30", "2020-12-31", "2021-01-01", "2021-01-04"])})
     for function, expected, dtype in (
-        ("YEAR", [2019, 2020, 2021, 2021], "Float64"),
-        ("ISOYEAR", [2020, 2020, 2020, 2021], "Float64"),
+        ("YEAR", [2019, 2020, 2021, 2021], "Int64"),
+        ("ISOYEAR", [2020, 2020, 2020, 2021], "Int64"),
         ("YEARWEEK", ["2020-W01", "2020-W53", "2020-W53", "2021-W01"], "string"),
-        ("WEEK#", [1, 53, 53, 1], "Float64"),
+        ("WEEK#", [1, 53, 53, 1], "Int64"),
     ):
         result = create_derived_column(source, DerivedColumnSpec("Result", f"{function}([When])"))["Result"]
         assert_series_equal(result, pd.Series(expected, dtype=dtype, name="Result"))
@@ -134,9 +134,9 @@ def test_fall_dst_repeated_hour_remains_stored_local_time():
     [
         ("IF([When] IS NULL; 'Missing'; MONTH([When]))", ["January", "September", "Missing"], "string"),
         ("IF(MONTH#([When]) <= 6; 'H1'; 'H2')", ["H1", "H2", "H2"], "string"),
-        ("YEAR([When]) + MONTH#([When])", [2027, 2035, pd.NA], "Float64"),
+        ("YEAR([When]) + MONTH#([When])", [2027, 2035, pd.NA], "Int64"),
         ("IF(TRUE; YEARWEEK([When]); MONTH([When]))", ["2026-W01", "2026-W36", pd.NA], "string"),
-        ("IF(FALSE; MONTH#([When]); 0)", [0, 0, 0], "Float64"),
+        ("IF(FALSE; MONTH#([When]); 0)", [0, 0, 0], "Int64"),
     ],
 )
 def test_time_functions_inside_conditions_arithmetic_and_selected_branches(formula, expected, dtype):

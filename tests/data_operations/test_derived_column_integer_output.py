@@ -88,6 +88,152 @@ def test_shared_numpy_operand_storage_does_not_alias_created_output(dtype: str, 
     assert_frame_equal(source, original)
 
 
+@pytest.mark.parametrize("dtype", INTEGER_DTYPES + ["category"])
+@pytest.mark.parametrize("empty", [False, True])
+def test_integer_if_null_replacement_preserves_exact_values_schema_and_preview(dtype: str, empty: bool) -> None:
+    storage = "Int64" if dtype == "category" else dtype
+    wide = dtype.lower().replace("[pyarrow]", "") in {"int64", "uint64"} or dtype == "category"
+    value = 2**53 + 1 if wide else 120
+    values = pd.Series([value, value + 1], dtype=storage)
+    if dtype == "category":
+        values = values.astype("category")
+    source = pd.DataFrame({"A": values})
+    source.index = pd.MultiIndex.from_tuples([("a", 1), ("a", 1)], names=["group", "row"])
+    if empty:
+        source = source.iloc[:0]
+    original = source.copy(deep=True)
+    spec = DerivedColumnSpec("Result", "IF([A] IS NULL; 0; IF(TRUE; [A]; NULL))")
+    result = create_derived_column(source, spec).Result
+    expected_dtype = "UInt64" if dtype.lower().replace("[pyarrow]", "") == "uint64" else "Int64"
+    assert_series_equal(
+        result,
+        pd.Series([] if empty else [value, value + 1], dtype=expected_dtype, index=source.index, name="Result"),
+    )
+    preview = preview_derived_column(source, spec, rows=1)
+    assert preview.ok and preview.data is not None
+    assert_series_equal(preview.data.Result, result.head(1))
+    assert_frame_equal(source, original)
+
+
+@pytest.mark.parametrize(
+    ("formula", "expected", "dtype"),
+    [
+        ("IF([Flag]; [A]; NULL)", [2**53 + 1, None, None], "Int64"),
+        ("IF([Flag]; NULL; [A])", [None, 2**53 + 3, None], "Int64"),
+        ("IF([A] IS NULL; 0; [A])", [2**53 + 1, 2**53 + 3, 0], "Int64"),
+        ("IF([Flag]; [U]; 0)", [2**64 - 1, 0, 0], "UInt64"),
+        ("IF([Flag]; [U]; NULL)", [2**64 - 1, None, None], "UInt64"),
+        ("IF([Flag]; IF(TRUE; [A]; NULL); 1)+1", [2**53 + 2, 2, 2], "Int64"),
+        ("IF(TRUE; [A]; 0.0)", [float(2**53 + 1), float(2**53 + 3), None], "Float64"),
+        ("IF(TRUE; [A]; 1e0)", [float(2**53 + 1), float(2**53 + 3), None], "Float64"),
+        ("IF(TRUE; [A]; [F])", [float(2**53 + 1), float(2**53 + 3), None], "Float64"),
+        ("IF([Flag]; NULL; NULL)", [None, None, None], "Float64"),
+    ],
+)
+@pytest.mark.parametrize("empty", [False, True])
+def test_if_merge_uses_full_schema_not_selected_values(
+    formula: str, expected: list[int | float | None], dtype: str, empty: bool
+) -> None:
+    source = pd.DataFrame({
+        "A": pd.Series([2**53 + 1, 2**53 + 3, None], dtype="Int64"),
+        "U": pd.Series([2**64 - 1, 1, None], dtype="UInt64"),
+        "F": pd.Series([None, None, None], dtype="Float64"),
+        "Flag": pd.Series([True, False, None], dtype="boolean"),
+    })
+    source.index = pd.Index([8, 8, 1], name="row")
+    if empty:
+        source = source.iloc[:0]
+    spec = DerivedColumnSpec("Result", formula)
+    result = create_derived_column(source, spec).Result
+    assert_series_equal(result, pd.Series([] if empty else expected, index=source.index, dtype=dtype, name="Result"))
+    preview = preview_derived_column(source, spec, rows=1)
+    assert preview.ok and preview.data is not None
+    assert_series_equal(preview.data.Result, result.head(1))
+
+
+@pytest.mark.parametrize("active", [False, True])
+@pytest.mark.parametrize("output_dtype", ["auto", "Float64"])
+def test_if_checks_only_selected_unsigned_rows_before_signed_merge(
+    active: bool, output_dtype: Literal["auto", "Float64"]
+) -> None:
+    source = pd.DataFrame({
+        "U": pd.Series([2**63, 2, None], dtype="UInt64"),
+        "S": pd.Series([-1, -2, -3], dtype="Int64"),
+        "Flag": pd.Series([active, True, True], dtype="boolean"),
+    })
+    formula = "IF([Flag]; [U]; [S])"
+    spec = DerivedColumnSpec("Result", formula, output_dtype=output_dtype)
+    if active:
+        with pytest.raises(DerivedColumnFormulaError) as caught:
+            create_derived_column(source, spec)
+        assert caught.value.code == "integer_out_of_range"
+        assert caught.value.context["position"] == 0
+        assert caught.value.context["end"] == len(formula)
+    else:
+        result = create_derived_column(source, spec).Result
+        assert_series_equal(
+            result, pd.Series([-1, 2, None], dtype="Int64" if output_dtype == "auto" else "Float64", name="Result")
+        )
+
+
+@pytest.mark.parametrize("branch", ["[Max]+1", "[Max]*2", str(2**64), f"{-(2**63) - 1}", "YEAR([When])+[Max]"])
+@pytest.mark.parametrize("active", [False, True])
+@pytest.mark.parametrize("output_dtype", ["auto", "Float64"])
+def test_if_preserves_lazy_integer_errors_and_date_arithmetic(
+    branch: str, active: bool, output_dtype: Literal["auto", "Float64"]
+) -> None:
+    source = pd.DataFrame({
+        "Max": pd.Series([2**63 - 1], dtype="Int64"),
+        "When": pd.to_datetime(["2026-01-01"]),
+    })
+    formula = f"IF({'TRUE' if active else 'FALSE'}; {branch}; 0)"
+    if active:
+        with pytest.raises(DerivedColumnFormulaError) as caught:
+            create_derived_column(source, DerivedColumnSpec("Result", formula, output_dtype=output_dtype))
+        assert caught.value.code in {"integer_overflow", "integer_out_of_range"}
+        start, end = caught.value.context["position"], caught.value.context["end"]
+        assert isinstance(start, int) and isinstance(end, int)
+        assert formula[start:end] == branch
+    else:
+        result = create_derived_column(source, DerivedColumnSpec("Result", formula, output_dtype=output_dtype)).Result
+        assert result.iloc[0] == 0
+        if output_dtype == "Float64":
+            assert str(result.dtype) == "Float64"
+        else:
+            assert pd.api.types.is_integer_dtype(result.dtype)
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "UInt64", "int64[pyarrow]", "uint64[pyarrow]"])
+@pytest.mark.parametrize("formula", ["IF(TRUE; [A]; NULL)", "IF(FALSE; NULL; [A])"])
+def test_all_missing_if_branch_retains_integer_schema(dtype: str, formula: str) -> None:
+    source = pd.DataFrame({"A": pd.Series([None, None], dtype=dtype)})
+    result = create_derived_column(source, DerivedColumnSpec("Result", formula)).Result
+    expected_dtype = "UInt64" if dtype.lower().startswith("u") else "Int64"
+    assert_series_equal(result, pd.Series([None, None], dtype=expected_dtype, name="Result"))
+
+
+@pytest.mark.parametrize("dtype", ["Int64", "UInt64"])
+def test_if_keeps_large_categorical_values_exact_with_missing_codes(dtype: str) -> None:
+    value = 2**64 - 1 if dtype == "UInt64" else 2**53 + 1
+    source = pd.DataFrame({"A": pd.Series([value, None], dtype=dtype).astype("category")})
+    result = create_derived_column(source, DerivedColumnSpec("Result", "IF(TRUE; [A]; NULL)")).Result
+    assert_series_equal(result, pd.Series([value, None], dtype=dtype, name="Result"))
+
+
+@pytest.mark.parametrize("function", ["YEAR", "ISOYEAR", "WEEK#", "MONTH#", "QUARTER#", "TERTIAL#"])
+@pytest.mark.parametrize("output_dtype", ["auto", "Float64"])
+def test_numeric_date_parts_keep_nulls_inside_if_and_arithmetic(
+    function: str, output_dtype: Literal["auto", "Float64"]
+) -> None:
+    source = pd.DataFrame({"When": pd.to_datetime(pd.Series(["2026-01-01", None], dtype="string"))})
+    formula = f"IF([When] IS NULL; NULL; {function}([When]))+1"
+    expected = 2027 if function in {"YEAR", "ISOYEAR"} else 2
+    result = create_derived_column(source, DerivedColumnSpec("Result", formula, output_dtype=output_dtype)).Result
+    assert_series_equal(
+        result, pd.Series([expected, None], dtype="Int64" if output_dtype == "auto" else "Float64", name="Result")
+    )
+
+
 @pytest.mark.parametrize("dtype", ["Int64", "UInt64", "int64[pyarrow]", "uint64[pyarrow]", "category"])
 @pytest.mark.parametrize("typed", [False, True])
 @pytest.mark.parametrize("empty", [False, True])
@@ -209,12 +355,12 @@ def test_checked_errors_have_source_spans_and_do_not_mutate_input(
         ("-[U]", [-3, None], "Int64"),
         ("+[U]", [3, None], "UInt64"),
         ("[A]+1e0", [4.0, None], "Float64"),
-        ("IF(TRUE; 2; 3)+[A]", [5.0, None], "Float64"),
-        ("YEAR([D])+[A]", [2029.0, None], "Float64"),
+        ("IF(TRUE; 2; 3)+[A]", [5, None], "Int64"),
+        ("YEAR([D])+[A]", [2029, None], "Int64"),
         ("NULL+[A]", [None, None], "Int64"),
     ],
 )
-def test_typed_unary_null_and_temporary_float_boundaries(
+def test_typed_unary_null_and_numeric_result_kinds(
     formula: str, expected: list[int | float | None], dtype: str
 ) -> None:
     source = pd.DataFrame({
@@ -241,7 +387,8 @@ def test_inactive_branches_do_not_raise_numeric_errors(formula: str) -> None:
         "U": pd.Series([2**64 - 1, None], dtype="UInt64"),
     })
     result = create_derived_column(source, DerivedColumnSpec("Result", formula))
-    assert_series_equal(result.Result, pd.Series([0.0, 0.0], dtype="Float64", name="Result"))
+    dtype = "UInt64" if formula == f"IF(FALSE; {2**64}; 0)" else "Int64"
+    assert_series_equal(result.Result, pd.Series([0, 0], dtype=dtype, name="Result"))
 
 
 @pytest.mark.parametrize("typed", [False, True])

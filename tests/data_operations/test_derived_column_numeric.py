@@ -511,11 +511,11 @@ def test_invalid_arity_kind_and_indexes_fail_explicitly() -> None:
 
 
 @pytest.mark.parametrize("formula", ["IF(TRUE; [A]; 0)", "YEAR([When])"])
-def test_if_merge_and_date_parts_remain_floating_until_their_migration(formula: str) -> None:
+def test_if_merge_and_date_parts_preserve_integer_output(formula: str) -> None:
     source = pd.DataFrame({
         "A": pd.Series([1, None], dtype="Int64"),
         "B": pd.Series([2, 3], dtype="Int64"),
         "When": pd.to_datetime(pd.Series(["2026-01-01", None], dtype="string")),
     })
     result = create_derived_column(source, DerivedColumnSpec("Result", formula))
-    assert str(result["Result"].dtype) == "Float64"
+    assert str(result["Result"].dtype) == "Int64"

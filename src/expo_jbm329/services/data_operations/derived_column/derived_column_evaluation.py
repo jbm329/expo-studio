@@ -101,10 +101,6 @@ def _apply(node: FormulaExpression, values: list[pd.Series], month_labels: Month
         return left.isna() if operation == Op.IS_NULL else left.notna()
     if operation in {Op.ADD, Op.SUBTRACT, Op.MULTIPLY, Op.POSITIVE, Op.NEGATIVE}:
         kind = node.numeric_kind
-        # IF merges and numeric date parts remain floating until their migration.
-        for operand, value in zip(node.operands, values, strict=True):
-            if operand.value_type != ExpressionType.NULL and pd.api.types.is_float_dtype(value.dtype):
-                kind = NumericKind.FLOAT
         if kind is None:
             kind = common_numeric_kind(
                 numeric_kind_from_dtype(left.dtype),
@@ -186,12 +182,20 @@ def evaluate_expression(
             elif stage == "merge":
                 otherwise, then = results.pop(), results.pop()
                 condition, yes, no = selections.pop()
-                dtype: pd.StringDtype | Literal["Float64"] = (
-                    pd.StringDtype() if node.value_type == ExpressionType.TEXT else "Float64"
-                )
+                kind = node.numeric_kind
+                dtype: pd.StringDtype | Literal["Int64", "UInt64", "Float64"]
+                if node.value_type == ExpressionType.TEXT:
+                    dtype = pd.StringDtype()
+                else:
+                    dtype = kind.value if kind is not None else "Float64"
+                if kind is not None and kind != NumericKind.FLOAT:
+                    then = prepare_integer_operand(then, kind)
+                    otherwise = prepare_integer_operand(otherwise, kind)
+                else:
+                    then, otherwise = then.astype(dtype), otherwise.astype(dtype)
                 result = pd.Series(pd.NA, index=condition.index, dtype=dtype)
-                result.iloc[yes] = then.astype(dtype).array
-                result.iloc[no] = otherwise.astype(dtype).array
+                result.iloc[yes] = then.array
+                result.iloc[no] = otherwise.array
                 results.append(result)
             elif stage == "apply":
                 count = 1 if node.operation in {Op.IN, Op.NOT_IN} else len(node.operands)

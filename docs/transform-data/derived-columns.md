@@ -134,9 +134,20 @@ unsigned values, requires the operands to fit signed 64-bit storage first.
 Otherwise the formula reports a range error, even if cancellation could make
 the final result fit.
 
-Currently, numeric `IF` results and numeric date-part functions still return
-floating-point columns. This also applies to arithmetic using those results.
-Integer preservation for these results is a separate follow-up.
+Numeric `IF` results use both branches' types, even when the preview or all
+current rows select only one branch. Integer branches keep nullable integer
+output; `NULL` adopts the other branch's type. A floating-point branch makes
+the result floating-point, even if it is not selected. Two `NULL` branches
+produce a nullable floating-point column.
+
+Only selected rows are calculated or checked for integer range errors.
+When signed and unsigned branches are mixed, selected unsigned values must
+fit signed 64-bit storage. An out-of-range value in an unselected row does not
+cause an error.
+
+Numeric date parts (`YEAR`, `ISOYEAR`, `WEEK#`, `MONTH#`, `QUARTER#` and
+`TERTIAL#`) produce nullable integers and preserve missing dates. They retain
+integer output in integer-only arithmetic and `IF` branches.
 
 ## Conditional results with IF {#conditional-results-with-if}
 

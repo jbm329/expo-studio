@@ -69,7 +69,7 @@ def test_text_null_replacement_preserves_nonmissing_values_and_source(dtype, val
 
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "float64", "category"])
 @pytest.mark.parametrize("values", [[18, None, 0, -2], [None, None], []])
-def test_numeric_null_replacement_is_nullable_float_with_original_index(dtype, values):
+def test_numeric_null_replacement_preserves_schema_with_original_index(dtype, values):
     source = pd.DataFrame({"Age": pd.Series(values, dtype=dtype)})
     source.index = pd.Index([8] * len(source), name="row")
     # An untyped empty/all-null category has no numeric schema.
@@ -78,7 +78,10 @@ def test_numeric_null_replacement_is_nullable_float_with_original_index(dtype, v
     assert_series_equal(
         create(source, "IF([Age] IS NULL; 0; [Age])"),
         pd.Series(
-            [0 if value is None else value for value in values], index=source.index, dtype="Float64", name="Result"
+            [0 if value is None else value for value in values],
+            index=source.index,
+            dtype="Int64" if dtype in {"Int64", "category"} else "Float64",
+            name="Result",
         ),
     )
 
@@ -109,7 +112,7 @@ def test_each_numeric_predicate_and_column_arithmetic(condition, expected):
     source.index = [2, 1, 1, 0]
     assert_series_equal(
         create(source, f"IF({condition}; 1; 0)"),
-        pd.Series(expected, index=source.index, dtype="Float64", name="Result"),
+        pd.Series(expected, index=source.index, dtype="Int64", name="Result"),
     )
 
 
@@ -147,20 +150,20 @@ def test_text_comparisons_and_missing_membership_candidates(predicate, expected)
         "Vehicle": pd.Series(["BMW", "Volvo", "Ford", None], dtype="string"),
         "Other": pd.Series(["BMW", None, "Saab", None], dtype="string"),
     })
-    assert_series_equal(create(source, f"IF({predicate}; 1; 0)"), pd.Series(expected, dtype="Float64", name="Result"))
+    assert_series_equal(create(source, f"IF({predicate}; 1; 0)"), pd.Series(expected, dtype="Int64", name="Result"))
 
 
 @pytest.mark.parametrize(
     ("formula", "expected", "dtype"),
     [
-        ("IF([Age] > 1; [Age]*2; [Age]+1)", [2, 4, None], "Float64"),
-        ("IF([Age] > 1; NULL; [Age])", [1, None, None], "Float64"),
+        ("IF([Age] > 1; [Age]*2; [Age]+1)", [2, 4, None], "Int64"),
+        ("IF([Age] > 1; NULL; [Age])", [1, None, None], "Int64"),
         ("IF([Age] > 1; 'yes'; NULL)", [None, "yes", None], "string"),
         ("IF([Age] > 1; NULL; NULL)", [None, None, None], "Float64"),
         ("IF([Age] > 1; IF([Age] < 3; 'two'; 'large'); 'other')", ["other", "two", "other"], "string"),
         ("IF([Age] > 1; 1/0; 2)", [2, None, 2], "Float64"),
-        ("IF([Age] > 1; -[Age]; +[Age])", [1, -2, None], "Float64"),
-        ("IF([Age] > 1; 2; 3)+1", [4, 3, 4], "Float64"),
+        ("IF([Age] > 1; -[Age]; +[Age])", [1, -2, None], "Int64"),
+        ("IF([Age] > 1; 2; 3)+1", [4, 3, 4], "Int64"),
     ],
 )
 def test_nested_results_nulls_arithmetic_and_division(formula, expected, dtype):
@@ -293,7 +296,7 @@ def test_direct_evaluation_returns_original_multiindex():
     )
     assert_series_equal(
         evaluate_expression(source, parsed.expression),
-        pd.Series([1, 0, 2], dtype="Float64", index=source.index),
+        pd.Series([1, 0, 2], dtype="Int64", index=source.index),
     )
 
 
