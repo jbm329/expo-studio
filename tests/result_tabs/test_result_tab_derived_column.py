@@ -95,8 +95,9 @@ def test_tab_menu_no_longer_offers_derived_column(derived_env, monkeypatch) -> N
 @pytest.mark.parametrize("column", [0, 1, 2])
 @pytest.mark.parametrize("row_count", [0, 2])
 @pytest.mark.parametrize("formula", ["[c] + 1", "IF([c] > 5; 'High'; 'Low')"])
+@pytest.mark.parametrize("dtype", ["Float64", "Int64", "UInt64"])
 def test_header_creation_inserts_after_clicked_column_and_preserves_target_and_undo(
-    derived_env, monkeypatch, qt_app, column, row_count, formula
+    derived_env, monkeypatch, qt_app, column, row_count, formula, dtype: str
 ) -> None:
     manager, tabs, transport, dialogs, cache = derived_env
     other = pd.DataFrame({"other": [9]})
@@ -105,7 +106,7 @@ def test_header_creation_inserts_after_clicked_column_and_preserves_target_and_u
     source = pd.DataFrame({
         "a": pd.Series([1, 2], dtype="Int64"),
         "b": pd.Series(["x", None], dtype="string"),
-        "c": pd.Series([4.5, 5.5], dtype="Float64"),
+        "c": pd.Series([4.5, 5.5] if dtype == "Float64" else [2**53 + 1, 2**53 + 3], dtype=dtype),
     }).iloc[:row_count]
     source.index = pd.Index([20, 10][:row_count], name="row")
     original = source.copy(deep=True)
@@ -146,7 +147,8 @@ def test_header_creation_inserts_after_clicked_column_and_preserves_target_and_u
     if formula == "[c] + 1":
         expected["Result"] = original["c"] + 1
     else:
-        expected["Result"] = pd.Series(["Low", "High"][:row_count], index=original.index, dtype="string")
+        labels = ["Low", "High"] if dtype == "Float64" else ["High", "High"]
+        expected["Result"] = pd.Series(labels[:row_count], index=original.index, dtype="string")
     expected = expected.loc[:, expected_columns]
     pd.testing.assert_frame_equal(manager.get_df_by_tab_id(source_id), expected)
     pd.testing.assert_frame_equal(view.model().data_frame(), expected)
