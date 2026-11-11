@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from xml.etree import ElementTree
+from zipfile import ZipFile
 
 import pandas as pd
 import pytest
+from openpyxl import Workbook
 
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
 
@@ -14,6 +17,168 @@ if TYPE_CHECKING:
 @pytest.fixture
 def loader() -> FileLoader:
     return FileLoader()
+
+
+@pytest.mark.parametrize("batch_size", [1, 100])
+@pytest.mark.parametrize("sheet", [None, 0, "Data"])
+def test_xlsx_missing_only_nullable_cell_types(
+    tmp_path: Path, loader: FileLoader, batch_size: int, sheet: int | str | None
+) -> None:
+    path = tmp_path / "nullable.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.title = "Data"
+    worksheet.append(["integer", "flag", "complete", "complete_flag", "float", "text", "empty", "date", "mixed"])
+    worksheet.append([1, True, 1, True, 1.25, "001", None, pd.Timestamp("2024-01-01"), 1])
+    worksheet.append([None, None, 2, False, None, None, None, None, "word"])
+    worksheet.append([2, False, 3, True, 2.5, "NA", None, pd.Timestamp("2024-01-02"), None])
+    workbook.save(path)
+    workbook.close()
+    loader.reload_settings({"excel": {"chunk_size_rows": batch_size}})
+    progress: list[int] = []
+
+    frame = loader.load_df_auto(str(path), sheet_name=sheet, progress_cb=progress.append, cancel_cb=lambda: False)
+
+    assert frame.dtypes.astype(str).to_dict() == {
+        "integer": "Int64",
+        "flag": "boolean",
+        "complete": "int64",
+        "complete_flag": "bool",
+        "float": "float64",
+        "text": "object",
+        "empty": "object",
+        "date": "datetime64[ns]",
+        "mixed": "object",
+    }
+    assert frame["integer"].dropna().tolist() == [1, 2]
+    assert frame["flag"].dropna().tolist() == [True, False]
+    assert frame["text"].tolist() == ["001", None, "NA"]
+    assert frame["empty"].isna().all()
+    assert frame["mixed"].tolist() == [1, "word", None]
+    assert progress[0] == 0 and progress[-1] == 100
+
+
+@pytest.mark.parametrize("index_col", [0, "id"])
+def test_xlsx_nullable_index_and_duplicate_headers(tmp_path: Path, loader: FileLoader, index_col: int | str) -> None:
+    path = tmp_path / "index.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.append(["id", "same", "same"])
+    worksheet.append([1, True, 1])
+    worksheet.append([None, None, None])
+    worksheet.append([2, False, 2])
+    workbook.save(path)
+    workbook.close()
+
+    frame = loader.load_df_auto(str(path), index_col=index_col)
+
+    assert frame.columns.tolist() == ["same", "same"]
+    assert frame.dtypes.astype(str).tolist() == ["boolean", "Int64"]
+    pd.testing.assert_index_equal(frame.index, pd.Index(pd.array([1, None, 2], dtype="Int64"), name="id"))
+
+
+def test_xlsx_loading_cancellation_is_explicit(tmp_path: Path, loader: FileLoader) -> None:
+    path = tmp_path / "cancel.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.append(["value"])
+    for value in range(5):
+        worksheet.append([value])
+    workbook.save(path)
+    workbook.close()
+    cancelled = False
+
+    def progress(value: int) -> None:
+        nonlocal cancelled
+        if value > 0:
+            cancelled = True
+
+    with pytest.raises(OperationCancelledError):
+        loader.load_df_auto(str(path), progress_cb=progress, cancel_cb=lambda: cancelled)
+
+
+@pytest.mark.parametrize("large", [2**53 + 1, 2**63 - 1, 2**64 - 1])
+def test_xlsx_preserves_exact_stored_integer_tokens(tmp_path: Path, loader: FileLoader, large: int) -> None:
+    source = tmp_path / "template.xlsx"
+    path = tmp_path / "exact.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.append(["value", "other"])
+    worksheet.append([1, "large"])
+    worksheet.append([None, "missing"])
+    worksheet.append([2, "small"])
+    workbook.save(source)
+    workbook.close()
+    # Workbook writers may round large numbers before loading is tested.
+    # Store an exact integer token in the XLSX XML to isolate reader precision.
+    with ZipFile(source) as original, ZipFile(path, "w") as modified:
+        for entry in original.infolist():
+            content = original.read(entry.filename)
+            if entry.filename == "xl/worksheets/sheet1.xml":
+                root = ElementTree.fromstring(content)
+                namespace = {"s": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+                cell_value = root.find(".//s:c[@r='A2']/s:v", namespace)
+                assert cell_value is not None
+                cell_value.text = str(large)
+                content = ElementTree.tostring(root)
+            modified.writestr(entry, content)
+
+    frame = loader.load_df_auto(str(path))
+
+    assert str(frame["value"].dtype) == ("Int64" if large <= 2**63 - 1 else "UInt64")
+    assert frame["value"].dropna().tolist() == [large, 2]
+    assert frame["value"].isna().tolist() == [False, True, False]
+
+
+@pytest.mark.parametrize("headers", [[], ["value", "flag"]])
+def test_xlsx_empty_and_header_only_workbooks(tmp_path: Path, loader: FileLoader, headers: list[str]) -> None:
+    path = tmp_path / "empty.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    if headers:
+        worksheet.append(headers)
+    workbook.save(path)
+    workbook.close()
+
+    frame = loader.load_df_auto(str(path))
+
+    assert frame.empty
+    assert frame.columns.tolist() == headers
+
+
+def test_xlsx_invalid_sheet_still_fails(tmp_path: Path, loader: FileLoader) -> None:
+    path = tmp_path / "sheet.xlsx"
+    workbook = Workbook()
+    workbook.save(path)
+    workbook.close()
+
+    with pytest.raises(ValueError, match="Sheet name not found"):
+        loader.load_df_auto(str(path), sheet_name="missing")
+
+
+def test_excel_raw_cell_builder_preserves_float_intent_and_unsupported_ranges() -> None:
+    data: list[list[object]] = [[1.0, 2**64, -1], [None, None, 2**63], [2.0, 1, None]]
+    frame = FileLoader._dataframe_from_excel_cells(
+        data, ["float", "too_large", "mixed_range"], check_cancel=lambda: None
+    )
+
+    assert frame.dtypes.astype(str).tolist() == ["float64", "object", "object"]
+    assert frame["float"].dropna().tolist() == [1.0, 2.0]
+    assert frame["too_large"].tolist() == [2**64, None, 1]
+    assert frame["mixed_range"].tolist() == [-1, 2**63, None]
+
+
+def test_excel_raw_cell_builder_checks_cancellation() -> None:
+    def cancel() -> None:
+        raise OperationCancelledError("cancelled")
+
+    with pytest.raises(OperationCancelledError):
+        FileLoader._dataframe_from_excel_cells([[1], [None]], ["value"], check_cancel=cancel)
 
 
 def test_load_df_auto_reads_csv(tmp_path: Path, loader: FileLoader) -> None:

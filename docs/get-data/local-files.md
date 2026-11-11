@@ -46,6 +46,25 @@ out-of-range values are not silently converted to missing values.
 Text remains object-backed and floating-point columns remain `float64`.
 This CSV policy does not change the loading rules for other file formats.
 
+## Excel datatypes and limitations
+
+For `.xlsx` files, integer cells mixed with missing cells load as nullable
+`Int64` (or `UInt64` for nonnegative values above the signed range). Boolean
+cells mixed with missing cells load as nullable `boolean`. Complete columns
+retain native integer/boolean storage. Text, dates, mixed-value columns and
+columns containing only missing cells retain their existing inference.
+
+Inference uses the stored cell values returned by the workbook reader, not
+the displayed number format. Text such as `001` or `NA` remains text.
+Floating-point cell values are not reclassified merely because they have
+no fractional part; however, a workbook may store `1.0` as an integer token.
+Integer precision is preserved during loading, but precision already lost
+when a spreadsheet application saved the workbook cannot be recovered.
+
+**Legacy `.xls` limitation:** although `.xls` is listed by the file workflow,
+the current openpyxl reader cannot load this format. Save the workbook as
+`.xlsx` before opening it. This change does not add legacy `.xls` support.
+
 ## Other file types
 
 The **Open** command also accepts other file types with different behavior:

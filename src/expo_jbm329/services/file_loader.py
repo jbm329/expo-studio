@@ -26,7 +26,7 @@ from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
 
 @dataclass(frozen=True)
@@ -640,12 +640,62 @@ class FileLoader:
     # ================================================================
     # Excel reader (streaming)
     # ================================================================
+    @staticmethod
+    def _dataframe_from_excel_cells(
+        data: list[list[object]],
+        header: Sequence[object],
+        *,
+        check_cancel: Callable[[], None],
+    ) -> pd.DataFrame:
+        """Construct columns from raw cells without rounding nullable integers.
+
+        Only integer/boolean columns with missing cells receive nullable
+        storage. Other columns retain pandas' existing constructor inference.
+        """
+        if not data:
+            return pd.DataFrame(columns=list(header))
+        columns: list[pd.Series] = []
+        for position in range(len(header)):
+            check_cancel()
+            values = [row[position] for row in data]
+            raw = pd.Series(values, dtype=object)
+            nonmissing = raw.dropna()
+            kind = pd.api.types.infer_dtype(nonmissing, skipna=True)
+            column: pd.Series
+            if raw.isna().any() and kind == "boolean":
+                column = raw.astype("boolean")
+            elif raw.isna().any() and kind == "integer":
+                minimum = min(nonmissing)
+                maximum = max(nonmissing)
+                signed = np.iinfo(np.int64)
+                unsigned = np.iinfo(np.uint64)
+                if signed.min <= minimum and maximum <= signed.max:
+                    column = raw.astype("Int64")
+                elif minimum >= 0 and maximum <= unsigned.max:
+                    column = raw.astype("UInt64")
+                else:
+                    column = raw
+            else:
+                column = pd.Series(values)
+            columns.append(column)
+        check_cancel()
+        frame = pd.concat(columns, axis=1)
+        frame.columns = pd.Index(list(header))
+        return frame
+
     def _read_excel(self, req: ReadRequest) -> pd.DataFrame:
         """Read XLSX with a streaming approach (openpyxl read_only).
 
         Keeps memory usage reasonable and emits progress periodically.
         Fallback to pandas.read_excel when openpyxl is unavailable.
         """
+
+        def check_cancel() -> None:
+            if req.cancel_cb is not None and req.cancel_cb():
+                msg = "Excel loading cancelled."
+                raise OperationCancelledError(msg)
+
+        check_cancel()
         # Try streaming path first
         try:
             from openpyxl import load_workbook
@@ -766,7 +816,7 @@ class FileLoader:
                     return
                 if total_rows > 0:
                     pct = int((read_rows * 100) / total_rows)
-                    pct = max(1, min(99, pct)) if read_rows < total_rows else 100
+                    pct = max(1, min(99, pct))
                 else:
                     # Unknown total: tick slowly upward towards 99
                     pct = min(99, (last_emitted + 1) if last_emitted >= 0 else 1)
@@ -777,8 +827,7 @@ class FileLoader:
             # Row streaming
             count_since_emit = 0
             for row in rows_iter:
-                if req.cancel_cb and req.cancel_cb():
-                    return pd.DataFrame()
+                check_cancel()
 
                 batch.append(row)
                 read_rows += 1
@@ -800,7 +849,7 @@ class FileLoader:
                 batch.clear()
                 emit_progress(force=True)
 
-            df = pd.DataFrame(data, columns=header)
+            df = self._dataframe_from_excel_cells(data, header, check_cancel=check_cancel)
 
             # Optional index assignment (robust + warn if it fails)
             if req.index_col is not None and not df.empty:
@@ -828,6 +877,7 @@ class FileLoader:
                         e,
                     )
 
+            check_cancel()
             if req.progress_cb:
                 req.progress_cb(100)
             return df

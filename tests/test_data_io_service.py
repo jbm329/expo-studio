@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.analysis.statistics_charts import (
@@ -65,6 +65,26 @@ def test_csv_worker_returns_missing_only_nullable_types(
     assert result.data["integer"].iloc[0] == 9007199254740993
     assert result.data["integer"].isna().tolist() == [False, True]
     assert progress[0] == 0 and progress[-1] == 100
+
+
+def test_xlsx_worker_returns_missing_only_nullable_types(io_service: DataIOService, tmp_path: Path) -> None:
+    path = tmp_path / "nullable_load.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.append(["integer", "flag", "complete"])
+    worksheet.append([1, True, 1])
+    worksheet.append([None, None, 2])
+    workbook.save(path)
+    workbook.close()
+
+    result = io_service.resolve_and_load_df(str(path), cancel_cb=lambda: False, corr_id="nullable-xlsx")
+
+    assert result.ok and not result.cancelled and result.error is None
+    assert result.corr_id == "nullable-xlsx"
+    assert isinstance(result.data, pd.DataFrame)
+    assert result.data.dtypes.astype(str).tolist() == ["Int64", "boolean", "int64"]
+    assert result.data["integer"].isna().tolist() == [False, True]
 
 
 def test_named_excel_start_omits_shape_until_validation(io_service, tmp_path, caplog):
