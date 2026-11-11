@@ -79,6 +79,16 @@ existing inference.
 
 ## Other file types
 
+Parquet, Feather and Pickle/dataframe files retain the datatypes restored by
+their readers. Explicit nullable integer or boolean columns are not converted
+back to native storage merely because the file contains no missing values.
+Preservation depends on the type metadata stored by the file's producer.
+
+SPSS and Stata continue to use their existing readers and datatype inference;
+the nullable loading changes described above do not add source-type recovery
+for these formats. Integer-coded or whole-valued floating-point columns are
+not automatically reinterpreted as nullable integers or booleans.
+
 The **Open** command also accepts other file types with different behavior:
 
 - A `.sql` file opens its text in an editor tab. It does not execute the query;

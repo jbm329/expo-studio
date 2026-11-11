@@ -58,6 +58,15 @@ missing values does not replace empty text.
 
 ## Convert a data type {#data-types}
 
+Automatic datatype inference when loading a dataset is separate from these
+explicit conversions. Supported loaders use nullable integers and booleans
+when missing values require them; this does not fill the missing cells.
+Complete inferred columns normally retain native storage, while typed files
+can preserve explicitly nullable columns even without missing values.
+See the source-specific rules for [local files](../get-data/local-files.md),
+[SQL results](../get-data/sql-queries.md#result-datatypes) and
+[REST responses](../get-data/rest-api.md#result-datatypes).
+
 Right-click a column header, open **Datatype…**, then choose an available
 conversion:
 
