@@ -15,6 +15,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 import pandas as pd
+from pandas.api.types import is_datetime64_any_dtype, is_float_dtype, is_integer_dtype
 from PyQt6.QtCore import QT_TR_NOOP, QPoint, Qt, QThread
 from PyQt6.QtGui import QAction, QFontMetrics
 from PyQt6.QtWidgets import (
@@ -91,6 +92,7 @@ if TYPE_CHECKING:
     from expo_jbm329.workbench.controllers.derived_column_controller import DerivedColumnController
     from expo_jbm329.workbench.controllers.join_controller import JoinController
     from expo_jbm329.workbench.controllers.reshape_controller import ReshapeController
+    from expo_jbm329.workbench.controllers.result_tabs.result_tab_column_presentation_delegate import NumericColumnKind
 
 
 # ======================================================================
@@ -2261,14 +2263,21 @@ class ResultTabManager:
         """Attach or update the column presentation delegate for a view."""
         try:
             semantics_by_index: dict[int, SeriesSemantics] = {}
+            numeric_column_kinds: dict[int, NumericColumnKind] = {}
 
-            for i in range(df.shape[1]):
-                sem = self.get_series_semantics(view, i)
-                if sem is not None:
-                    semantics_by_index[i] = sem
+            for i, dtype in enumerate(df.dtypes):
+                if is_integer_dtype(dtype):
+                    numeric_column_kinds[i] = "integer"
+                elif is_float_dtype(dtype):
+                    numeric_column_kinds[i] = "float"
+                elif is_datetime64_any_dtype(dtype):
+                    sem = self.get_series_semantics(view, i)
+                    if sem is not None:
+                        semantics_by_index[i] = sem
 
             delegate = ResultTabColumnPresentationDelegate(
                 semantics_by_column_index=semantics_by_index,
+                numeric_column_kinds=numeric_column_kinds,
                 parent=view,
             )
 

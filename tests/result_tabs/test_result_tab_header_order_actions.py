@@ -251,7 +251,7 @@ def test_order_preserves_header_identity_and_rebuilds_formatting(order_env, monk
     assert delegate is not old_delegate
     assert delegate._semantics_by_column_index[0].semantic_dtype == "datetime"
     assert delegate._semantics_by_column_index[0].is_date_only
-    assert delegate._semantics_by_column_index[1].semantic_dtype == "float"
+    assert delegate._numeric_column_kinds[1] == "float"
     option = QStyleOptionViewItem()
     delegate.initStyleOption(option, view.model().index(0, 0))
     assert option.text == "2026-01-01"

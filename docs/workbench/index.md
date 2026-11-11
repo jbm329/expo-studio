@@ -103,6 +103,14 @@ The lower area contains datasets loaded from files, database queries or REST
 requests, along with datasets produced by transformations. Select a ready
 result tab to work with its data.
 
+Use **Format view** on the toolbar to group integer and floating-point columns
+with your system locale's thousands separator. Floats always show two decimal
+places, including whole-valued floats. For example, in an English (US) locale,
+integer `1234` displays as `1,234` and float `1234.0` as `1,234.00`.
+Switch formatting off to see ungrouped, unrounded numeric values.
+Formatting changes presentation only, not dataset values or data types.
+Boolean, text, category and object columns are not numerically formatted.
+
 Right-click a ready result tab and select **Remove duplicate rows** to remove
 identical records from that dataset in the background. The status bar reports
 the result. This updates the existing tab and supports best-effort Undo; see
