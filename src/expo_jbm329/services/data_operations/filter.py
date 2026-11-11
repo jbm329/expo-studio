@@ -241,8 +241,9 @@ def filter_compare(
     Supported operators:
         ">", ">=", "<", "<=", "==", "!="
 
-    The column must be numeric or datetime-like. Missing operands never
-    satisfy a comparison, including "!=".
+    The column must be numeric or datetime-like. Comparing "!=" to a nonmissing
+    value keeps missing rows and removes only matching values. Other operators
+    exclude missing rows. A missing comparison value matches no rows.
 
     Args:
         df: Source DataFrame.
@@ -276,16 +277,18 @@ def filter_compare(
         raise ValueError(msg)
 
     if pdt.is_numeric_dtype(s):
-        mask = compare_values(s, value, comparison_operator, preserve_unknown=False)
-        return df.loc[mask].copy()
+        comparison_value = value
+    elif pdt.is_datetime64_any_dtype(s):
+        comparison_value = pd.to_datetime(cast("Any", value))
+    else:
+        msg = f"Column '{column}' must be numeric or datetime for filter_compare."
+        raise TypeError(msg)
 
-    if pdt.is_datetime64_any_dtype(s):
-        query_value = pd.to_datetime(cast("Any", value))
-        mask = compare_values(s, query_value, comparison_operator, preserve_unknown=False)
-        return df.loc[mask].copy()
+    if op == "!=" and pdt.is_scalar(comparison_value) and not pd.isna(cast("Any", comparison_value)):
+        return filter_not_equals(df, column, comparison_value)
 
-    msg = f"Column '{column}' must be numeric or datetime for filter_compare."
-    raise TypeError(msg)
+    mask = compare_values(s, comparison_value, comparison_operator, preserve_unknown=False)
+    return df.loc[mask].copy()
 
 
 def filter_between(

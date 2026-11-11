@@ -97,7 +97,7 @@ def test_remove_and_compare_empty_or_all_missing_columns(dtype: str, values: lis
     original = frame.copy(deep=True)
 
     pd.testing.assert_frame_equal(filter_not_equals(frame, "value", 1), original)
-    pd.testing.assert_frame_equal(filter_compare(frame, "value", "!=", 1), original.iloc[[]])
+    pd.testing.assert_frame_equal(filter_compare(frame, "value", "!=", 1), original)
     pd.testing.assert_frame_equal(frame, original)
 
 
@@ -175,9 +175,9 @@ def test_filter_compare_invalid_dtype():
 @pytest.mark.parametrize("dtype", ["float64", "Int64", "UInt64", "Float64"])
 @pytest.mark.parametrize(
     ("operator", "expected_rows"),
-    [("==", [0]), ("!=", [1]), (">", [1]), (">=", [0, 1]), ("<", []), ("<=", [0])],
+    [("==", [0]), ("!=", [1, 2]), (">", [1]), (">=", [0, 1]), ("<", []), ("<=", [0])],
 )
-def test_numeric_comparisons_exclude_missing_rows(dtype: str, operator: str, expected_rows: list[int]) -> None:
+def test_numeric_comparisons_apply_operator_missing_policy(dtype: str, operator: str, expected_rows: list[int]) -> None:
     frame = pd.DataFrame({"value": pd.Series([1, 2, None], dtype=dtype), "record": ["one", "two", "missing"]})
     frame.index = [5, 5, -1]
     original = frame.copy(deep=True)
@@ -196,7 +196,28 @@ def test_comparison_preserves_large_integer_precision_and_literal_column_names(d
 
     result = filter_compare(frame, column, "!=", 2**53)
 
-    pd.testing.assert_frame_equal(result, frame.iloc[[0]])
+    pd.testing.assert_frame_equal(result, frame.iloc[[0, 2]])
+
+
+@pytest.mark.parametrize(
+    "series",
+    [
+        pd.Series([1, 2, None], dtype="float64"),
+        pd.Series([1, 2, None], dtype="Int64"),
+        pd.Series([1, 2, None], dtype="UInt64"),
+        pd.Series([1, 2, None], dtype="Float64"),
+        pd.Series([True, False, None], dtype="boolean"),
+        pd.Series([True, False, True], dtype=bool),
+        pd.Series([1, 2, 1], dtype="int64"),
+    ],
+)
+def test_not_equals_comparison_matches_cell_removal(series: pd.Series) -> None:
+    frame = pd.DataFrame({"value": series})
+    original = frame.copy(deep=True)
+    value = series.iloc[0]
+
+    pd.testing.assert_frame_equal(filter_compare(frame, "value", "!=", value), filter_not_equals(frame, "value", value))
+    pd.testing.assert_frame_equal(frame, original)
 
 
 @pytest.mark.parametrize("operator", ["=", "in", "not in", "invalid"])
@@ -244,8 +265,13 @@ def test_filter_compare_datetime():
 
 
 @pytest.mark.parametrize("timezone", [None, "UTC"])
-@pytest.mark.parametrize("operator", ["==", "!="])
-def test_datetime_comparison_excludes_missing_rows(timezone: str | None, operator: str) -> None:
+@pytest.mark.parametrize(
+    ("operator", "expected_rows"),
+    [("==", [0]), ("!=", [1, 2]), (">", [1]), (">=", [0, 1]), ("<", []), ("<=", [0])],
+)
+def test_datetime_comparison_applies_operator_missing_policy(
+    timezone: str | None, operator: str, expected_rows: list[int]
+) -> None:
     series = pd.Series(pd.to_datetime(["2024-01-01", "2024-01-02", None]))
     if timezone is not None:
         series = series.dt.tz_localize(timezone)
@@ -255,7 +281,7 @@ def test_datetime_comparison_excludes_missing_rows(timezone: str | None, operato
 
     result = filter_compare(frame, "value", operator, value)
 
-    pd.testing.assert_frame_equal(result, original.iloc[[0 if operator == "==" else 1]])
+    pd.testing.assert_frame_equal(result, original.iloc[expected_rows])
     pd.testing.assert_frame_equal(frame, original)
 
 
