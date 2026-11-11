@@ -23,6 +23,29 @@ different. For CSV reading options such as delimiter detection and encoding,
 see [CSV settings](../settings/general-settings.md#csv-settings). For supported
 outputs, see [Export a dataset](../export-and-report/export-data.md).
 
+## CSV datatypes
+
+CSV loading infers datatypes from the parsed values. Integer columns containing
+missing values use pandas nullable `Int64`; boolean columns use nullable
+`boolean`. Complete integer and boolean columns retain native storage. These
+rules apply to the final dataset, including files read in chunks.
+
+For example, `1`, a blank entry and `2` load as `Int64`; `True`, a blank entry
+and `False` load as `boolean`. A numeric `0`/`1` column remains integer, not
+boolean. Decimal values such as `1.0` and `2.0` remain floating-point, even
+when they have no fractional part. Columns with only missing entries remain
+`float64` because there is no evidence of an integer or boolean type.
+
+Integer values are preserved without an intermediate floating-point conversion.
+Nonnegative integers above the signed 64-bit range, up to
+`18446744073709551615`, use `UInt64` when missing values require it and native
+`uint64` when complete. The unsigned-only recovery also recognizes the usual
+CSV missing tokens, such as blank entries, `NA` and `NULL`. Mixed or
+out-of-range values are not silently converted to missing values.
+
+Text remains object-backed and floating-point columns remain `float64`.
+This CSV policy does not change the loading rules for other file formats.
+
 ## Other file types
 
 The **Open** command also accepts other file types with different behavior:

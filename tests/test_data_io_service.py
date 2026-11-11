@@ -44,6 +44,29 @@ def io_service(loader: FileLoader, writer: FileWriter) -> DataIOService:
     return DataIOService(loader, writer)
 
 
+def test_csv_worker_returns_missing_only_nullable_types(
+    io_service: DataIOService, loader: FileLoader, tmp_path: Path
+) -> None:
+    path = tmp_path / "nullable_load.csv"
+    path.write_text("integer,flag,complete\n9007199254740993,True,1\n,,2\n", encoding="utf-8")
+    loader.reload_settings({"csv": {"read_chunk_size_rows": 1, "sniff_delimiter": False, "default_sep": ","}})
+    progress: list[int] = []
+
+    result = io_service.resolve_and_load_df(
+        str(path), progress_cb=progress.append, cancel_cb=lambda: False, corr_id="nullable-csv"
+    )
+
+    assert result.ok and not result.cancelled
+    assert result.error is None
+    assert result.corr_id == "nullable-csv"
+    assert result.path == str(path)
+    assert isinstance(result.data, pd.DataFrame)
+    assert result.data.dtypes.astype(str).tolist() == ["Int64", "boolean", "int64"]
+    assert result.data["integer"].iloc[0] == 9007199254740993
+    assert result.data["integer"].isna().tolist() == [False, True]
+    assert progress[0] == 0 and progress[-1] == 100
+
+
 def test_named_excel_start_omits_shape_until_validation(io_service, tmp_path, caplog):
     caplog.set_level(logging.DEBUG, logger="applogger.service")
 
