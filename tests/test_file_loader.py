@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 from xml.etree import ElementTree
 from zipfile import ZipFile
 
 import pandas as pd
 import pytest
 from openpyxl import Workbook
+from pyqvd import QvdTable
+from pyqvd.qvd import (
+    DateValue,
+    DoubleValue,
+    DualIntegerValue,
+    IntegerValue,
+    IntervalValue,
+    MoneyValue,
+    StringValue,
+    TimestampValue,
+    TimeValue,
+)
 
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
 
@@ -163,7 +176,7 @@ def test_xlsx_invalid_sheet_still_fails(tmp_path: Path, loader: FileLoader) -> N
 
 def test_excel_raw_cell_builder_preserves_float_intent_and_unsupported_ranges() -> None:
     data: list[list[object]] = [[1.0, 2**64, -1], [None, None, 2**63], [2.0, 1, None]]
-    frame = FileLoader._dataframe_from_excel_cells(
+    frame = FileLoader._dataframe_from_raw_values(
         data, ["float", "too_large", "mixed_range"], check_cancel=lambda: None
     )
 
@@ -178,7 +191,87 @@ def test_excel_raw_cell_builder_checks_cancellation() -> None:
         raise OperationCancelledError("cancelled")
 
     with pytest.raises(OperationCancelledError):
-        FileLoader._dataframe_from_excel_cells([[1], [None]], ["value"], check_cancel=cancel)
+        FileLoader._dataframe_from_raw_values([[1], [None]], ["value"], check_cancel=cancel)
+
+
+def test_qvd_loading_preserves_missing_integer_and_other_value_semantics(tmp_path: Path, loader: FileLoader) -> None:
+    path = tmp_path / "nullable.qvd"
+    table = QvdTable(
+        [
+            [IntegerValue(1), IntegerValue(0), DoubleValue(1.0), StringValue("001"), DualIntegerValue(1, "one")],
+            [None, IntegerValue(1), None, StringValue("NA"), None],
+            [IntegerValue(2), IntegerValue(0), DoubleValue(2.0), None, DualIntegerValue(2, "two")],
+        ],
+        ["integer", "flag", "float", "text", "dual"],
+    )
+    table.to_qvd(path)
+
+    loaded = loader.load_df_auto(str(path))
+    original_reader = QvdTable.from_qvd(path)
+    assert isinstance(original_reader, QvdTable)
+    reference = original_reader.to_pandas()
+
+    assert loaded.dtypes.astype(str).tolist() == ["Int64", "int64", "float64", "object", "Int64"]
+    assert loaded["integer"].dropna().tolist() == [1, 2]
+    assert loaded["dual"].dropna().tolist() == [1, 2]
+    pd.testing.assert_frame_equal(loaded[["flag", "float", "text"]], reference[["flag", "float", "text"]])
+
+
+def test_qvd_cancellation_after_reader_returns_is_explicit(tmp_path: Path, loader: FileLoader) -> None:
+    cancelled = False
+
+    def read(path: object) -> QvdTable:
+        nonlocal cancelled
+        cancelled = True
+        return QvdTable([[IntegerValue(1)], [None]], ["value"])
+
+    with patch.object(QvdTable, "from_qvd", side_effect=read), pytest.raises(OperationCancelledError):
+        loader.load_df_auto(str(tmp_path / "cancel.qvd"), cancel_cb=lambda: cancelled)
+
+
+def test_qvd_temporal_and_money_conversion_stays_owned_by_pyqvd(tmp_path: Path, loader: FileLoader) -> None:
+    path = tmp_path / "semantics.qvd"
+    table = QvdTable(
+        [
+            [
+                DateValue(45292, "2024-01-01"),
+                TimestampValue(45292.5, "2024-01-01 12:00"),
+                MoneyValue(1.25, "$1.25"),
+                TimeValue(0.5, "12:00"),
+                IntervalValue(1.5, "36:00"),
+            ],
+            [None, None, None, None, None],
+        ],
+        ["date", "timestamp", "money", "time", "interval"],
+    )
+    table.to_qvd(path)
+    restored = QvdTable.from_qvd(path)
+    assert isinstance(restored, QvdTable)
+
+    pd.testing.assert_frame_equal(loader.load_df_auto(str(path)), restored.to_pandas())
+
+
+def test_qvd_iterator_fallback_uses_same_nullable_construction(tmp_path: Path, loader: FileLoader) -> None:
+    table = QvdTable([[IntegerValue(1)], [None]], ["value"])
+    with patch.object(QvdTable, "from_qvd", return_value=iter([table])):
+        loaded = loader.load_df_auto(str(tmp_path / "iterator.qvd"))
+
+    pd.testing.assert_frame_equal(loaded, pd.DataFrame({"value": pd.array([1, None], dtype="Int64")}))
+
+
+@pytest.mark.parametrize("rows", [[], [[None], [None]], [[IntegerValue(1)], [IntegerValue(2)]]])
+def test_qvd_empty_missing_and_complete_columns(tmp_path: Path, loader: FileLoader, rows: list[list[object]]) -> None:
+    table = QvdTable(rows, ["value"])
+    with patch.object(QvdTable, "from_qvd", return_value=table):
+        loaded = loader.load_df_auto(str(tmp_path / "values.qvd"))
+    pd.testing.assert_frame_equal(loaded, table.to_pandas())
+
+
+def test_qvd_zero_columns_preserves_row_count(tmp_path: Path, loader: FileLoader) -> None:
+    table = QvdTable([[], []], [])
+    with patch.object(QvdTable, "from_qvd", return_value=table):
+        loaded = loader.load_df_auto(str(tmp_path / "no_columns.qvd"))
+    pd.testing.assert_frame_equal(loaded, table.to_pandas())
 
 
 @pytest.mark.parametrize("suffix", [".df", ".pkl", ".parquet", ".feather", ".ft"])

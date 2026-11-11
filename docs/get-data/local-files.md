@@ -65,6 +65,18 @@ when a spreadsheet application saved the workbook cannot be recovered.
 the current openpyxl reader cannot load this format. Save the workbook as
 `.xlsx` before opening it. This change does not add legacy `.xls` support.
 
+## QVD datatypes
+
+QVD integer calculation values mixed with missing entries load as nullable
+`Int64` when in range; complete integer columns retain native storage. Numeric
+`0`/`1` values remain integers, not booleans. Double values retain floating-point
+storage, even when their values have no fractional part.
+
+The QVD reader continues to use pyqvd's calculation-value conversion, including
+dual values and date, time, interval and money values. It does not reinterpret
+display labels as column types. Columns with only missing values retain their
+existing inference.
+
 ## Other file types
 
 The **Open** command also accepts other file types with different behavior:

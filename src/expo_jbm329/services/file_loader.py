@@ -641,19 +641,20 @@ class FileLoader:
     # Excel reader (streaming)
     # ================================================================
     @staticmethod
-    def _dataframe_from_excel_cells(
+    def _dataframe_from_raw_values(
         data: list[list[object]],
         header: Sequence[object],
         *,
         check_cancel: Callable[[], None],
     ) -> pd.DataFrame:
-        """Construct columns from raw cells without rounding nullable integers.
+        """Construct columns from raw values without rounding nullable integers.
 
         Only integer/boolean columns with missing cells receive nullable
         storage. Other columns retain pandas' existing constructor inference.
         """
-        if not data:
-            return pd.DataFrame(columns=list(header))
+        check_cancel()
+        if not data or not header:
+            return pd.DataFrame(data, columns=list(header))
         columns: list[pd.Series] = []
         for position in range(len(header)):
             check_cancel()
@@ -849,7 +850,7 @@ class FileLoader:
                 batch.clear()
                 emit_progress(force=True)
 
-            df = self._dataframe_from_excel_cells(data, header, check_cancel=check_cancel)
+            df = self._dataframe_from_raw_values(data, header, check_cancel=check_cancel)
 
             # Optional index assignment (robust + warn if it fails)
             if req.index_col is not None and not df.empty:
@@ -954,21 +955,37 @@ class FileLoader:
             fmt_path_size(req.path),
         )
 
-        if req.cancel_cb and req.cancel_cb():
-            return pd.DataFrame()
+        def check_cancel() -> None:
+            if req.cancel_cb is not None and req.cancel_cb():
+                msg = "QVD loading cancelled."
+                raise OperationCancelledError(msg)
+
+        check_cancel()
 
         table: QvdTable | Iterable[Any] = cast("Any", QvdTable.from_qvd(req.path))
 
-        if isinstance(table, QvdTable):
-            df: pd.DataFrame = table.to_pandas()
-        else:
+        if not isinstance(table, QvdTable):
             # fallback om library faktiskt returnerar iterator
             tables = list(table)
             if not tables:
                 return pd.DataFrame()
-            df = cast("pd.DataFrame", tables[0].to_pandas())
+            table = tables[0]
 
-        return df
+        check_cancel()
+        if not isinstance(table, QvdTable):
+            msg = "QVD reader did not return a QvdTable."
+            raise TypeError(msg)
+        converted = table.to_dict()
+        data = converted.get("data")
+        columns = converted.get("columns")
+        if not isinstance(data, list) or not isinstance(columns, list):
+            msg = "QVD conversion did not return column and row lists."
+            raise TypeError(msg)
+        if not all(isinstance(row, list) and len(row) == len(columns) for row in data):
+            msg = "QVD conversion returned malformed rows."
+            raise ValueError(msg)
+        check_cancel()
+        return self._dataframe_from_raw_values(data, columns, check_cancel=check_cancel)
 
     # ================================================================
     # SPSS reader
