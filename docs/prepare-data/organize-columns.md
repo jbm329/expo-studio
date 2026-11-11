@@ -24,6 +24,10 @@ Use this example dataset:
 Sorting changes the order of the rows, not the order of the columns. Each
 record's values stay together as its row moves.
 
+For pandas nullable integer columns (such as `Int64`) and nullable `boolean`
+columns, missing values appear last in both ascending and descending order.
+Integer ordering preserves exact stored values, including large integers.
+
 ## Rename a column {#rename-column}
 
 1. Right-click the column header and select **Rename…**.
