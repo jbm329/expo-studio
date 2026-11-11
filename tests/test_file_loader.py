@@ -22,6 +22,7 @@ from pyqvd.qvd import (
 )
 
 from expo_jbm329.services.file_loader import FileLoader, OperationCancelledError
+from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_values
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -176,9 +177,7 @@ def test_xlsx_invalid_sheet_still_fails(tmp_path: Path, loader: FileLoader) -> N
 
 def test_excel_raw_cell_builder_preserves_float_intent_and_unsupported_ranges() -> None:
     data: list[list[object]] = [[1.0, 2**64, -1], [None, None, 2**63], [2.0, 1, None]]
-    frame = FileLoader._dataframe_from_raw_values(
-        data, ["float", "too_large", "mixed_range"], check_cancel=lambda: None
-    )
+    frame = dataframe_from_raw_values(data, ["float", "too_large", "mixed_range"], check_cancel=lambda: None)
 
     assert frame.dtypes.astype(str).tolist() == ["float64", "object", "object"]
     assert frame["float"].dropna().tolist() == [1.0, 2.0]
@@ -191,7 +190,7 @@ def test_excel_raw_cell_builder_checks_cancellation() -> None:
         raise OperationCancelledError("cancelled")
 
     with pytest.raises(OperationCancelledError):
-        FileLoader._dataframe_from_raw_values([[1], [None]], ["value"], check_cancel=cancel)
+        dataframe_from_raw_values([[1], [None]], ["value"], check_cancel=cancel)
 
 
 def test_qvd_loading_preserves_missing_integer_and_other_value_semantics(tmp_path: Path, loader: FileLoader) -> None:

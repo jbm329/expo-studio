@@ -28,6 +28,23 @@ and linting use that connection's SQL dialect. Linting can point out issues
 before you run the query, but it does not replace checking the result or any
 database-specific errors reported during execution.
 
+## Result datatypes
+
+For SQLite, PostgreSQL, MySQL/MariaDB and DuckDB queries, integer values mixed
+with NULLs load as nullable pandas integers (`Int64`, or `UInt64` when needed
+for unsigned values). Actual boolean values mixed with NULLs load as nullable
+`boolean`. Complete integer and boolean columns retain native storage.
+
+Inference follows values returned by the database driver, not column names or
+declared table types. Numeric `0`/`1` values are not guessed as booleans.
+Empty or all-NULL columns remain `object` when their type cannot be established.
+Floating-point, text and mixed-value columns retain their existing inference,
+including the existing conversion of Decimal values to floating-point storage.
+
+Integer precision is preserved before pandas can promote missing integers to
+floating-point storage. This cannot recover precision already lost in a SQL
+expression or by a database driver. The separate raw ODBC reader is unchanged.
+
 ## Use SQL autocomplete
 
 Autocomplete also uses the connection's SQL dialect and available schema

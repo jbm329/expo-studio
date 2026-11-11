@@ -43,7 +43,9 @@ def test_sqlite_driver_reuses_engine_and_executes_df():
 
     with (
         patch("expo_jbm329.db.drivers.sa_sqlite.create_engine", return_value=engine) as mock_create,
-        patch("expo_jbm329.db.drivers.sa_sqlite.pd.read_sql", return_value=pd.DataFrame({"x": [1]})) as mock_read,
+        patch(
+            "expo_jbm329.db.drivers.sa_sqlite.read_sql_dataframe", return_value=pd.DataFrame({"x": [1]})
+        ) as mock_read,
     ):
         df = driver.execute_df(cfg, "SELECT 1")
         df2 = driver.execute_df(cfg, "SELECT 1")
@@ -74,7 +76,7 @@ def test_mysql_driver_builds_url_and_connect_args(driver_name):
 
     with (
         patch("expo_jbm329.db.drivers.sa_mysql.create_engine", return_value=engine) as mock_create,
-        patch("expo_jbm329.db.drivers.sa_mysql.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+        patch("expo_jbm329.db.drivers.sa_mysql.read_sql_dataframe", return_value=pd.DataFrame({"x": [1]})),
     ):
         df = driver.execute_df(cfg, "SELECT 1")
 
@@ -205,7 +207,7 @@ def test_postgres_driver_builds_url_and_connect_args():
 
     with (
         patch("expo_jbm329.db.drivers.sa_postgres.create_engine", return_value=engine) as mock_create,
-        patch("expo_jbm329.db.drivers.sa_postgres.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+        patch("expo_jbm329.db.drivers.sa_postgres.read_sql_dataframe", return_value=pd.DataFrame({"x": [1]})),
     ):
         df = driver.execute_df(cfg, "SELECT 1")
 
@@ -226,7 +228,7 @@ def test_postgres_driver_reuses_engine_and_disposes():
 
     with (
         patch("expo_jbm329.db.drivers.sa_postgres.create_engine", return_value=engine) as mock_create,
-        patch("expo_jbm329.db.drivers.sa_postgres.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+        patch("expo_jbm329.db.drivers.sa_postgres.read_sql_dataframe", return_value=pd.DataFrame({"x": [1]})),
     ):
         df1 = driver.execute_df(cfg, "SELECT 1")
         df2 = driver.execute_df(cfg, "SELECT 1")
@@ -272,7 +274,7 @@ def test_duckdb_driver_reuses_engine_enforces_read_only_and_disposes(tmp_path):
 
     with (
         patch("expo_jbm329.db.drivers.sa_duckdb.create_engine", return_value=engine) as create,
-        patch("expo_jbm329.db.drivers.sa_duckdb.pd.read_sql", return_value=pd.DataFrame({"x": [1]})),
+        patch("expo_jbm329.db.drivers.sa_duckdb.read_sql_dataframe", return_value=pd.DataFrame({"x": [1]})),
     ):
         first = driver.execute_df(cfg, "SELECT 1", job_id="job", corr_id="correlation")
         second = driver.execute_df(cfg, "SELECT 1")

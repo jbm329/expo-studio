@@ -21,12 +21,13 @@ import pandas as pd
 from openpyxl.utils.cell import range_boundaries
 from pyqvd import QvdTable
 
+from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_values
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Sequence
+    from collections.abc import Callable, Iterable
 
 
 @dataclass(frozen=True)
@@ -640,50 +641,6 @@ class FileLoader:
     # ================================================================
     # Excel reader (streaming)
     # ================================================================
-    @staticmethod
-    def _dataframe_from_raw_values(
-        data: list[list[object]],
-        header: Sequence[object],
-        *,
-        check_cancel: Callable[[], None],
-    ) -> pd.DataFrame:
-        """Construct columns from raw values without rounding nullable integers.
-
-        Only integer/boolean columns with missing cells receive nullable
-        storage. Other columns retain pandas' existing constructor inference.
-        """
-        check_cancel()
-        if not data or not header:
-            return pd.DataFrame(data, columns=list(header))
-        columns: list[pd.Series] = []
-        for position in range(len(header)):
-            check_cancel()
-            values = [row[position] for row in data]
-            raw = pd.Series(values, dtype=object)
-            nonmissing = raw.dropna()
-            kind = pd.api.types.infer_dtype(nonmissing, skipna=True)
-            column: pd.Series
-            if raw.isna().any() and kind == "boolean":
-                column = raw.astype("boolean")
-            elif raw.isna().any() and kind == "integer":
-                minimum = min(nonmissing)
-                maximum = max(nonmissing)
-                signed = np.iinfo(np.int64)
-                unsigned = np.iinfo(np.uint64)
-                if signed.min <= minimum and maximum <= signed.max:
-                    column = raw.astype("Int64")
-                elif minimum >= 0 and maximum <= unsigned.max:
-                    column = raw.astype("UInt64")
-                else:
-                    column = raw
-            else:
-                column = pd.Series(values)
-            columns.append(column)
-        check_cancel()
-        frame = pd.concat(columns, axis=1)
-        frame.columns = pd.Index(list(header))
-        return frame
-
     def _read_excel(self, req: ReadRequest) -> pd.DataFrame:
         """Read XLSX with a streaming approach (openpyxl read_only).
 
@@ -850,7 +807,7 @@ class FileLoader:
                 batch.clear()
                 emit_progress(force=True)
 
-            df = self._dataframe_from_raw_values(data, header, check_cancel=check_cancel)
+            df = dataframe_from_raw_values(data, header, check_cancel=check_cancel)
 
             # Optional index assignment (robust + warn if it fails)
             if req.index_col is not None and not df.empty:
@@ -985,7 +942,7 @@ class FileLoader:
             msg = "QVD conversion returned malformed rows."
             raise ValueError(msg)
         check_cancel()
-        return self._dataframe_from_raw_values(data, columns, check_cancel=check_cancel)
+        return dataframe_from_raw_values(data, columns, check_cancel=check_cancel)
 
     # ================================================================
     # SPSS reader
