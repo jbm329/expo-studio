@@ -20,6 +20,23 @@ client for every HTTP method, response format or API pagination scheme.
 form. It does not save the form or create a result tab. Loading a saved request
 from the workbench is the step that fetches data into a dataset.
 
+## Result datatypes
+
+JSON integer values mixed with `null` or absent fields load as nullable pandas
+integers (`Int64`, or `UInt64` when unsigned values require it). Actual JSON
+`true`/`false` values mixed with missing values load as nullable `boolean`.
+Complete integer and boolean columns retain native storage.
+
+Inference uses all fetched pages together, including fields omitted on later
+pages. Nested records and JSON-stat responses follow the same rule. Integer
+values are preserved before table construction; precision already lost by the
+API cannot be recovered.
+
+Floating-point JSON values remain floating-point, even if they look like whole
+numbers. Numeric `0`/`1` values are not guessed as booleans. Text, lists and mixed
+values retain their existing interpretation. Columns containing only `null`
+values do not acquire a guessed integer or boolean type.
+
 ## Continue your workflow
 
 - [Get data overview](index.md) for other ways to load data.

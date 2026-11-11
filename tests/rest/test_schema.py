@@ -22,3 +22,10 @@ def test_build_response_preview_handles_nested_response_path():
     assert preview["row_count"] == 2
     assert preview["columns"] == ["id", "name"]
     assert preview["sample"][0]["id"] == 1
+
+
+def test_response_preview_preserves_exact_nullable_values() -> None:
+    payload = [{"id": 2**53 + 1, "flag": True}, {"id": None, "flag": None}]
+    preview = build_response_preview(payload)
+    assert preview["sample"] == [{"id": 2**53 + 1, "flag": True}, {"id": None, "flag": None}]
+    assert validate_response_columns(payload, required_columns=("id", "flag")) == ["id", "flag"]

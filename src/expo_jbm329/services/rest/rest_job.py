@@ -9,7 +9,11 @@ import pandas as pd
 
 from expo_jbm329.services.job_result import JobResult
 from expo_jbm329.services.rest.client import RestClientError, fetch_json_pages
-from expo_jbm329.services.rest.normalizer import RestNormalizeError, normalize_json_to_df
+from expo_jbm329.services.rest.normalizer import (
+    RestNormalizeCancelledError,
+    RestNormalizeError,
+    normalize_json_payloads_to_df,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -83,9 +87,10 @@ def fetch_rest_dataset(
         # ---------------- Normalize ----------------
 
         df = _require_dataframe(
-            _normalize_payloads(
+            normalize_json_payloads_to_df(
                 payloads,
                 response_path=config.response_path,
+                cancel_cb=cancel_cb,
             )
         )
 
@@ -96,6 +101,14 @@ def fetch_rest_dataset(
             elapsed=elapsed,
             data=df,
             cancelled=False,
+            corr_id=corr_id,
+        )
+
+    except RestNormalizeCancelledError:
+        return JobResult(
+            ok=False,
+            elapsed=time.perf_counter() - t0,
+            cancelled=True,
             corr_id=corr_id,
         )
 
@@ -128,27 +141,3 @@ def fetch_rest_dataset(
             cancelled=False,
             corr_id=corr_id,
         )
-
-
-def _normalize_payloads(
-    payloads: list[object],
-    *,
-    response_path: str | None,
-) -> pd.DataFrame:
-    """Normalize one or more REST payloads into a single dataframe."""
-    if not payloads:
-        msg = "REST response did not contain any payloads"
-        raise RestNormalizeError(msg)
-
-    frames = [
-        normalize_json_to_df(
-            payload,
-            response_path=response_path,
-        )
-        for payload in payloads
-    ]
-
-    if len(frames) == 1:
-        return frames[0]
-
-    return pd.concat(frames, ignore_index=True)
