@@ -7,15 +7,17 @@ import threading
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 from sqlalchemy.pool import NullPool
 
+from expo_jbm329.db.core.dataframe_types import read_sql_dataframe
 from expo_jbm329.db.core.interfaces import DriverProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    import pandas as pd
 
     from expo_jbm329.db.core.models import ConnectionConfig
 
@@ -143,8 +145,7 @@ class SqlAlchemyDuckDbDriver(DriverProtocol):
         Returns:
             The query result as a dataframe.
         """
-        _ = cancel_cb
         engine = self._get_engine(conn)
         with engine.connect() as connection:
             log.debug("Executing DuckDB query for %s (corr=%s, job_id=%s).", conn.name, corr_id, job_id)
-            return pd.read_sql(sql, connection)
+            return read_sql_dataframe(sql, connection, cancel_cb=cancel_cb)

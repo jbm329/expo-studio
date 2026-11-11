@@ -26,6 +26,8 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 import pandas as pd
 import pandas.api.types as pdt
 
+from expo_jbm329.services.data_operations.expression_primitives import compare_values
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -98,6 +100,7 @@ def filter_not_equals(
 
     NA-handling:
         - If value is NA, returns rows where column is not NA.
+        - Otherwise, keeps missing rows and removes only matching values.
 
     Args:
         df: Source DataFrame.
@@ -121,7 +124,8 @@ def filter_not_equals(
     if pd.isna(cast("Any", value)):
         return df.loc[s.notna()].copy()
 
-    return df.loc[s.ne(cast("Any", value))].copy()
+    matches = compare_values(s, value, "=", preserve_unknown=False)
+    return df.loc[~matches].copy()
 
 
 # =====================================================================
@@ -237,7 +241,9 @@ def filter_compare(
     Supported operators:
         ">", ">=", "<", "<=", "==", "!="
 
-    The column must be numeric or datetime-like.
+    The column must be numeric or datetime-like. Comparing "!=" to a nonmissing
+    value keeps missing rows and removes only matching values. Other operators
+    exclude missing rows. A missing comparison value matches no rows.
 
     Args:
         df: Source DataFrame.
@@ -265,16 +271,24 @@ def filter_compare(
         raise KeyError(msg)
 
     s = df[column]
+    comparison_operator = "=" if op == "==" else op
+    if op not in {"==", "!=", ">", ">=", "<", "<="}:
+        msg = f"Unsupported comparison operator: {op!r}."
+        raise ValueError(msg)
 
     if pdt.is_numeric_dtype(s):
-        return df.query(f"`{column}` {op} @value").copy()
+        comparison_value = value
+    elif pdt.is_datetime64_any_dtype(s):
+        comparison_value = pd.to_datetime(cast("Any", value))
+    else:
+        msg = f"Column '{column}' must be numeric or datetime for filter_compare."
+        raise TypeError(msg)
 
-    if pdt.is_datetime64_any_dtype(s):
-        query_value = pd.to_datetime(cast("Any", value))
-        return df.query(f"`{column}` {op} @query_value", local_dict={"query_value": query_value}).copy()
+    if op == "!=" and pdt.is_scalar(comparison_value) and not pd.isna(cast("Any", comparison_value)):
+        return filter_not_equals(df, column, comparison_value)
 
-    msg = f"Column '{column}' must be numeric or datetime for filter_compare."
-    raise TypeError(msg)
+    mask = compare_values(s, comparison_value, comparison_operator, preserve_unknown=False)
+    return df.loc[mask].copy()
 
 
 def filter_between(

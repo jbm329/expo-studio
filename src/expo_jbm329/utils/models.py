@@ -50,6 +50,7 @@ class DataFrameModel(QAbstractTableModel):
 
     Sorting:
       - Rows sorted via internal row index mapping (_row_ix).
+      - Nullable integers and booleans: exact, stable ordering; NA last in both directions.
       - Datetime sorted by int64 timestamps; NA sink to bottom.
       - Object sorted by safe-string keys; NA -> "".
       - Numeric sorted with dtype max sentinels for NA to sink on ascending.
@@ -300,14 +301,26 @@ class DataFrameModel(QAbstractTableModel):
         if self._df.shape[0] <= 1:
             return
 
+        s = self._df.iloc[:, column]
+        if isinstance(s.array, (pd.arrays.IntegerArray, pd.arrays.BooleanArray)):
+            # Positional labels preserve row mapping even with duplicate source indexes.
+            ordered = s.reset_index(drop=True).sort_values(
+                ascending=order == Qt.SortOrder.AscendingOrder,
+                kind="stable",
+                na_position="last",
+            )
+            sorted_pos = ordered.index.to_numpy(dtype=np.int64)
+            self.layoutAboutToBeChanged.emit()
+            self._row_ix = sorted_pos
+            self.layoutChanged.emit()
+            return
+
         # Tell Qt we are about to reorder rows
         self.layoutAboutToBeChanged.emit()
 
         # -----------------------------------------
         # Data columns
         # -----------------------------------------
-        df_col_ix = column
-        s = self._df.iloc[:, df_col_ix]
         arr = s.to_numpy(copy=False)
 
         try:

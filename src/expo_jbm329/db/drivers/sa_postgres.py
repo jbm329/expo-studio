@@ -7,14 +7,16 @@ import logging
 import threading
 from typing import TYPE_CHECKING
 
-import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
+from expo_jbm329.db.core.dataframe_types import read_sql_dataframe
 from expo_jbm329.db.core.interfaces import DriverProtocol
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    import pandas as pd
 
     from expo_jbm329.db.core.models import ConnectionConfig
 
@@ -162,8 +164,6 @@ class SqlAlchemyPostgresDriver(DriverProtocol):
         Returns:
             A pandas DataFrame containing the query results.
         """
-        _ = cancel_cb
-
         engine = self._get_engine(conn)
         with engine.connect() as cx:
             log.debug(
@@ -173,4 +173,4 @@ class SqlAlchemyPostgresDriver(DriverProtocol):
                 corr_id,
                 job_id,
             )
-            return pd.read_sql(sql, cx)
+            return read_sql_dataframe(sql, cx, cancel_cb=cancel_cb)

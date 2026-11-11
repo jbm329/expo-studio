@@ -28,6 +28,13 @@ tab's own context menu.
 The comparison and range actions are available for numeric or datetime
 columns. The menu enables actions according to the selected column's type.
 
+**Not equals** (`!=`) with a nonmissing comparison value removes only matching
+rows and keeps rows with missing values. Equality and ordering comparisons
+(`==`, `<`, `<=`, `>`, `>=`) exclude rows with missing values: missing is not
+treated as zero or as less than another value. A missing comparison value
+matches no rows. Use **Is empty** or **Is not empty** to filter explicitly by
+missingness.
+
 In this example, **Between…** on **Amount** with bounds `10` and `20` keeps the
 two rows whose amounts are between those values:
 
@@ -52,6 +59,11 @@ If the selected cell is missing, **Keep rows** keeps rows with missing values
 in that column, and **Remove rows** removes rows with missing values. For a
 nonmissing selected value, **Remove rows** removes rows whose value in that
 column matches the selected value.
+
+When removing a nonmissing selected value, rows with missing values are kept:
+only matching rows are removed. For example, removing `1` from a column
+containing `1`, `2` and a missing value keeps `2` and the missing row. Using
+**Compare… → != 1** also keeps `2` and the missing row.
 
 For example, right-click a cell containing `North` in **Region** and select
 **Filter… → Keep rows** to keep the rows where **Region** equals `North`.

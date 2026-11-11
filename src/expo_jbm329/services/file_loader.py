@@ -7,17 +7,21 @@ Parquet, Feather, Pickle, and JSON files into pandas DataFrames.
 from __future__ import annotations
 
 import csv
+import io
 import logging
+import re
 import threading
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
+import numpy as np
 import pandas as pd
 from openpyxl.utils.cell import range_boundaries
 from pyqvd import QvdTable
 
+from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_values
 from expo_jbm329.utils.format_utils import fmt_path, fmt_path_size
 from expo_jbm329.utils.path_manager import get_documents_dir
 from expo_jbm329.utils.paths import expand
@@ -443,9 +447,11 @@ class FileLoader:
                 engine="python",
                 encoding=enc,
                 index_col=req.index_col,
+                dtype_backend="numpy_nullable",
             )
 
             _raise_if_cancelled()
+            df = self._finalize_csv_columns(df, check_cancel=_raise_if_cancelled)
 
             if req.progress_cb is not None:
                 req.progress_cb(100)
@@ -464,6 +470,7 @@ class FileLoader:
                 encoding=enc,
                 index_col=req.index_col,
                 chunksize=self._csv_read_chunk_size,
+                dtype_backend="numpy_nullable",
             )
 
             last_pct = -1
@@ -477,7 +484,7 @@ class FileLoader:
 
                 try:
                     pos = f.tell()
-                    pct = int((pos * 100) / total_size)
+                    pct = min(99, int((pos * 100) / total_size))
                     if req.progress_cb is not None and pct != last_pct:
                         req.progress_cb(pct)
                         last_pct = pct
@@ -498,7 +505,35 @@ class FileLoader:
 
         _raise_if_cancelled()
 
+        # All-null chunks have no type evidence. Match known integer/boolean
+        # chunks before concatenation, avoiding unsigned-to-float promotion.
+        if chunks:
+            for position in range(len(chunks[0].columns)):
+                _raise_if_cancelled()
+                columns = [chunk.iloc[:, position] for chunk in chunks]
+                known_dtypes = {column.dtype for column in columns if column.notna().any()}
+                if (
+                    any(str(dtype) == "UInt64" for dtype in known_dtypes)
+                    and len(known_dtypes) > 1
+                    and not any(pd.api.types.is_float_dtype(dtype) for dtype in known_dtypes)
+                ):
+                    # Mixed signed/unsigned concat can round integers through float.
+                    for chunk, column in zip(chunks, columns, strict=True):
+                        _raise_if_cancelled()
+                        chunk.isetitem(position, column.astype(object).array)
+                    continue
+                if len(known_dtypes) != 1:
+                    continue
+                dtype = next(iter(known_dtypes))
+                if not (pd.api.types.is_integer_dtype(dtype) or pd.api.types.is_bool_dtype(dtype)):
+                    continue
+                for chunk, column in zip(chunks, columns, strict=True):
+                    _raise_if_cancelled()
+                    if column.isna().all():
+                        chunk.isetitem(position, column.astype(dtype).array)
+
         df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+        df = self._finalize_csv_columns(df, check_cancel=_raise_if_cancelled)
 
         _raise_if_cancelled()
 
@@ -506,6 +541,102 @@ class FileLoader:
             req.progress_cb(100)
 
         return df
+
+    @staticmethod
+    def _restore_csv_unsigned(column: pd.Series, *, check_cancel: Callable[[], None]) -> pd.Series:
+        """Recover unsigned integer tokens when pandas falls back to text.
+
+        Reuse the public CSV parser's missing-token rules with text inference
+        forced, avoiding its unsigned-plus-missing inference failure.
+        """
+        if not (isinstance(column.dtype, pd.StringDtype) or pd.api.types.is_object_dtype(column.dtype)):
+            return column
+        signed_maximum = int(np.iinfo(np.int64).max)
+        unsigned_maximum = int(np.iinfo(np.uint64).max)
+        maximum_digits = len(str(unsigned_maximum))
+        tokens = column.dropna().astype(str)
+        integer_tokens = tokens[tokens.str.fullmatch(r"\+?[0-9]+")]
+        if not any(
+            len(token.lstrip("+")) <= maximum_digits and signed_maximum < int(token) <= unsigned_maximum
+            for token in integer_tokens
+        ):
+            return column
+
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        for value in column:
+            check_cancel()
+            writer.writerow(["" if pd.isna(value) else str(value)])
+        buffer.seek(0)
+        parsed = pd.read_csv(
+            buffer,
+            header=None,
+            sep=",",
+            engine="python",
+            dtype="string",
+            skip_blank_lines=False,
+        ).iloc[:, 0]
+        values: list[int | None] = []
+        for token in parsed:
+            check_cancel()
+            if pd.isna(token):
+                values.append(None)
+            elif re.fullmatch(r"\+?[0-9]+", token) is None or len(token.lstrip("+")) > maximum_digits:
+                return column
+            else:
+                number = int(token)
+                if number > unsigned_maximum:
+                    return column
+                values.append(number)
+        return pd.Series(pd.array(values, dtype="UInt64"), index=column.index, name=column.name)
+
+    @staticmethod
+    def _finalize_csv_columns(
+        frame: pd.DataFrame,
+        *,
+        check_cancel: Callable[[], None],
+    ) -> pd.DataFrame:
+        """Apply missing-only integer/boolean storage to nullable CSV inference.
+
+        Floats and text retain the existing CSV representations. All-null
+        columns lack integer/boolean evidence and retain legacy float storage.
+        """
+        for position in range(len(frame.columns)):
+            check_cancel()
+            column = FileLoader._restore_csv_unsigned(frame.iloc[:, position], check_cancel=check_cancel)
+            if isinstance(column.array, pd.arrays.IntegerArray):
+                if column.isna().all():
+                    column = column.astype("float64")
+                elif not column.isna().any():
+                    column = column.astype(np.dtype(str(column.dtype).lower()))
+            elif isinstance(column.array, pd.arrays.BooleanArray):
+                if not column.isna().any():
+                    column = column.astype(bool)
+            elif isinstance(column.array, pd.arrays.FloatingArray):
+                column = column.astype("float64")
+            elif isinstance(column.dtype, pd.StringDtype):
+                column = column.astype(object).where(column.notna(), np.nan)
+            elif pd.api.types.is_object_dtype(column.dtype):
+                # A boolean column can become object when differently typed
+                # all-null chunks are concatenated.
+                if pd.api.types.infer_dtype(column, skipna=True) == "boolean":
+                    column = column.astype("boolean" if column.isna().any() else bool)
+                else:
+                    column = column.where(column.notna(), np.nan)
+            frame.isetitem(position, column.array)
+        # The nullable reader also changes index storage; complete indexes
+        # must retain their native representation just like complete columns.
+        index_dtype = frame.index.dtype
+        if isinstance(frame.index.array, pd.arrays.IntegerArray) and not frame.index.hasnans:
+            frame.index = frame.index.astype(np.dtype(str(index_dtype).lower()))
+        elif isinstance(frame.index.array, pd.arrays.BooleanArray) and not frame.index.hasnans:
+            frame.index = frame.index.astype(bool)
+        elif isinstance(frame.index.array, pd.arrays.FloatingArray):
+            frame.index = frame.index.astype("float64")
+        elif isinstance(index_dtype, pd.StringDtype):
+            frame.index = pd.Index(frame.index.to_numpy(dtype=object, na_value=np.nan), name=frame.index.name)
+        check_cancel()
+        return frame
 
     # ================================================================
     # Excel reader (streaming)
@@ -516,6 +647,13 @@ class FileLoader:
         Keeps memory usage reasonable and emits progress periodically.
         Fallback to pandas.read_excel when openpyxl is unavailable.
         """
+
+        def check_cancel() -> None:
+            if req.cancel_cb is not None and req.cancel_cb():
+                msg = "Excel loading cancelled."
+                raise OperationCancelledError(msg)
+
+        check_cancel()
         # Try streaming path first
         try:
             from openpyxl import load_workbook
@@ -636,7 +774,7 @@ class FileLoader:
                     return
                 if total_rows > 0:
                     pct = int((read_rows * 100) / total_rows)
-                    pct = max(1, min(99, pct)) if read_rows < total_rows else 100
+                    pct = max(1, min(99, pct))
                 else:
                     # Unknown total: tick slowly upward towards 99
                     pct = min(99, (last_emitted + 1) if last_emitted >= 0 else 1)
@@ -647,8 +785,7 @@ class FileLoader:
             # Row streaming
             count_since_emit = 0
             for row in rows_iter:
-                if req.cancel_cb and req.cancel_cb():
-                    return pd.DataFrame()
+                check_cancel()
 
                 batch.append(row)
                 read_rows += 1
@@ -670,7 +807,7 @@ class FileLoader:
                 batch.clear()
                 emit_progress(force=True)
 
-            df = pd.DataFrame(data, columns=header)
+            df = dataframe_from_raw_values(data, header, check_cancel=check_cancel)
 
             # Optional index assignment (robust + warn if it fails)
             if req.index_col is not None and not df.empty:
@@ -698,6 +835,7 @@ class FileLoader:
                         e,
                     )
 
+            check_cancel()
             if req.progress_cb:
                 req.progress_cb(100)
             return df
@@ -774,21 +912,37 @@ class FileLoader:
             fmt_path_size(req.path),
         )
 
-        if req.cancel_cb and req.cancel_cb():
-            return pd.DataFrame()
+        def check_cancel() -> None:
+            if req.cancel_cb is not None and req.cancel_cb():
+                msg = "QVD loading cancelled."
+                raise OperationCancelledError(msg)
+
+        check_cancel()
 
         table: QvdTable | Iterable[Any] = cast("Any", QvdTable.from_qvd(req.path))
 
-        if isinstance(table, QvdTable):
-            df: pd.DataFrame = table.to_pandas()
-        else:
+        if not isinstance(table, QvdTable):
             # fallback om library faktiskt returnerar iterator
             tables = list(table)
             if not tables:
                 return pd.DataFrame()
-            df = cast("pd.DataFrame", tables[0].to_pandas())
+            table = tables[0]
 
-        return df
+        check_cancel()
+        if not isinstance(table, QvdTable):
+            msg = "QVD reader did not return a QvdTable."
+            raise TypeError(msg)
+        converted = table.to_dict()
+        data = converted.get("data")
+        columns = converted.get("columns")
+        if not isinstance(data, list) or not isinstance(columns, list):
+            msg = "QVD conversion did not return column and row lists."
+            raise TypeError(msg)
+        if not all(isinstance(row, list) and len(row) == len(columns) for row in data):
+            msg = "QVD conversion returned malformed rows."
+            raise ValueError(msg)
+        check_cancel()
+        return dataframe_from_raw_values(data, columns, check_cancel=check_cancel)
 
     # ================================================================
     # SPSS reader

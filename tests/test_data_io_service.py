@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
-from openpyxl import load_workbook
+from openpyxl import Workbook, load_workbook
 
 from expo_jbm329.services.analysis.statistics import analyze_descriptive_statistics
 from expo_jbm329.services.analysis.statistics_charts import (
@@ -42,6 +42,49 @@ def writer() -> FileWriter:
 @pytest.fixture
 def io_service(loader: FileLoader, writer: FileWriter) -> DataIOService:
     return DataIOService(loader, writer)
+
+
+def test_csv_worker_returns_missing_only_nullable_types(
+    io_service: DataIOService, loader: FileLoader, tmp_path: Path
+) -> None:
+    path = tmp_path / "nullable_load.csv"
+    path.write_text("integer,flag,complete\n9007199254740993,True,1\n,,2\n", encoding="utf-8")
+    loader.reload_settings({"csv": {"read_chunk_size_rows": 1, "sniff_delimiter": False, "default_sep": ","}})
+    progress: list[int] = []
+
+    result = io_service.resolve_and_load_df(
+        str(path), progress_cb=progress.append, cancel_cb=lambda: False, corr_id="nullable-csv"
+    )
+
+    assert result.ok and not result.cancelled
+    assert result.error is None
+    assert result.corr_id == "nullable-csv"
+    assert result.path == str(path)
+    assert isinstance(result.data, pd.DataFrame)
+    assert result.data.dtypes.astype(str).tolist() == ["Int64", "boolean", "int64"]
+    assert result.data["integer"].iloc[0] == 9007199254740993
+    assert result.data["integer"].isna().tolist() == [False, True]
+    assert progress[0] == 0 and progress[-1] == 100
+
+
+def test_xlsx_worker_returns_missing_only_nullable_types(io_service: DataIOService, tmp_path: Path) -> None:
+    path = tmp_path / "nullable_load.xlsx"
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.append(["integer", "flag", "complete"])
+    worksheet.append([1, True, 1])
+    worksheet.append([None, None, 2])
+    workbook.save(path)
+    workbook.close()
+
+    result = io_service.resolve_and_load_df(str(path), cancel_cb=lambda: False, corr_id="nullable-xlsx")
+
+    assert result.ok and not result.cancelled and result.error is None
+    assert result.corr_id == "nullable-xlsx"
+    assert isinstance(result.data, pd.DataFrame)
+    assert result.data.dtypes.astype(str).tolist() == ["Int64", "boolean", "int64"]
+    assert result.data["integer"].isna().tolist() == [False, True]
 
 
 def test_named_excel_start_omits_shape_until_validation(io_service, tmp_path, caplog):

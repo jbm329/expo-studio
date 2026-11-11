@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL, Engine
 
 from expo_jbm329.db.core.interfaces import DriverProtocol
+from expo_jbm329.utils.dataframe_construction import dataframe_from_raw_values
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -310,8 +311,13 @@ class SqlAlchemyOdbcDriver(DriverProtocol):
             if not rows:
                 return pd.DataFrame(columns=columns)
 
+            def check_cancel() -> None:
+                if _is_cancelled():
+                    msg = "SqlAlchemyOdbcDriver: SQL dataframe preparation cancelled."
+                    raise RuntimeError(msg)
+
             row_data = [tuple(row) for row in rows]
-            return pd.DataFrame.from_records(row_data, columns=columns)
+            return dataframe_from_raw_values(row_data, columns, check_cancel=check_cancel)
 
         finally:
             stop_event.set()

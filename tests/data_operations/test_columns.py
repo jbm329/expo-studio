@@ -38,6 +38,31 @@ def test_sort_dataframe_invalid_column():
 
 
 @pytest.mark.parametrize(
+    ("dtype", "values", "expected_ascending"),
+    [
+        ("Int64", [2**63 - 1, 2**63 - 2, pd.NA, -(2**63)], [3, 1, 0]),
+        ("UInt64", [2**64 - 1, 2**64 - 2, pd.NA, 0], [3, 1, 0]),
+        ("boolean", [True, False, pd.NA, pd.NA], [1, 0]),
+    ],
+)
+@pytest.mark.parametrize("ascending", [True, False])
+def test_sort_dataframe_nullable_values_preserve_precision_and_keep_missing_last(
+    dtype: str, values: list[object], expected_ascending: list[int], ascending: bool
+) -> None:
+    frame = pd.DataFrame({"value": pd.Series(values, dtype=dtype), "record": range(len(values))})
+    frame.index = [10, 10, -1, 4]
+    original = frame.copy(deep=True)
+    ordered = expected_ascending if ascending else expected_ascending[::-1]
+    missing = [row for row in range(len(values)) if row not in expected_ascending]
+
+    result = sort_dataframe(frame, "value", ascending=ascending)
+
+    assert result is not frame
+    pd.testing.assert_frame_equal(result, original.iloc[[*ordered, *missing]])
+    pd.testing.assert_frame_equal(frame, original)
+
+
+@pytest.mark.parametrize(
     ("source_index", "destination_index", "expected_columns"),
     [
         (1, 2, ["a", "c", "b", "d"]),

@@ -93,6 +93,31 @@ def test_facade_reads_real_file_and_preserves_result_values(duckdb_connection):
     assert first is second and cfg is cached_cfg
 
 
+def test_facade_preserves_missing_only_nullable_sql_types(duckdb_connection):
+    result = base.execute_sql_safe(
+        duckdb_connection,
+        "SELECT 9007199254740993::BIGINT AS value, TRUE AS flag, 1.0::DOUBLE AS measurement, 1 AS complete "
+        "UNION ALL SELECT NULL, NULL, NULL, 2",
+    )
+    assert result.ok and not result.cancelled
+    assert result.data.dtypes.astype(str).tolist() == ["Int64", "boolean", "float64", "int64"]
+    assert result.data["value"].iloc[0] == 9007199254740993
+    assert result.data["flag"].isna().tolist() == [False, True]
+
+
+def test_facade_preserves_unsigned_boolean_and_decimal_sql_results(duckdb_connection):
+    result = base.execute_sql_safe(
+        duckdb_connection,
+        "SELECT 18446744073709551615::UBIGINT AS value, TRUE AS flag, 1.25::DECIMAL(10,2) AS amount "
+        "UNION ALL SELECT NULL, FALSE, NULL",
+    )
+    assert result.ok and not result.cancelled
+    assert result.data.dtypes.astype(str).tolist() == ["UInt64", "bool", "float64"]
+    assert result.data["value"].iloc[0] == 18446744073709551615
+    assert result.data["flag"].tolist() == [True, False]
+    assert result.data["amount"].iloc[0] == 1.25
+
+
 def test_metadata_and_select_builders_use_real_file(duckdb_connection):
     assert base.list_tables(duckdb_connection) == [
         {"schema": "it's", "name": "o'x"},
@@ -333,7 +358,7 @@ def test_cancellation_and_disposal_follow_existing_service_contract(duckdb_conne
     assert cancelled.cancelled and not cancelled.ok
     assert duckdb_connection not in base._services
     checks = iter([False, False, False, True])
-    cancelled = base.execute_sql_safe(duckdb_connection, "SELECT 1", cancel_cb=lambda: next(checks))
+    cancelled = base.execute_sql_safe(duckdb_connection, "SELECT 1", cancel_cb=lambda: next(checks, True))
     assert cancelled.cancelled and not cancelled.ok
     base.close_connection(duckdb_connection)
     assert duckdb_connection not in base._services
