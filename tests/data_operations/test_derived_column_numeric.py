@@ -380,6 +380,95 @@ def test_missing_rows_cannot_trigger_overflow() -> None:
     assert_series_equal(result, pd.Series([None, None], dtype="Int64"))
 
 
+@pytest.mark.parametrize(
+    ("left", "right", "kind", "expected"),
+    [
+        ([3037000499, -3037000499], [3037000499, 3037000499], NumericKind.SIGNED, [3037000499**2, -(3037000499**2)]),
+        ([SIGNED_MIN, SIGNED_MAX], [1, 1], NumericKind.SIGNED, [SIGNED_MIN, SIGNED_MAX]),
+        ([UNSIGNED_MAX, 0], [1, 1], NumericKind.UNSIGNED, [UNSIGNED_MAX, 0]),
+        ([2**32 - 1, 0], [2**32 - 1, 0], NumericKind.UNSIGNED, [(2**32 - 1) ** 2, 0]),
+        # Cross-row extrema can exceed the range even when each actual product fits.
+        ([SIGNED_MIN, 1], [1, -1], NumericKind.SIGNED, [SIGNED_MIN, -1]),
+        ([-(2**62), 2], [2, -(2**62)], NumericKind.SIGNED, [SIGNED_MIN, SIGNED_MIN]),
+        ([UNSIGNED_MAX, 1], [1, UNSIGNED_MAX], NumericKind.UNSIGNED, [UNSIGNED_MAX, UNSIGNED_MAX]),
+    ],
+)
+def test_multiplication_bounds_and_inconclusive_extrema_preserve_exact_results(
+    left: list[int], right: list[int], kind: NumericKind, expected: list[int]
+) -> None:
+    a = pd.Series([*left, None], dtype=kind.value, index=[8, 8, 2])
+    b = pd.Series([*right, 2], dtype=kind.value, index=a.index)
+    original_a, original_b = a.copy(deep=True), b.copy(deep=True)
+    result = checked_integer_arithmetic("*", a, b, kind=kind)
+    assert isinstance(result, pd.Series)
+    assert_series_equal(result, pd.Series([*expected, None], dtype=kind.value, index=a.index))
+    assert_series_equal(a, original_a)
+    assert_series_equal(b, original_b)
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "kind"),
+    [
+        (3037000500, 3037000500, NumericKind.SIGNED),
+        (SIGNED_MIN, -1, NumericKind.SIGNED),
+        (-(2**62) - 1, 2, NumericKind.SIGNED),
+        (2**32, 2**32, NumericKind.UNSIGNED),
+        (UNSIGNED_MAX, 2, NumericKind.UNSIGNED),
+    ],
+)
+@pytest.mark.parametrize("masked", [False, True])
+def test_multiplication_outlier_is_checked_without_sampling(
+    left: int, right: int, kind: NumericKind, masked: bool
+) -> None:
+    a = pd.Series([2] * 256 + [left], dtype=kind.value)
+    b = pd.Series([3] * 256 + [None if masked else right], dtype=kind.value)
+    if masked:
+        result = checked_integer_arithmetic("*", a, b, kind=kind)
+        assert isinstance(result, pd.Series)
+        assert_series_equal(result, pd.Series([6] * 256 + [None], dtype=kind.value))
+    else:
+        with pytest.raises(DerivedColumnFormulaError) as caught:
+            checked_integer_arithmetic("*", a, b, kind=kind)
+        assert caught.value.code == "integer_overflow"
+
+
+@pytest.mark.parametrize("kind", [NumericKind.SIGNED, NumericKind.UNSIGNED])
+def test_individual_full_width_products_match_exact_python_bounds(kind: NumericKind) -> None:
+    bits = np.random.default_rng(1284).bit_generator.random_raw(256)
+    values = bits if kind == NumericKind.UNSIGNED else bits.view(np.int64)
+    right_values = values[128:].copy()
+    right_values[::3] = 1
+    small = np.arange(len(right_values[1::3]), dtype=np.int64) % 17
+    right_values[1::3] = small if kind == NumericKind.UNSIGNED else small - 8
+    lower, upper = (0, UNSIGNED_MAX) if kind == NumericKind.UNSIGNED else (SIGNED_MIN, SIGNED_MAX)
+    fitting = overflowing = 0
+    for left, right in zip(values[:128], right_values, strict=True):
+        expected = int(left) * int(right)
+        a = pd.Series([0, int(left)], dtype=kind.value)
+        b = pd.Series([0, int(right)], dtype=kind.value)
+        with np.errstate(divide="raise", over="raise", invalid="raise"):
+            if lower <= expected <= upper:
+                fitting += 1
+                result = checked_integer_arithmetic("*", a, b, kind=kind)
+                assert isinstance(result, pd.Series)
+                assert_series_equal(result, pd.Series([0, expected], dtype=kind.value))
+            else:
+                overflowing += 1
+                with pytest.raises(DerivedColumnFormulaError) as caught:
+                    checked_integer_arithmetic("*", a, b, kind=kind)
+                assert caught.value.code == "integer_overflow"
+    assert fitting > 0 and overflowing > 0
+
+
+def test_signed_division_edge_cases_in_inconclusive_multiplication_bounds() -> None:
+    a = pd.Series([SIGNED_MIN, SIGNED_MIN, -1, 0, SIGNED_MAX], dtype="Int64")
+    b = pd.Series([0, 1, SIGNED_MAX, -1, -1], dtype="Int64")
+    with np.errstate(divide="raise", over="raise", invalid="raise"):
+        result = checked_integer_arithmetic("*", a, b, kind=NumericKind.SIGNED)
+    assert isinstance(result, pd.Series)
+    assert_series_equal(result, pd.Series([0, SIGNED_MIN, -SIGNED_MAX, 0, -SIGNED_MAX], dtype="Int64"))
+
+
 @pytest.mark.parametrize("left,right", [(True, 1), (1, False)])
 def test_boolean_scalars_are_not_integer_operands(left: int, right: int) -> None:
     with pytest.raises(DerivedColumnFormulaError) as caught:

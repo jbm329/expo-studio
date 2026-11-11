@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
@@ -68,6 +69,22 @@ def test_integer_arithmetic_widens_before_evaluation(
     result = create_derived_column(source, spec)
     output_dtype = "UInt64" if dtype.lower().replace("[pyarrow]", "") == "uint64" else "Int64"
     assert_series_equal(result.Result, pd.Series(expected, dtype=output_dtype, name="Result"))
+    assert_frame_equal(source, original)
+
+
+@pytest.mark.parametrize("dtype", ["int64", "uint64"])
+@pytest.mark.parametrize("typed", [False, True])
+@pytest.mark.parametrize("formula", ["[A]", "[A]+[B]", "[A]*[B]"])
+def test_shared_numpy_operand_storage_does_not_alias_created_output(dtype: str, typed: bool, formula: str) -> None:
+    source = pd.DataFrame({
+        "A": pd.Series([2, 3], dtype=dtype),
+        "B": pd.Series([4, 5], dtype=dtype),
+    })
+    original = source.copy(deep=True)
+    result = create_derived_column(source, DerivedColumnSpec("Result", formula_for_path(formula, typed)))
+    assert not np.shares_memory(result.Result.to_numpy(), source.A.to_numpy())
+    result.loc[0, "Result"] = 99
+    result.loc[1, "Result"] = pd.NA
     assert_frame_equal(source, original)
 
 

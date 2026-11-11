@@ -121,7 +121,8 @@ def prepare_integer_operand(values: pd.Series, kind: NumericKind) -> pd.Series:
 
     Returns:
         A nullable integer Series on the unchanged index. Correctly typed
-        nullable operands are reused; callers must not mutate them.
+        nullable operands are reused and NumPy storage may be shared; callers
+        must not mutate the returned operand.
 
     Raises:
         DerivedColumnFormulaError: If values are noninteger or outside the range.
@@ -145,23 +146,34 @@ def prepare_integer_operand(values: pd.Series, kind: NumericKind) -> pd.Series:
     if out_of_range:
         code = "integer_out_of_range"
         raise DerivedColumnFormulaError(code, context={"dtype": kind.value})
-    return values.astype(kind.value)
+    return pd.Series(values.array, index=values.index, dtype=kind.value, name=values.name, copy=False)
 
 
-def _unsigned_magnitude(values: NDArray[np.int64]) -> NDArray[np.uint64]:
-    unsigned = values.view(np.uint64)
-    # Unsigned negation handles abs(INT64_MIN) exactly without signed overflow.
-    return np.where(values < 0, -unsigned, unsigned)
-
-
-def _signed_multiplication_overflow(left: NDArray[np.int64], right: NDArray[np.int64]) -> NDArray[np.bool_]:
-    left_magnitude = _unsigned_magnitude(left)
-    right_magnitude = _unsigned_magnitude(right)
-    negative = (left < 0) ^ (right < 0)
-    limit = np.where(negative, np.uint64(2**63), np.uint64(_INT64_MAX))
-    divisor = np.maximum(right_magnitude, np.uint64(1))
-    overflow: NDArray[np.bool_] = (right_magnitude != 0) & (left_magnitude > limit // divisor)
+def _signed_multiplication_overflow(
+    left: NDArray[np.int64], right: NDArray[np.int64], product: NDArray[np.int64]
+) -> NDArray[np.bool_]:
+    # An in-range product divides back to the original operand. Multiplication
+    # by 0 or 1 is safe; INT64_MIN * -1 is the only overflowing -1 product.
+    divide = (right < -1) | (right > 1)
+    overflow: NDArray[np.bool_] = (left == _INT64_MIN) & (right == -1)
+    if divide.any():
+        quotient = np.zeros_like(left)
+        np.floor_divide(product, right, out=quotient, where=divide)
+        overflow |= divide & (quotient != left)
     return overflow
+
+
+def _multiplication_is_bounded(
+    left: NDArray[np.int64] | NDArray[np.uint64],
+    right: NDArray[np.int64] | NDArray[np.uint64],
+    lower: int,
+    upper: int,
+) -> bool:
+    # Rectangle extrema bound every pairwise product. Python integers keep the
+    # bound calculation exact; inconclusive bounds still need per-row checks.
+    left_bounds = (int(left.min(initial=0)), int(left.max(initial=0)))
+    right_bounds = (int(right.min(initial=0)), int(right.max(initial=0)))
+    return all(lower <= a * b <= upper for a in left_bounds for b in right_bounds)
 
 
 def checked_integer_arithmetic(
@@ -241,14 +253,15 @@ def checked_integer_arithmetic(
             if not lower <= operand <= upper:
                 raise DerivedColumnFormulaError(range_code, context={"dtype": kind.value})
             operands.append(pd.Series(operand, index=index, dtype=kind.value))
+    if operation == "positive":
+        return pd.Series(operands[0].array, index=index, copy=False)
     missing = operands[0].isna().to_numpy(dtype=bool)
     numpy_dtype = np.uint64 if kind == NumericKind.UNSIGNED else np.int64
     a = operands[0].to_numpy(dtype=numpy_dtype, na_value=0)
+    overflow: NDArray[np.bool_] | None
     if unary:
-        result_array = a if operation == "positive" else -a
+        result_array = -a
         overflow = (a != 0) if kind == NumericKind.UNSIGNED else (a == _INT64_MIN)
-        if operation == "positive":
-            overflow = np.zeros(len(a), dtype=bool)
     else:
         missing |= operands[1].isna().to_numpy(dtype=bool)
         b = operands[1].to_numpy(dtype=numpy_dtype, na_value=0)
@@ -262,11 +275,13 @@ def checked_integer_arithmetic(
             result_array = a - b
             overflow = (a < b) if kind == NumericKind.UNSIGNED else (((a ^ b) & (a ^ result_array)) < 0)
         else:
-            if kind == NumericKind.UNSIGNED:
+            result_array = a * b
+            if _multiplication_is_bounded(a, b, lower, upper):
+                overflow = None
+            elif kind == NumericKind.UNSIGNED:
                 overflow = (b != 0) & (a > np.uint64(_UINT64_MAX) // np.maximum(b, np.uint64(1)))
             else:
-                overflow = _signed_multiplication_overflow(a, b)
-            result_array = a * b
-    if (overflow & ~missing).any():
+                overflow = _signed_multiplication_overflow(a, b, result_array)
+    if overflow is not None and (overflow & ~missing).any():
         raise DerivedColumnFormulaError(overflow_code, context={"operator": operation, "dtype": kind.value})
     return pd.Series(pd.arrays.IntegerArray(result_array, missing), index=index)
