@@ -181,6 +181,49 @@ def test_excel_raw_cell_builder_checks_cancellation() -> None:
         FileLoader._dataframe_from_excel_cells([[1], [None]], ["value"], check_cancel=cancel)
 
 
+@pytest.mark.parametrize("suffix", [".df", ".pkl", ".parquet", ".feather", ".ft"])
+def test_typed_file_loading_preserves_explicit_dtypes(tmp_path: Path, loader: FileLoader, suffix: str) -> None:
+    frame = pd.DataFrame({
+        "nullable_integer": pd.Series([2**53 + 1, None, 2], dtype="Int64"),
+        "nullable_unsigned": pd.Series([2**64 - 1, None, 1], dtype="UInt64"),
+        "nullable_boolean": pd.Series([True, None, False], dtype="boolean"),
+        "complete_nullable_integer": pd.Series([1, 2, 3], dtype="Int32"),
+        "complete_nullable_boolean": pd.Series([True, False, True], dtype="boolean"),
+        "native_integer": pd.Series([1, 2, 3], dtype="int16"),
+        "native_boolean": pd.Series([True, False, True], dtype=bool),
+        "float": [1.0, float("nan"), 2.0],
+        "text": pd.Series(["001", None, "NA"], dtype="string"),
+        "category": pd.Categorical(["low", None, "high"], categories=["low", "high"], ordered=True),
+        "date": pd.to_datetime(["2024-01-01", None, "2024-01-02"], utc=True),
+    })
+    path = tmp_path / f"typed{suffix}"
+    if suffix in {".df", ".pkl"}:
+        frame.to_pickle(path)
+    elif suffix == ".parquet":
+        frame.to_parquet(path)
+    else:
+        frame.to_feather(path)
+
+    loaded = loader.load_df_auto(str(path))
+
+    pd.testing.assert_frame_equal(loaded, frame)
+
+
+@pytest.mark.parametrize("suffix", [".df", ".parquet", ".feather"])
+def test_typed_file_loading_preserves_source_index(tmp_path: Path, loader: FileLoader, suffix: str) -> None:
+    frame = pd.DataFrame({"value": pd.array([1, None, 2], dtype="Int64")})
+    frame.index = pd.Index([20, 20, -1], name="source_row")
+    path = tmp_path / f"indexed{suffix}"
+    if suffix == ".df":
+        frame.to_pickle(path)
+    elif suffix == ".parquet":
+        frame.to_parquet(path)
+    else:
+        frame.to_feather(path)
+
+    pd.testing.assert_frame_equal(loader.load_df_auto(str(path)), frame)
+
+
 def test_load_df_auto_reads_csv(tmp_path: Path, loader: FileLoader) -> None:
     path = tmp_path / "test.csv"
     pd.DataFrame({"A": [1, 2]}).to_csv(path, index=False)
