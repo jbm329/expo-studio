@@ -24,8 +24,9 @@ from expo_jbm329.gui.dialogs.workflows.join.join_preview_dialog import JoinPrevi
 from expo_jbm329.services.data_operations.joins import (
     JoinMetadata,
     JoinRequest,
+    JoinResult,
     describe_join_fill_column,
-    join_dataframes,
+    join_dataframes_with_status,
 )
 from expo_jbm329.utils.i18n_utils import translate, translate_fmt
 
@@ -252,7 +253,7 @@ class JoinController:
             if cancel_cb is not None and cancel_cb():
                 return None
 
-            filtered_df = self._filter_joined_columns(result_df, cfg)
+            filtered_df = self._filter_joined_columns(result_df.frame, cfg, status_column=result_df.status_column)
 
             if cancel_cb is not None and cancel_cb():
                 return None
@@ -417,19 +418,21 @@ class JoinController:
             progress_cb: Callable[[int], None] | None = None,
             cancel_cb: Callable[[], bool] | None = None,
             **_: object,
-        ) -> tuple[pd.DataFrame, JoinMetadata] | None:
+        ) -> tuple[JoinResult, JoinMetadata] | None:
             del progress_cb
             if cancel_cb and cancel_cb():
                 return None
 
-            preview_df = self._execute_join(cfg, preview=True)
+            preview_result = self._execute_join(cfg, preview=True)
 
             if cancel_cb and cancel_cb():
                 return None
 
-            preview_df = self._filter_joined_columns(preview_df, cfg)
+            preview_df = self._filter_joined_columns(
+                preview_result.frame, cfg, status_column=preview_result.status_column
+            )
 
-            counts = preview_df["join_status"].value_counts(normalize=True)
+            counts = preview_df[preview_result.status_column].value_counts(normalize=True)
 
             metadata = JoinMetadata(
                 match_rate=counts.get("both", 0.0),
@@ -439,17 +442,18 @@ class JoinController:
                 estimated_rows=est_rows,
             )
 
-            return preview_df, metadata
+            return JoinResult(preview_df, preview_result.status_column), metadata
 
-        def _show_preview(result: tuple[pd.DataFrame, JoinMetadata] | None) -> None:
+        def _show_preview(result: tuple[JoinResult, JoinMetadata] | None) -> None:
             if result is None:
                 return
 
-            preview_df, metadata = result
+            preview_result, metadata = result
 
             preview_dialog = JoinPreviewDialog(
                 parent=dlg,
-                df=preview_df,
+                df=preview_result.frame,
+                status_column=preview_result.status_column,
                 metadata=metadata,
                 dialogs=self._dialogs,
             )
@@ -480,52 +484,31 @@ class JoinController:
         )
 
     # noinspection PyMethodMayBeStatic
-    def _filter_joined_columns(self, result_df: pd.DataFrame, cfg: JoinDialogResult) -> pd.DataFrame:
+    def _filter_joined_columns(
+        self, result_df: pd.DataFrame, cfg: JoinDialogResult, *, status_column: str
+    ) -> pd.DataFrame:
         """Filter join result columns according to dialog selection."""
+        if status_column not in result_df.columns:
+            message = f"Generated join status column {status_column!r} is missing."
+            raise ValueError(message)
         left_suffix = f"_{cfg.left_tab_title}"
         right_suffix = f"_{cfg.right_tab_title}"
-
-        keep_cols = []
-
-        for col in result_df.columns:
-            # --- JOIN KEYS (always keep) ---
-            if col in cfg.left_on or col in cfg.right_on:
-                keep_cols.append(col)
-                continue
-
-            # --- ALWAYS KEEP METADATA ---
-            if col == "join_status":
-                keep_cols.append(col)
-                continue
-
-            # --- LEFT SIDE COLUMNS ---
-            if col.endswith(left_suffix):
-                base = col[: -len(left_suffix)]  # remove suffix manually
-                if base in cfg.left_selected_columns:
-                    keep_cols.append(col)
-                continue
-
-            # --- RIGHT SIDE COLUMNS ---
-            if col.endswith(right_suffix):
-                base = col[: -len(right_suffix)]  # remove suffix manually
-                if base in cfg.right_selected_columns:
-                    keep_cols.append(col)
-                continue
-
-            # --- NON-SUFFIXED COLUMNS ---
-            if col in cfg.left_selected_columns:
-                keep_cols.append(col)
-                continue
-            if col in cfg.right_selected_columns:
-                keep_cols.append(col)
-                continue
-
-        keep_cols = list(dict.fromkeys(keep_cols))
-
-        # --- move join_status first ---
-        if "join_status" in keep_cols:
-            keep_cols = ["join_status"] + [c for c in keep_cols if c != "join_status"]
-
+        left_columns = set(self._get_df(cfg.left_tab_title).columns)
+        right_columns = set(self._get_df(cfg.right_tab_title).columns)
+        shared_keys = {left for left, right in zip(cfg.left_on, cfg.right_on, strict=True) if left == right}
+        suffixed = (left_columns & right_columns) - shared_keys
+        # Resolve source identity rather than interpreting suffix-like user names.
+        selected = {
+            f"{column}{suffix}" if column in suffixed else column
+            for columns, keys, suffix in (
+                (cfg.left_selected_columns, cfg.left_on, left_suffix),
+                (cfg.right_selected_columns, cfg.right_on, right_suffix),
+            )
+            for column in set(columns) | set(keys)
+        }
+        keep_cols = [status_column] + [
+            column for column in result_df.columns if column != status_column and column in selected
+        ]
         return result_df[keep_cols]
 
     # ------------------------------------------------------------------
@@ -537,13 +520,14 @@ class JoinController:
         cfg: JoinDialogResult,
         *,
         preview: bool = False,
-    ) -> pd.DataFrame:
+    ) -> JoinResult:
         """Execute join and return result (optionally preview)."""
         left_suffix = f"_{cfg.left_tab_title}"
         right_suffix = f"_{cfg.right_tab_title}"
 
         left = self._get_df(cfg.left_tab_title)
         right = self._get_df(cfg.right_tab_title)
+        join_label = {"inner": "INNER", "left": "LEFT", "right": "RIGHT", "outer": "FULL OUTER"}[cfg.join_type]
 
         req = JoinRequest(
             left=left,
@@ -556,14 +540,18 @@ class JoinController:
             right_columns=cfg.right_selected_columns,
             left_fill=cfg.left_fill,
             right_fill=cfg.right_fill,
+            status_column_base=f"join_status ({cfg.left_tab_title} {join_label} {cfg.right_tab_title})",
         )
 
-        df = join_dataframes(req)
+        result = join_dataframes_with_status(req)
 
         if preview:
-            return df.sample(min(100, len(df)), random_state=1)
+            return JoinResult(
+                result.frame.sample(min(100, len(result.frame)), random_state=1),
+                result.status_column,
+            )
 
-        return df
+        return result
 
     # noinspection PyMethodMayBeStatic
     def _are_joinable(self, s1: pd.Series, s2: pd.Series) -> bool:

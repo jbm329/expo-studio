@@ -51,9 +51,10 @@ To add customer details to matching orders:
 ![Join dialog with Orders and Customers selected, Customer ID and ID as keys,
 and Inner join selected](../assets/transform-data/join.png)
 
-The preview contains rows for keys present in both datasets:
+With dataset tabs named **Orders** and **Customers**, the preview contains
+rows for keys present in both datasets:
 
-| join_status | Order ID | Customer ID | Amount | ID | Customer | Region |
+| join_status (Orders INNER Customers) | Order ID | Customer ID | Amount | ID | Customer | Region |
 |---|---:|---|---:|---|---|---|
 | both | 101 | C1 | 25 | C1 | Maya | North |
 | both | 102 | C2 | 40 | C2 | Leo | South |
@@ -118,9 +119,10 @@ Defaults replace only values introduced because a source row is absent.
 Existing NULLs in matched rows are unchanged. For example, in the orders and
 customers example, use a left join and set the right-side **Region** default to
 `Unknown`. Order `103` then has `Unknown` as its region; a matched customer
-whose region was already NULL still has NULL. **join_status** is unchanged:
+whose region was already NULL still has NULL. The generated join status is
+unchanged by defaults:
 
-| Order ID | Customer ID | Region | join_status |
+| Order ID | Customer ID | Region | join_status (Orders LEFT Customers) |
 |---|---|---|---|
 | 101 | C1 | North | both |
 | 102 | C2 | South | both |
@@ -192,9 +194,27 @@ more than one output row for a match.
 Use the checkboxes in the **Columns to include** table to choose non-key columns
 for the result. The **Type** column shows each source column's data type.
 Resize the dialog to give the tables more room. The selected key columns and
-**join_status** are retained
-automatically. The status identifies whether a row matched both datasets
+the current join's generated status column are retained automatically.
+The status identifies whether a row matched both datasets
 (`both`), only the left (`left_only`), or only the right (`right_only`).
+
+The status column is placed first and is named
+`join_status (<left dataset> <JOIN TYPE> <right dataset>)`, using the dataset
+tab names and `INNER`, `LEFT`, `RIGHT`, or `FULL OUTER`. For example:
+`join_status (Film LEFT Actor)`. These type labels remain English regardless
+of the interface language. Renaming a tab later does not rename existing
+status columns.
+
+If that name is already present in either input or the merged output, the new
+column receives the first available numbered suffix, starting with
+`join_status (Film LEFT Actor) 2`. Existing columns are never replaced by the
+new status. You can join an earlier join result again: historical status
+columns, including columns named simply `join_status`, follow the ordinary
+**Columns to include** selections. Only the newly generated status column is
+retained automatically. Historical status columns can also be selected as keys.
+
+Exports use the same descriptive headers. When referencing them in SQL, quote
+the complete identifier, for example `"join_status (Film LEFT Actor)"`.
 
 When both datasets contain a selected non-key column with the same name, the
 result distinguishes them with suffixes based on the dataset tab names.
@@ -217,6 +237,9 @@ The preview shows up to 100 rows from the joined result. **Match success**,
 not necessarily the complete result. **Cardinality** describes whether the
 selected key is unique on either side. **Estimated number of rows** is an
 estimate; compare it with the result after creating the join.
+Percentages and status-cell highlighting refer to the current join, not to
+historical status columns retained from earlier joins. Left-only status cells
+are highlighted yellow and right-only status cells red.
 
 Repeated keys can multiply output rows. If a key occurs several times in both
 datasets, every matching left row is paired with every matching right row for
@@ -230,12 +253,13 @@ especially when the preview reports many-to-many cardinality.
 | The right key cannot be selected | Choose a right-side column with a compatible data type, or convert the key columns before joining. |
 | The preview has few or no matches | Check that the selected columns represent the same identifier and that their values have compatible types and matching content. |
 | The result has more rows than either input | Check for repeated keys. Duplicate key values can produce multiple matching pairs. |
-| Values are missing after a join | An outer, left, or right join retains unmatched rows; inspect **join_status** to see which side had no match. |
+| Values are missing after a join | An outer, left, or right join retains unmatched rows; inspect the first, generated status column to see which side had no match. |
 | An **If no match** cell is disabled | Choose a join type that can leave that side unmatched, include the column, and check that it is not a join key. |
 | A custom default is rejected | Check the source type, numeric range, locale decimal separator, and datetime timezone or resolution. Mixed non-text object columns accept NULL only. |
 | A matched row still contains NULL after setting a default | Defaults apply only when the source row is absent; they do not replace NULLs already present in matching source rows. |
 | A column name has a dataset suffix | Both datasets contain a selected column with that name. Rename the source columns or use the suffix to distinguish them. |
-| The preview estimate differs from the final row count | The preview row sample and estimated row count are not a complete calculation. Review the created result and its **join_status** values. |
+| A status column name ends in a number | Its descriptive base name was already occupied. The new status uses a numbered name to preserve existing columns. |
+| The preview estimate differs from the final row count | The preview row sample and estimated row count are not a complete calculation. Review the created result and its current join status values. |
 
 For calculated columns, summaries or appending rows, see
 [Transform data](index.md).

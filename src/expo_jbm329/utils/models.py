@@ -426,6 +426,34 @@ class JoinPreviewModel(DataFrameModel):
     Inherits from DataFrameModel and adds specific functionality for joined data.
     """
 
+    def __init__(
+        self,
+        df: object,
+        parent: QObject | None = None,
+        *,
+        na_rep: str = "",
+        formatters: dict[str, Callable[[object], str]] | None = None,
+        status_column: str | None = None,
+    ) -> None:
+        """Initialize the table with the current join's explicit status identity.
+
+        Args:
+            df: Joined dataframe to display.
+            parent: Optional parent object.
+            na_rep: Display text for missing values.
+            formatters: Optional per-column display formatters.
+            status_column: Generated status name, or the legacy ``join_status``
+                when omitted. Legacy callers may display frames without status.
+
+        Raises:
+            ValueError: If an explicitly supplied status column is absent or ambiguous.
+        """
+        super().__init__(df, parent, na_rep=na_rep, formatters=formatters)
+        self._status_column = "join_status" if status_column is None else status_column
+        if status_column is not None and list(self._df.columns).count(status_column) != 1:
+            message = f"Generated join status column {status_column!r} must occur exactly once."
+            raise ValueError(message)
+
     @override
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
         """Return the data for the given index and role."""
@@ -435,9 +463,10 @@ class JoinPreviewModel(DataFrameModel):
                 return None
 
             col_name = self._df.columns[index.column()]
-            raw = self._df.iloc[self._row_ix[index.row()], index.column()]
-
-            if col_name == "join_status":
+            if col_name == self._status_column:
+                raw = self._df.iloc[self._row_ix[index.row()], index.column()]
+                if pd.isna(raw):
+                    return None
                 if raw == "left_only":
                     return QColor("#fff3cd")  # yellow
                 if raw == "right_only":

@@ -1,88 +1,77 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
-from PyQt6.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QDialog, QTableView, QWidget
 
-from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialogResult
-from expo_jbm329.services.data_operations.joins import JoinMetadata, UnmatchedFill, join_dataframes
+from expo_jbm329.gui.dialogs.workflows.join.join_dialog import JoinDialog, JoinDialogResult
+from expo_jbm329.services.data_operations.joins import (
+    JoinHow,
+    JoinMetadata,
+    JoinResult,
+    UnmatchedFill,
+    join_dataframes_with_status,
+)
+from expo_jbm329.workbench.controllers.async_operation_controller import AsyncOperationController
 from expo_jbm329.workbench.controllers.join_controller import JoinController
+from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
+
+if TYPE_CHECKING:
+    from expo_jbm329.gui.dialogs.service.dialog_service import DialogService
 
 
-class DummyAsyncOps:
-    def __init__(self) -> None:
-        self.calls = []
-        self.job_mgr = MagicMock(get_job_id=lambda job: "job-1")
-        self.job = object()
+class TestableJoinController(JoinController):
+    """Expose the controller's orchestration seams for typed unit tests."""
 
-    def run_target_overlay_operation(self, **kwargs):
-        self.calls.append(kwargs)
-        self.last_kwargs = kwargs
-        return self.job
+    __test__ = False
 
+    def set_frames(self, frames: dict[str, pd.DataFrame]) -> None:
+        self._get_df = frames.__getitem__
 
-class DummyResults:
-    def __init__(self) -> None:
-        self.pending = []
-        self.bind_calls = []
-        self.fulfill_calls = []
-        self.remove_calls = []
-        self.tabs_by_id = {}
+    def set_dialogs(self, dialogs: DialogService) -> None:
+        self._dialogs = dialogs
 
-    def create_pending_tab(self, **kwargs):
-        tab_id = "pending-join"
-        self.pending.append(kwargs)
-        self.tabs_by_id[tab_id] = type("R", (), {"is_pending": True})()
-        return type("H", (), {"tab_id": tab_id, "view": QWidget()})()
+    def set_async_ops(self, async_ops: AsyncOperationController) -> None:
+        self._async_ops = async_ops
 
-    def fulfill_pending_tab(self, tab_id, df):
-        self.fulfill_calls.append((tab_id, df))
-        self.tabs_by_id[tab_id].is_pending = False
+    def run_join(self, cfg: JoinDialogResult) -> None:
+        self._run_join(cfg)
 
-    def remove_pending_tab(self, tab_id):
-        self.remove_calls.append(tab_id)
+    def preview_join(self, dialog: JoinDialog) -> None:
+        self._on_preview(dialog)
 
-    def bind_job_to_tab(self, tab_id, job_id):
-        self.bind_calls.append((tab_id, job_id))
+    def execute_join(self, cfg: JoinDialogResult, *, preview: bool = False) -> JoinResult:
+        return self._execute_join(cfg, preview=preview)
 
 
-class DummyDialog:
-    def __init__(self, result):
-        self._result = result
-        self.btn_preview = type("B", (), {"clicked": type("S", (), {"connect": lambda self, cb: None})()})()
-        self.btn_cancel = type("B", (), {"clicked": type("S", (), {"connect": lambda self, cb: None})()})()
-        self.btn_ok = type("B", (), {"clicked": type("S", (), {"connect": lambda self, cb: None})()})()
-
-    def exec(self):
-        return QDialog.DialogCode.Accepted
-
-    def build_result(self):
-        return self._result
+ControllerFixture = tuple[TestableJoinController, MagicMock, MagicMock, MagicMock]
 
 
 @pytest.fixture
-def controller(monkeypatch):
-    async_ops = DummyAsyncOps()
-    results = DummyResults()
+def controller(monkeypatch: pytest.MonkeyPatch) -> ControllerFixture:
+    async_ops = MagicMock(spec=AsyncOperationController)
+    async_ops.job_mgr = MagicMock()
+    async_ops.job_mgr.get_job_id.return_value = "job-1"
+    results = MagicMock(spec=ResultTabManager)
+    results.create_pending_tab.return_value = MagicMock(tab_id="pending-join", view=QTableView())
     status = MagicMock()
 
+    dialog = MagicMock()
+    dialog.exec.return_value = QDialog.DialogCode.Accepted
+    dialog.build_result.return_value = JoinDialogResult("left", "right", ["id"], ["id"], ["id"], ["id"], "inner")
     monkeypatch.setattr(
         "expo_jbm329.workbench.controllers.join_controller.JoinDialog",
-        lambda **kwargs: DummyDialog(result=JoinDialogResult("left", "right", ["id"], ["id"], ["id"], ["id"], "inner")),
+        MagicMock(return_value=dialog),
     )
-    monkeypatch.setattr(
-        "expo_jbm329.workbench.controllers.join_controller.join_dataframes",
-        lambda request: pd.DataFrame({"id": [1]}),
-    )
-
-    ctrl = JoinController(
+    ctrl = TestableJoinController(
         parent_widget=QWidget(),
         async_ops=async_ops,
         results=results,
         get_active_tab_title=lambda: "left",
-        get_active_view=lambda: QWidget(),
+        get_active_view=QTableView,
         list_tab_titles=lambda: ["left", "right"],
         get_df_for_tab=lambda title: pd.DataFrame({"id": [1]}),
         set_status=status,
@@ -90,20 +79,22 @@ def controller(monkeypatch):
     return ctrl, async_ops, results, status
 
 
-def test_open_join_dialog_runs_join(controller):
+def test_open_join_dialog_runs_join(controller: ControllerFixture) -> None:
     ctrl, async_ops, results, _ = controller
 
     ctrl.open_join_dialog()
 
-    assert async_ops.calls
-    assert results.pending
-    assert results.bind_calls == [("pending-join", "job-1")]
+    async_ops.run_target_overlay_operation.assert_called_once()
+    results.create_pending_tab.assert_called_once()
+    results.bind_job_to_tab.assert_called_once_with("pending-join", "job-1")
 
 
-def test_open_join_dialog_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_open_join_dialog_injects_dialog_service(
+    controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     ctrl, _, _, _ = controller
     dialogs = MagicMock()
-    ctrl._dialogs = dialogs
+    ctrl.set_dialogs(dialogs)
     factory = MagicMock(return_value=MagicMock(exec=MagicMock(return_value=QDialog.DialogCode.Rejected)))
     monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinDialog", factory)
 
@@ -113,36 +104,36 @@ def test_open_join_dialog_injects_dialog_service(controller, monkeypatch: pytest
     assert factory.call_args.kwargs["column_dtypes_for_tab"] == {"left": {"id": "int64"}, "right": {"id": "int64"}}
 
 
-def test_join_preview_injects_dialog_service(controller, monkeypatch: pytest.MonkeyPatch) -> None:
-    ctrl, _, _, _ = controller
+def test_join_preview_injects_dialog_service(controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    ctrl, async_ops, _, _ = controller
     dialogs = MagicMock()
-    ctrl._dialogs = dialogs
-    ctrl._async_ops = MagicMock()
+    ctrl.set_dialogs(dialogs)
     dialog = MagicMock()
     dialog.build_result.return_value = MagicMock(left_tab_title="left", right_tab_title="right")
-    monkeypatch.setattr(JoinController, "_precheck_join", lambda *args, **kwargs: 1)
+    monkeypatch.setattr(JoinController, "_precheck_join", MagicMock(return_value=1))
     factory = MagicMock()
     monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinPreviewDialog", factory)
 
-    ctrl._on_preview(dialog)
+    ctrl.preview_join(dialog)
     data = pd.DataFrame({"id": [1], "join_status": ["both"]})
     metadata = JoinMetadata(1.0, 0.0, 0.0, "one-to-one", 1)
-    ctrl._async_ops.run_with_overlay.call_args.kwargs["on_result"]((data, metadata))
+    async_ops.run_with_overlay.call_args.kwargs["on_result"]((JoinResult(data, "join_status"), metadata))
 
     assert factory.call_args.kwargs["dialogs"] is dialogs
     assert factory.call_args.kwargs["parent"] is dialog
     assert factory.call_args.kwargs["df"] is data
+    assert factory.call_args.kwargs["status_column"] == "join_status"
     factory.return_value.exec.assert_called_once_with()
 
 
-def test_join_result_updates_pending_tab(controller):
+def test_join_result_updates_pending_tab(controller: ControllerFixture) -> None:
     ctrl, async_ops, results, status = controller
     ctrl.open_join_dialog()
-    on_result = async_ops.last_kwargs["on_result"]
+    on_result = async_ops.run_target_overlay_operation.call_args.kwargs["on_result"]
 
     on_result(pd.DataFrame({"id": [1]}))
 
-    assert results.fulfill_calls
+    results.fulfill_pending_tab.assert_called_once()
     assert status.called
 
 
@@ -157,11 +148,13 @@ def test_join_dialog_result_default_mappings_are_independent() -> None:
 
 
 @pytest.mark.parametrize("preview", [False, True])
-def test_execute_join_passes_selection_and_defaults(controller, monkeypatch: pytest.MonkeyPatch, preview: bool) -> None:
+def test_execute_join_passes_selection_and_defaults(
+    controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch, preview: bool
+) -> None:
     """Preview and final execution pass the same typed request to the service."""
     ctrl, _, _, _ = controller
     frames = {"left": pd.DataFrame({"id": [1]}), "right": pd.DataFrame({"other_id": [1]})}
-    ctrl._get_df = frames.__getitem__
+    ctrl.set_frames(frames)
     cfg = JoinDialogResult(
         "left",
         "right",
@@ -174,9 +167,9 @@ def test_execute_join_passes_selection_and_defaults(controller, monkeypatch: pyt
         right_fill={"flag": UnmatchedFill(False)},
     )
     output = pd.DataFrame({"id": range(150)})
-    service = MagicMock(return_value=output)
-    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.join_dataframes", service)
-    result = ctrl._execute_join(cfg, preview=preview)
+    service = MagicMock(return_value=JoinResult(output, "generated-status"))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.join_dataframes_with_status", service)
+    result = ctrl.execute_join(cfg, preview=preview)
     request = service.call_args.args[0]
     assert request.left is frames["left"]
     assert request.right is frames["right"]
@@ -188,10 +181,14 @@ def test_execute_join_passes_selection_and_defaults(controller, monkeypatch: pyt
     assert request.right_columns == cfg.right_selected_columns
     assert request.left_fill == cfg.left_fill
     assert request.right_fill == cfg.right_fill
-    pd.testing.assert_frame_equal(result, output.sample(100, random_state=1) if preview else output)
+    assert request.status_column_base == "join_status (left FULL OUTER right)"
+    assert result.status_column == "generated-status"
+    pd.testing.assert_frame_equal(result.frame, output.sample(100, random_state=1) if preview else output)
 
 
-def test_join_workers_apply_defaults_and_keep_filtering(controller, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_join_workers_apply_defaults_and_keep_filtering(
+    controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Real service output reaches both worker paths with keys and metadata retained."""
     ctrl, async_ops, _, _ = controller
     frames = {
@@ -204,8 +201,10 @@ def test_join_workers_apply_defaults_and_keep_filtering(controller, monkeypatch:
         }),
     }
     originals = {name: frame.copy(deep=True) for name, frame in frames.items()}
-    ctrl._get_df = frames.__getitem__
-    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.join_dataframes", join_dataframes)
+    ctrl.set_frames(frames)
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.join_controller.join_dataframes_with_status", join_dataframes_with_status
+    )
     cfg = JoinDialogResult(
         "left",
         "right",
@@ -217,10 +216,17 @@ def test_join_workers_apply_defaults_and_keep_filtering(controller, monkeypatch:
         left_fill={"value": UnmatchedFill(0)},
         right_fill={"value": UnmatchedFill(0), "flag": UnmatchedFill(False)},
     )
-    ctrl._run_join(cfg)
-    final = async_ops.last_kwargs["work"]()
+    ctrl.run_join(cfg)
+    final = async_ops.run_target_overlay_operation.call_args.kwargs["work"]()
     assert final is not None
-    assert list(final.columns) == ["join_status", "id", "value_left", "other_id", "value_right", "flag"]
+    assert list(final.columns) == [
+        "join_status (left FULL OUTER right)",
+        "id",
+        "value_left",
+        "other_id",
+        "value_right",
+        "flag",
+    ]
     assert final["value_left"].tolist() == [10, 20, 0]
     assert final["value_right"].tolist() == [0, 30, 40]
     assert str(final["value_left"].dtype) == "int64"
@@ -231,13 +237,14 @@ def test_join_workers_apply_defaults_and_keep_filtering(controller, monkeypatch:
     assert pd.isna(final.loc[2, "id"])
 
     preview_ops = MagicMock()
-    ctrl._async_ops = preview_ops
+    ctrl.set_async_ops(preview_ops)
     dialog = MagicMock(build_result=MagicMock(return_value=cfg))
-    ctrl._on_preview(dialog)
+    ctrl.preview_join(dialog)
     preview_result = preview_ops.run_with_overlay.call_args.kwargs["work"]()
     assert preview_result is not None
     preview, metadata = preview_result
-    pd.testing.assert_frame_equal(preview, final.sample(len(final), random_state=1))
+    pd.testing.assert_frame_equal(preview.frame, final.sample(len(final), random_state=1))
+    assert preview.status_column == "join_status (left FULL OUTER right)"
     assert metadata.estimated_rows == 1
     assert metadata.match_rate == pytest.approx(1 / 3)
     for name, frame in frames.items():
@@ -246,17 +253,99 @@ def test_join_workers_apply_defaults_and_keep_filtering(controller, monkeypatch:
 
 @pytest.mark.parametrize("preview", [False, True])
 def test_execute_join_propagates_invalid_defaults(
-    controller,
+    controller: ControllerFixture,
     monkeypatch: pytest.MonkeyPatch,
     preview: bool,
 ) -> None:
     """Service validation errors remain available to the async error handler."""
     ctrl, _, _, _ = controller
     frames = {"left": pd.DataFrame({"id": [1, 2]}), "right": pd.DataFrame({"id": [2], "value": [3]})}
-    ctrl._get_df = frames.__getitem__
-    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.join_dataframes", join_dataframes)
+    ctrl.set_frames(frames)
+    monkeypatch.setattr(
+        "expo_jbm329.workbench.controllers.join_controller.join_dataframes_with_status", join_dataframes_with_status
+    )
     cfg = JoinDialogResult(
         "left", "right", ["id"], ["id"], [], ["value"], "left", right_fill={"value": UnmatchedFill("invalid")}
     )
     with pytest.raises(ValueError, match="Invalid unmatched-row default"):
-        ctrl._execute_join(cfg, preview=preview)
+        ctrl.execute_join(cfg, preview=preview)
+
+
+@pytest.mark.parametrize(
+    "how,label", [("inner", "INNER"), ("left", "LEFT"), ("right", "RIGHT"), ("outer", "FULL OUTER")]
+)
+@pytest.mark.parametrize("keep_history", [False, True])
+def test_workers_use_generated_identity_with_occupied_descriptive_name(
+    controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch, how: JoinHow, label: str, keep_history: bool
+) -> None:
+    """Both worker callbacks use current provenance while preserving selected history."""
+    ctrl, async_ops, results, _ = controller
+    base = f"join_status (Film {label} Actor)"
+    frames = {
+        "Film": pd.DataFrame({
+            "id": [1, 2],
+            "join_status": pd.Series(["right_only", pd.NA], dtype="string"),
+            base: ["old", "old"],
+            "title_Film": ["A", "B"],
+        }),
+        "Actor": pd.DataFrame({"id": [2, 3], "value": [20, 30]}),
+    }
+    originals = {name: frame.copy(deep=True) for name, frame in frames.items()}
+    ctrl.set_frames(frames)
+    cfg = JoinDialogResult(
+        "Film",
+        "Actor",
+        ["id"],
+        ["id"],
+        ["title_Film", "join_status", base] if keep_history else ["title_Film"],
+        ["value"],
+        how,
+        right_fill={"value": UnmatchedFill(0)} if how in {"left", "outer"} else {},
+    )
+    ctrl.run_join(cfg)
+    callbacks = async_ops.run_target_overlay_operation.call_args.kwargs
+    final = callbacks["work"]()
+    assert isinstance(final, pd.DataFrame)
+    assert final.columns[0] == f"{base} 2"
+    assert ("join_status" in final.columns) is keep_history
+    assert (base in final.columns) is keep_history
+    assert "title_Film" in final.columns
+    if how in {"left", "outer"}:
+        assert final.loc[final["id"] == 1, "value"].tolist() == [0]
+    callbacks["on_result"](final)
+    assert results.fulfill_pending_tab.call_args.args[1] is final
+
+    factory = MagicMock()
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinPreviewDialog", factory)
+    dialog = MagicMock(build_result=MagicMock(return_value=cfg))
+    ctrl.preview_join(dialog)
+    preview_callbacks = async_ops.run_with_overlay.call_args.kwargs
+    preview_result = preview_callbacks["work"]()
+    preview, metadata = preview_result
+    assert isinstance(preview, JoinResult)
+    assert preview.status_column == f"{base} 2"
+    pd.testing.assert_frame_equal(preview.frame, final.sample(len(final), random_state=1))
+    counts = final[f"{base} 2"].value_counts(normalize=True)
+    assert metadata.match_rate == pytest.approx(counts.get("both", 0.0))
+    assert metadata.left_only == pytest.approx(counts.get("left_only", 0.0))
+    assert metadata.right_only == pytest.approx(counts.get("right_only", 0.0))
+    preview_callbacks["on_result"](preview_result)
+    assert factory.call_args.kwargs["status_column"] == f"{base} 2"
+    assert factory.call_args.kwargs["df"] is preview.frame
+    for name, original in originals.items():
+        pd.testing.assert_frame_equal(frames[name], original)
+
+
+def test_worker_keeps_suffixed_keys_and_selected_history(controller: ControllerFixture) -> None:
+    """Different key names overlapping non-key columns retain both source keys."""
+    ctrl, async_ops, _, _ = controller
+    frames = {
+        "left": pd.DataFrame({"id": [1], "other_id": [10], "join_status": ["historical-left"]}),
+        "right": pd.DataFrame({"other_id": [1], "id": [20], "join_status": ["historical-right"]}),
+    }
+    ctrl.set_frames(frames)
+    cfg = JoinDialogResult("left", "right", ["id"], ["other_id"], [], ["join_status"], "inner")
+    ctrl.run_join(cfg)
+    final = async_ops.run_target_overlay_operation.call_args.kwargs["work"]()
+    assert list(final.columns) == ["join_status (left INNER right)", "id_left", "other_id_right", "join_status_right"]
+    assert final["join_status_right"].tolist() == ["historical-right"]
