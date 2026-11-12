@@ -45,6 +45,7 @@ class JoinPreviewDialog(QDialog):
         df: pd.DataFrame,
         metadata: JoinMetadata,
         dialogs: DialogService | None = None,
+        status_column: str | None = None,
     ) -> None:
         """Initialize the JoinPreviewDialog.
 
@@ -53,6 +54,8 @@ class JoinPreviewDialog(QDialog):
             df: The DataFrame to preview.
             metadata: The metadata dictionary.
             dialogs: Service for displaying warnings, defaulting to QtDialogService.
+            status_column: Explicit generated status identity. None preserves
+                the legacy ``join_status`` fallback for direct callers.
         """
         super().__init__(parent)
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
@@ -66,7 +69,10 @@ class JoinPreviewDialog(QDialog):
         # Guard
         # ======================================================
 
-        if "join_status" not in df.columns:
+        if status_column is not None and status_column not in df.columns:
+            message = f"Generated join status column {status_column!r} is missing."
+            raise ValueError(message)
+        if status_column is None and "join_status" not in df.columns:
             df = df.copy()
             df["join_status"] = "both"
 
@@ -74,7 +80,7 @@ class JoinPreviewDialog(QDialog):
         # Preview table
         # ======================================================
         self.table = QTableView()
-        self.model = JoinPreviewModel(df)
+        self.model = JoinPreviewModel(df, status_column=status_column)
         self.table.setModel(self.model)
         self.table.setAlternatingRowColors(True)
         self.table.setSortingEnabled(True)
