@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-11-12
+
+### Added
+- Context-sensitive Help and F1 links to user manual sections in settings, data operations, and Advanced Analysis
+- Remove duplicate rows from result tabs, or exclude duplicates when concatenating datasets
+- Select columns and specify typed defaults for absent columns when concatenating datasets
+- Specify typed defaults for unmatched rows when joining datasets
+
+### Changed
+- Preserve nullable integer and boolean types when loading supported file, SQL, ODBC, and REST datasets and when joining or concatenating datasets
+- Format result-tab numbers according to their data type and system locale
+- Join status columns identify the source datasets and join type, with unique names that preserve existing columns
+
+### Fixed
+- Preserve integer results in supported derived-column expressions
+- Preserve nullable integer precision when sorting and retain missing rows in not-equals filters
+
 ## [1.4.0] - 2026-11-06
 
 ### Added
