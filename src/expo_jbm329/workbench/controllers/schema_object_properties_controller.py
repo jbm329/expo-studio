@@ -70,7 +70,7 @@ class SchemaObjectPropertiesController:
 
     def open(self, connection: str, identity: SchemaObjectIdentity) -> SchemaObjectPropertiesDialog:
         """Open a modeless dialog bound to a captured connection and identity."""
-        dialog = SchemaObjectPropertiesDialog(self._parent, connection, identity)
+        dialog = SchemaObjectPropertiesDialog(self._parent, identity)
         session = _Session(connection, dialog)
         self._sessions.append(session)
 

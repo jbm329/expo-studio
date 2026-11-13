@@ -11822,11 +11822,6 @@ Shortcut: Ctrl+Z</source>
 <context>
     <name>SchemaObjectPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
-        <source>Properties</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
         <source>Only metadata visible to your database user is shown.</source>
         <translation type="unfinished" />
@@ -11971,16 +11966,6 @@ Shortcut: Ctrl+Z</source>
         <translation type="unfinished" />
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
-        <source>Table</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
-        <source>View</source>
-        <translation type="unfinished" />
-    </message>
-    <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />
         <source>Identity</source>
         <translation type="unfinished" />
@@ -11988,6 +11973,16 @@ Shortcut: Ctrl+Z</source>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="222" />
         <source>Generated</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="99" />
+        <source>Properties (table: {name})</source>
+        <translation type="unfinished" />
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="101" />
+        <source>Properties (view: {name})</source>
         <translation type="unfinished" />
     </message>
 </context>

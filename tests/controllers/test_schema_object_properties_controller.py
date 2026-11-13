@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import QCoreApplication, QEvent, Qt, QTranslator
+from PyQt6.QtCore import QCoreApplication, QEvent, QTranslator
 from PyQt6.QtWidgets import QApplication, QTableWidgetSelectionRange, QWidget
 
 from expo_jbm329.db.core.object_properties import (
@@ -99,7 +99,8 @@ def test_loading_runs_only_in_worker_and_displays_catalog_snapshot(controller, s
     call["on_result"](call["work"]())
     loader.assert_called_once_with("Clicked / connection", snapshot.identity, corr_id=call["corr_id"])
     assert dialog.tabs.isEnabled()
-    assert dialog.heading.text().startswith("Clicked / connection / Example")
+    assert dialog.windowTitle() == "Properties (table: <Orders>)"
+    assert dialog.status.isHidden()
     assert dialog.description.toPlainText() == "<b>Literal</b>\nDescription"
     assert dialog.columns.item(0, 0).text() == "tenant"
     assert dialog.columns.item(0, 1).text() == "nvarchar(50)"
@@ -109,7 +110,6 @@ def test_loading_runs_only_in_worker_and_displays_catalog_snapshot(controller, s
     assert dialog.constraints.item(0, 2).text() == "tenant, id"
     assert dialog.constraints.item(0, 3).text() == "other.Items (tenant, item_id)"
     assert "Custom: Other value" in dialog.details.toPlainText()
-    assert dialog.heading.textFormat() == Qt.TextFormat.PlainText
     assert "&lt;b&gt;Literal&lt;/b&gt;" in dialog.columns.item(0, 5).toolTip()
     dialog.columns.selectRow(1)
     assert dialog.details.toPlainText().startswith("id\n")
@@ -123,6 +123,18 @@ def test_copy_selected_cells_uses_plain_tab_separated_text(controller, snapshot)
     dialog.columns.setRangeSelected(QTableWidgetSelectionRange(0, 0, 1, 1), True)
     dialog._copy_selected()
     assert QApplication.clipboard().text() == "tenant\tnvarchar(50)\nid\tnvarchar(50)"
+
+
+def test_description_has_blank_line_spacing_without_identity_path(controller, snapshot):
+    from PyQt6.QtWidgets import QLabel
+
+    ctrl, _, _ = controller
+    dialog = ctrl.open("Hidden connection", snapshot.identity)
+    labels = [label.text() for label in dialog.findChildren(QLabel)]
+    assert not any("Hidden connection" in text or "Example / dbo" in text for text in labels)
+    layout = dialog.layout()
+    spacers = [layout.itemAt(index).spacerItem() for index in range(layout.count())]
+    assert any(spacer is not None and spacer.sizeHint().height() >= dialog.fontMetrics().height() for spacer in spacers)
 
 
 def test_retry_ignores_out_of_order_result_error_and_finished(controller, snapshot):
@@ -218,7 +230,8 @@ def test_empty_view_and_null_metadata_remain_explicit(controller, snapshot):
     )
     operations.calls[0]["on_result"](missing)
     assert dialog.description.toPlainText() == "Not set"
-    assert dialog.status.text() == "View"
+    assert dialog.windowTitle() == "Properties (view: <Orders>)"
+    assert dialog.status.isHidden()
     assert dialog.columns.rowCount() == 0
 
 
@@ -230,7 +243,13 @@ def test_properties_ui_strings_have_compiled_translations(language):
     translator = QTranslator()
     catalog = Path(__file__).parents[2] / "src" / "expo_jbm329" / "i18n" / "locales" / f"app_{language.value}.qm"
     assert translator.load(str(catalog))
-    for source in ("Properties", "Copy selected cells", "Loading properties...", "Extended properties"):
+    for source in (
+        "Properties (table: {name})",
+        "Properties (view: {name})",
+        "Copy selected cells",
+        "Loading properties...",
+        "Extended properties",
+    ):
         translated = translator.translate(SchemaObjectPropertiesDialog.__name__, source)
         assert bool(translated) == (language != Language.ENGLISH)
     for source in CATALOG_ERROR_MESSAGES:

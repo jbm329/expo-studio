@@ -38,8 +38,9 @@ you switch SQL editor tabs.
 Properties loads catalog metadata in the background. It does not retrieve table
 rows, calculate row counts or modify the database.
 
-- The heading identifies the connection, database, schema and object. The
-  status identifies whether the object is a table or view.
+- The title bar identifies the object as `Properties (table: name)` or
+  `Properties (view: name)`. The full connection/database/schema path is not
+  displayed.
 - **Description** shows the object's `MS_Description` extended property.
 - **Columns** lists column names in database order, complete declared types,
   nullability, default SQL expressions, constraint summaries and descriptions.

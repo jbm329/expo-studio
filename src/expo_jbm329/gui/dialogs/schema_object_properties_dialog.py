@@ -21,7 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.db.core.object_properties import ConstraintKind, MetadataState
+from expo_jbm329.db.core.object_properties import ConstraintKind, MetadataState, SchemaObjectKind
 from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 
@@ -34,19 +34,14 @@ class SchemaObjectPropertiesDialog(QDialog):
 
     retry_requested = pyqtSignal()
 
-    def __init__(self, parent: QWidget, connection: str, identity: SchemaObjectIdentity) -> None:
-        """Initialize presentation for the captured connection and object."""
+    def __init__(self, parent: QWidget, identity: SchemaObjectIdentity) -> None:
+        """Initialize presentation for the captured object."""
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.setWindowTitle(self.tr("Properties"))
+        self._set_object_title(identity)
         self.resize(1000, 720)
-        self._connection = connection
         self._snapshot: ObjectProperties | None = None
         layout = QVBoxLayout(self)
-        self.heading = QLabel(f"{connection} / {identity.catalog or ''} / {identity.schema} / {identity.name}", self)
-        self.heading.setTextFormat(Qt.TextFormat.PlainText)
-        self.heading.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        layout.addWidget(self.heading)
         self.status = QLabel(self)
         self.status.setTextFormat(Qt.TextFormat.PlainText)
         self.status.setWordWrap(True)
@@ -54,6 +49,7 @@ class SchemaObjectPropertiesDialog(QDialog):
         notice = QLabel(self.tr("Only metadata visible to your database user is shown."), self)
         notice.setWordWrap(True)
         layout.addWidget(notice)
+        layout.addSpacing(self.fontMetrics().height())
         self.description = QPlainTextEdit(self)
         self.description.setReadOnly(True)
         self.description.setMaximumHeight(90)
@@ -97,6 +93,14 @@ class SchemaObjectPropertiesDialog(QDialog):
         buttons.addButton(copy, QDialogButtonBox.ButtonRole.ActionRole)
         layout.addWidget(buttons)
         self.set_loading()
+
+    def _set_object_title(self, identity: SchemaObjectIdentity) -> None:
+        template = (
+            self.tr("Properties (table: {name})")
+            if identity.kind == SchemaObjectKind.TABLE
+            else self.tr("Properties (view: {name})")
+        )
+        self.setWindowTitle(template.format(name=identity.name))
 
     def _table(self, headers: list[str]) -> QTableWidget:
         table = QTableWidget(0, len(headers), self)
@@ -143,6 +147,7 @@ class SchemaObjectPropertiesDialog(QDialog):
         """Clear any previous snapshot and present the loading state."""
         self._snapshot = None
         self.status.setText(self.tr("Loading properties..."))
+        self.status.show()
         self.retry.setEnabled(False)
         self.tabs.setEnabled(False)
         self.description.clear()
@@ -153,6 +158,7 @@ class SchemaObjectPropertiesDialog(QDialog):
     def show_problem(self, message: str, *, retryable: bool = True) -> None:
         """Show a retrieval problem without changing the connection."""
         self.status.setText(message)
+        self.status.show()
         self.retry.setEnabled(retryable)
 
     def show_connection_changed(self) -> None:
@@ -163,11 +169,9 @@ class SchemaObjectPropertiesDialog(QDialog):
     def show_properties(self, snapshot: ObjectProperties) -> None:
         """Display a typed snapshot without interpreting database text as HTML."""
         self._snapshot = snapshot
-        self.status.setText(self.tr("Table") if snapshot.identity.kind.value == "table" else self.tr("View"))
-        self.heading.setText(
-            f"{self._connection} / {snapshot.identity.catalog or ''}"
-            f" / {snapshot.identity.schema} / {snapshot.identity.name}"
-        )
+        self._set_object_title(snapshot.identity)
+        self.status.clear()
+        self.status.hide()
         self.description.setPlainText(self._value(snapshot.description))
         self.tabs.setEnabled(True)
         self.retry.setEnabled(True)

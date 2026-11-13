@@ -12215,5 +12215,15 @@ Tastenkombination: Ctrl+Z</translation>
         <source>Generated</source>
         <translation>Generiert</translation>
     </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="99" />
+        <source>Properties (table: {name})</source>
+        <translation>Eigenschaften (Tabelle: {name})</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="101" />
+        <source>Properties (view: {name})</source>
+        <translation>Eigenschaften (Sicht: {name})</translation>
+    </message>
 </context>
 </TS>

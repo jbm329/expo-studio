@@ -12215,5 +12215,15 @@ Scorciatoia: Ctrl+Z</translation>
         <source>Generated</source>
         <translation>Generato</translation>
     </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="99" />
+        <source>Properties (table: {name})</source>
+        <translation>Proprietà (tabella: {name})</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="101" />
+        <source>Properties (view: {name})</source>
+        <translation>Proprietà (vista: {name})</translation>
+    </message>
 </context>
 </TS>

@@ -12214,5 +12214,15 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Generated</source>
         <translation>Genererad</translation>
     </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="99" />
+        <source>Properties (table: {name})</source>
+        <translation>Egenskaper (tabell: {name})</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="101" />
+        <source>Properties (view: {name})</source>
+        <translation>Egenskaper (vy: {name})</translation>
+    </message>
 </context>
 </TS>
