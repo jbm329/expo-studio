@@ -104,6 +104,59 @@ def test_open_join_dialog_injects_dialog_service(
     assert factory.call_args.kwargs["column_dtypes_for_tab"] == {"left": {"id": "int64"}, "right": {"id": "int64"}}
 
 
+@pytest.mark.parametrize(
+    "left_dtype,right_dtype,expected",
+    [
+        ("int64", "Int64", True),
+        ("Int64", "int64", True),
+        ("int32", "Int64", False),
+        ("float64", "Int64", False),
+    ],
+)
+def test_join_dialog_key_eligibility_for_mixed_integer_dtypes(
+    controller: ControllerFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    left_dtype: str,
+    right_dtype: str,
+    expected: bool,
+) -> None:
+    ctrl, _, _, _ = controller
+    frames = {
+        "left": pd.DataFrame({"left_key": pd.Series([1], dtype=left_dtype)}),
+        "right": pd.DataFrame({"right_key": pd.Series([1], dtype=right_dtype)}),
+    }
+    ctrl.set_frames(frames)
+    factory = MagicMock(return_value=MagicMock(exec=MagicMock(return_value=QDialog.DialogCode.Rejected)))
+    monkeypatch.setattr("expo_jbm329.workbench.controllers.join_controller.JoinDialog", factory)
+
+    ctrl.open_join_dialog()
+
+    joinable_map = factory.call_args.kwargs["joinable_map"]
+    eligible_keys = joinable_map.get(("left", "left_key", "right"), set())
+    assert ("right_key" in eligible_keys) is expected
+
+
+def test_execute_join_supports_mixed_integer_key_dtypes_without_mutating_inputs(
+    controller: ControllerFixture,
+) -> None:
+    ctrl, _, _, _ = controller
+    frames = {
+        "left": pd.DataFrame({"left_key": pd.Series([1, 2], dtype="int64")}),
+        "right": pd.DataFrame({"right_key": pd.Series([2, 3], dtype="Int64")}),
+    }
+    originals = {name: frame.copy(deep=True) for name, frame in frames.items()}
+    ctrl.set_frames(frames)
+    cfg = JoinDialogResult("left", "right", ["left_key"], ["right_key"], [], [], "inner")
+
+    result = ctrl.execute_join(cfg)
+
+    assert result.frame[["left_key", "right_key"]].to_dict("records") == [{"left_key": 2, "right_key": 2}]
+    assert str(result.frame["left_key"].dtype) == "int64"
+    assert str(result.frame["right_key"].dtype) == "Int64"
+    for name, original in originals.items():
+        pd.testing.assert_frame_equal(frames[name], original)
+
+
 def test_join_preview_injects_dialog_service(controller: ControllerFixture, monkeypatch: pytest.MonkeyPatch) -> None:
     ctrl, async_ops, _, _ = controller
     dialogs = MagicMock()
