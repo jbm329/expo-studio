@@ -182,3 +182,33 @@ class ObjectProperties:
 
 class ObjectPropertiesNotSupportedError(NotImplementedError):
     """Raised when the selected engine has no object-properties provider."""
+
+
+@dataclass(frozen=True)
+class ObjectPropertiesQueries:
+    """Catalog queries returning the common object-properties row shapes.
+
+    Object rows contain ``catalog_name``, ``schema_name``, ``object_name``,
+    ``object_id`` and ``modify_date``. Column rows contain ``object_id``,
+    ``column_id``, ``column_name``, ``ordinal_position``, ``data_type``,
+    ``nullable`` and the ``default``, ``identity`` and ``generated`` pairs
+    of ``<prefix>_present``/``<prefix>_definition`` fields.
+
+    Constraint rows contain ``object_id``, ``constraint_id``,
+    ``constraint_name``, ``constraint_kind`` (a ConstraintKind value),
+    ``column_position``, ``column_name``, ``definition`` and nullable
+    ``referenced_schema``, ``referenced_object`` and ``referenced_column``.
+    Property rows contain ``object_id``, ``column_id`` (zero for the object),
+    ``property_name`` and nullable plain-text ``property_value``.
+
+    Attributes:
+        object: Identity/version query, also repeated to detect concurrent DDL.
+        columns: Ordered columns with complete types and expression visibility.
+        constraints: One row per constraint column, grouped by constraint ID.
+        properties: Named object/column properties with plain-text values.
+    """
+
+    object: str
+    columns: str
+    constraints: str
+    properties: str

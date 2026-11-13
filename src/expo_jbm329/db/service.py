@@ -41,6 +41,7 @@ from expo_jbm329.db.core.errors import (
     BulkColumnListingNotSupportedError,
     should_log,
 )
+from expo_jbm329.db.core.interfaces import ObjectPropertiesDialectProtocol
 from expo_jbm329.db.core.models import (
     ConnectionConfig,
     SqlError,
@@ -48,6 +49,7 @@ from expo_jbm329.db.core.models import (
     TimeoutConfig,
 )
 from expo_jbm329.db.core.object_properties import ObjectPropertiesNotSupportedError
+from expo_jbm329.db.object_properties import load_object_properties
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -399,7 +401,14 @@ class DbService:
         Raises:
             ObjectPropertiesNotSupportedError: No provider is implemented for
                 this dialect. Unsupported retrieval never returns empty success.
+            RuntimeError: Catalog lookup failed or the object changed during retrieval.
         """
+        if isinstance(self.dialect, ObjectPropertiesDialectProtocol):
+            return load_object_properties(
+                identity,
+                self.dialect.sql_object_properties(identity),
+                lambda sql: self.execute_sql(conn, sql, corr_id=corr_id),
+            )
         log.warning(
             "Object properties are not supported (engine=%s, connection=%s, schema=%s, object=%s, corr=%s).",
             self.dialect.name,

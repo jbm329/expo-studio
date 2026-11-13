@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from .models import ConnectionConfig
+    from .object_properties import ObjectPropertiesQueries, SchemaObjectIdentity
 
 
 @runtime_checkable
@@ -170,4 +171,13 @@ class DialectProtocol(Protocol):
         Returns:
             A SQL fragment string or None if not applicable.
         """
+        ...
+
+
+@runtime_checkable
+class ObjectPropertiesDialectProtocol(Protocol):
+    """Optional catalog-query capability, separate from basic schema listing."""
+
+    def sql_object_properties(self, identity: SchemaObjectIdentity) -> ObjectPropertiesQueries:
+        """Build read-only queries using the common properties result shapes."""
         ...
