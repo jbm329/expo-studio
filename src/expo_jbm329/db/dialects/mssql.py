@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 from expo_jbm329.db.core.interfaces import DialectProtocol
+from expo_jbm329.db.core.object_properties import ObjectPropertiesQueries, SchemaObjectKind
+
+if TYPE_CHECKING:
+    from expo_jbm329.db.core.object_properties import SchemaObjectIdentity
 
 
 class MssqlDialect(DialectProtocol):
@@ -272,3 +277,105 @@ class MssqlDialect(DialectProtocol):
             "FROM INFORMATION_SCHEMA.COLUMNS AS c "
             "ORDER BY c.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION"
         )
+
+    def sql_object_properties(self, identity: SchemaObjectIdentity) -> ObjectPropertiesQueries:
+        """Build scoped catalog queries for table/view properties.
+
+        Args:
+            identity: Unquoted identity within the current database.
+
+        Returns:
+            Queries with a shared object scope and normalized metadata aliases.
+        """
+
+        def literal(value: str) -> str:
+            return "N'" + value.replace("'", "''") + "'"
+
+        object_type = "U" if identity.kind == SchemaObjectKind.TABLE else "V"
+        scope = (
+            "SELECT o.object_id, o.name, o.type, o.modify_date, s.name AS schema_name "  # noqa: S608 - escaped Unicode literals
+            "FROM sys.objects AS o JOIN sys.schemas AS s ON s.schema_id = o.schema_id "
+            f"WHERE s.name = {literal(identity.schema)} AND o.name = {literal(identity.name)} "
+            f"AND o.type = {literal(object_type)}"
+        )
+        if identity.catalog is not None:
+            scope += f" AND DB_NAME() = {literal(identity.catalog)}"
+        prefix = f"WITH target AS ({scope}) "
+        object_sql = prefix + (  # noqa: S608 - prefix contains only escaped catalog filters
+            "SELECT DB_NAME() AS catalog_name, schema_name, name AS object_name, object_id, modify_date FROM target"
+        )
+        columns_sql = prefix + (
+            "SELECT o.object_id, c.column_id, c.name AS column_name, "
+            "c.column_id AS ordinal_position, "
+            "CASE WHEN t.user_type_id IS NULL THEN NULL "
+            "WHEN t.is_user_defined = 1 OR t.is_assembly_type = 1 "
+            "THEN QUOTENAME(ts.name) + N'.' + QUOTENAME(t.name) "
+            "ELSE t.name + CASE "
+            "WHEN t.name IN (N'varchar', N'char', N'varbinary', N'binary', N'nvarchar', N'nchar') "
+            "THEN N'(' + CASE WHEN c.max_length = -1 THEN N'max' "
+            "ELSE CONVERT(nvarchar(10), CASE WHEN t.name IN (N'nvarchar', N'nchar') "
+            "THEN c.max_length / 2 ELSE c.max_length END) END + N')' "
+            "WHEN t.name IN (N'decimal', N'numeric') THEN N'(' + CONVERT(nvarchar(10), c.precision) "
+            "+ N', ' + CONVERT(nvarchar(10), c.scale) + N')' "
+            "WHEN t.name IN (N'datetime2', N'datetimeoffset', N'time') "
+            "THEN N'(' + CONVERT(nvarchar(10), c.scale) + N')' "
+            "WHEN t.name = N'float' THEN N'(' + CONVERT(nvarchar(10), c.precision) + N')' "
+            "WHEN t.name = N'xml' AND c.xml_collection_id <> 0 "
+            "THEN N'(' + CASE WHEN c.is_xml_document = 1 THEN N'DOCUMENT ' ELSE N'CONTENT ' END "
+            "+ QUOTENAME(xs.name) + N'.' + QUOTENAME(xc.name) + N')' "
+            "ELSE N'' END END AS data_type, "
+            "c.is_nullable AS nullable, "
+            "CASE WHEN c.default_object_id <> 0 THEN 1 ELSE 0 END AS default_present, "
+            "OBJECT_DEFINITION(c.default_object_id) AS default_definition, "
+            "c.is_identity AS identity_present, "
+            "CASE WHEN ic.object_id IS NOT NULL THEN N'IDENTITY(' "
+            "+ CONVERT(nvarchar(100), ic.seed_value) + N', ' "
+            "+ CONVERT(nvarchar(100), ic.increment_value) + N')' END AS identity_definition, "
+            "c.is_computed AS generated_present, cc.definition AS generated_definition "
+            "FROM target AS o JOIN sys.columns AS c ON c.object_id = o.object_id "
+            "LEFT JOIN sys.types AS t ON t.user_type_id = c.user_type_id "
+            "LEFT JOIN sys.schemas AS ts ON ts.schema_id = t.schema_id "
+            "LEFT JOIN sys.identity_columns AS ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id "
+            "LEFT JOIN sys.computed_columns AS cc ON cc.object_id = c.object_id AND cc.column_id = c.column_id "
+            "LEFT JOIN sys.xml_schema_collections AS xc ON xc.xml_collection_id = c.xml_collection_id "
+            "LEFT JOIN sys.schemas AS xs ON xs.schema_id = xc.schema_id "
+            "ORDER BY c.column_id"
+        )
+        constraints_sql = prefix + (
+            "SELECT o.object_id, k.object_id AS constraint_id, k.name AS constraint_name, "
+            "CASE k.type WHEN 'PK' THEN 'primary_key' ELSE 'unique' END AS constraint_kind, "
+            "ic.key_ordinal AS column_position, c.name AS column_name, "
+            "CAST(NULL AS nvarchar(max)) AS definition, "
+            "CAST(NULL AS sysname) AS referenced_schema, CAST(NULL AS sysname) AS referenced_object, "
+            "CAST(NULL AS sysname) AS referenced_column "
+            "FROM target AS o JOIN sys.key_constraints AS k ON k.parent_object_id = o.object_id "
+            "JOIN sys.index_columns AS ic ON ic.object_id = o.object_id "
+            "AND ic.index_id = k.unique_index_id AND ic.key_ordinal > 0 "
+            "JOIN sys.columns AS c ON c.object_id = o.object_id AND c.column_id = ic.column_id "
+            "UNION ALL "
+            "SELECT o.object_id, fk.object_id, fk.name, 'foreign_key', fc.constraint_column_id, c.name, "
+            "NULL, rs.name, rt.name, rc.name "
+            "FROM target AS o JOIN sys.foreign_keys AS fk ON fk.parent_object_id = o.object_id "
+            "JOIN sys.foreign_key_columns AS fc ON fc.constraint_object_id = fk.object_id "
+            "JOIN sys.columns AS c ON c.object_id = o.object_id AND c.column_id = fc.parent_column_id "
+            "LEFT JOIN sys.objects AS rt ON rt.object_id = fk.referenced_object_id "
+            "LEFT JOIN sys.schemas AS rs ON rs.schema_id = rt.schema_id "
+            "LEFT JOIN sys.columns AS rc ON rc.object_id = rt.object_id AND rc.column_id = fc.referenced_column_id "
+            "UNION ALL "
+            "SELECT o.object_id, ck.object_id, ck.name, 'check', 1, c.name, ck.definition, NULL, NULL, NULL "
+            "FROM target AS o JOIN sys.check_constraints AS ck ON ck.parent_object_id = o.object_id "
+            "LEFT JOIN sys.columns AS c ON c.object_id = o.object_id AND c.column_id = ck.parent_column_id "
+            "ORDER BY constraint_id, column_position"
+        )
+        properties_sql = prefix + (  # noqa: S608 - prefix contains only escaped catalog filters
+            "SELECT o.object_id, ep.minor_id AS column_id, ep.name AS property_name, "
+            "CASE WHEN SQL_VARIANT_PROPERTY(ep.value, 'BaseType') IN ('binary', 'varbinary') "
+            "THEN CONVERT(nvarchar(max), CONVERT(varbinary(8000), ep.value), 1) "
+            "ELSE CONVERT(nvarchar(max), ep.value) END AS property_value "
+            "FROM target AS o JOIN sys.extended_properties AS ep "
+            "ON ep.class = 1 AND ep.major_id = o.object_id "
+            "WHERE ep.minor_id = 0 OR EXISTS "
+            "(SELECT 1 FROM sys.columns AS c WHERE c.object_id = o.object_id AND c.column_id = ep.minor_id) "
+            "ORDER BY ep.minor_id, ep.name"
+        )
+        return ObjectPropertiesQueries(object_sql, columns_sql, constraints_sql, properties_sql)

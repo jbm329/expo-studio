@@ -29,6 +29,8 @@ from expo_jbm329.db.base import (
     get_dialect,
     list_columns,
 )
+from expo_jbm329.db.core.interfaces import ObjectPropertiesDialectProtocol
+from expo_jbm329.db.core.object_properties import SchemaObjectIdentity, SchemaObjectKind
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.identifier_formatting import build_identifier_text
 from expo_jbm329.gui.dialogs.service.qt_dialog_service import QtDialogService
@@ -62,6 +64,7 @@ class SchemaController:
 
     # --- i18n markers (pylupdate6-visible) -----------------------------
     TR_CONNECT = QT_TR_NOOP("Connect")
+    TR_PROPERTIES = QT_TR_NOOP("Properties")
     TR_DISCONNECT = QT_TR_NOOP("Disconnect")
     TR_LOADING_SCHEMA_STATUS = QT_TR_NOOP("Loading schema…")
     TR_TABLES_GROUP = QT_TR_NOOP("Tables")
@@ -92,6 +95,7 @@ class SchemaController:
         "_insert_sql_into_tab",
         "_job_mgr",
         "_logger",
+        "_open_object_properties",
         "_parent",
         "_resolve_dialect",
         "_restore_baseline_status",
@@ -120,6 +124,7 @@ class SchemaController:
         dialogs: DialogService | None = None,
         resolve_dialect: Callable[[str], DialectProtocol] | None = None,
         logger: logging.Logger | None = None,
+        open_object_properties: Callable[[str, SchemaObjectIdentity], object] | None = None,
     ) -> None:
         """Initialize the SchemaController.
 
@@ -141,8 +146,10 @@ class SchemaController:
             resolve_dialect: Callback resolving the SQL dialect for a connection,
                 defaults to ``db.base.get_dialect``.
             logger: Optional logger.
+            open_object_properties: Injected action for read-only catalog inspection.
         """
         self._parent = parent_widget
+        self._open_object_properties = open_object_properties
         self._tree = tree_widget
         self._schema_mgr = schema_mgr
         self._async_ops = async_ops
@@ -896,6 +903,14 @@ class SchemaController:
         act_star = menu.addAction(labels[0])
         act_cols = menu.addAction(labels[1])
         act_cols_schema = menu.addAction(labels[2])
+        act_properties = None
+        if (
+            meta_type in {"table", "view"}
+            and self._open_object_properties is not None
+            and isinstance(self._dialect_for_item(item), ObjectPropertiesDialectProtocol)
+        ):
+            menu.addSeparator()
+            act_properties = menu.addAction(self._tr(self.TR_PROPERTIES))
 
         viewport = self._tree.viewport()
         if viewport is None:
@@ -904,7 +919,17 @@ class SchemaController:
         if not chosen:
             return
 
-        if chosen == act_star:
+        if act_properties is not None and chosen == act_properties:
+            connection = self._resolve_connection_for_item(item)
+            schema = meta.get("schema")
+            if connection is not None and isinstance(schema, str) and self._open_object_properties is not None:
+                self._open_object_properties(
+                    connection,
+                    SchemaObjectIdentity(
+                        schema, name, SchemaObjectKind.TABLE if meta_type == "table" else SchemaObjectKind.VIEW
+                    ),
+                )
+        elif chosen == act_star:
             self._logger.debug(
                 "SchemaController: context menu choice: SELECT * (obj=%s.%s)", meta.get("schema"), meta.get("name")
             )

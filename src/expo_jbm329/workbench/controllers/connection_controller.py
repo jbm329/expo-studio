@@ -36,6 +36,7 @@ class ConnectionController:
         "_load_schema",
         "_logger",
         "_on_active_connection_changed",
+        "_on_connection_invalidated",
         "_on_connection_list_changed",
     )
     """
@@ -75,6 +76,7 @@ class ConnectionController:
         self._load_schema: Callable[[str, bool], None] | None = None
         self._on_connection_list_changed: list[Callable[[], None]] = []
         self._on_active_connection_changed: list[Callable[[str | None, str | None], None]] = []
+        self._on_connection_invalidated: list[Callable[[str], None]] = []
 
     # ==================================================================
     # Public connection API
@@ -146,6 +148,7 @@ class ConnectionController:
             return
 
         self._logger.info("ConnectionController: disconnecting from %s", name)
+        self._notify_invalidated(name)
 
         # Clear schema cache
         with contextlib.suppress(Exception):
@@ -192,12 +195,21 @@ class ConnectionController:
         Unlike a best-effort user disconnect, failures propagate to the caller
         so a connection test cannot report success using stale configuration.
         """
+        self._notify_invalidated(name)
         self._close_db(name)
         self._clear_schema_cache(name)
         if self._active_connection == name:
             self._active_connection = None
             for callback in self._on_active_connection_changed:
                 callback(name, None)
+
+    def on_connection_invalidated(self, callback: Callable[[str], None]) -> None:
+        """Subscribe to invalidation regardless of the active editor/connection."""
+        self._on_connection_invalidated.append(callback)
+
+    def _notify_invalidated(self, name: str) -> None:
+        for callback in self._on_connection_invalidated:
+            callback(name)
 
     def on_connection_list_changed(self, callback: Callable[[], None]) -> None:
         """Register a callback to be invoked when connection state changes."""

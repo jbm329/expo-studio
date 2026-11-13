@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import sqlglot
 from sqlglot import exp
 from sqlglot.errors import SqlglotError
 
 from expo_jbm329.db.core.interfaces import DialectProtocol
+from expo_jbm329.db.core.object_properties import ObjectPropertiesQueries, SchemaObjectKind
+
+if TYPE_CHECKING:
+    from expo_jbm329.db.core.object_properties import SchemaObjectIdentity
 
 
 class DuckDbDialect(DialectProtocol):
@@ -107,4 +113,65 @@ class DuckDbDialect(DialectProtocol):
             "WHERE table_catalog = current_database() "
             "AND table_schema NOT IN ('information_schema', 'pg_catalog') "
             "ORDER BY table_schema, table_name, ordinal_position"
+        )
+
+    def sql_object_properties(self, identity: SchemaObjectIdentity) -> ObjectPropertiesQueries:
+        """Build native DuckDB catalog queries without reading object contents.
+
+        Args:
+            identity: Requested table/view in the selected file's catalog.
+
+        Returns:
+            Scoped comment, column and declared-constraint queries.
+        """
+        view = identity.kind == SchemaObjectKind.VIEW
+        kind = "view" if view else "table"
+        scope = (
+            "database_name = current_database() "
+            f"AND schema_name = {self._literal(identity.schema)} "
+            f"AND {kind}_name = {self._literal(identity.name)} AND NOT internal"
+        )
+        if identity.catalog is not None:
+            scope += f" AND database_name = {self._literal(identity.catalog)}"
+        prefix = (
+            f"WITH target AS (SELECT database_name, schema_name, {kind}_name AS object_name, "  # noqa: S608
+            f"{kind}_oid AS object_id, comment, sql FROM duckdb_{kind}s() WHERE {scope}) "
+        )
+        object_sql = prefix + (  # noqa: S608 - scope uses escaped literals and a fixed table/view choice
+            "SELECT database_name AS catalog_name, schema_name, object_name, object_id, "
+            "comment AS description, sql AS modify_date FROM target"
+        )
+        columns_sql = prefix + (
+            "SELECT o.object_id, c.column_index AS column_id, c.column_name, c.column_index AS ordinal_position, "
+            "c.data_type, c.is_nullable AS nullable, c.comment AS description, "
+            "(c.column_default IS NOT NULL AND NOT c.is_generated) AS default_present, "
+            "CASE WHEN NOT c.is_generated THEN c.column_default END AS default_definition, "
+            "'unsupported' AS identity_state, false AS identity_present, NULL AS identity_definition, "
+            "c.is_generated AS generated_present, c.generation_expression AS generated_definition "
+            "FROM target AS o JOIN duckdb_columns() AS c ON c.database_name = o.database_name "
+            "AND c.schema_name = o.schema_name AND c.table_name = o.object_name AND c.table_oid = o.object_id "
+            "ORDER BY c.column_index"
+        )
+        constraints_sql = prefix + (
+            "SELECT o.object_id, k.constraint_index AS constraint_id, k.constraint_name, "
+            "CASE k.constraint_type WHEN 'PRIMARY KEY' THEN 'primary_key' WHEN 'UNIQUE' THEN 'unique' "
+            "WHEN 'FOREIGN KEY' THEN 'foreign_key' WHEN 'CHECK' THEN 'check' END AS constraint_kind, "
+            "COALESCE(p.position, 1) AS column_position, k.constraint_column_names[p.position] AS column_name, "
+            "k.constraint_text AS definition, "
+            # DuckDB rejects foreign keys across schemas/catalogs.
+            "CASE WHEN k.constraint_type = 'FOREIGN KEY' THEN o.schema_name END AS referenced_schema, "
+            "k.referenced_table AS referenced_object, k.referenced_column_names[p.position] AS referenced_column "
+            "FROM target AS o JOIN duckdb_constraints() AS k ON k.database_name = o.database_name "
+            "AND k.schema_name = o.schema_name AND k.table_name = o.object_name AND k.table_oid = o.object_id "
+            "LEFT JOIN LATERAL UNNEST(range(1, len(k.constraint_column_names) + 1)) AS p(position) ON true "
+            "WHERE k.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'FOREIGN KEY', 'CHECK') "
+            "ORDER BY k.constraint_index, p.position"
+        )
+        return ObjectPropertiesQueries(
+            object_sql,
+            columns_sql,
+            constraints_sql,
+            properties=None,
+            description_property=None,
+            verify_catalog_rows=True,
         )

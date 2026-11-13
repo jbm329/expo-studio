@@ -122,3 +122,26 @@ def test_invalidate_configuration_propagates_disposal_failure(controller):
     with pytest.raises(RuntimeError, match="disposal failed"):
         ctrl.invalidate_configuration("Conn1")
     assert ctrl.active_connection == "Conn1"
+
+
+@pytest.mark.parametrize("operation", ["disconnect", "invalidate_configuration"])
+@pytest.mark.parametrize("active", [True, False])
+def test_invalidation_notifies_before_backend_close_for_every_connection(controller, operation, active):
+    ctrl, mocks = controller
+    ctrl.connect("Conn1" if active else "Conn2")
+    seen = []
+    ctrl.on_connection_invalidated(lambda name: seen.append((name, mocks["close"].call_count)))
+    getattr(ctrl, operation)("Conn1")
+    assert seen == [("Conn1", 0)]
+
+
+def test_switching_active_connection_does_not_invalidate_properties(controller):
+    ctrl, _ = controller
+    callback = MagicMock()
+    ctrl.on_connection_invalidated(callback)
+    ctrl.connect("Conn1")
+    ctrl.connect("Conn2")
+    callback.assert_not_called()
+    ctrl.disconnect("Conn1")
+    ctrl.connect("Conn1")
+    callback.assert_called_once_with("Conn1")

@@ -28,6 +28,130 @@ and linting use that connection's SQL dialect. Linting can point out issues
 before you run the query, but it does not replace checking the result or any
 database-specific errors reported during execution.
 
+## Inspect table and view properties {#object-properties}
+
+For **SQL Server**, **PostgreSQL**, **MySQL/MariaDB**, **SQLite** and **DuckDB** connections,
+right-click a table or view in the schema browser and select **Properties**.
+Other database types do not yet offer this action. The dialog stays bound to
+the connection owning that object, even if you switch SQL editor tabs.
+
+Properties loads catalog metadata in the background. It does not retrieve table
+rows, calculate row counts or modify the database.
+
+MySQL/MariaDB Properties supports both `pymysql` and `mysqlconnector`
+connections. SQL text, including literal percent signs in metadata queries,
+is passed unchanged without parameter interpolation.
+
+- The title bar identifies the object as `Properties (table: name)` or
+  `Properties (view: name)`. The full connection/database/schema path is not
+  displayed.
+- **Description** shows the object's `MS_Description` extended property on
+  SQL Server or its native comment on PostgreSQL, DuckDB and MySQL/MariaDB tables.
+  Column descriptions use the same database-specific source.
+- **Columns** lists column names in database order, complete declared types,
+  nullability, default SQL expressions, constraint summaries and descriptions.
+  Selecting a column shows its full description, identity/computed expression
+  and named extended properties below the grid.
+- **Extended properties** lists every visible named property on the object,
+  not just `MS_Description`. Column properties appear in the selected-column
+  details instead. This tab is hidden for PostgreSQL, MySQL/MariaDB, SQLite and DuckDB,
+  which do not support SQL Server-style named extended properties.
+- **Constraints** shows declared primary keys, foreign keys, unique constraints
+  and checks, including names, grouped columns, foreign-key destinations and
+  available SQL definitions. A composite unique constraint applies to the
+  column combination, not independently to each column. View constraints are
+  not inferred from underlying tables.
+
+Select cells in a grid and use **Copy selected cells** to copy tab-separated
+text. Descriptions and column details can also be selected and copied. Database
+documentation is displayed as plain text, including any markup it contains.
+
+**Not set**, **Not applicable**, **Not supported** and **Unavailable** distinguish
+different reasons for missing metadata. Only metadata visible to your database
+user is shown: an empty property or constraint list does not prove that no
+hidden metadata exists. A column's constraint summary can be empty when no
+visible column-associated constraint was found; table-level checks may appear
+only in the Constraints tab.
+
+PostgreSQL types use the database's formatted type names, including arrays,
+domains, enums, length and precision where declared. Defaults and generated
+expressions are shown as SQL rather than evaluated values. Identity columns
+show their declared generation mode; legacy `serial` columns expose their
+sequence expression as a default. Only declared table constraints are listed,
+not inferred constraints on views or separate unique indexes. PostgreSQL
+permits zero-column objects, which appear with an empty Columns grid.
+
+MySQL/MariaDB types retain their catalog declaration, including length,
+precision, unsigned types and enum values. Table and base-column comments are
+shown; empty comments appear as **Not set**. View descriptions and column
+comments are **Not supported**, not copied from underlying tables.
+`AUTO_INCREMENT` and generated expressions appear in selected-column details.
+Key definitions preserve ordered index expressions and prefix lengths. Only
+actual indexed column names appear in the Columns field; columns used inside
+an expression are not inferred by parsing it.
+If an older server identifies a generated column but cannot expose its
+expression, the expression is **Unavailable**.
+
+The app discovers available catalog columns before loading MySQL/MariaDB
+metadata. CHECK expressions are listed when the server exposes the CHECK
+catalog; their column associations are not inferred by parsing SQL. If that
+catalog is absent, **Check: Not supported** appears below the tabs, while
+available key constraints remain visible. These are declared constraints,
+not a statement that enforcement is enabled. A failed discovery or metadata
+query is an error, not an empty constraint list.
+
+Defaults are displayed as SQL, preserving expressions and quoting literals
+according to the server's catalog conventions. On MariaDB versions before
+10.2.7, a present default is **Unavailable**, because the catalog cannot
+reliably distinguish literal text from an expression. Metadata rereads detect
+changes during loading where possible, but are not a transactional DDL snapshot.
+
+SQLite uses its native schema and PRAGMA metadata. Object/column descriptions,
+extended properties and identity specifications are **Not supported**. SQL
+source comments are not interpreted as descriptions. Declared types and default
+SQL are preserved; an untyped column has an empty Data type cell.
+
+SQLite lists declared primary, foreign and unique keys, preserving composite
+column order. It does not list separate user-created unique indexes. Original
+primary/foreign-key constraint names are not exposed by PRAGMA metadata, so
+their names remain empty. Unique keys use SQLite's native backing-index names,
+which may be generated `sqlite_autoindex_...` names rather than names written
+in the CREATE TABLE statement.
+
+Implicit foreign-key target columns are resolved against the parent primary
+key. If that parent or its primary key is missing, the References field shows
+the target table with **Unavailable** columns instead of inventing a mapping.
+This inspects declared metadata, not whether foreign-key enforcement is enabled.
+
+SQLite does not expose CHECK clauses or generated-column expressions through
+these PRAGMAs. **Check: Unavailable** appears below the tabs, and a generated
+column's expression is **Unavailable**. Neither is reconstructed by parsing
+CREATE TABLE SQL. Nullability reflects SQLite's native behavior, including
+non-null INTEGER PRIMARY KEY rowid aliases and nullable legacy primary keys.
+View constraints are not inferred from underlying tables.
+
+DuckDB Properties uses native catalogs through the existing read-only file
+connection. Table/view comments and their own column comments are shown,
+including multiline text. Types retain DuckDB's catalog formatting, including
+decimal precision, arrays and nested types; aliases and length declarations
+that DuckDB normalizes are not reconstructed from the original SQL.
+Defaults and generated expressions are shown separately, so a generated
+expression is not mistaken for a default. Sequence-based defaults remain SQL
+expressions; identity specifications are **Not supported**.
+
+DuckDB lists native primary, foreign, unique and CHECK constraints with their
+catalog names and SQL definitions. Composite keys keep their column order and
+foreign-key mapping. A CHECK without a column association appears only in
+Constraints. Separate user-created unique indexes are not listed as declared
+constraints. View constraints are **Not applicable**, not inherited from their
+source tables. Named SQL Server-style extended properties are **Not supported**.
+
+Use **Retry** to reload metadata or recover from a retrieval error. Errors do
+not disconnect the database or clear its schema tree. You can close the dialog
+while loading. If the connection is disconnected, deleted or its saved settings
+are replaced, close the invalidated dialog and reopen Properties after
+connecting again. Late replies cannot replace the invalidated display.
+
 ## Result datatypes
 
 For SQLite, PostgreSQL, MySQL/MariaDB, DuckDB and ODBC queries, integer values mixed

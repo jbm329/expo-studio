@@ -35,6 +35,13 @@ for you to finish configuring the connection. **Test connection also saves the
 current form before testing**, even if the connection attempt fails. Invalid
 DuckDB settings are rejected before either saving or testing.
 
+**Save**, **Test connection** and a confirmed **Delete** invalidate the named
+connection's cached backend and schema metadata for every database type.
+Reconnect through the schema browser when needed. Test connection uses the
+newly saved settings rather than an older cached connection. An open
+[Properties dialog](../get-data/sql-queries.md#object-properties) for that
+connection is invalidated and must be reopened.
+
 **Close** does not save edits still in the form, but it does not undo an Add,
 Save, Test connection or confirmed Delete that has already been performed.
 

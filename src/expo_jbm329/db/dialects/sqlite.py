@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from expo_jbm329.db.core.interfaces import DialectProtocol
+from expo_jbm329.db.core.object_properties import MetadataState, ObjectPropertiesQueries
+
+if TYPE_CHECKING:
+    from expo_jbm329.db.core.object_properties import SchemaObjectIdentity
 
 
 class SqliteDialect(DialectProtocol):
@@ -148,3 +154,76 @@ class SqliteDialect(DialectProtocol):
         """
         # Not feasible in a single SQL across all tables in SQLite (needs per-table PRAGMA).
         return None
+
+    def sql_object_properties(self, identity: SchemaObjectIdentity) -> ObjectPropertiesQueries:
+        """Build read-only SQLite schema and table-valued PRAGMA queries.
+
+        Args:
+            identity: Requested table/view in main, temp or an attached schema.
+
+        Returns:
+            Native declared metadata without parsing SQL for comments or expressions.
+        """
+        schema = identity.schema or "main"
+
+        def literal(value: str) -> str:
+            return "'" + value.replace("'", "''") + "'"
+
+        schema_literal = literal(schema)
+        name_literal = literal(identity.name)
+        target = (
+            f"SELECT rowid AS object_id, name, sql FROM {self.quote_ident(schema)}.sqlite_master "  # noqa: S608
+            f"WHERE name = {name_literal} AND type = {literal(identity.kind.value)}"
+        )
+        if identity.catalog is not None:
+            target += f" AND {literal(identity.catalog)} = {schema_literal}"
+        prefix = f"WITH target AS ({target}) "
+        object_sql = prefix + (  # noqa: S608 - quoted identifiers and escaped string literals
+            f"SELECT {schema_literal} AS catalog_name, {schema_literal} AS schema_name, "  # noqa: S608
+            "name AS object_name, object_id, sql AS modify_date FROM target"
+        )
+        table_info = f"pragma_table_xinfo({name_literal}, {schema_literal})"
+        indexes = f"pragma_index_list({name_literal}, {schema_literal})"
+        # A true INTEGER PRIMARY KEY rowid alias has no separate primary-key index.
+        rowid_alias = (
+            "c.pk > 0 AND UPPER(c.type) = 'INTEGER' "  # noqa: S608 - escaped PRAGMA arguments
+            f"AND (SELECT COUNT(*) FROM {table_info} WHERE pk > 0) = 1 "
+            f"AND NOT EXISTS (SELECT 1 FROM {indexes} WHERE origin = 'pk')"
+        )
+        columns_sql = prefix + (
+            "SELECT o.object_id, c.cid AS column_id, c.name AS column_name, c.cid + 1 AS ordinal_position, "  # noqa: S608
+            f'c.type AS data_type, NOT (c."notnull" OR ({rowid_alias})) AS nullable, '
+            "(c.dflt_value IS NOT NULL) AS default_present, c.dflt_value AS default_definition, "
+            "'unsupported' AS identity_state, 0 AS identity_present, NULL AS identity_definition, "
+            "(c.hidden IN (2, 3)) AS generated_present, NULL AS generated_definition "
+            f"FROM target AS o JOIN {table_info} AS c ORDER BY c.cid"
+        )
+        constraints_sql = prefix + (
+            "SELECT o.object_id, 0 AS constraint_id, NULL AS constraint_name, 'primary_key' AS constraint_kind, "  # noqa: S608
+            "c.pk AS column_position, c.name AS column_name, NULL AS definition, "
+            "NULL AS referenced_schema, NULL AS referenced_object, NULL AS referenced_column, "
+            "NULL AS referenced_columns_state "
+            f"FROM target AS o JOIN {table_info} AS c WHERE c.pk > 0 "
+            "UNION ALL SELECT o.object_id, i.name, i.name, 'unique', k.seqno + 1, k.name, NULL, NULL, NULL, NULL, NULL "
+            f"FROM target AS o JOIN {indexes} AS i "
+            f"JOIN pragma_index_xinfo(i.name, {schema_literal}) AS k "
+            "WHERE i.origin = 'u' AND k.key = 1 "
+            "UNION ALL SELECT o.object_id, f.id, NULL, 'foreign_key', f.seq + 1, f.\"from\", NULL, "
+            f'{schema_literal}, f."table", COALESCE(f."to", p.name), '
+            "CASE WHEN COALESCE(f.\"to\", p.name) IS NULL THEN 'unavailable' END "
+            f"FROM target AS o JOIN pragma_foreign_key_list({name_literal}, {schema_literal}) AS f "
+            f'LEFT JOIN pragma_table_xinfo(f."table", {schema_literal}) AS p '
+            'ON f."to" IS NULL AND p.pk = f.seq + 1 '
+            "ORDER BY constraint_kind, constraint_id, column_position"
+        )
+        return ObjectPropertiesQueries(
+            object_sql,
+            columns_sql,
+            constraints_sql,
+            properties=None,
+            description_property=None,
+            object_description_state=MetadataState.UNSUPPORTED,
+            column_description_state=MetadataState.UNSUPPORTED,
+            check_constraints_state=MetadataState.UNAVAILABLE,
+            verify_catalog_rows=True,
+        )

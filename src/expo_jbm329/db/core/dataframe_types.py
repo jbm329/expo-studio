@@ -23,7 +23,7 @@ def read_sql_dataframe(
     """Read raw query results and preserve missing-only integer/boolean storage.
 
     Args:
-        sql: Query string passed unchanged to the driver.
+        sql: Query string passed unchanged to the driver, without bound parameters.
         connection: Open SQLAlchemy connection owned by the caller.
         cancel_cb: Existing cooperative cancellation callback.
 
@@ -40,7 +40,8 @@ def read_sql_dataframe(
             raise RuntimeError(msg)
 
     check_cancel()
-    with connection.exec_driver_sql(sql) as result:
+    # Omit even empty DBAPI parameters so percent literals are not interpolated.
+    with connection.exec_driver_sql(sql, execution_options={"no_parameters": True}) as result:
         header = list(result.keys())
         data = result.fetchall()
         frame = dataframe_from_raw_values(data, header, check_cancel=check_cancel, coerce_float=True)

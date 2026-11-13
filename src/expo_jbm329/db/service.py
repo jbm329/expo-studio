@@ -41,17 +41,21 @@ from expo_jbm329.db.core.errors import (
     BulkColumnListingNotSupportedError,
     should_log,
 )
+from expo_jbm329.db.core.interfaces import ObjectPropertiesDialectProtocol, ObjectPropertiesDiscoveryDialectProtocol
 from expo_jbm329.db.core.models import (
     ConnectionConfig,
     SqlError,
     SqlResult,
     TimeoutConfig,
 )
+from expo_jbm329.db.core.object_properties import ObjectPropertiesNotSupportedError
+from expo_jbm329.db.object_properties import load_object_properties, require_catalog_data
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from expo_jbm329.db.core.interfaces import DialectProtocol, DriverProtocol
+    from expo_jbm329.db.core.object_properties import ObjectProperties, SchemaObjectIdentity
 
 log = logging.getLogger("applogger.db")
 
@@ -376,6 +380,52 @@ class DbService:
     # -------------------------------------------------------------------------
     # Metadata operations (tables / views / columns)
     # -------------------------------------------------------------------------
+
+    def get_object_properties(
+        self,
+        conn: ConnectionConfig,
+        identity: SchemaObjectIdentity,
+        *,
+        corr_id: str | None = None,
+    ) -> ObjectProperties:
+        """Retrieve a read-only properties snapshot for a table or view.
+
+        Args:
+            conn: Connection configuration used for catalog access.
+            identity: Unquoted schema object identity.
+            corr_id: Optional correlation ID for logging.
+
+        Returns:
+            A typed metadata snapshot when a provider is implemented.
+
+        Raises:
+            ObjectPropertiesNotSupportedError: No provider is implemented for
+                this dialect. Unsupported retrieval never returns empty success.
+            RuntimeError: Catalog lookup failed or the object changed during retrieval.
+            ValueError: Discovered catalog capabilities are incomplete or inconsistent.
+        """
+        if isinstance(self.dialect, ObjectPropertiesDialectProtocol):
+            queries = self.dialect.sql_object_properties(identity)
+            if isinstance(self.dialect, ObjectPropertiesDiscoveryDialectProtocol):
+                capabilities = require_catalog_data(
+                    self.execute_sql(conn, self.dialect.sql_object_properties_capabilities(), corr_id=corr_id)
+                )
+                queries = self.dialect.sql_discovered_object_properties(identity, capabilities)
+            return load_object_properties(
+                identity,
+                queries,
+                lambda sql: self.execute_sql(conn, sql, corr_id=corr_id),
+            )
+        log.warning(
+            "Object properties are not supported (engine=%s, connection=%s, schema=%s, object=%s, corr=%s).",
+            self.dialect.name,
+            conn.name,
+            identity.schema,
+            identity.name,
+            corr_id,
+        )
+        message = f"Object properties are not supported for dialect '{self.dialect.name}'."
+        raise ObjectPropertiesNotSupportedError(message)
 
     def list_tables(self, conn: ConnectionConfig, corr_id: str | None = None) -> list[dict[str, str]]:
         """Return a list of tables in the connection.

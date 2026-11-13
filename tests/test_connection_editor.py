@@ -471,16 +471,11 @@ def test_edits_involving_duckdb_invalidate_through_injected_owner(duckdb_editor,
         editor.data["Duck file"]["db_type"] = "sqlite"
     else:
         editor.db_type_combo.setCurrentIndex(editor.db_type_combo.findData("sqlite"))
-    # Deletion uses the persisted engine rather than an unsaved type selection.
-    should_invalidate = action != "delete_connection" or old_engine == "duckdb"
     callback = MagicMock()
     editor._invalidate_connection = callback
     dialogs.prompt_yes_no.return_value = True
     getattr(editor, action)()
-    if should_invalidate:
-        callback.assert_called_once_with("Duck file")
-    else:
-        callback.assert_not_called()
+    callback.assert_called_once_with("Duck file")
 
 
 def test_delete_duckdb_closes_cached_backend(duckdb_editor) -> None:
@@ -494,14 +489,43 @@ def test_delete_duckdb_closes_cached_backend(duckdb_editor) -> None:
     assert service.driver._engines == {}
 
 
-def test_sqlite_edit_and_test_retain_existing_invalidation_behavior(duckdb_editor) -> None:
+def test_sqlite_edit_and_test_invalidate_cached_configuration(duckdb_editor) -> None:
     editor, _ = duckdb_editor
     editor.list_widget.setCurrentRow(1)
     callback = MagicMock()
     editor._invalidate_connection = callback
     editor.save_changes()
     editor.test_connection()
-    callback.assert_not_called()
+    assert callback.call_count == 2
+    callback.assert_called_with("SQLite file")
+
+
+@pytest.mark.parametrize("engine", ["mssql", "postgresql", "mysql", "sqlite"])
+@pytest.mark.parametrize("action", ["save_changes", "test_connection", "delete_connection"])
+def test_persisted_edits_invalidate_all_engines_and_emit_change(monkeypatch, engine, action):
+    dialogs = MagicMock(spec=NullDialogService)
+    dialogs.prompt_yes_no.return_value = True
+    callback = MagicMock()
+    editor = ConnectionEditor(dialogs=dialogs, invalidate_connection=callback)
+    editor.data = {"Test": {"db_type": engine}}
+    editor.list_widget.clear()
+    editor.list_widget.addItem("Test")
+    editor.list_widget.setCurrentRow(0)
+    monkeypatch.setattr(editor, "_validated_current_form", lambda: {"db_type": engine, "protocol": "odbc"})
+    changed = MagicMock()
+    editor.connections_changed.connect(changed)
+    execute = MagicMock(return_value=SqlResult(ok=True))
+    monkeypatch.setattr(connection_editor, "execute_sql_safe", execute)
+    getattr(editor, action)()
+    callback.assert_called_once_with("Test")
+    changed.assert_called_once_with()
+    if action == "delete_connection":
+        assert "Test" not in read_connections()
+    else:
+        assert read_connections()["Test"]["db_type"] == engine
+    if action == "test_connection":
+        execute.assert_called_once()
+    editor.close()
 
 
 @pytest.mark.parametrize("language", list(Language))

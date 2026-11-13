@@ -55,6 +55,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
     from expo_jbm329.db.core.interfaces import DialectProtocol
+    from expo_jbm329.db.core.object_properties import ObjectProperties, SchemaObjectIdentity
 
 logger = logging.getLogger("applogger.db")
 
@@ -512,6 +513,29 @@ def fetch_df(connection_name: str, sql: str) -> pd.DataFrame | None:
 # =============================================================================
 # Public Metadata API (Facade over DbService)
 # =============================================================================
+
+
+def get_object_properties(
+    connection_name: str,
+    identity: SchemaObjectIdentity,
+    *,
+    corr_id: str | None = None,
+) -> ObjectProperties:
+    """Retrieve read-only catalog properties using the connection's service.
+
+    Args:
+        connection_name: Saved connection owning the inspected object.
+        identity: Unquoted schema object identity.
+        corr_id: Optional correlation ID for logging.
+
+    Returns:
+        The object's typed metadata snapshot.
+
+    Raises:
+        ObjectPropertiesNotSupportedError: The engine has no implemented provider.
+    """
+    svc, cfg = _get_service_with_config(connection_name)
+    return svc.get_object_properties(cfg, identity, corr_id=corr_id)
 
 
 def list_tables(connection_name: str, corr_id: str | None = None) -> list[dict[str, str]]:

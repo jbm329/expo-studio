@@ -7,10 +7,14 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from pymysql import Connection as PyMySqlConnection
 from sqlalchemy import create_engine
+from sqlalchemy.dialects.mysql.pymysql import MySQLDialect_pymysql
 
 from expo_jbm329.db.core.dataframe_types import read_sql_dataframe
 from expo_jbm329.db.core.models import ConnectionConfig
+from expo_jbm329.db.core.object_properties import SchemaObjectIdentity, SchemaObjectKind
+from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.drivers.sa_duckdb import SqlAlchemyDuckDbDriver
 from expo_jbm329.db.drivers.sa_mysql import SqlAlchemyMySqlDriver
 from expo_jbm329.db.drivers.sa_postgres import SqlAlchemyPostgresDriver
@@ -53,7 +57,7 @@ def test_raw_sql_inference_preserves_exact_values_and_unrelated_types() -> None:
     assert result["unsigned"].iloc[0] == 2**64 - 1
     assert result["text"].tolist() == ["001", None]
     assert result["unknown"].tolist() == [None, None]
-    connection.exec_driver_sql.assert_called_once_with("SELECT values")
+    connection.exec_driver_sql.assert_called_once_with("SELECT values", execution_options={"no_parameters": True})
     connection.exec_driver_sql.return_value.__exit__.assert_called_once()
 
 
@@ -120,6 +124,38 @@ def test_sql_fetch_failure_closes_result() -> None:
     with pytest.raises(ValueError, match="fetch failed"):
         read_sql_dataframe("SELECT values", connection)
     connection.exec_driver_sql.return_value.__exit__.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT '100% complete' AS value",
+        "SELECT '%s %(name)s %%' AS value",
+        MySqlDialect().sql_object_properties(SchemaObjectIdentity("sales", "Orders", SchemaObjectKind.TABLE)).columns,
+    ],
+)
+def test_pymysql_raw_sql_does_not_interpolate_literal_percent_characters(sql: str) -> None:
+    pymysql_connection = PyMySqlConnection(defer_connect=True)
+    pymysql_connection.server_status = 0
+    pymysql_cursor = pymysql_connection.cursor()
+    cursor = MagicMock()
+    cursor.description = [("value", None, None, None, None, None, None)]
+    cursor.fetchall.return_value = [("result",)]
+    cursor.execute.side_effect = pymysql_cursor.mogrify
+    dbapi_connection = MagicMock()
+    dbapi_connection.cursor.return_value = cursor
+    with (
+        patch.object(MySQLDialect_pymysql, "initialize"),
+        patch.object(MySQLDialect_pymysql, "on_connect", return_value=None),
+    ):
+        engine = create_engine("mysql+pymysql://", creator=lambda: dbapi_connection)
+        try:
+            with engine.connect() as connection:
+                frame = read_sql_dataframe(sql, connection)
+            assert frame["value"].tolist() == ["result"]
+            cursor.execute.assert_called_once_with(sql)
+        finally:
+            engine.dispose()
 
 
 @pytest.mark.parametrize(
