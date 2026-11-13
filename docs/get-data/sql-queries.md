@@ -38,6 +38,10 @@ owning that object, even if you switch SQL editor tabs.
 Properties loads catalog metadata in the background. It does not retrieve table
 rows, calculate row counts or modify the database.
 
+MySQL/MariaDB Properties supports both `pymysql` and `mysqlconnector`
+connections. SQL text, including literal percent signs in metadata queries,
+is passed unchanged without parameter interpolation.
+
 - The title bar identifies the object as `Properties (table: name)` or
   `Properties (view: name)`. The full connection/database/schema path is not
   displayed.
