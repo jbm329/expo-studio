@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 )
 
 from expo_jbm329.db.core.object_properties import ConstraintKind, MetadataState
+from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 
 if TYPE_CHECKING:
@@ -59,6 +60,7 @@ class SchemaObjectPropertiesDialog(QDialog):
         layout.addWidget(QLabel(self.tr("Description"), self))
         layout.addWidget(self.description)
         self.tabs = QTabWidget(self)
+        self.tabs.setStyleSheet(ANALYSIS_TABS_STYLE)
         self.columns = self._table([
             self.tr("Column"),
             self.tr("Data type"),

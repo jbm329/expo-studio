@@ -87,8 +87,11 @@ def controller(snapshot):
 
 
 def test_loading_runs_only_in_worker_and_displays_catalog_snapshot(controller, snapshot):
+    from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
+
     ctrl, operations, loader = controller
     dialog = ctrl.open("Clicked / connection", snapshot.identity)
+    assert dialog.tabs.styleSheet() == ANALYSIS_TABS_STYLE
     loader.assert_not_called()
     assert not dialog.tabs.isEnabled()
     assert not dialog.retry.isEnabled()
