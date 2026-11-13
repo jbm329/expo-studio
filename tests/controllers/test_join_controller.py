@@ -46,6 +46,9 @@ class TestableJoinController(JoinController):
     def execute_join(self, cfg: JoinDialogResult, *, preview: bool = False) -> JoinResult:
         return self._execute_join(cfg, preview=preview)
 
+    def precheck_join(self, cfg: JoinDialogResult) -> int | None:
+        return self._precheck_join(cfg, parent=QWidget())
+
 
 ControllerFixture = tuple[TestableJoinController, MagicMock, MagicMock, MagicMock]
 
@@ -137,7 +140,7 @@ def test_join_dialog_key_eligibility_for_mixed_integer_dtypes(
 
 
 def test_execute_join_supports_mixed_integer_key_dtypes_without_mutating_inputs(
-    controller: ControllerFixture,
+    controller: ControllerFixture, caplog: pytest.LogCaptureFixture
 ) -> None:
     ctrl, _, _, _ = controller
     frames = {
@@ -147,6 +150,9 @@ def test_execute_join_supports_mixed_integer_key_dtypes_without_mutating_inputs(
     originals = {name: frame.copy(deep=True) for name, frame in frames.items()}
     ctrl.set_frames(frames)
     cfg = JoinDialogResult("left", "right", ["left_key"], ["right_key"], [], [], "inner")
+
+    assert ctrl.precheck_join(cfg) == 1
+    assert "JoinController: dtype mismatch" not in caplog.text
 
     result = ctrl.execute_join(cfg)
 

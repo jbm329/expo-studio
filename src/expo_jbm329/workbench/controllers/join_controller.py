@@ -606,7 +606,7 @@ class JoinController:
         s1 = left[cfg.left_on[0]]
         s2 = right[cfg.right_on[0]]
 
-        if s1.dtype != s2.dtype:
+        if not self._are_joinable(s1, s2):
             self._logger.warning("JoinController: dtype mismatch")
             return None
 
