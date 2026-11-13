@@ -556,7 +556,8 @@ class JoinController:
     # noinspection PyMethodMayBeStatic
     def _are_joinable(self, s1: pd.Series, s2: pd.Series) -> bool:
         """Check if two series can be joined."""
-        return s1.dtype == s2.dtype
+        matching_nullable_integer_dtypes = {str(s1.dtype), str(s2.dtype)} == {"int64", "Int64"}
+        return s1.dtype == s2.dtype or matching_nullable_integer_dtypes
 
     def _classify_cardinality(self, cfg: JoinDialogResult) -> str:
         """Classify the cardinality of the join result."""
@@ -605,7 +606,7 @@ class JoinController:
         s1 = left[cfg.left_on[0]]
         s2 = right[cfg.right_on[0]]
 
-        if s1.dtype != s2.dtype:
+        if not self._are_joinable(s1, s2):
             self._logger.warning("JoinController: dtype mismatch")
             return None
 

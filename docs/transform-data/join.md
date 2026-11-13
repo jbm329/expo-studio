@@ -183,8 +183,10 @@ identifiers and nullable types must survive export and reloading.
 
 Choose one key column from each dataset. The values to match must have
 compatible data types; the dialog enables compatible right-side keys for the
-selected left key. Column names do not need to be the same. For example,
-**Customer ID** can match **ID**.
+selected left key. NumPy `int64` and pandas nullable `Int64` keys are compatible
+with each other. Other differing types may need to be converted before joining.
+Column names do not need to be the same. For example, **Customer ID** can match
+**ID**.
 
 The key suggestions are a convenience, not a check that values have the
 meaning you intend. Confirm that the selected columns identify the same kind
