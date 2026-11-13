@@ -148,7 +148,7 @@ class ConnectionEditor(QDialog):
             parent: The parent widget.
             dialogs: Service for showing dialog boxes. Defaults to QtDialogService if None.
             icon_service: Service for retrieving icons.
-            invalidate_connection: Callback invalidating changed DuckDB connections.
+            invalidate_connection: Callback invalidating changed connections for every engine.
                 Defaults to closing the backend when no workbench is attached.
             file_dialogs: Optional file selection service, defaulting to QtFileDialogService.
         """
