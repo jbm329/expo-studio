@@ -12047,9 +12047,8 @@ Tastenkombination: Ctrl+Z</translation>
 <context>
     <name>SchemaObjectPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
         <source>Properties</source>
-        <translation>Eigenschaften</translation>
+        <translation type="vanished">Eigenschaften</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
@@ -12196,14 +12195,12 @@ Tastenkombination: Ctrl+Z</translation>
         <translation>Die Verbindung wurde geändert. Schließen Sie diesen Dialog und öffnen Sie Eigenschaften erneut.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>Table</source>
-        <translation>Tabelle</translation>
+        <translation type="vanished">Tabelle</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>View</source>
-        <translation>Sicht</translation>
+        <translation type="vanished">Sicht</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />

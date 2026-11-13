@@ -12046,9 +12046,8 @@ Snabbkommando: Ctrl+Z</translation>
 <context>
     <name>SchemaObjectPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
         <source>Properties</source>
-        <translation>Egenskaper</translation>
+        <translation type="vanished">Egenskaper</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
@@ -12195,14 +12194,12 @@ Snabbkommando: Ctrl+Z</translation>
         <translation>Anslutningen har ändrats. Stäng dialogrutan och öppna Egenskaper igen.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>Table</source>
-        <translation>Tabell</translation>
+        <translation type="vanished">Tabell</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>View</source>
-        <translation>Vy</translation>
+        <translation type="vanished">Vy</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />

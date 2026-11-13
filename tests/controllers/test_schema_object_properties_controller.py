@@ -342,6 +342,10 @@ def test_properties_dialog_renders_using_each_compiled_language(controller, snap
         if context.findtext("name") not in contexts:
             continue
         for message in context.findall("message"):
+            translation = message.find("translation")
+            assert translation is not None
+            if translation.get("type") in {"vanished", "obsolete"}:
+                continue
             source = message.findtext("source")
             translated = translator.translate(context.findtext("name"), source)
             assert bool(translated) == (language != Language.ENGLISH)

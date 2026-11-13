@@ -12047,9 +12047,8 @@ Scorciatoia: Ctrl+Z</translation>
 <context>
     <name>SchemaObjectPropertiesDialog</name>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
         <source>Properties</source>
-        <translation>Proprietà</translation>
+        <translation type="vanished">Proprietà</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
@@ -12196,14 +12195,12 @@ Scorciatoia: Ctrl+Z</translation>
         <translation>La connessione è cambiata. Chiudere questa finestra e riaprire Proprietà.</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>Table</source>
-        <translation>Tabella</translation>
+        <translation type="vanished">Tabella</translation>
     </message>
     <message>
-        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
         <source>View</source>
-        <translation>Vista</translation>
+        <translation type="vanished">Vista</translation>
     </message>
     <message>
         <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />
