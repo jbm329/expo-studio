@@ -3679,6 +3679,36 @@ Vänligen se loggfil för mer information.</translation>
         <source>Settings for schema cache updated.</source>
         <translation>Inställningarna för schemacachen har uppdaterats.</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="20" />
+        <source>Object properties retrieval did not complete.</source>
+        <translation>Hämtningen av objektegenskaper slutfördes inte.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="21" />
+        <source>Object properties query returned no result set.</source>
+        <translation>Frågan om objektegenskaper returnerade ingen resultatuppsättning.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="22" />
+        <source>The object does not exist or is not visible in the selected database.</source>
+        <translation>Objektet finns inte eller är inte synligt i den valda databasen.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="23" />
+        <source>Object columns are no longer available or are not visible.</source>
+        <translation>Objektets kolumner är inte längre tillgängliga eller är inte synliga.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="24" />
+        <source>The object changed while its properties were being loaded.</source>
+        <translation>Objektet ändrades medan dess egenskaper lästes in.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="25" />
+        <source>The object changed while its properties were being loaded. Retry the request.</source>
+        <translation>Objektet ändrades medan dess egenskaper lästes in. Försök igen.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnController</name>
     <message>
@@ -10922,6 +10952,11 @@ Tid: {sec:.2f}s{sample}</translation>
         <source>Preloading schema… {done}/{total}</source>
         <translation>Förladdar schema… {done}/{total}</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_controller.py" line="67" />
+        <source>Properties</source>
+        <translation>Egenskaper</translation>
+    </message>
 </context><context>
     <name>SettingsEditor</name>
     <message>
@@ -11986,4 +12021,198 @@ Snabbkommando: Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analysera data</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>SchemaObjectPropertiesController</name>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="53" />
+        <source>Load object properties</source>
+        <translation>Läs in objektegenskaper</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="54" />
+        <source>Could not load properties.
+
+{error}</source>
+        <translation>Kunde inte läsa in egenskaper.
+
+{error}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="55" />
+        <source>Properties loading did not complete.</source>
+        <translation>Inläsningen av egenskaper slutfördes inte.</translation>
+    </message>
+</context>
+<context>
+    <name>SchemaObjectPropertiesDialog</name>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
+        <source>Properties</source>
+        <translation>Egenskaper</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
+        <source>Only metadata visible to your database user is shown.</source>
+        <translation>Endast metadata som är synliga för din databasanvändare visas.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="67" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="58" />
+        <source>Description</source>
+        <translation>Beskrivning</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="73" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="62" />
+        <source>Column</source>
+        <translation>Kolumn</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="63" />
+        <source>Data type</source>
+        <translation>Datatyp</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="64" />
+        <source>Nullable</source>
+        <translation>Tillåter NULL</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="65" />
+        <source>Default</source>
+        <translation>Standardvärde</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="79" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="72" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="66" />
+        <source>Constraints</source>
+        <translation>Villkor</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="69" />
+        <source>Property</source>
+        <translation>Egenskap</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="69" />
+        <source>Value</source>
+        <translation>Värde</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="71" />
+        <source>Name</source>
+        <translation>Namn</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="74" />
+        <source>References</source>
+        <translation>Referenser</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="75" />
+        <source>Definition</source>
+        <translation>Definition</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="77" />
+        <source>Columns</source>
+        <translation>Kolumner</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="78" />
+        <source>Extended properties</source>
+        <translation>Utökade egenskaper</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="89" />
+        <source>Retry</source>
+        <translation>Försök igen</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="92" />
+        <source>Copy selected cells</source>
+        <translation>Kopiera markerade celler</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="122" />
+        <source>Yes</source>
+        <translation>Ja</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="122" />
+        <source>No</source>
+        <translation>Nej</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="125" />
+        <source>Not set</source>
+        <translation>Inte angivet</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="126" />
+        <source>Not applicable</source>
+        <translation>Inte tillämpligt</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="127" />
+        <source>Not supported</source>
+        <translation>Stöds inte</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="128" />
+        <source>Unavailable</source>
+        <translation>Inte tillgängligt</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="133" />
+        <source>Primary key</source>
+        <translation>Primärnyckel</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="134" />
+        <source>Foreign key</source>
+        <translation>Främmande nyckel</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="135" />
+        <source>Unique</source>
+        <translation>Unikt</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="136" />
+        <source>Check</source>
+        <translation>Kontrollvillkor</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="142" />
+        <source>Loading properties...</source>
+        <translation>Läser in egenskaper...</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="158" />
+        <source>The connection changed. Close this dialog and reopen Properties.</source>
+        <translation>Anslutningen har ändrats. Stäng dialogrutan och öppna Egenskaper igen.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
+        <source>Table</source>
+        <translation>Tabell</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
+        <source>View</source>
+        <translation>Vy</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />
+        <source>Identity</source>
+        <translation>Identitet</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="222" />
+        <source>Generated</source>
+        <translation>Genererad</translation>
+    </message>
+</context>
+</TS>

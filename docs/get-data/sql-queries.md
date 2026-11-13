@@ -28,6 +28,49 @@ and linting use that connection's SQL dialect. Linting can point out issues
 before you run the query, but it does not replace checking the result or any
 database-specific errors reported during execution.
 
+## Inspect table and view properties {#object-properties}
+
+For **SQL Server** connections, right-click a table or view in the schema
+browser and select **Properties**. Other database types do not yet offer this
+action. The dialog stays bound to the connection owning that object, even if
+you switch SQL editor tabs.
+
+Properties loads catalog metadata in the background. It does not retrieve table
+rows, calculate row counts or modify the database.
+
+- The heading identifies the connection, database, schema and object. The
+  status identifies whether the object is a table or view.
+- **Description** shows the object's `MS_Description` extended property.
+- **Columns** lists column names in database order, complete declared types,
+  nullability, default SQL expressions, constraint summaries and descriptions.
+  Selecting a column shows its full description, identity/computed expression
+  and named extended properties below the grid.
+- **Extended properties** lists every visible named property on the object,
+  not just `MS_Description`. Column properties appear in the selected-column
+  details instead.
+- **Constraints** shows declared primary keys, foreign keys, unique constraints
+  and checks, including names, grouped columns, foreign-key destinations and
+  available check definitions. A composite unique constraint applies to the
+  column combination, not independently to each column. View constraints are
+  not inferred from underlying tables.
+
+Select cells in a grid and use **Copy selected cells** to copy tab-separated
+text. Descriptions and column details can also be selected and copied. Database
+documentation is displayed as plain text, including any markup it contains.
+
+**Not set**, **Not applicable**, **Not supported** and **Unavailable** distinguish
+different reasons for missing metadata. Only metadata visible to your database
+user is shown: an empty property or constraint list does not prove that no
+hidden metadata exists. A column's constraint summary can be empty when no
+visible column-associated constraint was found; table-level checks may appear
+only in the Constraints tab.
+
+Use **Retry** to reload metadata or recover from a retrieval error. Errors do
+not disconnect the database or clear its schema tree. You can close the dialog
+while loading. If the connection is disconnected, deleted or its saved settings
+are replaced, close the invalidated dialog and reopen Properties after
+connecting again. Late replies cannot replace the invalidated display.
+
 ## Result datatypes
 
 For SQLite, PostgreSQL, MySQL/MariaDB, DuckDB and ODBC queries, integer values mixed

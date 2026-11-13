@@ -66,7 +66,7 @@ class DummyJobMgr:
         return None
 
 
-def make_ctrl(resolve_dialect=None):
+def make_ctrl(resolve_dialect=None, open_object_properties=None):
     tree = StubTree()
     schema_mgr = StubSchemaMgr()
     status_msgs: list[tuple[str, int | None]] = []
@@ -92,6 +92,7 @@ def make_ctrl(resolve_dialect=None):
         restore_baseline_status=restore_baseline_status,
         dialogs=dialogs,
         resolve_dialect=resolve_dialect or (lambda _conn: MssqlDialect()),
+        open_object_properties=open_object_properties,
     )
     return ctrl, tree, schema_mgr, inserted_sql, status_msgs, dialogs, connect_connection, disconnect_connection
 
@@ -325,6 +326,55 @@ def test_ansi_table_double_click_and_context_menu_queries(monkeypatch, dialect):
     assert inserted_sql[-1] == (
         'SELECT\n    "public"."users"."id",\n    "public"."users"."name"\nFROM "public"."users" LIMIT 1000;'
     )
+
+
+@pytest.mark.parametrize("kind", ["table", "view"])
+@pytest.mark.parametrize("supported", [True, False])
+def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypatch, kind, supported):
+    from PyQt6.QtCore import QPoint
+    from PyQt6.QtWidgets import QMenu
+
+    from expo_jbm329.db.core.object_properties import SchemaObjectIdentity, SchemaObjectKind
+    from expo_jbm329.workbench.controllers import schema_controller
+
+    opened = MagicMock()
+    dialect = MssqlDialect() if supported else SqliteDialect()
+    ctrl, tree, *_ = make_ctrl(lambda _name: dialect, opened)
+    ctrl.refresh_connections(["Clicked"])
+    ctrl.load_schema_tree("Clicked")
+    item = tree.topLevelItem(0).child(0).child(0).child(0)
+    item.setData(0, Qt.ItemDataRole.UserRole, {"type": kind, "schema": "dbo", "name": "Object"})
+    tree.itemAt = lambda _pos: item
+    menus = []
+
+    class Menu(QMenu):
+        def exec(self, _pos):
+            menus.append([action.text() for action in self.actions()])
+            return next((action for action in self.actions() if action.text() == "Properties"), None)
+
+    monkeypatch.setattr(schema_controller, "QMenu", Menu)
+    ctrl._on_context_menu(QPoint())
+    assert ("Properties" in menus[0]) == supported
+    if supported:
+        opened.assert_called_once_with("Clicked", SchemaObjectIdentity("dbo", "Object", SchemaObjectKind(kind)))
+    else:
+        opened.assert_not_called()
+
+
+@pytest.mark.parametrize("kind", ["database", "group", "column", "connection"])
+def test_properties_action_is_not_used_for_other_nodes(monkeypatch, kind):
+    from PyQt6.QtCore import QPoint
+
+    opened = MagicMock()
+    ctrl, tree, *_ = make_ctrl(open_object_properties=opened)
+    ctrl.refresh_connections(["Clicked"])
+    item = tree.topLevelItem(0)
+    item.setData(0, Qt.ItemDataRole.UserRole, {"type": kind, "name": "Object", "schema": "dbo"})
+    tree.itemAt = lambda _pos: item
+    monkeypatch.setattr(SchemaController, "_on_column_context_menu", lambda *_args: None)
+    monkeypatch.setattr(SchemaController, "_on_connection_context_menu", lambda *_args: None)
+    ctrl._on_context_menu(QPoint())
+    opened.assert_not_called()
 
 
 def test_duckdb_drag_text_escapes_quoted_schema_table_and_column():

@@ -35,6 +35,7 @@ from expo_jbm329.workbench.controllers.rest_controller import RestController
 from expo_jbm329.workbench.controllers.rest_panel_controller import RestPanelController
 from expo_jbm329.workbench.controllers.result_tabs.result_tab_manager import ResultTabManager
 from expo_jbm329.workbench.controllers.schema_controller import SchemaController
+from expo_jbm329.workbench.controllers.schema_object_properties_controller import SchemaObjectPropertiesController
 from expo_jbm329.workbench.icon.custom_file_icon_provider import CustomFileIconProvider
 from expo_jbm329.workbench.icon.icon_service import IconService
 from expo_jbm329.workbench.theme.highlighter_theme_service import HighlighterThemeService
@@ -417,6 +418,8 @@ class WorkbenchServices:
         # ============================================================
         # SCHEMA CONTROLLER
         # ============================================================
+        object_properties = SchemaObjectPropertiesController(parent=ui.parent, async_ops=async_ops)
+        connections.on_connection_invalidated(object_properties.invalidate_connection)
         schema = SchemaController(
             parent_widget=ui.parent,
             tree_widget=ui.schema_tree,
@@ -432,6 +435,7 @@ class WorkbenchServices:
             get_current_connection=editor_tab_manager.get_connection_for_active_tab,
             restore_baseline_status=ui.restore_status,
             dialogs=app.dialogs,
+            open_object_properties=object_properties.open,
         )
 
         # ============================================================

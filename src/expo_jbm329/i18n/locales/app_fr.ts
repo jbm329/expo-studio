@@ -3679,6 +3679,36 @@ Consultez les journaux pour plus d'informations.</translation>
         <source>Settings for schema cache updated.</source>
         <translation>Paramètres du cache de schéma mis à jour.</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="20" />
+        <source>Object properties retrieval did not complete.</source>
+        <translation>La récupération des propriétés de l'objet n'a pas abouti.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="21" />
+        <source>Object properties query returned no result set.</source>
+        <translation>La requête des propriétés de l'objet n'a renvoyé aucun jeu de résultats.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="22" />
+        <source>The object does not exist or is not visible in the selected database.</source>
+        <translation>L'objet n'existe pas ou n'est pas visible dans la base de données sélectionnée.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="23" />
+        <source>Object columns are no longer available or are not visible.</source>
+        <translation>Les colonnes de l'objet ne sont plus disponibles ou ne sont pas visibles.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="24" />
+        <source>The object changed while its properties were being loaded.</source>
+        <translation>L'objet a été modifié pendant le chargement de ses propriétés.</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="25" />
+        <source>The object changed while its properties were being loaded. Retry the request.</source>
+        <translation>L'objet a été modifié pendant le chargement de ses propriétés. Réessayez la demande.</translation>
+    </message>
 </context><context>
     <name>DerivedColumnController</name>
     <message>
@@ -10922,6 +10952,11 @@ Durée : {sec:.2f}s{sample}</translation>
         <source>Preloading schema… {done}/{total}</source>
         <translation>Préchargement du schéma… {done}/{total}</translation>
     </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_controller.py" line="67" />
+        <source>Properties</source>
+        <translation>Propriétés</translation>
+    </message>
 </context><context>
     <name>SettingsEditor</name>
     <message>
@@ -11987,4 +12022,198 @@ Raccourci : Ctrl+Z</translation>
         <source>Analyze data</source>
         <translation>Analyser les données</translation>
     </message>
-</context></TS>
+</context><context>
+    <name>SchemaObjectPropertiesController</name>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="53" />
+        <source>Load object properties</source>
+        <translation>Charger les propriétés de l'objet</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="54" />
+        <source>Could not load properties.
+
+{error}</source>
+        <translation>Impossible de charger les propriétés.
+
+{error}</translation>
+    </message>
+    <message>
+        <location filename="..\..\workbench\controllers\schema_object_properties_controller.py" line="55" />
+        <source>Properties loading did not complete.</source>
+        <translation>Le chargement des propriétés n'a pas abouti.</translation>
+    </message>
+</context>
+<context>
+    <name>SchemaObjectPropertiesDialog</name>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="39" />
+        <source>Properties</source>
+        <translation>Propriétés</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="52" />
+        <source>Only metadata visible to your database user is shown.</source>
+        <translation>Seules les métadonnées visibles par votre utilisateur de base de données sont affichées.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="67" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="58" />
+        <source>Description</source>
+        <translation>Description</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="73" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="62" />
+        <source>Column</source>
+        <translation>Colonne</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="63" />
+        <source>Data type</source>
+        <translation>Type de données</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="64" />
+        <source>Nullable</source>
+        <translation>NULL autorisé</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="65" />
+        <source>Default</source>
+        <translation>Valeur par défaut</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="79" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="72" />
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="66" />
+        <source>Constraints</source>
+        <translation>Contraintes</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="69" />
+        <source>Property</source>
+        <translation>Propriété</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="69" />
+        <source>Value</source>
+        <translation>Valeur</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="71" />
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="74" />
+        <source>References</source>
+        <translation>Références</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="75" />
+        <source>Definition</source>
+        <translation>Définition</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="77" />
+        <source>Columns</source>
+        <translation>Colonnes</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="78" />
+        <source>Extended properties</source>
+        <translation>Propriétés étendues</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="89" />
+        <source>Retry</source>
+        <translation>Réessayer</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="92" />
+        <source>Copy selected cells</source>
+        <translation>Copier les cellules sélectionnées</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="122" />
+        <source>Yes</source>
+        <translation>Oui</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="122" />
+        <source>No</source>
+        <translation>Non</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="125" />
+        <source>Not set</source>
+        <translation>Non défini</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="126" />
+        <source>Not applicable</source>
+        <translation>Sans objet</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="127" />
+        <source>Not supported</source>
+        <translation>Non pris en charge</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="128" />
+        <source>Unavailable</source>
+        <translation>Indisponible</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="133" />
+        <source>Primary key</source>
+        <translation>Clé primaire</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="134" />
+        <source>Foreign key</source>
+        <translation>Clé étrangère</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="135" />
+        <source>Unique</source>
+        <translation>Unique</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="136" />
+        <source>Check</source>
+        <translation>Vérification</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="142" />
+        <source>Loading properties...</source>
+        <translation>Chargement des propriétés...</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="158" />
+        <source>The connection changed. Close this dialog and reopen Properties.</source>
+        <translation>La connexion a changé. Fermez cette boîte de dialogue et rouvrez Propriétés.</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
+        <source>Table</source>
+        <translation>Table</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="163" />
+        <source>View</source>
+        <translation>Vue</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="221" />
+        <source>Identity</source>
+        <translation>Identité</translation>
+    </message>
+    <message>
+        <location filename="..\..\gui\dialogs\schema_object_properties_dialog.py" line="222" />
+        <source>Generated</source>
+        <translation>Généré</translation>
+    </message>
+</context>
+</TS>

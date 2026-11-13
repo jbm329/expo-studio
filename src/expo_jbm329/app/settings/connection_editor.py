@@ -674,13 +674,6 @@ class ConnectionEditor(QDialog):
             message = f"{message}\n\n{translate('DbErrors', hint)}"
         self._dialogs.warn(parent=self, title=self.tr("Connection error"), text=message)
 
-    def _involves_duckdb(self, name: str, replacement: JsonObject | None) -> bool:
-        """Return whether a persisted edit changes to, from or within DuckDB."""
-        previous = self.data.get(name, {})
-        return string_value(previous.get("db_type")).lower() == "duckdb" or (
-            replacement is not None and replacement.get("db_type") == "duckdb"
-        )
-
     def add_connection(self) -> None:
         """Prompts for a name and adds a new connection entry with default values."""
         name, ok = self._dialogs.prompt_text(
@@ -737,11 +730,9 @@ class ConnectionEditor(QDialog):
         if not confirm:
             return
 
-        involves_duckdb = self._involves_duckdb(name, None)
         self.data.pop(name, None)
         write_connections(self.data)
-        if involves_duckdb:
-            self._invalidate_connection(name)
+        self._invalidate_connection(name)
         self.connections_changed.emit()
 
         self.list_widget.takeItem(self.list_widget.row(item))
@@ -759,12 +750,10 @@ class ConnectionEditor(QDialog):
         form = self._validated_current_form()
         if form is None:
             return
-        involves_duckdb = self._involves_duckdb(name, form)
         self.data[name] = form
 
         write_connections(self.data)
-        if involves_duckdb:
-            self._invalidate_connection(name)
+        self._invalidate_connection(name)
         self._dialogs.info(parent=self, title=self.tr("Saved"), text=self.tr("Changes saved successfully."))
         self.connections_changed.emit()
 
@@ -786,12 +775,10 @@ class ConnectionEditor(QDialog):
         form = self._validated_current_form()
         if form is None:
             return
-        involves_duckdb = self._involves_duckdb(name, form)
         self.data[name] = form
         write_connections(self.data)
-        if involves_duckdb:
-            self._invalidate_connection(name)
-            self.connections_changed.emit()
+        self._invalidate_connection(name)
+        self.connections_changed.emit()
 
         engine = self.data[name].get("db_type")
         test_sql = "SELECT 1 FROM DUAL" if engine == "oracle" else "SELECT 1"
