@@ -124,6 +124,7 @@ class DerivedColumnDialog(QDialog):
         self._validation_label.setTextFormat(Qt.TextFormat.PlainText)
         self._validation_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self._validation_label.setWordWrap(True)
+        self._validation_label.setMinimumHeight(self._validation_label.fontMetrics().lineSpacing() * 2)
 
         layout.addWidget(self._validation_label)
 
