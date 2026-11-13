@@ -30,7 +30,7 @@ database-specific errors reported during execution.
 
 ## Inspect table and view properties {#object-properties}
 
-For **SQL Server**, **PostgreSQL**, **MySQL/MariaDB** and **SQLite** connections,
+For **SQL Server**, **PostgreSQL**, **MySQL/MariaDB**, **SQLite** and **DuckDB** connections,
 right-click a table or view in the schema browser and select **Properties**.
 Other database types do not yet offer this action. The dialog stays bound to
 the connection owning that object, even if you switch SQL editor tabs.
@@ -46,7 +46,7 @@ is passed unchanged without parameter interpolation.
   `Properties (view: name)`. The full connection/database/schema path is not
   displayed.
 - **Description** shows the object's `MS_Description` extended property on
-  SQL Server or its native comment on PostgreSQL and MySQL/MariaDB tables.
+  SQL Server or its native comment on PostgreSQL, DuckDB and MySQL/MariaDB tables.
   Column descriptions use the same database-specific source.
 - **Columns** lists column names in database order, complete declared types,
   nullability, default SQL expressions, constraint summaries and descriptions.
@@ -54,7 +54,7 @@ is passed unchanged without parameter interpolation.
   and named extended properties below the grid.
 - **Extended properties** lists every visible named property on the object,
   not just `MS_Description`. Column properties appear in the selected-column
-  details instead. This tab is hidden for PostgreSQL, MySQL/MariaDB and SQLite,
+  details instead. This tab is hidden for PostgreSQL, MySQL/MariaDB, SQLite and DuckDB,
   which do not support SQL Server-style named extended properties.
 - **Constraints** shows declared primary keys, foreign keys, unique constraints
   and checks, including names, grouped columns, foreign-key destinations and
@@ -129,6 +129,22 @@ column's expression is **Unavailable**. Neither is reconstructed by parsing
 CREATE TABLE SQL. Nullability reflects SQLite's native behavior, including
 non-null INTEGER PRIMARY KEY rowid aliases and nullable legacy primary keys.
 View constraints are not inferred from underlying tables.
+
+DuckDB Properties uses native catalogs through the existing read-only file
+connection. Table/view comments and their own column comments are shown,
+including multiline text. Types retain DuckDB's catalog formatting, including
+decimal precision, arrays and nested types; aliases and length declarations
+that DuckDB normalizes are not reconstructed from the original SQL.
+Defaults and generated expressions are shown separately, so a generated
+expression is not mistaken for a default. Sequence-based defaults remain SQL
+expressions; identity specifications are **Not supported**.
+
+DuckDB lists native primary, foreign, unique and CHECK constraints with their
+catalog names and SQL definitions. Composite keys keep their column order and
+foreign-key mapping. A CHECK without a column association appears only in
+Constraints. Separate user-created unique indexes are not listed as declared
+constraints. View constraints are **Not applicable**, not inherited from their
+source tables. Named SQL Server-style extended properties are **Not supported**.
 
 Use **Retry** to reload metadata or recover from a retrieval error. Errors do
 not disconnect the database or clear its schema tree. You can close the dialog

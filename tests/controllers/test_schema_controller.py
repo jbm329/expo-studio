@@ -330,7 +330,9 @@ def test_ansi_table_double_click_and_context_menu_queries(monkeypatch, dialect):
 
 
 @pytest.mark.parametrize("kind", ["table", "view"])
-@pytest.mark.parametrize("dialect", [MssqlDialect(), PostgresDialect(), MySqlDialect(), SqliteDialect(), AnsiDialect()])
+@pytest.mark.parametrize(
+    "dialect", [MssqlDialect(), PostgresDialect(), MySqlDialect(), SqliteDialect(), DuckDbDialect(), AnsiDialect()]
+)
 def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypatch, kind, dialect):
     from PyQt6.QtCore import QPoint
     from PyQt6.QtWidgets import QMenu
