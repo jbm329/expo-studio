@@ -30,10 +30,10 @@ database-specific errors reported during execution.
 
 ## Inspect table and view properties {#object-properties}
 
-For **SQL Server** connections, right-click a table or view in the schema
-browser and select **Properties**. Other database types do not yet offer this
-action. The dialog stays bound to the connection owning that object, even if
-you switch SQL editor tabs.
+For **SQL Server** and **PostgreSQL** connections, right-click a table or view
+in the schema browser and select **Properties**. Other database types do not
+yet offer this action. The dialog stays bound to the connection owning that
+object, even if you switch SQL editor tabs.
 
 Properties loads catalog metadata in the background. It does not retrieve table
 rows, calculate row counts or modify the database.
@@ -41,17 +41,20 @@ rows, calculate row counts or modify the database.
 - The title bar identifies the object as `Properties (table: name)` or
   `Properties (view: name)`. The full connection/database/schema path is not
   displayed.
-- **Description** shows the object's `MS_Description` extended property.
+- **Description** shows the object's `MS_Description` extended property on
+  SQL Server or its native comment on PostgreSQL. Column descriptions use
+  the same database-specific source.
 - **Columns** lists column names in database order, complete declared types,
   nullability, default SQL expressions, constraint summaries and descriptions.
   Selecting a column shows its full description, identity/computed expression
   and named extended properties below the grid.
 - **Extended properties** lists every visible named property on the object,
   not just `MS_Description`. Column properties appear in the selected-column
-  details instead.
+  details instead. This tab is hidden for PostgreSQL, which uses native
+  comments rather than SQL Server-style named extended properties.
 - **Constraints** shows declared primary keys, foreign keys, unique constraints
   and checks, including names, grouped columns, foreign-key destinations and
-  available check definitions. A composite unique constraint applies to the
+  available SQL definitions. A composite unique constraint applies to the
   column combination, not independently to each column. View constraints are
   not inferred from underlying tables.
 
@@ -65,6 +68,14 @@ user is shown: an empty property or constraint list does not prove that no
 hidden metadata exists. A column's constraint summary can be empty when no
 visible column-associated constraint was found; table-level checks may appear
 only in the Constraints tab.
+
+PostgreSQL types use the database's formatted type names, including arrays,
+domains, enums, length and precision where declared. Defaults and generated
+expressions are shown as SQL rather than evaluated values. Identity columns
+show their declared generation mode; legacy `serial` columns expose their
+sequence expression as a default. Only declared table constraints are listed,
+not inferred constraints on views or separate unique indexes. PostgreSQL
+permits zero-column objects, which appear with an empty Columns grid.
 
 Use **Retry** to reload metadata or recover from a retrieval error. Errors do
 not disconnect the database or clear its schema tree. You can close the dialog

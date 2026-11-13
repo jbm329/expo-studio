@@ -23,7 +23,6 @@ from expo_jbm329.db.core.object_properties import (
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
-from expo_jbm329.db.dialects.postgres import PostgresDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
 from expo_jbm329.db.service import DbService
 
@@ -136,7 +135,7 @@ def test_identity_and_column_validation():
         make_column(name="")
 
 
-@pytest.mark.parametrize("dialect_type", [AnsiDialect, PostgresDialect, MySqlDialect, SqliteDialect, DuckDbDialect])
+@pytest.mark.parametrize("dialect_type", [AnsiDialect, MySqlDialect, SqliteDialect, DuckDbDialect])
 @pytest.mark.parametrize("kind", list(SchemaObjectKind))
 def test_unimplemented_provider_fails_explicitly_without_queries(dialect_type, kind, caplog):
     driver = MagicMock(spec=DriverProtocol)

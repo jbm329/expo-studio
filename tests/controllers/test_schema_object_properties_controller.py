@@ -235,6 +235,25 @@ def test_empty_view_and_null_metadata_remain_explicit(controller, snapshot):
     assert dialog.columns.rowCount() == 0
 
 
+def test_native_comments_hide_named_properties_without_losing_descriptions(controller, snapshot):
+    ctrl, operations, _ = controller
+    dialog = ctrl.open("Postgres", snapshot.identity)
+    native = replace(
+        snapshot,
+        properties=MetadataValue(MetadataState.UNSUPPORTED),
+        columns=tuple(
+            replace(column, properties=MetadataValue(MetadataState.UNSUPPORTED)) for column in snapshot.columns
+        ),
+    )
+    operations.calls[0]["on_result"](native)
+    assert not dialog.tabs.isTabVisible(1)
+    assert dialog.tabs.isTabVisible(0) and dialog.tabs.isTabVisible(2)
+    assert dialog.description.toPlainText() == native.description.value
+    assert dialog.columns.item(0, 5).text() == native.columns[0].description.value
+    dialog.show_properties(snapshot)
+    assert dialog.tabs.isTabVisible(1)
+
+
 @pytest.mark.parametrize("language", list(Language))
 def test_properties_ui_strings_have_compiled_translations(language):
     from expo_jbm329.gui.dialogs.schema_object_properties_dialog import SchemaObjectPropertiesDialog

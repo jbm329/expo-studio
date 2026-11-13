@@ -80,9 +80,9 @@ def _expression(row: dict[str, object], prefix: str) -> MetadataValue[str]:
     return _optional_text(row[f"{prefix}_definition"], MetadataState.UNAVAILABLE)
 
 
-def _description(properties: tuple[NamedProperty, ...]) -> MetadataValue[str]:
+def _description(properties: tuple[NamedProperty, ...], name: str) -> MetadataValue[str]:
     return next(
-        (prop.value for prop in properties if prop.name == "MS_Description"),
+        (prop.value for prop in properties if prop.name == name),
         MetadataValue(MetadataState.ABSENT),
     )
 
@@ -113,7 +113,7 @@ def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) 
                 kind,
                 columns,
                 _optional_text(first["definition"], MetadataState.UNAVAILABLE)
-                if kind == ConstraintKind.CHECK
+                if kind == ConstraintKind.CHECK or _text(first["definition"]) is not None
                 else MetadataValue(MetadataState.NOT_APPLICABLE),
                 target,
                 target_columns,
@@ -174,8 +174,8 @@ def load_object_properties(
     )
     columns = _rows(query(queries.columns))
     constraints = _rows(query(queries.constraints))
-    properties = _rows(query(queries.properties))
-    if not columns:
+    properties = _rows(query(queries.properties)) if queries.properties is not None else []
+    if not columns and not queries.allows_zero_columns:
         message = "Object columns are no longer available or are not visible."
         raise RuntimeError(message)
     if any(_integer(row["object_id"]) != object_id for row in (*columns, *constraints, *properties)):
@@ -203,8 +203,12 @@ def load_object_properties(
                 data_type=_optional_text(row["data_type"], MetadataState.UNAVAILABLE),
                 nullable=MetadataValue(MetadataState.AVAILABLE, _flag(row["nullable"])),
                 default=_expression(row, "default"),
-                description=_description(column_properties),
-                properties=MetadataValue(MetadataState.AVAILABLE, column_properties),
+                description=_description(column_properties, queries.description_property)
+                if queries.description_property is not None
+                else _optional_text(row["description"]),
+                properties=MetadataValue(MetadataState.AVAILABLE, column_properties)
+                if queries.properties is not None
+                else MetadataValue(MetadataState.UNSUPPORTED),
                 identity=_expression(row, "identity"),
                 generated=_expression(row, "generated"),
             )
@@ -214,8 +218,12 @@ def load_object_properties(
         raise ValueError(message)
     return ObjectProperties(
         resolved,
-        _description(object_properties),
-        MetadataValue(MetadataState.AVAILABLE, object_properties),
+        _description(object_properties, queries.description_property)
+        if queries.description_property is not None
+        else _optional_text(first["description"]),
+        MetadataValue(MetadataState.AVAILABLE, object_properties)
+        if queries.properties is not None
+        else MetadataValue(MetadataState.UNSUPPORTED),
         tuple(output_columns),
         MetadataValue(MetadataState.NOT_APPLICABLE)
         if identity.kind == SchemaObjectKind.VIEW

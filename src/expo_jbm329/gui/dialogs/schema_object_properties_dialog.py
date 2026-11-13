@@ -195,6 +195,7 @@ class SchemaObjectPropertiesDialog(QDialog):
         self._populate(
             self.properties, [[prop.name, self._value(prop.value)] for prop in snapshot.properties.value or ()]
         )
+        self.tabs.setTabVisible(1, snapshot.properties.state != MetadataState.UNSUPPORTED)
         self._populate(
             self.constraints,
             [

@@ -329,8 +329,8 @@ def test_ansi_table_double_click_and_context_menu_queries(monkeypatch, dialect):
 
 
 @pytest.mark.parametrize("kind", ["table", "view"])
-@pytest.mark.parametrize("supported", [True, False])
-def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypatch, kind, supported):
+@pytest.mark.parametrize("dialect", [MssqlDialect(), PostgresDialect(), SqliteDialect()])
+def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypatch, kind, dialect):
     from PyQt6.QtCore import QPoint
     from PyQt6.QtWidgets import QMenu
 
@@ -338,7 +338,7 @@ def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypa
     from expo_jbm329.workbench.controllers import schema_controller
 
     opened = MagicMock()
-    dialect = MssqlDialect() if supported else SqliteDialect()
+    supported = not isinstance(dialect, SqliteDialect)
     ctrl, tree, *_ = make_ctrl(lambda _name: dialect, opened)
     ctrl.refresh_connections(["Clicked"])
     ctrl.load_schema_tree("Clicked")

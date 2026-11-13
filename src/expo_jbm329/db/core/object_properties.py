@@ -206,9 +206,15 @@ class ObjectPropertiesQueries:
         columns: Ordered columns with complete types and expression visibility.
         constraints: One row per constraint column, grouped by constraint ID.
         properties: Named object/column properties with plain-text values.
+            None when native named properties are unsupported.
+        description_property: Named property used as the description. None
+            selects native ``description`` fields in object and column rows.
+        allows_zero_columns: Whether the engine permits objects without columns.
     """
 
     object: str
     columns: str
     constraints: str
-    properties: str
+    properties: str | None
+    description_property: str | None = "MS_Description"
+    allows_zero_columns: bool = False
