@@ -3,8 +3,8 @@
 import pandas as pd
 import pytest
 from PyQt6 import sip
-from PyQt6.QtCore import QEvent, QPoint, Qt
-from PyQt6.QtGui import QHelpEvent, QTextCharFormat, QTextCursor
+from PyQt6.QtCore import QEvent, QPoint, QRect, Qt
+from PyQt6.QtGui import QFontMetrics, QHelpEvent, QTextCharFormat, QTextCursor
 from PyQt6.QtTest import QTest
 from PyQt6.QtWidgets import QApplication, QComboBox, QDialog
 
@@ -69,6 +69,31 @@ def test_invalid_formula_disables_accept_and_presents_validation_error():
     assert dialog._formula_edit.extraSelections()
     dialog._on_accept()
     assert dialog.get_result() is None
+
+
+def test_validation_label_reserves_space_for_wrapped_feedback():
+    frame = pd.DataFrame({"Age": [1]})
+
+    def validate(name, formula):
+        result = validate_derived_column_spec(frame, DerivedColumnSpec(name, formula))
+        return result, "This lint feedback is intentionally long enough to wrap onto another line. " * 3
+
+    dialog = DerivedColumnDialog(df=frame, validate_callback=validate)
+    dialog._column_name_edit.setText("Group")
+    dialog._formula_edit.setPlainText("[Missing]")
+
+    label = dialog._validation_label
+    line_height = label.fontMetrics().lineSpacing()
+    wrapped_bounds = QFontMetrics(label.font()).boundingRect(
+        QRect(0, 0, label.width(), 1000),
+        Qt.TextFlag.TextWordWrap,
+        label.text(),
+    )
+    assert wrapped_bounds.height() >= line_height * 2
+    assert dialog._validation_label.height() >= line_height * 2
+    assert dialog.minimumHeight() == dialog.maximumHeight()
+
+    dialog.close()
 
 
 @pytest.mark.parametrize("key", [Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Tab])
