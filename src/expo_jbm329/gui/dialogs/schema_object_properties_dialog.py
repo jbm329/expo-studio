@@ -21,12 +21,12 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from expo_jbm329.db.core.object_properties import ConstraintKind, MetadataState, SchemaObjectKind
+from expo_jbm329.db.core.object_properties import ConstraintKind, MetadataState, MetadataValue, SchemaObjectKind
 from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 
 if TYPE_CHECKING:
-    from expo_jbm329.db.core.object_properties import MetadataValue, ObjectProperties, SchemaObjectIdentity
+    from expo_jbm329.db.core.object_properties import ObjectProperties, SchemaObjectIdentity
 
 
 class SchemaObjectPropertiesDialog(QDialog):
@@ -77,6 +77,10 @@ class SchemaObjectPropertiesDialog(QDialog):
         self.tabs.addTab(self.properties, self.tr("Extended properties"))
         self.tabs.addTab(self.constraints, self.tr("Constraints"))
         layout.addWidget(self.tabs)
+        self.constraint_notice = QLabel(self)
+        self.constraint_notice.setTextFormat(Qt.TextFormat.PlainText)
+        self.constraint_notice.hide()
+        layout.addWidget(self.constraint_notice)
         self.details = QPlainTextEdit(self)
         self.details.setReadOnly(True)
         self.details.setMaximumHeight(150)
@@ -152,6 +156,7 @@ class SchemaObjectPropertiesDialog(QDialog):
         self.tabs.setEnabled(False)
         self.description.clear()
         self.details.clear()
+        self.constraint_notice.hide()
         for table in (self.columns, self.properties, self.constraints):
             table.setRowCount(0)
 
@@ -196,6 +201,12 @@ class SchemaObjectPropertiesDialog(QDialog):
             self.properties, [[prop.name, self._value(prop.value)] for prop in snapshot.properties.value or ()]
         )
         self.tabs.setTabVisible(1, snapshot.properties.state != MetadataState.UNSUPPORTED)
+        incomplete_checks = snapshot.check_constraints_state in (MetadataState.UNSUPPORTED, MetadataState.UNAVAILABLE)
+        self.constraint_notice.setVisible(incomplete_checks)
+        if incomplete_checks:
+            self.constraint_notice.setText(
+                f"{self.tr('Check')}: {self._value(MetadataValue(snapshot.check_constraints_state))}"
+            )
         self._populate(
             self.constraints,
             [

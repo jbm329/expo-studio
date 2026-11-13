@@ -181,3 +181,18 @@ class ObjectPropertiesDialectProtocol(Protocol):
     def sql_object_properties(self, identity: SchemaObjectIdentity) -> ObjectPropertiesQueries:
         """Build read-only queries using the common properties result shapes."""
         ...
+
+
+@runtime_checkable
+class ObjectPropertiesDiscoveryDialectProtocol(Protocol):
+    """Optional catalog discovery for version-dependent properties queries."""
+
+    def sql_object_properties_capabilities(self) -> str:
+        """Build a read-only query describing the available catalog columns."""
+        ...
+
+    def sql_discovered_object_properties(
+        self, identity: SchemaObjectIdentity, capabilities: pd.DataFrame
+    ) -> ObjectPropertiesQueries:
+        """Build properties queries from successfully retrieved capabilities."""
+        ...

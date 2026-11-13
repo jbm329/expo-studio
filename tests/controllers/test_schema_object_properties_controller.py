@@ -254,6 +254,42 @@ def test_native_comments_hide_named_properties_without_losing_descriptions(contr
     assert dialog.tabs.isTabVisible(1)
 
 
+@pytest.mark.parametrize(
+    "state, label",
+    [
+        (MetadataState.UNSUPPORTED, "Not supported"),
+        (MetadataState.UNAVAILABLE, "Unavailable"),
+    ],
+)
+def test_missing_check_catalog_coverage_is_visible(controller, snapshot, state, label):
+    ctrl, operations, _ = controller
+    dialog = ctrl.open("MySQL", snapshot.identity)
+    operations.calls[0]["on_result"](replace(snapshot, check_constraints_state=state))
+    assert not dialog.constraint_notice.isHidden()
+    assert dialog.constraint_notice.text() == f"Check: {label}"
+    dialog.set_loading()
+    assert dialog.constraint_notice.isHidden()
+    dialog.show_properties(snapshot)
+    assert dialog.constraint_notice.isHidden()
+
+
+def test_expression_unique_definition_is_visible_without_invented_columns(controller, snapshot):
+    constraint = ObjectConstraint(
+        "uq_expression",
+        ConstraintKind.UNIQUE,
+        (),
+        MetadataValue(MetadataState.AVAILABLE, "UNIQUE ((lower(`tenant`)))"),
+    )
+    ctrl, operations, _ = controller
+    dialog = ctrl.open("MySQL", snapshot.identity)
+    operations.calls[0]["on_result"](
+        replace(snapshot, constraints=MetadataValue(MetadataState.AVAILABLE, (constraint,)))
+    )
+    assert dialog.constraints.item(0, 2).text() == ""
+    assert dialog.constraints.item(0, 4).text() == "UNIQUE ((lower(`tenant`)))"
+    assert dialog.columns.item(0, 4).text() == ""
+
+
 @pytest.mark.parametrize("language", list(Language))
 def test_properties_ui_strings_have_compiled_translations(language):
     from expo_jbm329.gui.dialogs.schema_object_properties_dialog import SchemaObjectPropertiesDialog
@@ -268,6 +304,9 @@ def test_properties_ui_strings_have_compiled_translations(language):
         "Copy selected cells",
         "Loading properties...",
         "Extended properties",
+        "Check",
+        "Not supported",
+        "Unavailable",
     ):
         translated = translator.translate(SchemaObjectPropertiesDialog.__name__, source)
         assert bool(translated) == (language != Language.ENGLISH)

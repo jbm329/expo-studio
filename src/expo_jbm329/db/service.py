@@ -41,7 +41,7 @@ from expo_jbm329.db.core.errors import (
     BulkColumnListingNotSupportedError,
     should_log,
 )
-from expo_jbm329.db.core.interfaces import ObjectPropertiesDialectProtocol
+from expo_jbm329.db.core.interfaces import ObjectPropertiesDialectProtocol, ObjectPropertiesDiscoveryDialectProtocol
 from expo_jbm329.db.core.models import (
     ConnectionConfig,
     SqlError,
@@ -49,7 +49,7 @@ from expo_jbm329.db.core.models import (
     TimeoutConfig,
 )
 from expo_jbm329.db.core.object_properties import ObjectPropertiesNotSupportedError
-from expo_jbm329.db.object_properties import load_object_properties
+from expo_jbm329.db.object_properties import load_object_properties, require_catalog_data
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -402,11 +402,18 @@ class DbService:
             ObjectPropertiesNotSupportedError: No provider is implemented for
                 this dialect. Unsupported retrieval never returns empty success.
             RuntimeError: Catalog lookup failed or the object changed during retrieval.
+            ValueError: Discovered catalog capabilities are incomplete or inconsistent.
         """
         if isinstance(self.dialect, ObjectPropertiesDialectProtocol):
+            queries = self.dialect.sql_object_properties(identity)
+            if isinstance(self.dialect, ObjectPropertiesDiscoveryDialectProtocol):
+                capabilities = require_catalog_data(
+                    self.execute_sql(conn, self.dialect.sql_object_properties_capabilities(), corr_id=corr_id)
+                )
+                queries = self.dialect.sql_discovered_object_properties(identity, capabilities)
             return load_object_properties(
                 identity,
-                self.dialect.sql_object_properties(identity),
+                queries,
                 lambda sql: self.execute_sql(conn, sql, corr_id=corr_id),
             )
         log.warning(

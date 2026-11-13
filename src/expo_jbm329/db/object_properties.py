@@ -80,7 +80,16 @@ def _expression(row: dict[str, object], prefix: str) -> MetadataValue[str]:
     return _optional_text(row[f"{prefix}_definition"], MetadataState.UNAVAILABLE)
 
 
-def _description(properties: tuple[NamedProperty, ...], name: str) -> MetadataValue[str]:
+def _description(
+    properties: tuple[NamedProperty, ...],
+    name: str | None,
+    row: dict[str, object],
+    state: MetadataState | None,
+) -> MetadataValue[str]:
+    if state is not None:
+        return MetadataValue(state)
+    if name is None:
+        return _optional_text(row["description"])
     return next(
         (prop.value for prop in properties if prop.name == name),
         MetadataValue(MetadataState.ABSENT),
@@ -88,9 +97,11 @@ def _description(properties: tuple[NamedProperty, ...], name: str) -> MetadataVa
 
 
 def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) -> tuple[ObjectConstraint, ...]:
-    groups: dict[int, list[dict[str, object]]] = defaultdict(list)
+    groups: dict[tuple[str, str | int], list[dict[str, object]]] = defaultdict(list)
     for row in rows:
-        groups[_integer(row["constraint_id"])].append(row)
+        identifier = row["constraint_id"]
+        key = _required_text(identifier) if isinstance(identifier, str) else _integer(identifier)
+        groups[(_required_text(row["constraint_kind"]), key)].append(row)
     constraints: list[ObjectConstraint] = []
     for group in groups.values():
         ordered = sorted(group, key=lambda row: _integer(row["column_position"]))
@@ -107,19 +118,52 @@ def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) 
                 identity.catalog,
             )
             target_columns = tuple(_required_text(row["referenced_column"]) for row in ordered)
+        definition = (
+            _optional_text(first["definition"], MetadataState.UNAVAILABLE)
+            if kind == ConstraintKind.CHECK or _text(first["definition"]) is not None
+            else MetadataValue[str](MetadataState.NOT_APPLICABLE)
+        )
+        if kind in (ConstraintKind.PRIMARY_KEY, ConstraintKind.UNIQUE) and "key_part" in first:
+            parts = ", ".join(_required_text(row["key_part"]) for row in ordered)
+            keyword = "PRIMARY KEY" if kind == ConstraintKind.PRIMARY_KEY else "UNIQUE"
+            definition = MetadataValue(MetadataState.AVAILABLE, f"{keyword} ({parts})")
         constraints.append(
             ObjectConstraint(
                 _text(first["constraint_name"]),
                 kind,
                 columns,
-                _optional_text(first["definition"], MetadataState.UNAVAILABLE)
-                if kind == ConstraintKind.CHECK or _text(first["definition"]) is not None
-                else MetadataValue(MetadataState.NOT_APPLICABLE),
+                definition,
                 target,
                 target_columns,
             )
         )
     return tuple(constraints)
+
+
+def require_catalog_data(result: SqlResult) -> pd.DataFrame:
+    """Require a successful catalog result without hiding retrieval failures.
+
+    Args:
+        result: Catalog query result from the existing service executor.
+
+    Returns:
+        Retrieved metadata, including a valid empty result set.
+
+    Raises:
+        RuntimeError: The query failed or returned no result set.
+    """
+    if not result.ok:
+        if result.error is not None:
+            message = result.error.message
+            if result.error.hint is not None:
+                message += "\n\n" + result.error.hint
+        else:
+            message = "Object properties retrieval did not complete."
+        raise RuntimeError(message)
+    if result.data is None:
+        message = "Object properties query returned no result set."
+        raise RuntimeError(message)
+    return result.data
 
 
 def load_object_properties(
@@ -145,19 +189,7 @@ def load_object_properties(
     """
 
     def query(sql: str) -> pd.DataFrame:
-        result = execute(sql)
-        if not result.ok:
-            if result.error is not None:
-                message = result.error.message
-                if result.error.hint is not None:
-                    message += "\n\n" + result.error.hint
-            else:
-                message = "Object properties retrieval did not complete."
-            raise RuntimeError(message)
-        if result.data is None:
-            message = "Object properties query returned no result set."
-            raise RuntimeError(message)
-        return result.data
+        return require_catalog_data(execute(sql))
 
     initial = query(queries.object)
     header = _rows(initial)
@@ -172,8 +204,10 @@ def load_object_properties(
         identity.kind,
         _required_text(first["catalog_name"]),
     )
-    columns = _rows(query(queries.columns))
-    constraints = _rows(query(queries.constraints))
+    column_frame = query(queries.columns)
+    constraint_frame = query(queries.constraints)
+    columns = _rows(column_frame)
+    constraints = _rows(constraint_frame)
     properties = _rows(query(queries.properties)) if queries.properties is not None else []
     if not columns and not queries.allows_zero_columns:
         message = "Object columns are no longer available or are not visible."
@@ -183,7 +217,11 @@ def load_object_properties(
         raise RuntimeError(message)
     # Separate catalog queries are not a transactional DDL snapshot.
     final = query(queries.object)
-    if not final.equals(initial):
+    changed = not final.equals(initial)
+    if queries.verify_catalog_rows:
+        changed = not query(queries.columns).equals(column_frame) or changed
+        changed = not query(queries.constraints).equals(constraint_frame) or changed
+    if changed:
         message = "The object changed while its properties were being loaded. Retry the request."
         raise RuntimeError(message)
 
@@ -203,9 +241,9 @@ def load_object_properties(
                 data_type=_optional_text(row["data_type"], MetadataState.UNAVAILABLE),
                 nullable=MetadataValue(MetadataState.AVAILABLE, _flag(row["nullable"])),
                 default=_expression(row, "default"),
-                description=_description(column_properties, queries.description_property)
-                if queries.description_property is not None
-                else _optional_text(row["description"]),
+                description=_description(
+                    column_properties, queries.description_property, row, queries.column_description_state
+                ),
                 properties=MetadataValue(MetadataState.AVAILABLE, column_properties)
                 if queries.properties is not None
                 else MetadataValue(MetadataState.UNSUPPORTED),
@@ -218,9 +256,7 @@ def load_object_properties(
         raise ValueError(message)
     return ObjectProperties(
         resolved,
-        _description(object_properties, queries.description_property)
-        if queries.description_property is not None
-        else _optional_text(first["description"]),
+        _description(object_properties, queries.description_property, first, queries.object_description_state),
         MetadataValue(MetadataState.AVAILABLE, object_properties)
         if queries.properties is not None
         else MetadataValue(MetadataState.UNSUPPORTED),
@@ -228,4 +264,5 @@ def load_object_properties(
         MetadataValue(MetadataState.NOT_APPLICABLE)
         if identity.kind == SchemaObjectKind.VIEW
         else MetadataValue(MetadataState.AVAILABLE, _constraints(constraints, resolved)),
+        MetadataState.NOT_APPLICABLE if identity.kind == SchemaObjectKind.VIEW else queries.check_constraints_state,
     )

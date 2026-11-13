@@ -100,7 +100,8 @@ class ObjectConstraint:
         name: Catalog name, or None for an unnamed constraint.
         kind: Declared constraint kind.
         columns: Participating columns in constraint order, not separate keys.
-            Empty when a table-level CHECK has no known column mapping.
+            Empty when a table-level CHECK has no known column mapping, or
+            a UNIQUE key contains only expressions represented in its definition.
         definition: Catalog expression or definition, when available.
         referenced_object: Foreign-key target, otherwise None.
         referenced_columns: Foreign-key targets paired by position with columns.
@@ -115,7 +116,13 @@ class ObjectConstraint:
 
     def __post_init__(self) -> None:
         """Reject malformed foreign-key mappings and empty key constraints."""
-        if self.kind != ConstraintKind.CHECK and not self.columns:
+        expression_key = (
+            self.kind == ConstraintKind.UNIQUE
+            and self.definition.state == MetadataState.AVAILABLE
+            and self.definition.value is not None
+            and bool(self.definition.value.strip())
+        )
+        if self.kind != ConstraintKind.CHECK and not self.columns and not expression_key:
             message = "Key constraints must contain at least one column."
             raise ValueError(message)
         if self.kind == ConstraintKind.FOREIGN_KEY:
@@ -171,6 +178,7 @@ class ObjectProperties:
         columns: Columns in database order.
         constraints: Whole constraints, never flattened into independent keys.
             Unsupported constraint details retain their own availability state.
+        check_constraints_state: Whether CHECK metadata can be inspected.
     """
 
     identity: SchemaObjectIdentity
@@ -178,6 +186,7 @@ class ObjectProperties:
     properties: MetadataValue[tuple[NamedProperty, ...]]
     columns: tuple[ColumnProperties, ...]
     constraints: MetadataValue[tuple[ObjectConstraint, ...]]
+    check_constraints_state: MetadataState = MetadataState.AVAILABLE
 
 
 class ObjectPropertiesNotSupportedError(NotImplementedError):
@@ -194,10 +203,13 @@ class ObjectPropertiesQueries:
     ``nullable`` and the ``default``, ``identity`` and ``generated`` pairs
     of ``<prefix>_present``/``<prefix>_definition`` fields.
 
-    Constraint rows contain ``object_id``, ``constraint_id``,
+    Constraint rows contain ``object_id``, ``constraint_id`` (native integer
+    or nonempty name, unique within a constraint kind),
     ``constraint_name``, ``constraint_kind`` (a ConstraintKind value),
     ``column_position``, ``column_name``, ``definition`` and nullable
     ``referenced_schema``, ``referenced_object`` and ``referenced_column``.
+    Optional ``key_part`` fields preserve native ordered key SQL, including
+    expressions and prefix lengths, without inventing column names.
     Property rows contain ``object_id``, ``column_id`` (zero for the object),
     ``property_name`` and nullable plain-text ``property_value``.
 
@@ -210,6 +222,10 @@ class ObjectPropertiesQueries:
         description_property: Named property used as the description. None
             selects native ``description`` fields in object and column rows.
         allows_zero_columns: Whether the engine permits objects without columns.
+        object_description_state: Override when native object comments are unsupported.
+        column_description_state: Override when native column comments are unsupported.
+        check_constraints_state: Availability of CHECK catalog metadata.
+        verify_catalog_rows: Reread columns and constraints when no native DDL version exists.
     """
 
     object: str
@@ -218,3 +234,7 @@ class ObjectPropertiesQueries:
     properties: str | None
     description_property: str | None = "MS_Description"
     allows_zero_columns: bool = False
+    object_description_state: MetadataState | None = None
+    column_description_state: MetadataState | None = None
+    check_constraints_state: MetadataState = MetadataState.AVAILABLE
+    verify_catalog_rows: bool = False

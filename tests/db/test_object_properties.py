@@ -22,7 +22,6 @@ from expo_jbm329.db.core.object_properties import (
 )
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
-from expo_jbm329.db.dialects.mysql import MySqlDialect
 from expo_jbm329.db.dialects.sqlite import SqliteDialect
 from expo_jbm329.db.service import DbService
 
@@ -125,6 +124,16 @@ def test_check_can_preserve_definition_without_invented_column_mapping():
         replace(constraint, kind=ConstraintKind.PRIMARY_KEY)
 
 
+def test_expression_unique_key_requires_an_available_nonempty_definition():
+    constraint = ObjectConstraint(
+        "expression_key", ConstraintKind.UNIQUE, (), MetadataValue(MetadataState.AVAILABLE, "UNIQUE ((abs(amount)))")
+    )
+    assert constraint.columns == ()
+    for definition in (MetadataValue(MetadataState.UNAVAILABLE), MetadataValue(MetadataState.AVAILABLE, "")):
+        with pytest.raises(ValueError, match="at least one column"):
+            replace(constraint, definition=definition)
+
+
 def test_identity_and_column_validation():
     with pytest.raises(ValueError, match="name must not be empty"):
         SchemaObjectIdentity("dbo", "", SchemaObjectKind.VIEW)
@@ -135,7 +144,7 @@ def test_identity_and_column_validation():
         make_column(name="")
 
 
-@pytest.mark.parametrize("dialect_type", [AnsiDialect, MySqlDialect, SqliteDialect, DuckDbDialect])
+@pytest.mark.parametrize("dialect_type", [AnsiDialect, SqliteDialect, DuckDbDialect])
 @pytest.mark.parametrize("kind", list(SchemaObjectKind))
 def test_unimplemented_provider_fails_explicitly_without_queries(dialect_type, kind, caplog):
     driver = MagicMock(spec=DriverProtocol)

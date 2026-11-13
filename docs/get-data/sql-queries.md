@@ -30,10 +30,10 @@ database-specific errors reported during execution.
 
 ## Inspect table and view properties {#object-properties}
 
-For **SQL Server** and **PostgreSQL** connections, right-click a table or view
-in the schema browser and select **Properties**. Other database types do not
-yet offer this action. The dialog stays bound to the connection owning that
-object, even if you switch SQL editor tabs.
+For **SQL Server**, **PostgreSQL** and **MySQL/MariaDB** connections, right-click
+a table or view in the schema browser and select **Properties**. Other database
+types do not yet offer this action. The dialog stays bound to the connection
+owning that object, even if you switch SQL editor tabs.
 
 Properties loads catalog metadata in the background. It does not retrieve table
 rows, calculate row counts or modify the database.
@@ -42,16 +42,16 @@ rows, calculate row counts or modify the database.
   `Properties (view: name)`. The full connection/database/schema path is not
   displayed.
 - **Description** shows the object's `MS_Description` extended property on
-  SQL Server or its native comment on PostgreSQL. Column descriptions use
-  the same database-specific source.
+  SQL Server or its native comment on PostgreSQL and MySQL/MariaDB tables.
+  Column descriptions use the same database-specific source.
 - **Columns** lists column names in database order, complete declared types,
   nullability, default SQL expressions, constraint summaries and descriptions.
   Selecting a column shows its full description, identity/computed expression
   and named extended properties below the grid.
 - **Extended properties** lists every visible named property on the object,
   not just `MS_Description`. Column properties appear in the selected-column
-  details instead. This tab is hidden for PostgreSQL, which uses native
-  comments rather than SQL Server-style named extended properties.
+  details instead. This tab is hidden for PostgreSQL and MySQL/MariaDB, which
+  use native comments rather than SQL Server-style named extended properties.
 - **Constraints** shows declared primary keys, foreign keys, unique constraints
   and checks, including names, grouped columns, foreign-key destinations and
   available SQL definitions. A composite unique constraint applies to the
@@ -76,6 +76,31 @@ show their declared generation mode; legacy `serial` columns expose their
 sequence expression as a default. Only declared table constraints are listed,
 not inferred constraints on views or separate unique indexes. PostgreSQL
 permits zero-column objects, which appear with an empty Columns grid.
+
+MySQL/MariaDB types retain their catalog declaration, including length,
+precision, unsigned types and enum values. Table and base-column comments are
+shown; empty comments appear as **Not set**. View descriptions and column
+comments are **Not supported**, not copied from underlying tables.
+`AUTO_INCREMENT` and generated expressions appear in selected-column details.
+Key definitions preserve ordered index expressions and prefix lengths. Only
+actual indexed column names appear in the Columns field; columns used inside
+an expression are not inferred by parsing it.
+If an older server identifies a generated column but cannot expose its
+expression, the expression is **Unavailable**.
+
+The app discovers available catalog columns before loading MySQL/MariaDB
+metadata. CHECK expressions are listed when the server exposes the CHECK
+catalog; their column associations are not inferred by parsing SQL. If that
+catalog is absent, **Check: Not supported** appears below the tabs, while
+available key constraints remain visible. These are declared constraints,
+not a statement that enforcement is enabled. A failed discovery or metadata
+query is an error, not an empty constraint list.
+
+Defaults are displayed as SQL, preserving expressions and quoting literals
+according to the server's catalog conventions. On MariaDB versions before
+10.2.7, a present default is **Unavailable**, because the catalog cannot
+reliably distinguish literal text from an expression. Metadata rereads detect
+changes during loading where possible, but are not a transactional DDL snapshot.
 
 Use **Retry** to reload metadata or recover from a retrieval error. Errors do
 not disconnect the database or clear its schema tree. You can close the dialog
