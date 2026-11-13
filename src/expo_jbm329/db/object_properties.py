@@ -75,6 +75,9 @@ def _optional_text(value: object, missing: MetadataState = MetadataState.ABSENT)
 
 
 def _expression(row: dict[str, object], prefix: str) -> MetadataValue[str]:
+    state = row.get(f"{prefix}_state")
+    if state is not None:
+        return MetadataValue(MetadataState(_required_text(state)))
     if not _flag(row[f"{prefix}_present"]):
         return MetadataValue(MetadataState.NOT_APPLICABLE if prefix != "default" else MetadataState.ABSENT)
     return _optional_text(row[f"{prefix}_definition"], MetadataState.UNAVAILABLE)
@@ -110,6 +113,7 @@ def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) 
         columns = tuple(name for row in ordered if (name := _text(row["column_name"])) is not None)
         target = None
         target_columns: tuple[str, ...] = ()
+        target_columns_state = MetadataState.AVAILABLE
         if kind == ConstraintKind.FOREIGN_KEY:
             target = SchemaObjectIdentity(
                 _required_text(first["referenced_schema"]),
@@ -117,7 +121,10 @@ def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) 
                 SchemaObjectKind.TABLE,
                 identity.catalog,
             )
-            target_columns = tuple(_required_text(row["referenced_column"]) for row in ordered)
+            if any(_text(row.get("referenced_columns_state")) == MetadataState.UNAVAILABLE for row in ordered):
+                target_columns_state = MetadataState.UNAVAILABLE
+            else:
+                target_columns = tuple(_required_text(row["referenced_column"]) for row in ordered)
         definition = (
             _optional_text(first["definition"], MetadataState.UNAVAILABLE)
             if kind == ConstraintKind.CHECK or _text(first["definition"]) is not None
@@ -135,6 +142,7 @@ def _constraints(rows: list[dict[str, object]], identity: SchemaObjectIdentity) 
                 definition,
                 target,
                 target_columns,
+                target_columns_state,
             )
         )
     return tuple(constraints)

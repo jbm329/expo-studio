@@ -105,6 +105,7 @@ class ObjectConstraint:
         definition: Catalog expression or definition, when available.
         referenced_object: Foreign-key target, otherwise None.
         referenced_columns: Foreign-key targets paired by position with columns.
+        referenced_columns_state: Unavailable when a native implicit target cannot be resolved.
     """
 
     name: str | None
@@ -113,6 +114,7 @@ class ObjectConstraint:
     definition: MetadataValue[str]
     referenced_object: SchemaObjectIdentity | None = None
     referenced_columns: tuple[str, ...] = ()
+    referenced_columns_state: MetadataState = MetadataState.AVAILABLE
 
     def __post_init__(self) -> None:
         """Reject malformed foreign-key mappings and empty key constraints."""
@@ -126,10 +128,18 @@ class ObjectConstraint:
             message = "Key constraints must contain at least one column."
             raise ValueError(message)
         if self.kind == ConstraintKind.FOREIGN_KEY:
-            if self.referenced_object is None or len(self.columns) != len(self.referenced_columns):
+            unavailable = self.referenced_columns_state == MetadataState.UNAVAILABLE and not self.referenced_columns
+            mapped = self.referenced_columns_state == MetadataState.AVAILABLE and len(self.columns) == len(
+                self.referenced_columns
+            )
+            if self.referenced_object is None or not (mapped or unavailable):
                 message = "Foreign keys require a target and one target column per source column."
                 raise ValueError(message)
-        elif self.referenced_object is not None or self.referenced_columns:
+        elif (
+            self.referenced_object is not None
+            or self.referenced_columns
+            or self.referenced_columns_state != MetadataState.AVAILABLE
+        ):
             message = "Only foreign keys may contain a referenced object or columns."
             raise ValueError(message)
 
@@ -202,6 +212,7 @@ class ObjectPropertiesQueries:
     ``column_id``, ``column_name``, ``ordinal_position``, ``data_type``,
     ``nullable`` and the ``default``, ``identity`` and ``generated`` pairs
     of ``<prefix>_present``/``<prefix>_definition`` fields.
+    Optional ``<prefix>_state`` fields override unsupported expression metadata.
 
     Constraint rows contain ``object_id``, ``constraint_id`` (native integer
     or nonempty name, unique within a constraint kind),
@@ -210,6 +221,8 @@ class ObjectPropertiesQueries:
     ``referenced_schema``, ``referenced_object`` and ``referenced_column``.
     Optional ``key_part`` fields preserve native ordered key SQL, including
     expressions and prefix lengths, without inventing column names.
+    Optional ``referenced_columns_state`` marks unresolved implicit foreign-key
+    target mappings unavailable; missing target columns otherwise remain invalid.
     Property rows contain ``object_id``, ``column_id`` (zero for the object),
     ``property_name`` and nullable plain-text ``property_value``.
 

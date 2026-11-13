@@ -10,6 +10,7 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidgetItem, QWidget
 
 from expo_jbm329.db import base
+from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
 from expo_jbm329.db.dialects.mssql import MssqlDialect
 from expo_jbm329.db.dialects.mysql import MySqlDialect
@@ -329,7 +330,7 @@ def test_ansi_table_double_click_and_context_menu_queries(monkeypatch, dialect):
 
 
 @pytest.mark.parametrize("kind", ["table", "view"])
-@pytest.mark.parametrize("dialect", [MssqlDialect(), PostgresDialect(), MySqlDialect(), SqliteDialect()])
+@pytest.mark.parametrize("dialect", [MssqlDialect(), PostgresDialect(), MySqlDialect(), SqliteDialect(), AnsiDialect()])
 def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypatch, kind, dialect):
     from PyQt6.QtCore import QPoint
     from PyQt6.QtWidgets import QMenu
@@ -338,7 +339,7 @@ def test_properties_menu_uses_clicked_connection_and_supported_provider(monkeypa
     from expo_jbm329.workbench.controllers import schema_controller
 
     opened = MagicMock()
-    supported = not isinstance(dialect, SqliteDialect)
+    supported = not isinstance(dialect, AnsiDialect)
     ctrl, tree, *_ = make_ctrl(lambda _name: dialect, opened)
     ctrl.refresh_connections(["Clicked"])
     ctrl.load_schema_tree("Clicked")

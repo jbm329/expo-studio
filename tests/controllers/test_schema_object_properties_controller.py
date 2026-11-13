@@ -290,6 +290,20 @@ def test_expression_unique_definition_is_visible_without_invented_columns(contro
     assert dialog.columns.item(0, 4).text() == ""
 
 
+def test_unresolved_foreign_key_target_columns_show_unavailable(controller, snapshot):
+    constraint = replace(
+        snapshot.constraints.value[0],
+        referenced_columns=(),
+        referenced_columns_state=MetadataState.UNAVAILABLE,
+    )
+    ctrl, operations, _ = controller
+    dialog = ctrl.open("SQLite", snapshot.identity)
+    operations.calls[0]["on_result"](
+        replace(snapshot, constraints=MetadataValue(MetadataState.AVAILABLE, (constraint,)))
+    )
+    assert dialog.constraints.item(0, 3).text() == "other.Items (Unavailable)"
+
+
 @pytest.mark.parametrize("language", list(Language))
 def test_properties_ui_strings_have_compiled_translations(language):
     from expo_jbm329.gui.dialogs.schema_object_properties_dialog import SchemaObjectPropertiesDialog

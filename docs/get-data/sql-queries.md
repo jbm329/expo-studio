@@ -30,10 +30,10 @@ database-specific errors reported during execution.
 
 ## Inspect table and view properties {#object-properties}
 
-For **SQL Server**, **PostgreSQL** and **MySQL/MariaDB** connections, right-click
-a table or view in the schema browser and select **Properties**. Other database
-types do not yet offer this action. The dialog stays bound to the connection
-owning that object, even if you switch SQL editor tabs.
+For **SQL Server**, **PostgreSQL**, **MySQL/MariaDB** and **SQLite** connections,
+right-click a table or view in the schema browser and select **Properties**.
+Other database types do not yet offer this action. The dialog stays bound to
+the connection owning that object, even if you switch SQL editor tabs.
 
 Properties loads catalog metadata in the background. It does not retrieve table
 rows, calculate row counts or modify the database.
@@ -54,8 +54,8 @@ is passed unchanged without parameter interpolation.
   and named extended properties below the grid.
 - **Extended properties** lists every visible named property on the object,
   not just `MS_Description`. Column properties appear in the selected-column
-  details instead. This tab is hidden for PostgreSQL and MySQL/MariaDB, which
-  use native comments rather than SQL Server-style named extended properties.
+  details instead. This tab is hidden for PostgreSQL, MySQL/MariaDB and SQLite,
+  which do not support SQL Server-style named extended properties.
 - **Constraints** shows declared primary keys, foreign keys, unique constraints
   and checks, including names, grouped columns, foreign-key destinations and
   available SQL definitions. A composite unique constraint applies to the
@@ -105,6 +105,30 @@ according to the server's catalog conventions. On MariaDB versions before
 10.2.7, a present default is **Unavailable**, because the catalog cannot
 reliably distinguish literal text from an expression. Metadata rereads detect
 changes during loading where possible, but are not a transactional DDL snapshot.
+
+SQLite uses its native schema and PRAGMA metadata. Object/column descriptions,
+extended properties and identity specifications are **Not supported**. SQL
+source comments are not interpreted as descriptions. Declared types and default
+SQL are preserved; an untyped column has an empty Data type cell.
+
+SQLite lists declared primary, foreign and unique keys, preserving composite
+column order. It does not list separate user-created unique indexes. Original
+primary/foreign-key constraint names are not exposed by PRAGMA metadata, so
+their names remain empty. Unique keys use SQLite's native backing-index names,
+which may be generated `sqlite_autoindex_...` names rather than names written
+in the CREATE TABLE statement.
+
+Implicit foreign-key target columns are resolved against the parent primary
+key. If that parent or its primary key is missing, the References field shows
+the target table with **Unavailable** columns instead of inventing a mapping.
+This inspects declared metadata, not whether foreign-key enforcement is enabled.
+
+SQLite does not expose CHECK clauses or generated-column expressions through
+these PRAGMAs. **Check: Unavailable** appears below the tabs, and a generated
+column's expression is **Unavailable**. Neither is reconstructed by parsing
+CREATE TABLE SQL. Nullability reflects SQLite's native behavior, including
+non-null INTEGER PRIMARY KEY rowid aliases and nullable legacy primary keys.
+View constraints are not inferred from underlying tables.
 
 Use **Retry** to reload metadata or recover from a retrieval error. Errors do
 not disconnect the database or clear its schema tree. You can close the dialog

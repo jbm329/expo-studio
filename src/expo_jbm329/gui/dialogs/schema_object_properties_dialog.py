@@ -26,7 +26,7 @@ from expo_jbm329.gui.dialogs.analysis.section_layout import ANALYSIS_TABS_STYLE
 from expo_jbm329.gui.dialogs.service.common.localization import localize_dialog_buttons
 
 if TYPE_CHECKING:
-    from expo_jbm329.db.core.object_properties import ObjectProperties, SchemaObjectIdentity
+    from expo_jbm329.db.core.object_properties import ObjectConstraint, ObjectProperties, SchemaObjectIdentity
 
 
 class SchemaObjectPropertiesDialog(QDialog):
@@ -216,7 +216,7 @@ class SchemaObjectPropertiesDialog(QDialog):
                     ", ".join(constraint.columns),
                     (
                         f"{constraint.referenced_object.schema}.{constraint.referenced_object.name}"
-                        f" ({', '.join(constraint.referenced_columns)})"
+                        f" ({self._reference_columns(constraint)})"
                     )
                     if constraint.referenced_object is not None
                     else "",
@@ -227,6 +227,11 @@ class SchemaObjectPropertiesDialog(QDialog):
         )
         if snapshot.columns:
             self.columns.selectRow(0)
+
+    def _reference_columns(self, constraint: ObjectConstraint) -> str:
+        if constraint.referenced_columns_state == MetadataState.AVAILABLE:
+            return ", ".join(constraint.referenced_columns)
+        return self._value(MetadataValue[str](constraint.referenced_columns_state))
 
     def _show_column_details(self) -> None:
         snapshot = self._snapshot

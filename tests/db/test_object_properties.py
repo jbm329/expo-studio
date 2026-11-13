@@ -22,7 +22,6 @@ from expo_jbm329.db.core.object_properties import (
 )
 from expo_jbm329.db.dialects.ansi import AnsiDialect
 from expo_jbm329.db.dialects.duckdb import DuckDbDialect
-from expo_jbm329.db.dialects.sqlite import SqliteDialect
 from expo_jbm329.db.service import DbService
 
 
@@ -112,6 +111,14 @@ def test_composite_foreign_key_preserves_target_mapping():
         replace(constraint, referenced_object=None)
     with pytest.raises(ValueError, match="Only foreign keys"):
         replace(constraint, kind=ConstraintKind.UNIQUE)
+    unresolved = replace(constraint, referenced_columns=(), referenced_columns_state=MetadataState.UNAVAILABLE)
+    assert unresolved.referenced_object == target
+    with pytest.raises(ValueError, match="one target column"):
+        replace(unresolved, referenced_columns_state=MetadataState.AVAILABLE)
+    with pytest.raises(ValueError, match="one target column"):
+        replace(unresolved, referenced_columns=("id",))
+    with pytest.raises(ValueError, match="Only foreign keys"):
+        replace(unresolved, kind=ConstraintKind.UNIQUE, referenced_object=None)
 
 
 def test_check_can_preserve_definition_without_invented_column_mapping():
@@ -144,7 +151,7 @@ def test_identity_and_column_validation():
         make_column(name="")
 
 
-@pytest.mark.parametrize("dialect_type", [AnsiDialect, SqliteDialect, DuckDbDialect])
+@pytest.mark.parametrize("dialect_type", [AnsiDialect, DuckDbDialect])
 @pytest.mark.parametrize("kind", list(SchemaObjectKind))
 def test_unimplemented_provider_fails_explicitly_without_queries(dialect_type, kind, caplog):
     driver = MagicMock(spec=DriverProtocol)
