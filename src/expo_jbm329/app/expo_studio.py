@@ -308,8 +308,8 @@ class ExpoStudio(QMainWindow):
             raise RuntimeError(message)
         return self._file_dialogs
 
-    def init_services(self) -> None:
-        """Initializes services."""
+    def init_services(self, *, console_log: bool = False) -> None:
+        """Initialize services with the GUI launch options."""
         # -------------------------------------------
         # Status bar + controller (Must be before backend services to provide status_cb)
         # -------------------------------------------
@@ -323,7 +323,7 @@ class ExpoStudio(QMainWindow):
         # -------------------------------------------
         # Backend services
         # -------------------------------------------
-        self.services = AppServices.build(self.settings)
+        self.services = AppServices.build(self.settings, console_log=console_log)
         services = self.services
         self.ui_logger = services.log_ui
 

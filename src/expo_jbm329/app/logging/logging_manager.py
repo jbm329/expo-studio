@@ -8,12 +8,23 @@ for different application components.
 from __future__ import annotations
 
 import logging
+import os
 import sys
+from io import TextIOWrapper
 from logging.handlers import RotatingFileHandler
+from typing import TYPE_CHECKING, override
 
-from expo_jbm329.app.settings.config_store import read_log_config
+from expo_jbm329.app.logging.console_stream import open_parent_console
+from expo_jbm329.app.settings.config_store import DEFAULT_LOG_STDOUT_HANDLER_CONFIG, read_log_config
 from expo_jbm329.app.settings.json_types import JsonObject, int_value, object_or_empty, string_value
 from expo_jbm329.utils.path_manager import get_log_path
+
+if TYPE_CHECKING:
+    from typing import TextIO
+
+    _TextStreamHandler = logging.StreamHandler[TextIO]
+else:
+    _TextStreamHandler = logging.StreamHandler
 
 BUILTIN_FORMATTERS = {
     "default": {
@@ -70,6 +81,26 @@ class ThirdPartyMinLevelFilter(logging.Filter):
         return record.levelno >= self.min_level
 
 
+class _OwnedStreamHandler(_TextStreamHandler):
+    """Close the text stream opened specifically for Windows log output."""
+
+    @override
+    def emit(self, record: logging.LogRecord) -> None:
+        """Ignore a record already dispatched to this handler before reload."""
+        if not self.stream.closed:
+            super().emit(record)
+
+    @override
+    def close(self) -> None:
+        """Close the owned stream while holding the handler lock."""
+        self.acquire()
+        try:
+            self.stream.close()
+        finally:
+            self.release()
+            super().close()
+
+
 class LoggingManager:
     """Manages logging configuration and provides logger instances.
 
@@ -87,6 +118,8 @@ class LoggingManager:
     """
 
     __slots__ = (
+        "_console_log",
+        "_owned_handlers",
         "db_logger",
         "jobs_logger",
         "service_logger",
@@ -96,8 +129,10 @@ class LoggingManager:
 
     APP_PREFIXES = ("applogger",)
 
-    def __init__(self) -> None:
+    def __init__(self, *, console_log: bool = False) -> None:
         """Initializes the LoggingManager with pre-configured logger instances."""
+        self._console_log = console_log
+        self._owned_handlers: list[logging.Handler] = []
         self.ui_logger: logging.Logger = logging.getLogger("applogger.ui")
         self.service_logger: logging.Logger = logging.getLogger("applogger.service")
         self.jobs_logger: logging.Logger = logging.getLogger("applogger.jobs")
@@ -111,8 +146,8 @@ class LoggingManager:
         """Sets up the logging infrastructure based on configuration.
 
         Reads the logging configuration, configures handlers, filters, and log levels,
-        and initializes the logger instances. This method should be called once
-        during application startup.
+        and initializes the logger instances. Call at startup and when applying
+        new logging settings.
         """
         cfg = read_log_config()
         root = logging.getLogger()
@@ -123,8 +158,17 @@ class LoggingManager:
         # Remove old handlers
         for h in list(root.handlers):
             root.removeHandler(h)
+        for h in self._owned_handlers:
+            h.close()
+        self._owned_handlers.clear()
 
         handlers_cfg = object_or_empty(cfg.get("handlers"))
+        frozen = _is_frozen()
+        frozen_console_platform = frozen and sys.platform in {"win32", "linux"}
+        fallback = logging.NullHandler()
+        if frozen_console_platform:
+            # Prevent logging.lastResort from writing to stderr without a configured sink.
+            root.addHandler(fallback)
 
         # Wildcard filter
         third_party_level = self._to_level(cfg.get("third_party_log_level", "WARNING"))
@@ -136,6 +180,7 @@ class LoggingManager:
                 h = self._create_file_handler(cfg)
                 h.addFilter(tp_filter)
                 root.addHandler(h)
+                self._owned_handlers.append(h)
             except (
                 AttributeError,
                 ConnectionError,
@@ -150,25 +195,20 @@ class LoggingManager:
             ):
                 logging.getLogger("applogger").exception("Failed to init file handler")
 
-        # Stdout handler
-        if "stdout" in handlers_cfg and not _is_frozen():
+        # The legacy configuration key is "stdout", but records go to stderr.
+        if (frozen_console_platform and self._console_log) or (not frozen and "stdout" in handlers_cfg):
             try:
-                h = self._create_stdout_handler(cfg)
-                h.addFilter(tp_filter)
-                root.addHandler(h)
-            except (
-                AttributeError,
-                ConnectionError,
-                FileNotFoundError,
-                IndexError,
-                KeyError,
-                LookupError,
-                OSError,
-                RuntimeError,
-                TypeError,
-                ValueError,
-            ):
-                logging.getLogger("applogger").exception("Failed to init stdout handler")
+                console_handler = self._create_console_handler(cfg, attach=frozen and sys.platform == "win32")
+            except (OSError, ValueError):
+                self.system_logger.exception("LoggingManager: failed to initialize console output")
+            else:
+                if console_handler is not None:
+                    console_handler.addFilter(tp_filter)
+                    root.addHandler(console_handler)
+                    self._owned_handlers.append(console_handler)
+
+        if self._owned_handlers and frozen_console_platform:
+            root.removeHandler(fallback)
 
         # Per-namespace overrides
         for lname, spec_value in object_or_empty(cfg.get("loggers")).items():
@@ -208,21 +248,30 @@ class LoggingManager:
         h.setFormatter(fmt)
         return h
 
-    def _create_stdout_handler(self, cfg: JsonObject) -> logging.Handler:
-        """Creates a stdout stream handler based on configuration.
+    def _create_console_handler(self, cfg: JsonObject, *, attach: bool) -> logging.Handler | None:
+        params = DEFAULT_LOG_STDOUT_HANDLER_CONFIG | self._subcfg(cfg, "handlers", "stdout")
+        level = self._to_level(params["level"])
+        fmt = self._formatter(string_value(params["formatter"], "default"))
 
-        Args:
-            cfg: The full configuration dict.
-
-        Returns:
-            A configured StreamHandler instance.
-        """
-        params = self._subcfg(cfg, "handlers", "stdout")
-
-        level = self._to_level(params.get("level", "WARNING"))
-        fmt = self._formatter(string_value(params.get("formatter"), "default"))
-
-        h = logging.StreamHandler()
+        stream = sys.stderr
+        h: logging.StreamHandler[TextIO]
+        if stream is None:
+            if not attach:
+                return None
+            stream = open_parent_console()
+            if stream is None:
+                return None
+            h = _OwnedStreamHandler(stream)
+        elif stream.closed or not stream.writable():
+            return None
+        elif attach and isinstance(stream, TextIOWrapper) and not stream.isatty():
+            # Windows redirects can default to an ANSI code page. Leave stderr
+            # and its descriptor alone while writing the log records as UTF-8.
+            h = _OwnedStreamHandler(
+                os.fdopen(stream.fileno(), "w", encoding="utf-8", errors="backslashreplace", closefd=False)
+            )
+        else:
+            h = logging.StreamHandler(stream)
         h.setLevel(level)
         h.setFormatter(fmt)
         return h
