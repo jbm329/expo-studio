@@ -86,7 +86,7 @@ class LogConfigEditor(QDialog):
     """Dedicated dialog for editing logconfig.json.
 
     Supports configuring the root log level, file handler, console handler
-    (if not frozen), and specific namespace loggers. Includes a reset
+    (when available), and specific namespace loggers. Includes a reset
     functionality to restore default settings.
     """
 
@@ -95,6 +95,8 @@ class LogConfigEditor(QDialog):
         parent: QWidget | None = None,
         dialogs: DialogService | None = None,
         icon_service: IconService | None = None,
+        *,
+        frozen_console_active: bool = False,
     ) -> None:
         """Initializes the LogConfigEditor dialog.
 
@@ -102,11 +104,14 @@ class LogConfigEditor(QDialog):
             parent: The parent widget.
             dialogs: Service for showing dialog boxes. Defaults to QtDialogService if None.
             icon_service: Service for retrieving icons.
+            frozen_console_active: Whether the packaged launch has active console output.
         """
         super().__init__(parent)
 
         self._dialogs = dialogs if dialogs is not None else QtDialogService()
         self._icon_service = icon_service
+        self._frozen = _is_frozen()
+        self._frozen_console_active = self._frozen and frozen_console_active
 
         self.setWindowTitle(self.tr("Log settings"))
         self.setFixedSize(500, 500)
@@ -235,7 +240,14 @@ class LogConfigEditor(QDialog):
         form_console = QFormLayout(self.gb_console)
 
         self.chk_console_enabled = QCheckBox(self.tr("Activate"), self)
-        form_console.addRow(self.chk_console_enabled)
+        if self._frozen:
+            self.chk_console_enabled.hide()
+            if self._frozen_console_active:
+                console_note = QLabel(self.tr("Enabled by --console-log."), self.gb_console)
+                console_note.setWordWrap(True)
+                form_console.addRow(console_note)
+        else:
+            form_console.addRow(self.chk_console_enabled)
 
         self.cb_stdout_level = QComboBox(self)
         self.cb_stdout_level.addItems(LOGLEVELS)
@@ -245,9 +257,9 @@ class LogConfigEditor(QDialog):
         self.cb_stdout_formatter.addItems(_builtin_formatter_names())
         form_console.addRow(self.tr("Formatting:"), self.cb_stdout_formatter)
 
-        bind_enable(self.chk_console_enabled, [self.cb_stdout_level, self.cb_stdout_formatter])
-
-        if _is_frozen():
+        if not self._frozen:
+            bind_enable(self.chk_console_enabled, [self.cb_stdout_level, self.cb_stdout_formatter])
+        elif not self._frozen_console_active:
             self.gb_console.hide()
 
         cols.addWidget(self.gb_console, 1)
@@ -399,7 +411,7 @@ class LogConfigEditor(QDialog):
         stdout_formatter = h_out.get("formatter")
         self._ensure_custom_formatter(stdout_formatter if isinstance(stdout_formatter, str) else None)
 
-        self.chk_console_enabled.setChecked(bool(h_out) and not _is_frozen())
+        self.chk_console_enabled.setChecked(bool(h_out) and not self._frozen)
         self.cb_stdout_level.setCurrentText(
             string_value(h_out.get("level"), string_value(out_def.get("level"), "WARNING"))
         )
@@ -461,7 +473,11 @@ class LogConfigEditor(QDialog):
             }
 
         # STDOUT
-        if not _is_frozen() and self.chk_console_enabled.isChecked():
+        if self._frozen and not self._frozen_console_active:
+            previous_handlers = object_or_empty(self.log_cfg.get("handlers"))
+            if "stdout" in previous_handlers:
+                handlers["stdout"] = previous_handlers["stdout"]
+        elif self._frozen_console_active or self.chk_console_enabled.isChecked():
             handlers["stdout"] = {
                 "level": self.cb_stdout_level.currentText(),
                 "formatter": self.cb_stdout_formatter.currentText(),

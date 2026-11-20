@@ -6009,93 +6009,98 @@ Sparad till:
 </context><context>
     <name>LogConfigEditor</name>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="111" />
+        <location filename="../../app/settings/log_config_editor.py" line="116" />
         <source>Log settings</source>
         <translation>Logginställningar</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="170" />
+        <location filename="../../app/settings/log_config_editor.py" line="175" />
         <source>Log file:</source>
         <translation>Loggfil:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="175" />
+        <location filename="../../app/settings/log_config_editor.py" line="180" />
         <source>Root log level:</source>
         <translation>Root loggnivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="180" />
+        <location filename="../../app/settings/log_config_editor.py" line="185" />
         <source>Third party log level:</source>
         <translation>Tredje part loggnivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="201" />
+        <location filename="../../app/settings/log_config_editor.py" line="206" />
         <source>File</source>
         <translation>Fil</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="269" />
-        <location filename="../../app/settings/log_config_editor.py" line="237" />
-        <location filename="../../app/settings/log_config_editor.py" line="204" />
+        <location filename="../../app/settings/log_config_editor.py" line="281" />
+        <location filename="../../app/settings/log_config_editor.py" line="242" />
+        <location filename="../../app/settings/log_config_editor.py" line="209" />
         <source>Activate</source>
         <translation>Aktivera</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="287" />
-        <location filename="../../app/settings/log_config_editor.py" line="242" />
-        <location filename="../../app/settings/log_config_editor.py" line="209" />
+        <location filename="../../app/settings/log_config_editor.py" line="299" />
+        <location filename="../../app/settings/log_config_editor.py" line="254" />
+        <location filename="../../app/settings/log_config_editor.py" line="214" />
         <source>Level:</source>
         <translation>Nivå:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="246" />
-        <location filename="../../app/settings/log_config_editor.py" line="213" />
+        <location filename="../../app/settings/log_config_editor.py" line="258" />
+        <location filename="../../app/settings/log_config_editor.py" line="218" />
         <source>Formatting:</source>
         <translation>Formatering:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="218" />
+        <location filename="../../app/settings/log_config_editor.py" line="223" />
         <source>Max size (bytes):</source>
         <translation>Max storlek (bytes):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="222" />
+        <location filename="../../app/settings/log_config_editor.py" line="227" />
         <source>Backup:</source>
         <translation>Backup:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="234" />
+        <location filename="../../app/settings/log_config_editor.py" line="239" />
         <source>Console</source>
         <translation>Konsol</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="261" />
+        <location filename="../../app/settings/log_config_editor.py" line="246" />
+        <source>Enabled by --console-log.</source>
+        <translation>Aktiverad med --console-log.</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="273" />
         <source>Namespace loggers</source>
         <translation>Namngivna loggare</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="435" />
-        <location filename="../../app/settings/log_config_editor.py" line="318" />
+        <location filename="../../app/settings/log_config_editor.py" line="447" />
+        <location filename="../../app/settings/log_config_editor.py" line="330" />
         <source>Reset defaults</source>
         <translation>Återställ standard</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="320" />
+        <location filename="../../app/settings/log_config_editor.py" line="332" />
         <source>Cancel</source>
         <translation>Avbryt</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="322" />
+        <location filename="../../app/settings/log_config_editor.py" line="334" />
         <source>Save</source>
         <translation>Spara</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="338" />
+        <location filename="../../app/settings/log_config_editor.py" line="350" />
         <source>Unable to open link</source>
         <translation>Det gick inte att öppna länken</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="339" />
+        <location filename="../../app/settings/log_config_editor.py" line="351" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -6104,29 +6109,29 @@ Sparad till:
 {url}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="436" />
+        <location filename="../../app/settings/log_config_editor.py" line="448" />
         <source>Log configuration has been reset to default values.</source>
         <translation>Logginställningar har återställts till standardvärden</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="501" />
+        <location filename="../../app/settings/log_config_editor.py" line="517" />
         <source>Failure</source>
         <translation>Fel</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="502" />
+        <location filename="../../app/settings/log_config_editor.py" line="518" />
         <source>Could not save log configuration:
 {error}</source>
         <translation>Kunde inte spara logginställningar:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="507" />
+        <location filename="../../app/settings/log_config_editor.py" line="523" />
         <source>Log configuration saved</source>
         <translation>Logginställningar sparade</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="507" />
+        <location filename="../../app/settings/log_config_editor.py" line="523" />
         <source>Log configuration has been saved.</source>
         <translation>Logginställningarna har sparats</translation>
     </message>

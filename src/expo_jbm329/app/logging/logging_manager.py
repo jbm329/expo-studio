@@ -119,6 +119,7 @@ class LoggingManager:
 
     __slots__ = (
         "_console_log",
+        "_frozen_console_active",
         "_owned_handlers",
         "db_logger",
         "jobs_logger",
@@ -132,12 +133,18 @@ class LoggingManager:
     def __init__(self, *, console_log: bool = False) -> None:
         """Initializes the LoggingManager with pre-configured logger instances."""
         self._console_log = console_log
+        self._frozen_console_active = False
         self._owned_handlers: list[logging.Handler] = []
         self.ui_logger: logging.Logger = logging.getLogger("applogger.ui")
         self.service_logger: logging.Logger = logging.getLogger("applogger.service")
         self.jobs_logger: logging.Logger = logging.getLogger("applogger.jobs")
         self.db_logger: logging.Logger = logging.getLogger("applogger.db")
         self.system_logger: logging.Logger = logging.getLogger("applogger")
+
+    @property
+    def frozen_console_active(self) -> bool:
+        """Return whether setup installed console output for this packaged session."""
+        return self._frozen_console_active
 
     # =====================================================================
     # Bootstrap
@@ -161,6 +168,7 @@ class LoggingManager:
         for h in self._owned_handlers:
             h.close()
         self._owned_handlers.clear()
+        self._frozen_console_active = False
 
         handlers_cfg = object_or_empty(cfg.get("handlers"))
         frozen = _is_frozen()
@@ -206,6 +214,7 @@ class LoggingManager:
                     console_handler.addFilter(tp_filter)
                     root.addHandler(console_handler)
                     self._owned_handlers.append(console_handler)
+                    self._frozen_console_active = frozen_console_platform
 
         if self._owned_handlers and frozen_console_platform:
             root.removeHandler(fallback)

@@ -443,6 +443,7 @@ class ExpoStudio(QMainWindow):
             parent=self,
             dialogs=self._require_dialogs(),
             icon_service=self._require_workbench_services().icon_service,
+            frozen_console_active=self._require_services().logging_manager.frozen_console_active,
         )
         if dlg.exec():
             self._reload_logging()
