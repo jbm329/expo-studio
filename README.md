@@ -247,6 +247,28 @@ After installation, you can launch the main application using:
 uv run expo-gui
 ```
 
+### Console logging in the packaged GUI
+
+From the folder containing the packaged executable, start the GUI with
+`--console-log`. On Windows, use Command Prompt (`cmd.exe`); `/wait` keeps the
+prompt from returning while Expo Studio is open:
+
+```bat
+start "" /b /wait ".\expo.exe" --console-log
+```
+
+On Linux:
+
+```sh
+./expo --console-log
+```
+
+Application logs go to `stderr`; append `2>expo-console.log` to either
+command to capture them in a file instead. The flag applies only to that
+launch and does not change file logging. The default Console level is
+`WARNING`. For more detail, lower both **Console → Level** and the relevant
+logger threshold in **Tools → Log settings…**.
+
 ### CLI Access
 The `expo` entry point currently provides help and version output only; it does not yet support data-processing operations.
 
@@ -261,7 +283,7 @@ uv run expo --version
 ### Configuration
 - **Settings**: Accessible via `Settings` in the menu.
 - **Connections**: Manage database connections through the `Connections` dialog.
-- **Logs**: Configure logging levels and destinations via `Logsettings`.
+- **Logs**: Configure logging levels and destinations via **Tools → Log settings…**.
 
 
 ### 🎨 Themes & Appearance

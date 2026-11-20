@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
@@ -13,6 +14,26 @@ from PyQt6.QtWidgets import QApplication, QSplashScreen
 from expo_jbm329.app.bootstrap import run_bootstrap
 from expo_jbm329.app.expo_studio import ExpoStudio
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+
+def _extract_console_log_flag(argv: Sequence[str]) -> tuple[list[str], bool]:
+    """Remove the launch flag without consuming Qt options or arguments after `--`."""
+    if not argv:
+        return [], False
+    qt_args = [argv[0]]
+    requested = False
+    for index, arg in enumerate(argv[1:], start=1):
+        if arg == "--":
+            qt_args.extend(argv[index:])
+            break
+        if arg == "--console-log":
+            requested = True
+        else:
+            qt_args.append(arg)
+    return qt_args, requested
+
 
 def gui_main() -> int:
     """Main function for the GUI application.
@@ -20,8 +41,9 @@ def gui_main() -> int:
     Initializes the QApplication, shows a splash screen, and starts the main window.
     :return: Int
     """
+    qt_args, console_log = _extract_console_log_flag(sys.argv)
     QApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
-    app = QApplication(sys.argv)
+    app = QApplication(qt_args)
     run_bootstrap()
 
     splash = QSplashScreen(QPixmap(":/splash/splash.png"))
@@ -30,7 +52,7 @@ def gui_main() -> int:
     app.processEvents()
 
     win = ExpoStudio()
-    win.init_services()
+    win.init_services(console_log=console_log)
 
     splash.finish(win)
     splash.deleteLater()

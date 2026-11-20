@@ -25,24 +25,37 @@ Use a small, stable set of namespaces:
 
 ## 2) Root logger & handlers
 
-- The **root logger** owns *all handlers* (file + stdout).  
+- The **root logger** owns *all handlers* (file and console).
 - Named loggers **do not** have handlers; they **propagate** to root.  
 - Prevents duplicates and centralizes formatting/filtering.
 
 ### Handlers
 The following describes the intended roles of the handlers. The shipped defaults
-are **file INFO**, **stdout WARNING**, **UI INFO**, **service WARNING**,
+are **file INFO**, **console WARNING**, **UI INFO**, **service WARNING**,
 **jobs INFO**, and **DB WARNING**. The JSON examples below are illustrative
-diagnostic configurations, not the shipped defaults. Stdout is disabled in frozen
-builds.
+diagnostic configurations, not the shipped defaults.
 
 - **File (RotatingFileHandler)** — deeper diagnostics
   - Level: `DEBUG` (dev), `INFO` (prod)
   - Formatter: verbose (timestamp, level, file, line, function, message)
   - Rotation configured in `logconfig.json`
-- **Stdout (StreamHandler)** — clean console for the UI
-  - Level: `INFO`
+- **Console (StreamHandler)** — diagnostic output to `stderr`
+  - Level: `WARNING` by default
   - Formatter: default (compact)
+  - Configuration key: `handlers.stdout` (retained for compatibility)
+
+In packaged Windows and Linux GUI builds, `--console-log` enables the console
+handler for the current launch only, provided an output stream is available.
+On Linux it uses inherited `stderr`. On Windows the windowed executable uses
+inherited `stderr` if available, or attempts to attach to the launching
+console without creating a new window. Redirected Windows console log records
+are written as UTF-8. Without a usable destination, the application continues
+without console logging.
+
+The launch flag is not persisted and does not change file logging. Saved
+console level and formatter apply on opt-in; if they are missing, the defaults
+are `WARNING` and `default`. Console output still requires the originating
+logger and any applicable third-party filter to allow the record.
 
 ---
 
@@ -63,7 +76,7 @@ Configured in `logconfig.json`, for example:
 - Raise `applogger.service` to `DEBUG` during data/export troubleshooting.
 - Also set the **file handler** level to `DEBUG`; changing only the namespace
   does not enable DEBUG file output. Set `applogger.ui` to `DEBUG` when investigating
-  ignored stale results. Keep stdout and third-party filtering at `WARNING`.
+  ignored stale results. Keep console and third-party filtering at `WARNING`.
 - Keep `applogger.db` at `WARNING` unless debugging DB logic.
 - Keep `applogger.ui` at `INFO` (UI should not be too chatty).
 

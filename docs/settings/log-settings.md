@@ -14,9 +14,9 @@ manual URL.
 For general preferences and saved connections, see the
 [Settings overview](index.md).
 
-*The Log settings dialog, with an illustrative username substituted in the path.
-The log-file path and selected values depend on your installation and
-configuration. The Console group is hidden in packaged executables.*
+*Log settings when running from source, with an illustrative username
+substituted in the path. Packaged builds show Console only when console output
+is active, and do not show its Activate checkbox.*
 
 ## Save or reset log settings {#save-log-settings}
 
@@ -64,8 +64,8 @@ still apply; this setting does not force additional messages to be emitted.
 ## Configure file and console output {#destinations}
 
 The **File** and **Console** groups configure separate output destinations.
-Uncheck **Activate** to remove a destination from the saved configuration.
-Its remaining controls become disabled.
+Where **Activate** is shown, unchecking it disables the remaining controls
+for that destination.
 
 | Control | Purpose |
 |---|---|
@@ -78,9 +78,33 @@ With **Backup** set to **0**, the rotating handler does not retain backups or
 rotate the file. **Max size (bytes)** is therefore not a hard size cap in that
 configuration.
 
-**Console** output is available when running from source, such as from a terminal
-or an IDE. Packaged executables hide this group and do not install the console
-destination.
+### Show logs in a terminal
+
+For the packaged Windows or Linux GUI, open a terminal in the folder containing
+the executable. In Windows Command Prompt (`cmd.exe`), run:
+
+```bat
+start "" /b /wait ".\expo.exe" --console-log
+```
+
+On Linux, run:
+
+```sh
+./expo --console-log
+```
+
+The flag enables application console logging for this launch only, if an output
+destination is available. It does not open a new console or change file logging.
+Logs go to standard error (`stderr`). To capture them instead, append
+`2>expo-console.log` to the launch command.
+
+Once console output is active, open **Tools → Log settings…** to adjust the
+**Console** level or formatting. If no preferences have been saved, the defaults
+are `WARNING` and `default`, so routine `INFO` messages do not appear. For
+`DEBUG` messages, lower both the Console level and the applicable logger
+threshold. **Save** applies the changes to the current session, but neither
+**Save** nor **Reset defaults** enables console output in an ordinary packaged
+launch. When running from source, Console still uses its **Activate** checkbox.
 
 ## Select application namespaces {#namespace-loggers}
 

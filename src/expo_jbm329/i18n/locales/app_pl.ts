@@ -6009,93 +6009,98 @@ Zapisano w:
 </context><context>
     <name>LogConfigEditor</name>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="111" />
+        <location filename="../../app/settings/log_config_editor.py" line="116" />
         <source>Log settings</source>
         <translation>Ustawienia dziennika</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="170" />
+        <location filename="../../app/settings/log_config_editor.py" line="175" />
         <source>Log file:</source>
         <translation>Plik dziennika:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="175" />
+        <location filename="../../app/settings/log_config_editor.py" line="180" />
         <source>Root log level:</source>
         <translation>Główny poziom rejestrowania:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="180" />
+        <location filename="../../app/settings/log_config_editor.py" line="185" />
         <source>Third party log level:</source>
         <translation>Poziom rejestrowania bibliotek zewnętrznych:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="201" />
+        <location filename="../../app/settings/log_config_editor.py" line="206" />
         <source>File</source>
         <translation>Plik</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="269" />
-        <location filename="../../app/settings/log_config_editor.py" line="237" />
-        <location filename="../../app/settings/log_config_editor.py" line="204" />
+        <location filename="../../app/settings/log_config_editor.py" line="281" />
+        <location filename="../../app/settings/log_config_editor.py" line="242" />
+        <location filename="../../app/settings/log_config_editor.py" line="209" />
         <source>Activate</source>
         <translation>Aktywuj</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="287" />
-        <location filename="../../app/settings/log_config_editor.py" line="242" />
-        <location filename="../../app/settings/log_config_editor.py" line="209" />
+        <location filename="../../app/settings/log_config_editor.py" line="299" />
+        <location filename="../../app/settings/log_config_editor.py" line="254" />
+        <location filename="../../app/settings/log_config_editor.py" line="214" />
         <source>Level:</source>
         <translation>Poziom:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="246" />
-        <location filename="../../app/settings/log_config_editor.py" line="213" />
+        <location filename="../../app/settings/log_config_editor.py" line="258" />
+        <location filename="../../app/settings/log_config_editor.py" line="218" />
         <source>Formatting:</source>
         <translation>Formatowanie:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="218" />
+        <location filename="../../app/settings/log_config_editor.py" line="223" />
         <source>Max size (bytes):</source>
         <translation>Maksymalny rozmiar (bajty):</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="222" />
+        <location filename="../../app/settings/log_config_editor.py" line="227" />
         <source>Backup:</source>
         <translation>Kopia zapasowa:</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="234" />
+        <location filename="../../app/settings/log_config_editor.py" line="239" />
         <source>Console</source>
         <translation>Konsola</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="261" />
+        <location filename="../../app/settings/log_config_editor.py" line="246" />
+        <source>Enabled by --console-log.</source>
+        <translation>Włączono przez --console-log.</translation>
+    </message>
+    <message>
+        <location filename="../../app/settings/log_config_editor.py" line="273" />
         <source>Namespace loggers</source>
         <translation>Rejestratory przestrzeni nazw</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="435" />
-        <location filename="../../app/settings/log_config_editor.py" line="318" />
+        <location filename="../../app/settings/log_config_editor.py" line="447" />
+        <location filename="../../app/settings/log_config_editor.py" line="330" />
         <source>Reset defaults</source>
         <translation>Przywróć ustawienia domyślne</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="320" />
+        <location filename="../../app/settings/log_config_editor.py" line="332" />
         <source>Cancel</source>
         <translation>Anuluj</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="322" />
+        <location filename="../../app/settings/log_config_editor.py" line="334" />
         <source>Save</source>
         <translation>Zapisz</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="338" />
+        <location filename="../../app/settings/log_config_editor.py" line="350" />
         <source>Unable to open link</source>
         <translation>Nie można otworzyć łącza</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="339" />
+        <location filename="../../app/settings/log_config_editor.py" line="351" />
         <source>The user manual could not be opened.
 
 {url}</source>
@@ -6104,29 +6109,29 @@ Zapisano w:
 {url}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="436" />
+        <location filename="../../app/settings/log_config_editor.py" line="448" />
         <source>Log configuration has been reset to default values.</source>
         <translation>Przywrócono domyślną konfigurację dziennika.</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="501" />
+        <location filename="../../app/settings/log_config_editor.py" line="517" />
         <source>Failure</source>
         <translation>Błąd</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="502" />
+        <location filename="../../app/settings/log_config_editor.py" line="518" />
         <source>Could not save log configuration:
 {error}</source>
         <translation>Nie można zapisać konfiguracji dziennika:
 {error}</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="507" />
+        <location filename="../../app/settings/log_config_editor.py" line="523" />
         <source>Log configuration saved</source>
         <translation>Zapisano konfigurację dziennika</translation>
     </message>
     <message>
-        <location filename="../../app/settings/log_config_editor.py" line="507" />
+        <location filename="../../app/settings/log_config_editor.py" line="523" />
         <source>Log configuration has been saved.</source>
         <translation>Konfiguracja dziennika została zapisana.</translation>
     </message>

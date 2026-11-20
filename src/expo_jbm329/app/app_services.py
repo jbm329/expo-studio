@@ -90,7 +90,7 @@ class AppServices:
     # Factory
     # ==================================================================
     @classmethod
-    def build(cls: type[Self], settings: dict[str, object]) -> Self:
+    def build(cls: type[Self], settings: dict[str, object], *, console_log: bool = False) -> Self:
         """Builds the full application infrastructure layer.
 
         This factory method initializes and configures all core services,
@@ -99,6 +99,7 @@ class AppServices:
 
         Args:
             settings: Dictionary of application settings from configuration.
+            console_log: Whether the launch requested packaged console logging.
 
         Returns:
             An initialized AppServices instance with all services ready.
@@ -106,7 +107,7 @@ class AppServices:
         # -------------------------
         # 1) Logging
         # -------------------------
-        logging_manager = LoggingManager()
+        logging_manager = LoggingManager(console_log=console_log)
         logging_manager.setup()
 
         log_ui = logging_manager.ui_logger
